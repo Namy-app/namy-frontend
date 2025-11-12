@@ -1,4 +1,4 @@
-import Counter from "@/shared/components/Counter/Counter";
+import Counter from "@/src/shared/components/Counter/Counter";
 
 export default function Home() {
   return (
