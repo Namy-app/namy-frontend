@@ -4,7 +4,6 @@ import { useCounterStore } from "@/store/useCounterStore";
 
 export default function Counter() {
   const { count, increase, decrease, reset } = useCounterStore();
-
   return (
     <div className="flex flex-col items-center gap-3">
       <h2 className="text-xl font-bold">Count: {count}</h2>
