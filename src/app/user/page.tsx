@@ -14,6 +14,11 @@ export default function UserPage() {
   const { user } = useAuthStore();
   const logoutMutation = useLogout();
 
+  if (!user) {
+    // user is not available yet — avoid rendering until it's present
+    return null;
+  }
+
   const handleLogout = async () => {
     try {
       await logoutMutation.mutateAsync();
@@ -33,63 +38,61 @@ export default function UserPage() {
 
   return (
     <ProtectedRoute>
-    <div className="min-h-screen bg-gradient-hero p-6">
-      <div className="max-w-4xl mx-auto space-y-6">
-        <Card className="p-6 shadow-glow">
-          <h1 className="text-3xl font-bold text-foreground mb-2">
-            Welcome back, {user.displayName || user.email}!
-          </h1>
-          <p className="text-muted-foreground mb-6">
-            Manage your account and explore delicious discounts
-          </p>
+      <div className="min-h-screen bg-gradient-hero p-6">
+        <div className="max-w-4xl mx-auto space-y-6">
+          <Card className="p-6 shadow-glow">
+            <h1 className="text-3xl font-bold text-foreground mb-2">
+              Welcome back, {user.displayName || user.email}!
+            </h1>
+            <p className="text-muted-foreground mb-6">
+              Manage your account and explore delicious discounts
+            </p>
 
-          <div className="space-y-4">
-            <div>
-              <h2 className="text-sm font-medium text-muted-foreground">
-                Email
-              </h2>
-              <p className="text-foreground">{user.email}</p>
+            <div className="space-y-4">
+              <div>
+                <h2 className="text-sm font-medium text-muted-foreground">
+                  Email
+                </h2>
+                <p className="text-foreground">{user.email}</p>
+              </div>
+
+              {user.displayName && (
+                <div>
+                  <h2 className="text-sm font-medium text-muted-foreground">
+                    Display Name
+                  </h2>
+                  <p className="text-foreground">{user.displayName}</p>
+                </div>
+              )}
+
+              {user.phone && (
+                <div>
+                  <h2 className="text-sm font-medium text-muted-foreground">
+                    Phone
+                  </h2>
+                  <p className="text-foreground">{user.phone}</p>
+                </div>
+              )}
             </div>
 
-            {user.displayName && (
-              <div>
-                <h2 className="text-sm font-medium text-muted-foreground">
-                  Display Name
-                </h2>
-                <p className="text-foreground">
-                  {user.displayName}
-                </p>
-              </div>
-            )}
-
-            {user.phone && (
-              <div>
-                <h2 className="text-sm font-medium text-muted-foreground">
-                  Phone
-                </h2>
-                <p className="text-foreground">{user.phone}</p>
-              </div>
-            )}
-          </div>
-
-          <div className="mt-6 flex gap-4">
-            <Button
-              onClick={() => router.push("/store")}
-              className="bg-primary text-primary-foreground hover:bg-primary/90"
-            >
-              Browse Stores
-            </Button>
-            <Button
-              onClick={handleLogout}
-              variant="outline"
-              disabled={logoutMutation.isPending}
-            >
-              {logoutMutation.isPending ? "Logging out..." : "Logout"}
-            </Button>
-          </div>
-        </Card>
+            <div className="mt-6 flex gap-4">
+              <Button
+                onClick={() => router.push("/store")}
+                className="bg-primary text-primary-foreground hover:bg-primary/90"
+              >
+                Browse Stores
+              </Button>
+              <Button
+                onClick={handleLogout}
+                variant="outline"
+                disabled={logoutMutation.isPending}
+              >
+                {logoutMutation.isPending ? "Logging out..." : "Logout"}
+              </Button>
+            </div>
+          </Card>
+        </div>
       </div>
-    </div>
     </ProtectedRoute>
   );
 }

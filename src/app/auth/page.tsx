@@ -39,6 +39,7 @@ export default function AuthPage() {
 
   // Signup state
   const [signupEmail, setSignupEmail] = useState("");
+  const [signupUsername, setSignupUsername] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
   const [signupConfirmPassword, setSignupConfirmPassword] = useState("");
   const [signupDisplayName, setSignupDisplayName] = useState("");
@@ -52,7 +53,7 @@ export default function AuthPage() {
 
     try {
       await loginMutation.mutateAsync({
-        email: loginEmail,
+        emailOrUsername: loginEmail,
         password: loginPassword,
         rememberMe,
       });
@@ -64,11 +65,24 @@ export default function AuthPage() {
 
       router.push("/user");
     } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Login failed",
-        description: error.message || "Invalid email or password",
-      });
+      // Check if error is about unverified email
+      if (error.message?.includes("Email not verified")) {
+        toast({
+          variant: "default",
+          title: "Email verification required",
+          description: error.message,
+        });
+
+        // Redirect to verify email page with email pre-filled
+        const email = loginEmail.includes("@") ? loginEmail : "";
+        router.push(`/auth/verify-email?email=${encodeURIComponent(email)}`);
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Login failed",
+          description: error.message || "Invalid email, username or password",
+        });
+      }
     }
   };
 
@@ -96,16 +110,20 @@ export default function AuthPage() {
     try {
       await signupMutation.mutateAsync({
         email: signupEmail,
+        username: signupUsername || undefined,
         password: signupPassword,
-        displayName: signupDisplayName,
+        displayName: signupDisplayName || undefined,
       });
 
       toast({
-        title: "Account created!",
-        description: "Welcome to Ñamy!",
+        title: "Registration Successful! 🎉",
+        description: `A verification code has been sent to ${signupEmail}. Please check your email and verify your account.`,
       });
 
-      router.push("/user");
+      // Redirect to verify email page
+      router.push(
+        `/auth/verify-email?email=${encodeURIComponent(signupEmail)}`
+      );
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -114,7 +132,6 @@ export default function AuthPage() {
       });
     }
   };
-
 
   return (
     <div className="flex min-h-screen bg-gradient-hero items-center justify-center p-6">
@@ -141,11 +158,11 @@ export default function AuthPage() {
             <form onSubmit={handleLogin} className="space-y-4">
               <div>
                 <label className="text-sm font-medium text-foreground mb-2 block">
-                  Email
+                  Email or Username
                 </label>
                 <Input
-                  type="email"
-                  placeholder="your@email.com"
+                  type="text"
+                  placeholder="your@email.com or username"
                   className="h-12 rounded-xl"
                   required
                   value={loginEmail}
@@ -220,6 +237,20 @@ export default function AuthPage() {
                   required
                   value={signupEmail}
                   onChange={(e) => setSignupEmail(e.target.value)}
+                  disabled={signupMutation.isPending}
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-foreground mb-2 block">
+                  Username
+                </label>
+                <Input
+                  type="text"
+                  placeholder="username"
+                  className="h-12 rounded-xl"
+                  value={signupUsername}
+                  onChange={(e) => setSignupUsername(e.target.value)}
                   disabled={signupMutation.isPending}
                 />
               </div>
