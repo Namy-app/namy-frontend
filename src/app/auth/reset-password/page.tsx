@@ -72,7 +72,8 @@ export default function ResetPasswordPage() {
         variant: "destructive",
         title: "Reset failed",
         description:
-          error.message || "Failed to reset password. The link may have expired.",
+          error.message ||
+          "Failed to reset password. The link may have expired.",
       });
     }
   };
@@ -99,7 +100,7 @@ export default function ResetPasswordPage() {
       <Card className="w-full max-w-md p-8 bg-card border-border shadow-glow">
         <div className="text-center mb-8">
           <Image
-            src="/assets/namy-logo.jpg"
+            src="/namy-logo.webp"
             alt="Ñamy Logo"
             width={96}
             height={96}
@@ -151,7 +152,9 @@ export default function ResetPasswordPage() {
             className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 rounded-full font-bold shadow-glow"
             disabled={resetPasswordMutation.isPending}
           >
-            {resetPasswordMutation.isPending ? "Resetting..." : "Reset Password"}
+            {resetPasswordMutation.isPending
+              ? "Resetting..."
+              : "Reset Password"}
           </Button>
 
           <Button

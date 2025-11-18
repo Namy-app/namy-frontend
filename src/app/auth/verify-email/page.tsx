@@ -121,7 +121,7 @@ export default function VerifyEmailPage() {
       <Card className="w-full max-w-md p-8 bg-card border-border shadow-glow">
         <div className="text-center mb-8">
           <Image
-            src="/assets/namy-logo.jpg"
+            src="/namy-logo.webp"
             alt="Ñamy Logo"
             width={96}
             height={96}
