@@ -1,4 +1,5 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, type UseMutationResult } from "@tanstack/react-query";
+
 import { graphqlRequest } from "@/lib/graphql-client";
 import { RESET_PASSWORD_MUTATION } from "@/lib/graphql-queries";
 
@@ -13,7 +14,12 @@ interface ResetPasswordResponse {
   };
 }
 
-export function useResetPassword() {
+export function useResetPassword(): UseMutationResult<
+  { message: string },
+  Error,
+  ResetPasswordInput,
+  unknown
+> {
   return useMutation({
     mutationFn: async (input: ResetPasswordInput) => {
       const data = await graphqlRequest<ResetPasswordResponse>(

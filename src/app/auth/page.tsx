@@ -1,25 +1,26 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Card } from "@/shared/components/Card";
+import { useState, useEffect } from "react";
+
+import { useLogin, useSignup } from "@/domains/user/hooks";
+import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/shared/components/Button";
+import { Card } from "@/shared/components/Card";
+import { Checkbox } from "@/shared/components/Checkbox";
 import { Input } from "@/shared/components/Input";
 import { PasswordInput } from "@/shared/components/PasswordInput";
-import { Checkbox } from "@/shared/components/Checkbox";
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
 } from "@/shared/components/Tabs";
-import { useLogin, useSignup } from "@/domains/user/hooks";
-import { useToast } from "@/hooks/use-toast";
 import { useAuthStore } from "@/store/useAuthStore";
 
-export default function AuthPage() {
+export default function AuthPage(): React.JSX.Element {
   const router = useRouter();
   const { toast } = useToast();
   const { isAuthenticated, checkExpiration } = useAuthStore();
@@ -48,7 +49,7 @@ export default function AuthPage() {
   const loginMutation = useLogin();
   const signupMutation = useSignup();
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
 
     try {
@@ -64,13 +65,15 @@ export default function AuthPage() {
       });
 
       router.push("/user");
-    } catch (error: any) {
+    } catch (error) {
       // Check if error is about unverified email
-      if (error.message?.includes("Email not verified")) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      if (errorMessage?.includes("Email not verified")) {
         toast({
           variant: "default",
           title: "Email verification required",
-          description: error.message,
+          description: errorMessage,
         });
 
         // Redirect to verify email page with email pre-filled
@@ -80,13 +83,13 @@ export default function AuthPage() {
         toast({
           variant: "destructive",
           title: "Login failed",
-          description: error.message || "Invalid email, username or password",
+          description: errorMessage || "Invalid email, username or password",
         });
       }
     }
   };
 
-  const handleSignup = async (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
 
     if (signupPassword !== signupConfirmPassword) {
@@ -124,11 +127,13 @@ export default function AuthPage() {
       router.push(
         `/auth/verify-email?email=${encodeURIComponent(signupEmail)}`
       );
-    } catch (error: any) {
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       toast({
         variant: "destructive",
         title: "Signup failed",
-        description: error.message || "Could not create account",
+        description: errorMessage || "Could not create account",
       });
     }
   };
@@ -155,7 +160,12 @@ export default function AuthPage() {
           </TabsList>
 
           <TabsContent value="login">
-            <form onSubmit={handleLogin} className="space-y-4">
+            <form
+              onSubmit={(e) => {
+                void handleLogin(e);
+              }}
+              className="space-y-4"
+            >
               <div>
                 <label className="text-sm font-medium text-foreground mb-2 block">
                   Email or Username
@@ -211,7 +221,12 @@ export default function AuthPage() {
           </TabsContent>
 
           <TabsContent value="signup">
-            <form onSubmit={handleSignup} className="space-y-4">
+            <form
+              onSubmit={(e) => {
+                void handleSignup(e);
+              }}
+              className="space-y-4"
+            >
               <div>
                 <label className="text-sm font-medium text-foreground mb-2 block">
                   Display Name

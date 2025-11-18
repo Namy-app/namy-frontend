@@ -1,6 +1,8 @@
 import * as React from "react";
-import { Input } from "../Input";
+
 import { cn } from "@/lib/utils";
+
+import { Input } from "../Input";
 
 export interface PasswordInputProps
   extends React.InputHTMLAttributes<HTMLInputElement> {
@@ -14,44 +16,74 @@ const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputProps>(
 
     const calculateStrength = (password: string): number => {
       let score = 0;
-      if (!password) return score;
+      if (!password) {
+        return score;
+      }
 
       // Length check
-      if (password.length >= 8) score += 1;
-      if (password.length >= 12) score += 1;
+      if (password.length >= 8) {
+        score += 1;
+      }
+      if (password.length >= 12) {
+        score += 1;
+      }
 
       // Contains lowercase
-      if (/[a-z]/.test(password)) score += 1;
+      if (/[a-z]/.test(password)) {
+        score += 1;
+      }
 
       // Contains uppercase
-      if (/[A-Z]/.test(password)) score += 1;
+      if (/[A-Z]/.test(password)) {
+        score += 1;
+      }
 
       // Contains numbers
-      if (/\d/.test(password)) score += 1;
+      if (/\d/.test(password)) {
+        score += 1;
+      }
 
       // Contains special characters
-      if (/[^A-Za-z0-9]/.test(password)) score += 1;
+      if (/[^A-Za-z0-9]/.test(password)) {
+        score += 1;
+      }
 
       return Math.min(score, 4); // Max score of 4
     };
 
     const getStrengthColor = (strength: number): string => {
-      if (strength === 0) return "bg-muted";
-      if (strength === 1) return "bg-red-500";
-      if (strength === 2) return "bg-orange-500";
-      if (strength === 3) return "bg-yellow-500";
+      if (strength === 0) {
+        return "bg-muted";
+      }
+      if (strength === 1) {
+        return "bg-red-500";
+      }
+      if (strength === 2) {
+        return "bg-orange-500";
+      }
+      if (strength === 3) {
+        return "bg-yellow-500";
+      }
       return "bg-green-500";
     };
 
     const getStrengthText = (strength: number): string => {
-      if (strength === 0) return "";
-      if (strength === 1) return "Weak";
-      if (strength === 2) return "Fair";
-      if (strength === 3) return "Good";
+      if (strength === 0) {
+        return "";
+      }
+      if (strength === 1) {
+        return "Weak";
+      }
+      if (strength === 2) {
+        return "Fair";
+      }
+      if (strength === 3) {
+        return "Good";
+      }
       return "Strong";
     };
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
       if (showStrength) {
         setStrength(calculateStrength(e.target.value));
       }
@@ -113,7 +145,7 @@ const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputProps>(
           </button>
         </div>
 
-        {showStrength && props.value && (
+        {showStrength && props.value ? (
           <div className="space-y-1">
             <div className="flex gap-1">
               {[...Array(4)].map((_, i) => (
@@ -132,7 +164,7 @@ const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputProps>(
               </p>
             )}
           </div>
-        )}
+        ) : null}
       </div>
     );
   }

@@ -1,13 +1,14 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, type UseQueryResult } from "@tanstack/react-query";
+
+import { type User } from "@/lib/api-types";
 import { graphqlRequest } from "@/lib/graphql-client";
 import { GET_USER_BY_ID_QUERY } from "@/lib/graphql-queries";
-import { User } from "@/lib/api-types";
 
 interface UserResponse {
   user: User;
 }
 
-export function useUser(id: string) {
+export function useUser(id: string): UseQueryResult<User, Error> {
   return useQuery({
     queryKey: ["user", id],
     queryFn: async () => {

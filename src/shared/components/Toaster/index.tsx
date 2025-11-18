@@ -1,5 +1,6 @@
 "use client";
 
+import { useToast } from "@/hooks/use-toast";
 import {
   Toast,
   ToastClose,
@@ -8,9 +9,8 @@ import {
   ToastTitle,
   ToastViewport,
 } from "@/shared/components/Toast";
-import { useToast } from "@/hooks/use-toast";
 
-export function Toaster() {
+export function Toaster(): React.JSX.Element {
   const { toasts } = useToast();
 
   return (
@@ -19,10 +19,10 @@ export function Toaster() {
         return (
           <Toast key={id} {...props}>
             <div className="grid gap-1">
-              {title && <ToastTitle>{title}</ToastTitle>}
-              {description && (
+              {title ? <ToastTitle>{title}</ToastTitle> : null}
+              {description ? (
                 <ToastDescription>{description}</ToastDescription>
-              )}
+              ) : null}
             </div>
             {action}
             <ToastClose />

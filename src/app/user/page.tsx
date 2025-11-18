@@ -1,14 +1,15 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Card } from "@/shared/components/Card";
-import { Button } from "@/shared/components/Button";
-import { useAuthStore } from "@/store/useAuthStore";
+
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { useLogout } from "@/domains/user/hooks";
 import { useToast } from "@/hooks/use-toast";
-import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { Button } from "@/shared/components/Button";
+import { Card } from "@/shared/components/Card";
+import { useAuthStore } from "@/store/useAuthStore";
 
-export default function UserPage() {
+export default function UserPage(): React.JSX.Element | null {
   const router = useRouter();
   const { toast } = useToast();
   const { user } = useAuthStore();
@@ -19,7 +20,7 @@ export default function UserPage() {
     return null;
   }
 
-  const handleLogout = async () => {
+  const handleLogout = async (): Promise<void> => {
     try {
       await logoutMutation.mutateAsync();
       toast({
@@ -27,11 +28,13 @@ export default function UserPage() {
         description: "You have been logged out successfully.",
       });
       router.push("/auth");
-    } catch (error: any) {
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       toast({
         variant: "destructive",
         title: "Logout failed",
-        description: error.message || "Could not log out",
+        description: errorMessage || "Could not log out",
       });
     }
   };
@@ -56,23 +59,23 @@ export default function UserPage() {
                 <p className="text-foreground">{user.email}</p>
               </div>
 
-              {user.displayName && (
+              {user.displayName ? (
                 <div>
                   <h2 className="text-sm font-medium text-muted-foreground">
                     Display Name
                   </h2>
                   <p className="text-foreground">{user.displayName}</p>
                 </div>
-              )}
+              ) : null}
 
-              {user.phone && (
+              {user.phone ? (
                 <div>
                   <h2 className="text-sm font-medium text-muted-foreground">
                     Phone
                   </h2>
                   <p className="text-foreground">{user.phone}</p>
                 </div>
-              )}
+              ) : null}
             </div>
 
             <div className="mt-6 flex gap-4">
@@ -83,7 +86,9 @@ export default function UserPage() {
                 Browse Stores
               </Button>
               <Button
-                onClick={handleLogout}
+                onClick={() => {
+                  void handleLogout();
+                }}
                 variant="outline"
                 disabled={logoutMutation.isPending}
               >

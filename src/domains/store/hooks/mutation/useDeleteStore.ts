@@ -1,7 +1,12 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQueryClient,
+  type UseMutationResult,
+} from "@tanstack/react-query";
+
+import { type Store } from "@/lib/api-types";
 import { graphqlRequest } from "@/lib/graphql-client";
 import { DELETE_STORE_MUTATION } from "@/lib/graphql-queries";
-import { Store } from "@/lib/api-types";
 
 interface DeleteStoreInput {
   id: string;
@@ -11,7 +16,12 @@ interface DeleteStoreResponse {
   deleteStore: Store;
 }
 
-export function useDeleteStore() {
+export function useDeleteStore(): UseMutationResult<
+  Store,
+  Error,
+  DeleteStoreInput,
+  unknown
+> {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -24,7 +34,7 @@ export function useDeleteStore() {
     },
     onSuccess: (data) => {
       // Invalidate stores list and remove the specific store from cache
-      queryClient.invalidateQueries({ queryKey: ["stores"] });
+      void queryClient.invalidateQueries({ queryKey: ["stores"] });
       queryClient.removeQueries({ queryKey: ["store", data.id] });
     },
   });

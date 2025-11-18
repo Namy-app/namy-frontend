@@ -1,33 +1,29 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
-import { Card } from "@/shared/components/Card";
-import { Button } from "@/shared/components/Button";
-import { Input } from "@/shared/components/Input";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useState, useEffect } from "react";
+
 import { useVerifyEmail, useResendVerification } from "@/domains/user/hooks";
 import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/shared/components/Button";
+import { Card } from "@/shared/components/Card";
+import { Input } from "@/shared/components/Input";
 
-export default function VerifyEmailPage() {
+export default function VerifyEmailPage(): React.JSX.Element {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
 
-  const [email, setEmail] = useState("");
+  const emailParam = searchParams.get("email");
+  const [email, setEmail] = useState(
+    emailParam ? decodeURIComponent(emailParam) : ""
+  );
   const [code, setCode] = useState("");
   const [resendCooldown, setResendCooldown] = useState(0);
 
   const verifyEmailMutation = useVerifyEmail();
   const resendVerificationMutation = useResendVerification();
-
-  // Get email from URL params if available
-  useEffect(() => {
-    const emailParam = searchParams.get("email");
-    if (emailParam) {
-      setEmail(decodeURIComponent(emailParam));
-    }
-  }, [searchParams]);
 
   // Countdown timer for resend button
   useEffect(() => {
@@ -35,11 +31,12 @@ export default function VerifyEmailPage() {
       const timer = setTimeout(() => {
         setResendCooldown(resendCooldown - 1);
       }, 1000);
-      return () => clearTimeout(timer);
+      return (): void => clearTimeout(timer);
     }
+    return undefined;
   }, [resendCooldown]);
 
-  const handleVerifyEmail = async (e: React.FormEvent) => {
+  const handleVerifyEmail = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
 
     if (!email || !code) {
@@ -66,17 +63,19 @@ export default function VerifyEmailPage() {
       setTimeout(() => {
         router.push("/auth");
       }, 2000);
-    } catch (error: any) {
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       toast({
         variant: "destructive",
         title: "Verification failed",
         description:
-          error.message || "Invalid verification code. Please try again.",
+          errorMessage || "Invalid verification code. Please try again.",
       });
     }
   };
 
-  const handleResendVerification = async () => {
+  const handleResendVerification = async (): Promise<void> => {
     if (!email) {
       toast({
         variant: "destructive",
@@ -98,11 +97,13 @@ export default function VerifyEmailPage() {
 
       // Set cooldown to 60 seconds
       setResendCooldown(60);
-    } catch (error: any) {
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       // Check if error message contains cooldown information
-      const cooldownMatch = error.message?.match(/wait (\d+) seconds/);
-      if (cooldownMatch) {
-        const seconds = parseInt(cooldownMatch[1]);
+      const cooldownMatch = errorMessage?.match(/wait (\d+) seconds/);
+      if (cooldownMatch && cooldownMatch[1]) {
+        const seconds = parseInt(cooldownMatch[1], 10);
         setResendCooldown(seconds);
       }
 
@@ -110,7 +111,7 @@ export default function VerifyEmailPage() {
         variant: "destructive",
         title: "Failed to resend",
         description:
-          error.message ||
+          errorMessage ||
           "Could not resend verification email. Please try again later.",
       });
     }
@@ -136,7 +137,12 @@ export default function VerifyEmailPage() {
           </p>
         </div>
 
-        <form className="space-y-4" onSubmit={handleVerifyEmail}>
+        <form
+          className="space-y-4"
+          onSubmit={(e) => {
+            void handleVerifyEmail(e);
+          }}
+        >
           <div>
             <label className="text-sm font-medium text-foreground mb-2 block">
               Email Address
@@ -189,7 +195,9 @@ export default function VerifyEmailPage() {
               type="button"
               variant="outline"
               className="w-full h-12 rounded-full"
-              onClick={handleResendVerification}
+              onClick={() => {
+                void handleResendVerification();
+              }}
               disabled={
                 resendVerificationMutation.isPending || resendCooldown > 0
               }
@@ -197,8 +205,8 @@ export default function VerifyEmailPage() {
               {resendCooldown > 0
                 ? `Resend in ${resendCooldown}s`
                 : resendVerificationMutation.isPending
-                ? "Sending..."
-                : "Resend verification email"}
+                  ? "Sending..."
+                  : "Resend verification email"}
             </Button>
           </div>
 

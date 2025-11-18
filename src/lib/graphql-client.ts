@@ -1,7 +1,9 @@
 import { GraphQLClient } from "graphql-request";
+
 import { env } from "./env";
 
-console.log('API URL:', env.NEXT_PUBLIC_API_URL);
+// eslint-disable-next-line no-console
+console.log("API URL:", env.NEXT_PUBLIC_API_URL);
 
 // Create the GraphQL client instance
 export const graphqlClient = new GraphQLClient(env.NEXT_PUBLIC_API_URL, {
@@ -13,7 +15,7 @@ export const graphqlClient = new GraphQLClient(env.NEXT_PUBLIC_API_URL, {
 });
 
 // Helper function to set authorization header
-export const setAuthToken = (token: string | null) => {
+export const setAuthToken = (token: string | null): void => {
   if (token) {
     graphqlClient.setHeader("authorization", `Bearer ${token}`);
   } else {
@@ -24,25 +26,32 @@ export const setAuthToken = (token: string | null) => {
 // Helper function to make GraphQL requests with error handling
 export async function graphqlRequest<T>(
   query: string,
-  variables?: Record<string, any>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  variables?: any
 ): Promise<T> {
   try {
-    console.log('GraphQL Request:', { query, variables });
+    // eslint-disable-next-line no-console
+    console.log("GraphQL Request:", { query, variables });
     const result = await graphqlClient.request<T>(query, variables);
-    console.log('GraphQL Response:', result);
+    // eslint-disable-next-line no-console
+    console.log("GraphQL Response:", result);
     return result;
-  } catch (error: any) {
-    console.error('GraphQL Error:', error);
+  } catch (error) {
+    console.error("GraphQL Error:", error);
     // Handle GraphQL errors
-    if (error.response?.errors) {
-      const graphqlErrors = error.response.errors;
-      const errorMessage = graphqlErrors[0]?.message || "GraphQL request failed";
-      console.error('GraphQL Error Message:', errorMessage);
+    if (error && typeof error === "object" && "response" in error) {
+      const graphqlError = error as {
+        response?: { errors?: Array<{ message?: string }> };
+      };
+      const graphqlErrors = graphqlError.response?.errors;
+      const errorMessage =
+        graphqlErrors?.[0]?.message || "GraphQL request failed";
+      console.error("GraphQL Error Message:", errorMessage);
       throw new Error(errorMessage);
     }
-    if (error.message) {
+    if (error instanceof Error) {
       throw new Error(error.message);
     }
-    throw new Error("Network error: Could not connect to server");
+    throw new Error("An unknown error occurred");
   }
 }

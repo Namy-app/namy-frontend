@@ -1,30 +1,29 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
-import { Card } from "@/shared/components/Card";
-import { Button } from "@/shared/components/Button";
-import { PasswordInput } from "@/shared/components/PasswordInput";
-import { useToast } from "@/hooks/use-toast";
-import { useResetPassword } from "@/domains/user/hooks";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useState, useEffect } from "react";
 
-export default function ResetPasswordPage() {
+import { useResetPassword } from "@/domains/user/hooks";
+import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/shared/components/Button";
+import { Card } from "@/shared/components/Card";
+import { PasswordInput } from "@/shared/components/PasswordInput";
+
+export default function ResetPasswordPage(): React.JSX.Element {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
-  const [token, setToken] = useState("");
+
+  const tokenParam = searchParams.get("token");
+  const token = tokenParam || "";
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [isTokenValid, setIsTokenValid] = useState(false);
+  const isTokenValid = !!tokenParam;
   const resetPasswordMutation = useResetPassword();
 
   useEffect(() => {
-    const tokenParam = searchParams.get("token");
-    if (tokenParam) {
-      setToken(tokenParam);
-      setIsTokenValid(true);
-    } else {
+    if (!tokenParam) {
       toast({
         variant: "destructive",
         title: "Invalid reset link",
@@ -32,9 +31,9 @@ export default function ResetPasswordPage() {
       });
       setTimeout(() => router.push("/auth/forgot-password"), 3000);
     }
-  }, [searchParams, router, toast]);
+  }, [tokenParam, router, toast]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
 
     if (newPassword !== confirmPassword) {
@@ -67,12 +66,14 @@ export default function ResetPasswordPage() {
       });
 
       setTimeout(() => router.push("/auth"), 2000);
-    } catch (error: any) {
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       toast({
         variant: "destructive",
         title: "Reset failed",
         description:
-          error.message ||
+          errorMessage ||
           "Failed to reset password. The link may have expired.",
       });
     }
@@ -114,7 +115,12 @@ export default function ResetPasswordPage() {
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form
+          onSubmit={(e) => {
+            void handleSubmit(e);
+          }}
+          className="space-y-4"
+        >
           <div>
             <label className="text-sm font-medium text-foreground mb-2 block">
               New Password

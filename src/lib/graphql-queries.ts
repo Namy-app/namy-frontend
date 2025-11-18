@@ -49,6 +49,38 @@ export const SIGNUP_MUTATION = `
   }
 `;
 
+export const VERIFY_EMAIL_MUTATION = `
+  mutation VerifyEmail($input: VerifyEmailInput!) {
+    verifyEmail(input: $input) {
+      message
+    }
+  }
+`;
+
+export const RESEND_VERIFICATION_MUTATION = `
+  mutation ResendVerification($input: ResendVerificationInput!) {
+    resendVerification(input: $input) {
+      message
+    }
+  }
+`;
+
+export const FORGOT_PASSWORD_MUTATION = `
+  mutation ForgotPassword($input: ForgotPasswordInput!) {
+    forgotPassword(input: $input) {
+      message
+    }
+  }
+`;
+
+export const RESET_PASSWORD_MUTATION = `
+  mutation ResetPassword($input: ResetPasswordInput!) {
+    resetPassword(input: $input) {
+      message
+    }
+  }
+`;
+
 export const GET_CURRENT_USER_QUERY = `
   query GetCurrentUser {
     me {

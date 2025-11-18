@@ -1,4 +1,5 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, type UseMutationResult } from "@tanstack/react-query";
+
 import { graphqlClient } from "@/lib/graphql-client";
 import { VERIFY_EMAIL_MUTATION } from "@/lib/graphql-queries";
 
@@ -13,7 +14,12 @@ interface VerifyEmailResponse {
   };
 }
 
-export const useVerifyEmail = () => {
+export const useVerifyEmail = (): UseMutationResult<
+  { message: string },
+  Error,
+  VerifyEmailInput,
+  unknown
+> => {
   return useMutation({
     mutationFn: async (input: VerifyEmailInput) => {
       const response = await graphqlClient.request<VerifyEmailResponse>(

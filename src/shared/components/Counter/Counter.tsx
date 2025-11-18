@@ -1,8 +1,8 @@
 "use client";
 
-import { useCounterStore } from "@/src/store/useCounterStore";
+import { useCounterStore } from "@/store/useCounterStore";
 
-export default function Counter() {
+export default function Counter(): React.JSX.Element {
   const { count, increase, decrease, reset } = useCounterStore();
   return (
     <div className="flex flex-col items-center gap-3">
