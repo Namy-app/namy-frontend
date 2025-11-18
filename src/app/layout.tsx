@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import "../styles/globals.css";
-import { ReactQueryProvider } from "@/src/providers/ReactQueryProvider";
+// import TopBar from "@/components/TopBar";
+// import BottomNav from "@/components/BottomNav";
+import { Toaster } from "@/shared/components/Toaster";
+import { ReactQueryProvider } from "@/providers/ReactQueryProvider";
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -10,19 +13,25 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: "Namy Web App",
-  description: "Client Side App",
+  title: "Ñamy - Unlock delicious discounts",
+  description:
+    "Discover amazing deals and discounts on your favorite restaurants",
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <html lang="en">
       <body className={`${poppins.variable}  font-sans`}>
-        <ReactQueryProvider>{children}</ReactQueryProvider>
+        <ReactQueryProvider>
+          {/* <TopBar /> */}
+          {children}
+          {/* <BottomNav /> */}
+          <Toaster />
+        </ReactQueryProvider>
       </body>
     </html>
   );
