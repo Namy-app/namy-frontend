@@ -40,7 +40,6 @@ export default function AuthPage(): React.JSX.Element {
 
   // Signup state
   const [signupEmail, setSignupEmail] = useState("");
-  const [signupUsername, setSignupUsername] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
   const [signupConfirmPassword, setSignupConfirmPassword] = useState("");
   const [signupDisplayName, setSignupDisplayName] = useState("");
@@ -54,7 +53,7 @@ export default function AuthPage(): React.JSX.Element {
 
     try {
       await loginMutation.mutateAsync({
-        emailOrUsername: loginEmail,
+        email: loginEmail,
         password: loginPassword,
         rememberMe,
       });
@@ -83,7 +82,7 @@ export default function AuthPage(): React.JSX.Element {
         toast({
           variant: "destructive",
           title: "Login failed",
-          description: errorMessage || "Invalid email, username or password",
+          description: errorMessage || "Invalid email or password",
         });
       }
     }
@@ -113,7 +112,6 @@ export default function AuthPage(): React.JSX.Element {
     try {
       await signupMutation.mutateAsync({
         email: signupEmail,
-        username: signupUsername || undefined,
         password: signupPassword,
         displayName: signupDisplayName || undefined,
       });
@@ -168,11 +166,11 @@ export default function AuthPage(): React.JSX.Element {
             >
               <div>
                 <label className="text-sm font-medium text-foreground mb-2 block">
-                  Email or Username
+                  Email
                 </label>
                 <Input
                   type="text"
-                  placeholder="your@email.com or username"
+                  placeholder="your@email.com"
                   className="h-12 rounded-xl"
                   required
                   value={loginEmail}
@@ -252,20 +250,6 @@ export default function AuthPage(): React.JSX.Element {
                   required
                   value={signupEmail}
                   onChange={(e) => setSignupEmail(e.target.value)}
-                  disabled={signupMutation.isPending}
-                />
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-foreground mb-2 block">
-                  Username
-                </label>
-                <Input
-                  type="text"
-                  placeholder="username"
-                  className="h-12 rounded-xl"
-                  value={signupUsername}
-                  onChange={(e) => setSignupUsername(e.target.value)}
                   disabled={signupMutation.isPending}
                 />
               </div>

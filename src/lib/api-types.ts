@@ -23,13 +23,12 @@ export interface AuthResponse {
 }
 
 export interface LoginInput {
-  emailOrUsername: string;
+  email: string;
   password: string;
 }
 
 export interface SignupInput {
   email: string;
-  username?: string;
   password: string;
   displayName?: string;
   phone?: string;
