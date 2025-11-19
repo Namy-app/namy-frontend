@@ -1,8 +1,9 @@
-import { Card } from "@/shared/components/Card";
-import { Button } from "@/shared/components/Button";
 import Link from "next/link";
 
-export default function TermsPage() {
+import { Button } from "@/shared/components/Button";
+import { Card } from "@/shared/components/Card";
+
+export default function TermsPage(): React.JSX.Element {
   return (
     <div className="min-h-screen bg-gradient-hero p-6">
       <div className="max-w-4xl mx-auto space-y-6">
@@ -24,10 +25,10 @@ export default function TermsPage() {
             <section>
               <h2 className="text-xl font-bold mb-3">1. Acceptance of Terms</h2>
               <p className="text-muted-foreground">
-                By accessing and using Ñamy ("the Service"), you accept and
-                agree to be bound by the terms and provision of this agreement.
-                If you do not agree to these terms, please do not use the
-                Service.
+                By accessing and using Ñamy (&quot;the Service&quot;), you
+                accept and agree to be bound by the terms and provision of this
+                agreement. If you do not agree to these terms, please do not use
+                the Service.
               </p>
             </section>
 
@@ -84,7 +85,9 @@ export default function TermsPage() {
             </section>
 
             <section>
-              <h2 className="text-xl font-bold mb-3">6. Intellectual Property</h2>
+              <h2 className="text-xl font-bold mb-3">
+                6. Intellectual Property
+              </h2>
               <p className="text-muted-foreground">
                 All content on Ñamy, including but not limited to text,
                 graphics, logos, images, and software, is the property of Ñamy
@@ -94,11 +97,14 @@ export default function TermsPage() {
             </section>
 
             <section>
-              <h2 className="text-xl font-bold mb-3">7. Limitation of Liability</h2>
+              <h2 className="text-xl font-bold mb-3">
+                7. Limitation of Liability
+              </h2>
               <p className="text-muted-foreground">
-                Ñamy provides the Service "as is" without any warranties. We are
-                not liable for any direct, indirect, incidental, or
-                consequential damages arising from your use of the Service.
+                Ñamy provides the Service &quot;as is&quot; without any
+                warranties. We are not liable for any direct, indirect,
+                incidental, or consequential damages arising from your use of
+                the Service.
               </p>
             </section>
 
@@ -121,12 +127,20 @@ export default function TermsPage() {
             </section>
 
             <section>
-              <h2 className="text-xl font-bold mb-3">10. Contact Information</h2>
+              <h2 className="text-xl font-bold mb-3">
+                10. Contact Information
+              </h2>
               <p className="text-muted-foreground">
                 If you have questions about these terms, please contact us at:
               </p>
               <p className="text-muted-foreground mt-2">
-                Email: <a href="mailto:support@namy.com" className="text-primary hover:underline">support@namy.com</a>
+                Email:{" "}
+                <a
+                  href="mailto:support@namy.com"
+                  className="text-primary hover:underline"
+                >
+                  support@namy.com
+                </a>
               </p>
             </section>
 

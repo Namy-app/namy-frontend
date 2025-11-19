@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+
 import { useAuthStore } from "@/store/useAuthStore";
 
-export default function Home() {
+export default function Home(): null {
   const router = useRouter();
   const { isAuthenticated, checkExpiration } = useAuthStore();
 

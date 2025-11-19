@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { User } from "@/lib/api-types";
+
+import { type User } from "@/lib/api-types";
 import { setAuthToken } from "@/lib/graphql-client";
 
 interface AuthState {
@@ -29,7 +30,9 @@ export const useAuthStore = create<AuthState>()(
       setAuth: (user, accessToken, rememberMe = false) => {
         setAuthToken(accessToken);
         // If remember me: 30 days, otherwise: 1 day
-        const expirationTime = rememberMe ? 30 * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000;
+        const expirationTime = rememberMe
+          ? 30 * 24 * 60 * 60 * 1000
+          : 24 * 60 * 60 * 1000;
         const expiresAt = Date.now() + expirationTime;
 
         set({

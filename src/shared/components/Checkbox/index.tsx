@@ -1,4 +1,5 @@
 import * as React from "react";
+
 import { cn } from "@/lib/utils";
 
 export interface CheckboxProps
@@ -23,13 +24,11 @@ const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
             ref={ref}
             {...props}
           />
-          {label && (
-            <span className="text-sm text-foreground select-none">
-              {label}
-            </span>
-          )}
+          {label ? (
+            <span className="text-sm text-foreground select-none">{label}</span>
+          ) : null}
         </label>
-        {error && <p className="text-xs text-destructive">{error}</p>}
+        {error ? <p className="text-xs text-destructive">{error}</p> : null}
       </div>
     );
   }

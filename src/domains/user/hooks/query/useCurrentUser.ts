@@ -1,14 +1,15 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, type UseQueryResult } from "@tanstack/react-query";
+
+import { type User } from "@/lib/api-types";
 import { graphqlRequest } from "@/lib/graphql-client";
 import { GET_CURRENT_USER_QUERY } from "@/lib/graphql-queries";
-import { User } from "@/lib/api-types";
 import { useAuthStore } from "@/store/useAuthStore";
 
 interface CurrentUserResponse {
   me: User;
 }
 
-export function useCurrentUser() {
+export function useCurrentUser(): UseQueryResult<User, Error> {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
   return useQuery({

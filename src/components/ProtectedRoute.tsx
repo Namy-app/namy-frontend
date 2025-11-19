@@ -1,14 +1,17 @@
 "use client";
 
-import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+
 import { useAuthStore } from "@/store/useAuthStore";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
 }
 
-export function ProtectedRoute({ children }: ProtectedRouteProps) {
+export function ProtectedRoute({
+  children,
+}: ProtectedRouteProps): React.JSX.Element | null {
   const router = useRouter();
   const { isAuthenticated, checkExpiration } = useAuthStore();
 

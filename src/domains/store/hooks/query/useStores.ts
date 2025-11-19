@@ -1,13 +1,14 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, type UseQueryResult } from "@tanstack/react-query";
+
+import { type Store } from "@/lib/api-types";
 import { graphqlRequest } from "@/lib/graphql-client";
 import { GET_ALL_STORES_QUERY } from "@/lib/graphql-queries";
-import { Store } from "@/lib/api-types";
 
 interface StoresResponse {
   stores: Store[];
 }
 
-export function useStores() {
+export function useStores(): UseQueryResult<Store[], Error> {
   return useQuery({
     queryKey: ["stores"],
     queryFn: async () => {

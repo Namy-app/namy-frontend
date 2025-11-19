@@ -1,21 +1,22 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Card } from "@/shared/components/Card";
-import { Button } from "@/shared/components/Button";
-import { Input } from "@/shared/components/Input";
-import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
-export default function ForgotPasswordPage() {
+import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/shared/components/Button";
+import { Card } from "@/shared/components/Card";
+import { Input } from "@/shared/components/Input";
+
+export default function ForgotPasswordPage(): React.JSX.Element {
   const router = useRouter();
   const { toast } = useToast();
   const [email, setEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
     setIsSubmitting(true);
 
@@ -37,7 +38,7 @@ export default function ForgotPasswordPage() {
       <Card className="w-full max-w-md p-8 bg-card border-border shadow-glow">
         <div className="text-center mb-8">
           <Image
-            src="/assets/namy-logo.jpg"
+            src="/namy-logo.webp"
             alt="Ñamy Logo"
             width={96}
             height={96}
@@ -48,13 +49,18 @@ export default function ForgotPasswordPage() {
           </h1>
           <p className="text-muted-foreground text-sm">
             {emailSent
-              ? "We've sent you a password reset link"
-              : "Enter your email and we'll send you a reset link"}
+              ? "We&apos;ve sent you a password reset link"
+              : "Enter your email and we&apos;ll send you a reset link"}
           </p>
         </div>
 
         {!emailSent ? (
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form
+            onSubmit={(e) => {
+              void handleSubmit(e);
+            }}
+            className="space-y-4"
+          >
             <div>
               <label className="text-sm font-medium text-foreground mb-2 block">
                 Email Address
@@ -91,7 +97,7 @@ export default function ForgotPasswordPage() {
           <div className="space-y-4">
             <div className="bg-muted p-4 rounded-lg">
               <p className="text-sm text-muted-foreground text-center">
-                We've sent a password reset link to:
+                We&apos;ve sent a password reset link to:
               </p>
               <p className="text-foreground font-medium text-center mt-2">
                 {email}
@@ -99,7 +105,7 @@ export default function ForgotPasswordPage() {
             </div>
 
             <div className="text-sm text-muted-foreground space-y-2">
-              <p>Didn't receive the email?</p>
+              <p>Didn&apos;t receive the email?</p>
               <ul className="list-disc list-inside space-y-1 text-xs">
                 <li>Check your spam folder</li>
                 <li>Make sure you entered the correct email</li>
