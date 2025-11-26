@@ -15,7 +15,7 @@ export default function VerifyEmailPage(): React.JSX.Element {
   const searchParams = useSearchParams();
   const { toast } = useToast();
 
-  const emailParam = searchParams.get("email");
+  const emailParam = searchParams?.get("email") ?? null;
   const [email, setEmail] = useState(
     emailParam ? decodeURIComponent(emailParam) : ""
   );

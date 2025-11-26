@@ -49,8 +49,8 @@ export default function ForgotPasswordPage(): React.JSX.Element {
           </h1>
           <p className="text-muted-foreground text-sm">
             {emailSent
-              ? "We&apos;ve sent you a password reset link"
-              : "Enter your email and we&apos;ll send you a reset link"}
+              ? "We've sent you a password reset link"
+              : "Enter your email and we'll send you a reset link"}
           </p>
         </div>
 

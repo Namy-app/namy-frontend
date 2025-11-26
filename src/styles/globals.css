@@ -14,30 +14,60 @@
     /* Primary colors */
     --primary: 8 92% 70%;
     --primary-foreground: 0 0% 100%;
+    --primary-glow: 8 95% 80%;
 
     /* Secondary colors */
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 82 65% 65%;
+    --secondary-foreground: 24 45% 15%;
 
     /* Muted colors */
     --muted: 25 20% 95%;
     --muted-foreground: 24 20% 45%;
 
     /* Accent colors */
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 82 65% 65%;
+    --accent-foreground: 24 45% 15%;
+
+    /* Services color (for the services section) */
+    --services: 180 70% 50%;
+    --services-foreground: 0 0% 100%;
 
     /* Destructive colors */
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 0 0% 100%;
 
     /* Border and input */
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 142 76% 36%;
+    --border: 25 15% 88%;
+    --input: 25 15% 88%;
+    --ring: 8 92% 70%;
 
     /* Radius */
-    --radius: 0.5rem;
+    --radius: 1rem;
+
+    /* Tier colors for gamification */
+    --bronze: 28 75% 55%;
+    --silver: 0 0% 70%;
+    --gold: 45 100% 50%;
+    --platinum: 210 40% 80%;
+
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(8 92% 70%), hsl(8 95% 80%));
+    --gradient-secondary: linear-gradient(
+      135deg,
+      hsl(82 65% 65%),
+      hsl(82 70% 75%)
+    );
+    --gradient-hero: linear-gradient(180deg, hsl(8 95% 95%), hsl(0 0% 100%));
+    --gradient-progress: linear-gradient(
+      90deg,
+      hsl(340 85% 60%),
+      hsl(8 92% 70%),
+      hsl(45 100% 60%)
+    );
+
+    /* Shadows */
+    --shadow-card: 0 4px 20px -5px hsl(8 92% 70% / 0.15);
+    --shadow-glow: 0 0 30px hsl(8 95% 80% / 0.3);
   }
 
   @media (prefers-color-scheme: dark) {
@@ -49,25 +79,26 @@
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 142 76% 36%;
+    --background: 24 45% 8%;
+    --foreground: 0 0% 98%;
+    --card: 24 30% 12%;
+    --card-foreground: 0 0% 98%;
+    --popover: 24 30% 12%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 8 92% 70%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 142 76% 36%;
+    --primary-glow: 8 95% 80%;
+    --secondary: 82 65% 65%;
+    --secondary-foreground: 24 45% 15%;
+    --muted: 24 20% 20%;
+    --muted-foreground: 24 20% 65%;
+    --accent: 82 65% 65%;
+    --accent-foreground: 24 45% 15%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 24 20% 25%;
+    --input: 24 20% 25%;
+    --ring: 8 92% 70%;
   }
 
   * {
@@ -84,7 +115,15 @@
 @layer utilities {
   /* Custom gradient - Ñamy hero background */
   .bg-gradient-hero {
-    background-image: linear-gradient(180deg, hsl(8 95% 95%), hsl(0 0% 100%));
+    background-image: var(--gradient-hero);
+  }
+
+  .bg-gradient-primary {
+    background-image: var(--gradient-primary);
+  }
+
+  .bg-gradient-secondary {
+    background-image: var(--gradient-secondary);
   }
 
   /* Card background */
@@ -107,7 +146,19 @@
 
   /* Custom shadow glow */
   .shadow-glow {
-    box-shadow: 0 4px 14px 0 rgba(142, 76, 36, 0.15);
+    --tw-shadow: var(--shadow-glow);
+    --tw-shadow-colored: var(--shadow-glow);
+    box-shadow:
+      var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000),
+      var(--tw-shadow);
+  }
+
+  .shadow-card {
+    --tw-shadow: var(--shadow-card);
+    --tw-shadow-colored: var(--shadow-card);
+    box-shadow:
+      var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000),
+      var(--tw-shadow);
   }
 
   .bg-background {
@@ -136,5 +187,165 @@
 
   .text-primary-foreground {
     color: hsl(var(--primary-foreground));
+  }
+
+  /* Animation utilities for explore page */
+  @keyframes bounce-in {
+    0% {
+      transform: scale(0.95);
+      opacity: 0.7;
+    }
+    50% {
+      transform: scale(1.05);
+    }
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
+  .animate-bounce-in {
+    animation: bounce-in 0.3s ease-out;
+  }
+
+  /* Additional animations from the new design */
+  @keyframes slide-up {
+    0% {
+      transform: translateY(20px);
+      opacity: 0;
+    }
+    100% {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  .animate-slide-up {
+    animation: slide-up 0.4s ease-out;
+  }
+
+  @keyframes bounce-once {
+    0% {
+      transform: scale(0);
+      opacity: 0;
+    }
+    50% {
+      transform: scale(1.1);
+    }
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
+  .animate-bounce-once {
+    animation: bounce-once 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  }
+
+  @keyframes confetti {
+    0% {
+      transform: translateY(0) rotate(0);
+      opacity: 1;
+    }
+    100% {
+      transform: translateY(100vh) rotate(360deg);
+      opacity: 0;
+    }
+  }
+
+  .animate-confetti {
+    animation: confetti 3s ease-out forwards;
+  }
+
+  @keyframes confetti-fall {
+    0% {
+      transform: translateY(-100vh) rotate(0);
+      opacity: 1;
+    }
+    100% {
+      transform: translateY(100vh) rotate(720deg);
+      opacity: 0;
+    }
+  }
+
+  .confetti-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 100;
+  }
+
+  .confetti {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: linear-gradient(45deg, #ff5c58, #ff914d, #a6e22e, #43c6ac);
+    animation: confetti-fall 3s ease-out forwards;
+  }
+
+  @keyframes points-float {
+    0% {
+      transform: translateY(0) scale(0.5);
+      opacity: 0;
+    }
+    50% {
+      opacity: 1;
+    }
+    100% {
+      transform: translateY(-100px) scale(1);
+      opacity: 0;
+    }
+  }
+
+  .points-float {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 2rem;
+    font-weight: 700;
+    color: gold;
+    text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+    animation: points-float 2s ease-out forwards;
+    z-index: 101;
+    pointer-events: none;
+  }
+
+  /* QR glow effect for gamification */
+  .qr-glow {
+    box-shadow:
+      0 0 30px rgba(255, 255, 255, 0.5),
+      0 0 60px rgba(255, 255, 255, 0.3);
+    animation: glow-pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes glow-pulse {
+    0%,
+    100% {
+      box-shadow:
+        0 0 30px rgba(255, 255, 255, 0.5),
+        0 0 60px rgba(255, 255, 255, 0.3);
+    }
+    50% {
+      box-shadow:
+        0 0 40px rgba(255, 255, 255, 0.7),
+        0 0 80px rgba(255, 255, 255, 0.5);
+    }
+  }
+
+  /* Animation delay utilities */
+  .delay-100 {
+    animation-delay: 100ms;
+  }
+
+  .delay-200 {
+    animation-delay: 200ms;
+  }
+
+  .delay-300 {
+    animation-delay: 300ms;
   }
 }

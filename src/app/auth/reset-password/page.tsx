@@ -15,8 +15,8 @@ export default function ResetPasswordPage(): React.JSX.Element {
   const searchParams = useSearchParams();
   const { toast } = useToast();
 
-  const tokenParam = searchParams.get("token");
-  const token = tokenParam || "";
+  const tokenParam = searchParams?.get("token") ?? null;
+  const token = tokenParam ?? "";
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const isTokenValid = !!tokenParam;

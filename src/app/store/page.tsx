@@ -28,7 +28,9 @@ export default function StorePage(): React.JSX.Element {
               </p>
             </div>
             <Button
-              onClick={() => router.push(isAuthenticated ? "/user" : "/auth")}
+              onClick={() =>
+                router.push(isAuthenticated ? "/explore" : "/auth")
+              }
               variant="outline"
             >
               {isAuthenticated ? "My Account" : "Login"}
