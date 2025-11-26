@@ -1,32 +1,41 @@
-## Multi-stage Dockerfile for Next.js (namy-web-app)
-# Builds the app and runs it with `next start` in production mode.
+## Multi-stage Dockerfile for Next.js (namy-ui)
+## Supports pnpm when `pnpm-lock.yaml` is present, otherwise falls back to npm
 
-FROM node:18-alpine AS builder
+FROM node:18-alpine AS base
 WORKDIR /app
 
-# Install deps
-COPY package*.json ./
-# Install dependencies: prefer package-lock.json via npm ci, otherwise use pnpm if pnpm-lock.yaml exists, otherwise fall back to npm install
-RUN if [ -f package-lock.json ]; then \
-    npm ci --production=false; \
-    elif [ -f pnpm-lock.yaml ]; then \
+# Install git and build tools required by some packages
+RUN apk add --no-cache git python3 make g++
+
+FROM base AS deps
+COPY package.json package-lock.json pnpm-lock.yaml* ./
+# Install dependencies: prefer pnpm when lockfile exists
+RUN if [ -f pnpm-lock.yaml ]; then \
     npm install -g pnpm && pnpm install --frozen-lockfile; \
+    elif [ -f package-lock.json ]; then \
+    npm ci; \
     else \
     npm install; \
     fi
 
-# Copy source and build
+FROM base AS builder
+COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npm run build
 
-## Production image
 FROM node:18-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 
-# Copy necessary files from builder
-COPY --from=builder /app/package*.json ./
-COPY --from=builder /app/node_modules ./node_modules
+# Copy only the necessary runtime artifacts
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/package.json ./package.json
+COPY --from=deps /app/node_modules ./node_modules
+
+EXPOSE 3000
+
+CMD ["npm", "start"]
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/next.config.js ./next.config.js
