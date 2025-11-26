@@ -146,20 +146,30 @@ export const DELETE_USER_MUTATION = `
 
 // ============ STORE ============
 export const GET_ALL_STORES_QUERY = `
-  query GetAllStores {
-    stores {
-      id
-      name
-      description
-      address
-      phoneNumber
-      email
-      logo
-      coverImage
-      isActive
-      ownerId
-      createdAt
-      updatedAt
+  query GetAllStores($pagination: PaginationInput, $filters: StoreFiltersInput) {
+    stores(pagination: $pagination, filters: $filters) {
+      data {
+        id
+        name
+        description
+        address
+        phoneNumber
+        email
+        logo
+        coverImage
+        isActive
+        ownerId
+        createdAt
+        updatedAt
+      }
+      paginationInfo {
+        total
+        page
+        limit
+        totalPages
+        hasNextPage
+        hasPreviousPage
+      }
     }
   }
 `;
@@ -311,6 +321,145 @@ export const VALIDATE_DISCOUNT_QUERY = `
       finalAmount
       discountAmount
       message
+    }
+  }
+`;
+
+// ============ REDEEM PAGE ============
+export const GET_COUPON_REDEEM_DETAILS_QUERY = `
+  query GetCouponRedeemDetails($code: String!) {
+    couponRedeemDetails(code: $code) {
+      id
+      code
+      used
+      usedAt
+      expiresAt
+      createdAt
+      valid
+      store {
+        id
+        name
+        description
+        address
+        city
+        phoneNumber
+        averageRating
+        reviewCounter
+      }
+      discount {
+        id
+        title
+        description
+        type
+        value
+        minPurchaseAmount
+        maxDiscountAmount
+      }
+    }
+  }
+`;
+
+export const GET_DISCOUNT_BY_ID_QUERY = `
+  query GetDiscountById($id: String!) {
+    discount(id: $id) {
+      id
+      title
+      description
+      type
+      value
+      code
+      startDate
+      endDate
+      active
+      storeId
+      maxUses
+      usedCount
+      minPurchaseAmount
+      maxDiscountAmount
+    }
+  }
+`;
+
+export const GET_STORE_FOR_REDEEM_QUERY = `
+  query GetStoreForRedeem($id: String!) {
+    store(id: $id) {
+      id
+      name
+      description
+      address
+      city
+      phoneNumber
+      categoryId
+      subCategory
+      type
+      lat
+      lng
+      price
+      active
+      url
+      tags
+      averageRating
+      reviewCounter
+    }
+  }
+`;
+
+// ============ COUPONS ============
+export const GENERATE_COUPON_MUTATION = `
+  mutation GenerateCoupon($input: GenerateCouponInput!) {
+    generateCoupon(input: $input) {
+      code
+      qrCode
+      url
+    }
+  }
+`;
+
+export const MY_COUPONS_QUERY = `
+  query MyCoupons($filters: CouponFiltersInput) {
+    myCoupons(filters: $filters) {
+      id
+      code
+      qrCode
+      url
+      used
+      usedAt
+      expiresAt
+      createdAt
+      storeId
+      discountId
+    }
+  }
+`;
+
+export const REDEEM_COUPON_BY_STAFF_MUTATION = `
+  mutation RedeemCouponByStaff(
+    $code: String!
+    $storeId: String!
+    $staffPin: String!
+    $deviceId: String
+  ) {
+    redeemCouponByStaff(
+      code: $code
+      storeId: $storeId
+      staffPin: $staffPin
+      deviceId: $deviceId
+    ) {
+      success
+      leveledUp
+      newLevel
+      oldLevel
+      message
+    }
+  }
+`;
+
+export const DELETE_COUPON_MUTATION = `
+  mutation DeleteCoupon($couponId: String!) {
+    deleteCoupon(couponId: $couponId) {
+      code
+      qrCode
+      url
     }
   }
 `;

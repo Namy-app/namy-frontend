@@ -29,7 +29,7 @@ export default function AuthPage(): React.JSX.Element {
   useEffect(() => {
     const isValid = checkExpiration();
     if (isAuthenticated && isValid) {
-      router.push("/user");
+      router.push("/explore");
     }
   }, [isAuthenticated, checkExpiration, router]);
 
@@ -63,7 +63,7 @@ export default function AuthPage(): React.JSX.Element {
         description: "You have successfully logged in.",
       });
 
-      router.push("/user");
+      router.push("/explore");
     } catch (error) {
       // Check if error is about unverified email
       const errorMessage =

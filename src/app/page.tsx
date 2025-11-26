@@ -14,7 +14,7 @@ export default function Home(): null {
 
     if (isAuthenticated && isValid) {
       // Redirect to user dashboard if authenticated
-      router.push("/user");
+      router.push("/explore");
     } else {
       // Redirect to auth page if not authenticated
       router.push("/auth");

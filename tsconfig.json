@@ -28,11 +28,6 @@
       "@/*": ["*"]
     }
   },
-  "include": [
-    "next-env.d.ts",
-    "src",
-    ".next/types/**/*.ts",
-    ".next/dev/types/**/*.ts"
-  ],
-  "exclude": ["node_modules"]
+  "include": ["next-env.d.ts", "src"],
+  "exclude": ["node_modules", ".next"]
 }
