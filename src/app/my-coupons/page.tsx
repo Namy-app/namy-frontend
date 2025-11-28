@@ -1,5 +1,6 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { Ticket, Share2, CheckCircle, Clock } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -8,11 +9,8 @@ import { useEffect, useState } from "react";
 import { BottomNavigation } from "@/app/explore/components/BottomNavigation";
 import { ExploreHeader } from "@/app/explore/components/ExploreHeader";
 import CouponCard from "@/domains/coupons/CouponCard";
-import {
-  MY_COUPONS_QUERY,
-  GET_STORE_FOR_REDEEM_QUERY,
-  GET_DISCOUNT_BY_ID_QUERY,
-} from "@/lib/graphql-queries";
+import { graphqlRequest, setAuthToken } from "@/lib/graphql-client";
+import { COUPONS_QUERY } from "@/lib/graphql-queries";
 import StatusCard from "@/shared/components/StatusCard/StatusCard";
 import { useAuthStore } from "@/store/useAuthStore";
 
@@ -38,7 +36,7 @@ type FilterTab = "all" | CouponStatus;
 
 export default function MyCouponsPage(): React.JSX.Element {
   const router = useRouter();
-  const { isAuthenticated, accessToken } = useAuthStore();
+  const { isAuthenticated, accessToken, user } = useAuthStore();
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -72,109 +70,55 @@ export default function MyCouponsPage(): React.JSX.Element {
     setHydrated(true);
   }, []);
 
-  // Fetch user's coupons
+  // Fetch user's coupons via react-query to enable client-side caching
+  const pagination = { first: 20, page: 1 };
+
+  const filters: Record<string, unknown> = { includeExpired: true };
+  if (user?.id) {
+    filters.userId = user.id;
+  }
+
+  const {
+    data: rawCoupons = [],
+    isLoading: queryLoading,
+    error: queryError,
+  } = useQuery({
+    queryKey: ["coupons", { pagination, filters }],
+    queryFn: async () => {
+      // Ensure auth header is set for the graphql client
+      setAuthToken(accessToken ?? null);
+      const res = await graphqlRequest<{ coupons: Coupon[] }>(COUPONS_QUERY, {
+        pagination,
+        filters,
+      });
+      return res.coupons ?? [];
+    },
+    enabled: hydrated && isAuthenticated,
+    staleTime: 30_000,
+    refetchOnWindowFocus: false,
+  });
+
   useEffect(() => {
-    // Wait for hydration before checking auth
-    if (!hydrated) {
-      return;
+    if (queryError) {
+      setError(
+        queryError instanceof Error ? queryError.message : String(queryError)
+      );
     }
+  }, [queryError]);
 
-    if (!isAuthenticated) {
-      router.push("/auth");
-      return;
-    }
+  useEffect(() => {
+    setLoading(queryLoading);
+  }, [queryLoading]);
 
-    const fetchCoupons = async (): Promise<void> => {
-      try {
-        const response = await fetch(process.env.NEXT_PUBLIC_API_URL!, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
-          },
-          body: JSON.stringify({
-            query: MY_COUPONS_QUERY,
-            variables: {}, // Removed filter to show all coupons
-          }),
-        });
-
-        const result = await response.json();
-
-        if (result.errors) {
-          throw new Error(result.errors[0].message);
-        }
-
-        const rawCoupons = (result.data.myCoupons ?? []) as unknown as Coupon[];
-
-        // Helper to fetch store and discount for a coupon
-        const fetchStore = async (
-          storeId: string
-        ): Promise<Record<string, unknown> | null> => {
-          try {
-            const res = await fetch(process.env.NEXT_PUBLIC_API_URL!, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${accessToken}`,
-              },
-              body: JSON.stringify({
-                query: GET_STORE_FOR_REDEEM_QUERY,
-                variables: { id: storeId },
-              }),
-            });
-            const j = await res.json();
-            return j.data?.store ?? null;
-          } catch (e) {
-            console.warn("Failed to fetch store", e);
-            return null;
-          }
-        };
-
-        const fetchDiscount = async (
-          discountId: string
-        ): Promise<Record<string, unknown> | null> => {
-          try {
-            const res = await fetch(process.env.NEXT_PUBLIC_API_URL!, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${accessToken}`,
-              },
-              body: JSON.stringify({
-                query: GET_DISCOUNT_BY_ID_QUERY,
-                variables: { id: discountId },
-              }),
-            });
-            const j = await res.json();
-            return j.data?.discount ?? null;
-          } catch (e) {
-            console.warn("Failed to fetch discount", e);
-            return null;
-          }
-        };
-
-        // Enrich coupons with store & discount details in parallel
-        const enriched = await Promise.all(
-          rawCoupons.map(async (c) => {
-            const [store, discount] = await Promise.all([
-              c.storeId ? fetchStore(c.storeId) : null,
-              c.discountId ? fetchDiscount(c.discountId) : null,
-            ]);
-            return { ...c, store, discount } as Coupon;
-          })
-        );
-
-        setCoupons(enriched);
-      } catch (err) {
-        console.error("Error fetching coupons:", err);
-        setError(err instanceof Error ? err.message : "Failed to load coupons");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    void fetchCoupons();
-  }, [hydrated, isAuthenticated, accessToken, router]);
+  useEffect(() => {
+    // Map nested payloads directly
+    const enriched = (rawCoupons || []).map((c) => ({
+      ...c,
+      store: c.store ?? null,
+      discount: c.discount ?? null,
+    }));
+    setCoupons(enriched);
+  }, [rawCoupons]);
 
   // Handle share
   const handleShare = async (coupon: Coupon): Promise<void> => {

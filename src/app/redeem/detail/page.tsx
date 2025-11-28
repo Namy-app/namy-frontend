@@ -1,11 +1,13 @@
 "use client";
 
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { MapPin, Phone, Clock, Tag, Star, AlertCircle } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, Suspense } from "react";
 
 import { useToast } from "@/hooks/use-toast";
 import { CouponDecoder, type DecodedCouponData } from "@/lib/coupon-decoder";
+import { graphqlRequest } from "@/lib/graphql-client";
 import {
   REDEEM_COUPON_BY_STAFF_MUTATION,
   GET_COUPON_REDEEM_DETAILS_QUERY,
@@ -15,7 +17,7 @@ import {
   clearRedeemViewData,
 } from "@/lib/redeem-view-store";
 
-export default function RedeemPage(): React.JSX.Element {
+function RedeemContent(): React.JSX.Element {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [couponData, setCouponData] = useState<DecodedCouponData | null>(null);
@@ -41,6 +43,37 @@ export default function RedeemPage(): React.JSX.Element {
     }
     return id;
   })();
+
+  const queryClient = useQueryClient();
+
+  type RedemptionResult = {
+    success: boolean;
+    leveledUp: boolean;
+    newLevel?: number | null;
+    oldLevel?: number | null;
+    message?: string | null;
+  };
+
+  const redeemMutation = useMutation<
+    { redeemCouponByStaff: RedemptionResult },
+    Error,
+    { code: string; storeId: string; staffPin: string; deviceId?: string }
+  >({
+    mutationFn: async (vars) =>
+      graphqlRequest<{ redeemCouponByStaff: RedemptionResult }>(
+        REDEEM_COUPON_BY_STAFF_MUTATION,
+        vars
+      ),
+    onSuccess: (
+      _data: { redeemCouponByStaff: RedemptionResult },
+      vars: { code: string }
+    ) => {
+      void queryClient.invalidateQueries({ queryKey: ["coupons"] });
+      void queryClient.invalidateQueries({
+        queryKey: ["couponRedeemDetails", vars.code],
+      });
+    },
+  });
 
   // Decrypt coupon data from URL
   useEffect(() => {
@@ -270,27 +303,13 @@ export default function RedeemPage(): React.JSX.Element {
 
     setRedeeming(true);
     try {
-      const res = await fetch(process.env.NEXT_PUBLIC_API_URL!, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          query: REDEEM_COUPON_BY_STAFF_MUTATION,
-          variables: {
-            code: couponData.code,
-            storeId: couponData.storeId,
-            // keep GraphQL variable `staffPin` for backend compatibility
-            staffPin: storePin,
-            deviceId,
-          },
-        }),
+      const result = await redeemMutation.mutateAsync({
+        code: couponData.code,
+        storeId: couponData.storeId,
+        staffPin: storePin,
+        deviceId,
       });
-
-      const result = await res.json();
-      if (result.errors) {
-        throw new Error(result.errors[0].message);
-      }
-
-      const data = result.data.redeemCouponByStaff;
+      const data = result?.redeemCouponByStaff ?? result;
       if (data.success) {
         setRedeemed(true);
         toast({ title: "Redemption successful", description: data.message });
@@ -594,5 +613,19 @@ export default function RedeemPage(): React.JSX.Element {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function RedeemPage(): React.JSX.Element {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-gradient-hero flex items-center justify-center">
+          <div className="text-muted-foreground">Loading...</div>
+        </div>
+      }
+    >
+      <RedeemContent />
+    </Suspense>
   );
 }

@@ -1,7 +1,8 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { useParams, useSearchParams } from "next/navigation";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, Suspense } from "react";
 
 import RedeemCropModal from "@/domains/redeem/components/RedeemCropModal";
 import RedeemDetail from "@/domains/redeem/components/RedeemDetail";
@@ -10,10 +11,11 @@ import RedeemScannerModal from "@/domains/redeem/components/RedeemScannerModal";
 import { useToast } from "@/hooks/use-toast";
 import { CouponDecoder } from "@/lib/coupon-decoder";
 import type { DecodedCouponData } from "@/lib/coupon-decoder";
+import { graphqlRequest } from "@/lib/graphql-client";
 import { GET_COUPON_REDEEM_DETAILS_QUERY } from "@/lib/graphql-queries";
 import { useQrScanner } from "@/lib/use-qr-scanner";
 
-export default function StoreRedeemPage(): React.JSX.Element {
+function StoreRedeemContent(): React.JSX.Element {
   const { toast } = useToast();
   const params = useParams();
   const searchParams = useSearchParams();
@@ -95,6 +97,51 @@ export default function StoreRedeemPage(): React.JSX.Element {
   } = qr;
 
   // Manual code submit — fetch coupon details and show detail view
+  type ServerRedeemDetails = {
+    id: string;
+    code: string;
+    used: boolean;
+    usedAt?: string | null;
+    expiresAt: string;
+    createdAt: string;
+    valid: boolean;
+    store: {
+      id: string;
+      name: string;
+      description?: string | null;
+      address?: string | null;
+      city?: string | null;
+      phoneNumber?: string | null;
+      averageRating?: number | null;
+      reviewCounter?: number | null;
+    };
+    discount: {
+      id: string;
+      title: string;
+      description?: string | null;
+      type: string;
+      value: number;
+      minPurchaseAmount?: number | null;
+      maxDiscountAmount?: number | null;
+    };
+  };
+
+  const { refetch: refetchCoupon } = useQuery<ServerRedeemDetails | null>({
+    queryKey: ["couponRedeemDetails", couponCode],
+    queryFn: async () => {
+      if (!couponCode) {
+        return null;
+      }
+      const res = await graphqlRequest<{
+        couponRedeemDetails: ServerRedeemDetails;
+      }>(GET_COUPON_REDEEM_DETAILS_QUERY, { code: couponCode });
+      return res.couponRedeemDetails ?? null;
+    },
+    enabled: false,
+    staleTime: 30_000,
+    refetchOnWindowFocus: false,
+  });
+
   const handleCodeSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
     const code = couponCode.trim();
@@ -102,19 +149,8 @@ export default function StoreRedeemPage(): React.JSX.Element {
       return;
     }
     try {
-      const res = await fetch(process.env.NEXT_PUBLIC_API_URL!, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          query: GET_COUPON_REDEEM_DETAILS_QUERY,
-          variables: { code },
-        }),
-      });
-      const json = await res.json();
-      if (json.errors) {
-        throw new Error(json.errors[0].message);
-      }
-      const details = json.data?.couponRedeemDetails;
+      const result = await refetchCoupon();
+      const details = result?.data ?? null;
       if (!details) {
         toast({
           title: "Not found",
@@ -123,7 +159,6 @@ export default function StoreRedeemPage(): React.JSX.Element {
         });
         return;
       }
-      // Map server response into a lightweight view model
       const mapped = {
         code: details.code,
         expiresAt: details.expiresAt,
@@ -203,5 +238,19 @@ export default function StoreRedeemPage(): React.JSX.Element {
         croppedAreaPixels={croppedAreaPixels}
       />
     </>
+  );
+}
+
+export default function StoreRedeemPage(): React.JSX.Element {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-gradient-hero flex items-center justify-center">
+          <div className="text-muted-foreground">Loading...</div>
+        </div>
+      }
+    >
+      <StoreRedeemContent />
+    </Suspense>
   );
 }
