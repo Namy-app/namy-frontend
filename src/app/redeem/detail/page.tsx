@@ -2,7 +2,7 @@
 
 import { MapPin, Phone, Clock, Tag, Star, AlertCircle } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, Suspense } from "react";
 
 import { useToast } from "@/hooks/use-toast";
 import { CouponDecoder, type DecodedCouponData } from "@/lib/coupon-decoder";
@@ -15,7 +15,7 @@ import {
   clearRedeemViewData,
 } from "@/lib/redeem-view-store";
 
-export default function RedeemPage(): React.JSX.Element {
+function RedeemContent(): React.JSX.Element {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [couponData, setCouponData] = useState<DecodedCouponData | null>(null);
@@ -594,5 +594,19 @@ export default function RedeemPage(): React.JSX.Element {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function RedeemPage(): React.JSX.Element {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-gradient-hero flex items-center justify-center">
+          <div className="text-muted-foreground">Loading...</div>
+        </div>
+      }
+    >
+      <RedeemContent />
+    </Suspense>
   );
 }

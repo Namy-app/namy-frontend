@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useSearchParams } from "next/navigation";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, Suspense } from "react";
 
 import RedeemCropModal from "@/domains/redeem/components/RedeemCropModal";
 import RedeemDetail from "@/domains/redeem/components/RedeemDetail";
@@ -13,7 +13,7 @@ import type { DecodedCouponData } from "@/lib/coupon-decoder";
 import { GET_COUPON_REDEEM_DETAILS_QUERY } from "@/lib/graphql-queries";
 import { useQrScanner } from "@/lib/use-qr-scanner";
 
-export default function StoreRedeemPage(): React.JSX.Element {
+function StoreRedeemContent(): React.JSX.Element {
   const { toast } = useToast();
   const params = useParams();
   const searchParams = useSearchParams();
@@ -203,5 +203,19 @@ export default function StoreRedeemPage(): React.JSX.Element {
         croppedAreaPixels={croppedAreaPixels}
       />
     </>
+  );
+}
+
+export default function StoreRedeemPage(): React.JSX.Element {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-gradient-hero flex items-center justify-center">
+          <div className="text-muted-foreground">Loading...</div>
+        </div>
+      }
+    >
+      <StoreRedeemContent />
+    </Suspense>
   );
 }

@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 
 import { useResetPassword } from "@/domains/user/hooks";
 import { useToast } from "@/hooks/use-toast";
@@ -10,7 +10,7 @@ import { Button } from "@/shared/components/Button";
 import { Card } from "@/shared/components/Card";
 import { PasswordInput } from "@/shared/components/PasswordInput";
 
-export default function ResetPasswordPage(): React.JSX.Element {
+function ResetPasswordForm(): React.JSX.Element {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
@@ -174,5 +174,23 @@ export default function ResetPasswordPage(): React.JSX.Element {
         </form>
       </Card>
     </div>
+  );
+}
+
+export default function ResetPasswordPage(): React.JSX.Element {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen bg-gradient-hero items-center justify-center p-6">
+          <Card className="w-full max-w-md p-8 bg-card border-border shadow-glow">
+            <div className="text-center">
+              <p className="text-muted-foreground">Loading...</p>
+            </div>
+          </Card>
+        </div>
+      }
+    >
+      <ResetPasswordForm />
+    </Suspense>
   );
 }
