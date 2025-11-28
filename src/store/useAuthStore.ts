@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { User } from "@/lib/api-types";
+
+import { type User } from "@/lib/api-types";
 import { setAuthToken } from "@/lib/graphql-client";
 
 interface AuthState {
@@ -29,7 +30,9 @@ export const useAuthStore = create<AuthState>()(
       setAuth: (user, accessToken, rememberMe = false) => {
         setAuthToken(accessToken);
         // If remember me: 30 days, otherwise: 1 day
-        const expirationTime = rememberMe ? 30 * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000;
+        const expirationTime = rememberMe
+          ? 30 * 24 * 60 * 60 * 1000
+          : 24 * 60 * 60 * 1000;
         const expiresAt = Date.now() + expirationTime;
 
         set({
@@ -74,7 +77,16 @@ export const useAuthStore = create<AuthState>()(
         if (state?.accessToken) {
           // Check if session has expired
           if (state.expiresAt && Date.now() > state.expiresAt) {
-            state.clearAuth();
+            // persisted state is a plain object (no functions). Removing the
+            // localStorage entry clears the expired session safely during
+            // rehydration instead of calling a nonexistent `clearAuth`.
+            try {
+              if (typeof window !== "undefined" && window.localStorage) {
+                window.localStorage.removeItem("namy-auth-storage");
+              }
+            } catch {
+              // ignore errors during cleanup
+            }
           } else {
             setAuthToken(state.accessToken);
           }

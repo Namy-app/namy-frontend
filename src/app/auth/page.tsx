@@ -1,25 +1,26 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Card } from "@/shared/components/Card";
+import { useState, useEffect } from "react";
+
+import { useLogin, useSignup } from "@/domains/user/hooks";
+import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/shared/components/Button";
+import { Card } from "@/shared/components/Card";
+import { Checkbox } from "@/shared/components/Checkbox";
 import { Input } from "@/shared/components/Input";
 import { PasswordInput } from "@/shared/components/PasswordInput";
-import { Checkbox } from "@/shared/components/Checkbox";
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
 } from "@/shared/components/Tabs";
-import { useLogin, useSignup } from "@/domains/user/hooks";
-import { useToast } from "@/hooks/use-toast";
 import { useAuthStore } from "@/store/useAuthStore";
 
-export default function AuthPage() {
+export default function AuthPage(): React.JSX.Element {
   const router = useRouter();
   const { toast } = useToast();
   const { isAuthenticated, checkExpiration } = useAuthStore();
@@ -28,7 +29,7 @@ export default function AuthPage() {
   useEffect(() => {
     const isValid = checkExpiration();
     if (isAuthenticated && isValid) {
-      router.push("/user");
+      router.push("/explore");
     }
   }, [isAuthenticated, checkExpiration, router]);
 
@@ -47,7 +48,7 @@ export default function AuthPage() {
   const loginMutation = useLogin();
   const signupMutation = useSignup();
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
 
     try {
@@ -62,17 +63,32 @@ export default function AuthPage() {
         description: "You have successfully logged in.",
       });
 
-      router.push("/user");
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Login failed",
-        description: error.message || "Invalid email or password",
-      });
+      router.push("/explore");
+    } catch (error) {
+      // Check if error is about unverified email
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      if (errorMessage?.includes("Email not verified")) {
+        toast({
+          variant: "default",
+          title: "Email verification required",
+          description: errorMessage,
+        });
+
+        // Redirect to verify email page with email pre-filled
+        const email = loginEmail.includes("@") ? loginEmail : "";
+        router.push(`/auth/verify-email?email=${encodeURIComponent(email)}`);
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Login failed",
+          description: errorMessage || "Invalid email or password",
+        });
+      }
     }
   };
 
-  const handleSignup = async (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
 
     if (signupPassword !== signupConfirmPassword) {
@@ -97,31 +113,35 @@ export default function AuthPage() {
       await signupMutation.mutateAsync({
         email: signupEmail,
         password: signupPassword,
-        displayName: signupDisplayName,
+        displayName: signupDisplayName || undefined,
       });
 
       toast({
-        title: "Account created!",
-        description: "Welcome to Ñamy!",
+        title: "Registration Successful! 🎉",
+        description: `A verification code has been sent to ${signupEmail}. Please check your email and verify your account.`,
       });
 
-      router.push("/user");
-    } catch (error: any) {
+      // Redirect to verify email page
+      router.push(
+        `/auth/verify-email?email=${encodeURIComponent(signupEmail)}`
+      );
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       toast({
         variant: "destructive",
         title: "Signup failed",
-        description: error.message || "Could not create account",
+        description: errorMessage || "Could not create account",
       });
     }
   };
-
 
   return (
     <div className="flex min-h-screen bg-gradient-hero items-center justify-center p-6">
       <Card className="w-full max-w-md p-8 bg-card border-border shadow-glow">
         <div className="text-center mb-8">
           <Image
-            src="/assets/namy-logo.jpg"
+            src="/namy-logo.webp"
             alt="Ñamy Logo"
             width={96}
             height={96}
@@ -138,13 +158,18 @@ export default function AuthPage() {
           </TabsList>
 
           <TabsContent value="login">
-            <form onSubmit={handleLogin} className="space-y-4">
+            <form
+              onSubmit={(e) => {
+                void handleLogin(e);
+              }}
+              className="space-y-4"
+            >
               <div>
                 <label className="text-sm font-medium text-foreground mb-2 block">
                   Email
                 </label>
                 <Input
-                  type="email"
+                  type="text"
                   placeholder="your@email.com"
                   className="h-12 rounded-xl"
                   required
@@ -194,7 +219,12 @@ export default function AuthPage() {
           </TabsContent>
 
           <TabsContent value="signup">
-            <form onSubmit={handleSignup} className="space-y-4">
+            <form
+              onSubmit={(e) => {
+                void handleSignup(e);
+              }}
+              className="space-y-4"
+            >
               <div>
                 <label className="text-sm font-medium text-foreground mb-2 block">
                   Display Name

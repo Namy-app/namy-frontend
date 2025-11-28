@@ -1,7 +1,8 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, type UseMutationResult } from "@tanstack/react-query";
+
 import { useAuthStore } from "@/store/useAuthStore";
 
-export function useLogout() {
+export function useLogout(): UseMutationResult<void, Error, void, unknown> {
   const clearAuth = useAuthStore((state) => state.clearAuth);
 
   return useMutation({

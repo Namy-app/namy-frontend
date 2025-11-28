@@ -1,7 +1,12 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQueryClient,
+  type UseMutationResult,
+} from "@tanstack/react-query";
+
+import { type User } from "@/lib/api-types";
 import { graphqlRequest } from "@/lib/graphql-client";
 import { UPDATE_USER_MUTATION } from "@/lib/graphql-queries";
-import { User } from "@/lib/api-types";
 import { useAuthStore } from "@/store/useAuthStore";
 
 interface UpdateUserInput {
@@ -15,7 +20,12 @@ interface UpdateUserResponse {
   updateUser: User;
 }
 
-export function useUpdateUser() {
+export function useUpdateUser(): UseMutationResult<
+  User,
+  Error,
+  UpdateUserInput,
+  unknown
+> {
   const queryClient = useQueryClient();
   const updateUser = useAuthStore((state) => state.updateUser);
 
@@ -31,7 +41,7 @@ export function useUpdateUser() {
       // Update the user in the auth store
       updateUser(data);
       // Invalidate current user query
-      queryClient.invalidateQueries({ queryKey: ["currentUser"] });
+      void queryClient.invalidateQueries({ queryKey: ["currentUser"] });
     },
   });
 }

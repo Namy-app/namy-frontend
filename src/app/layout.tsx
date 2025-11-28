@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
+
 import "../styles/globals.css";
 // import TopBar from "@/components/TopBar";
 // import BottomNav from "@/components/BottomNav";
-import { Toaster } from "@/shared/components/Toaster";
 import { ReactQueryProvider } from "@/providers/ReactQueryProvider";
+import { Toaster } from "@/shared/components/Toaster";
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -22,7 +23,7 @@ export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
-}) {
+}): React.JSX.Element {
   return (
     <html lang="en">
       <body className={`${poppins.variable}  font-sans`}>

@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+
 import { useAuthStore } from "@/store/useAuthStore";
 
-export default function Home() {
+export default function Home(): null {
   const router = useRouter();
   const { isAuthenticated, checkExpiration } = useAuthStore();
 
@@ -13,7 +14,7 @@ export default function Home() {
 
     if (isAuthenticated && isValid) {
       // Redirect to user dashboard if authenticated
-      router.push("/user");
+      router.push("/explore");
     } else {
       // Redirect to auth page if not authenticated
       router.push("/auth");

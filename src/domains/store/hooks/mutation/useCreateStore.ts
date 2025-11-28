@@ -1,7 +1,12 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQueryClient,
+  type UseMutationResult,
+} from "@tanstack/react-query";
+
+import { type Store } from "@/lib/api-types";
 import { graphqlRequest } from "@/lib/graphql-client";
 import { CREATE_STORE_MUTATION } from "@/lib/graphql-queries";
-import { Store } from "@/lib/api-types";
 
 interface CreateStoreInput {
   name: string;
@@ -18,7 +23,12 @@ interface CreateStoreResponse {
   createStore: Store;
 }
 
-export function useCreateStore() {
+export function useCreateStore(): UseMutationResult<
+  Store,
+  Error,
+  CreateStoreInput,
+  unknown
+> {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -31,7 +41,7 @@ export function useCreateStore() {
     },
     onSuccess: () => {
       // Invalidate stores list
-      queryClient.invalidateQueries({ queryKey: ["stores"] });
+      void queryClient.invalidateQueries({ queryKey: ["stores"] });
     },
   });
 }
