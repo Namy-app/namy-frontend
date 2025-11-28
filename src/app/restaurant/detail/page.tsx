@@ -2,6 +2,7 @@
 
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
   Heart,
@@ -147,6 +148,8 @@ export default function RestaurantDetailPage(): React.JSX.Element {
   const { isAuthenticated } = useAuthStore();
   const { toast } = useToast();
 
+  const queryClient = useQueryClient();
+
   const [currentImageIndex] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
@@ -206,7 +209,29 @@ export default function RestaurantDetailPage(): React.JSX.Element {
       toast({ title: "Generating coupon...", description: "Please wait." });
 
       const data = await graphqlRequest<{
-        generateCoupon: { code: string; qrCode: string; url: string };
+        generateCoupon: {
+          code: string;
+          qrCode: string;
+          url: string;
+          discount: {
+            id: string;
+            title: string;
+            description?: string;
+            type: string;
+            value: number;
+            minPurchaseAmount?: number;
+            maxDiscountAmount?: number;
+          };
+          store: {
+            id: string;
+            name: string;
+            address?: string;
+            city?: string;
+            phoneNumber?: string;
+            averageRating?: number;
+            reviewCounter?: number;
+          };
+        };
       }>(GENERATE_COUPON_MUTATION, {
         input: { discountId },
       });
@@ -216,6 +241,12 @@ export default function RestaurantDetailPage(): React.JSX.Element {
           title: "Coupon created",
           description: "Coupon added to My Coupons.",
         });
+        // Ensure coupons cache is refreshed so UI shows the new coupon
+        try {
+          void queryClient.invalidateQueries({ queryKey: ["coupons"] });
+        } catch (_e) {
+          // ignore
+        }
         router.push("/my-coupons");
       } else {
         throw new Error("No coupon returned from server");

@@ -1,10 +1,12 @@
 "use client";
 
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { MapPin, Phone, Clock, Tag, AlertCircle } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 
 import { useToast } from "@/hooks/use-toast";
 import { CouponDecoder, type DecodedCouponData } from "@/lib/coupon-decoder";
+import { graphqlRequest } from "@/lib/graphql-client";
 import {
   GET_COUPON_REDEEM_DETAILS_QUERY,
   REDEEM_COUPON_BY_STAFF_MUTATION,
@@ -13,6 +15,47 @@ import {
 type Props = {
   couponData: DecodedCouponData;
   onClose?: () => void;
+};
+
+type StoreInfo = {
+  id: string;
+  name?: string;
+  description?: string | null;
+  address?: string | null;
+  city?: string | null;
+  phoneNumber?: string | null;
+  averageRating?: number | null;
+  reviewCounter?: number | null;
+};
+
+type DiscountInfo = {
+  id: string;
+  title: string;
+  description?: string | null;
+  type: string;
+  value: number;
+  minPurchaseAmount?: number | null;
+  maxDiscountAmount?: number | null;
+};
+
+type RedeemDetails = {
+  id: string;
+  code: string;
+  used: boolean;
+  usedAt?: string | null;
+  expiresAt: string;
+  createdAt: string;
+  valid: boolean;
+  store: StoreInfo;
+  discount: DiscountInfo;
+};
+
+type RedemptionResult = {
+  success: boolean;
+  leveledUp: boolean;
+  newLevel?: number | null;
+  oldLevel?: number | null;
+  message?: string | null;
 };
 
 export default function RedeemDetail({
@@ -42,46 +85,74 @@ export default function RedeemDetail({
     return id;
   })();
 
+  // Use react-query to fetch coupon redeem details (cached)
+  const {
+    data: details,
+    isLoading: detailsLoading,
+    error: detailsError,
+  } = useQuery<RedeemDetails | null>({
+    queryKey: ["couponRedeemDetails", couponData?.code],
+    queryFn: async () => {
+      if (!couponData?.code) {
+        return null;
+      }
+      const res = await graphqlRequest<{ couponRedeemDetails: RedeemDetails }>(
+        GET_COUPON_REDEEM_DETAILS_QUERY,
+        { code: couponData.code }
+      );
+      return res.couponRedeemDetails ?? null;
+    },
+    enabled: !!couponData?.code,
+    staleTime: 30_000,
+    refetchOnWindowFocus: false,
+  });
+
+  const queryClient = useQueryClient();
+
+  const redeemMutation = useMutation<
+    { redeemCouponByStaff: RedemptionResult },
+    Error,
+    { code: string; storeId: string; staffPin: string; deviceId?: string }
+  >({
+    mutationFn: async (vars) =>
+      graphqlRequest<{ redeemCouponByStaff: RedemptionResult }>(
+        REDEEM_COUPON_BY_STAFF_MUTATION,
+        vars
+      ),
+    onSuccess: (_data, vars) => {
+      // invalidate coupon list and the specific coupon details
+      void queryClient.invalidateQueries({ queryKey: ["coupons"] });
+      void queryClient.invalidateQueries({
+        queryKey: ["couponRedeemDetails", vars.code],
+      });
+    },
+  });
+
   useEffect(() => {
-    const init = async (): Promise<void> => {
-      if (!couponData) {
-        return;
+    if (!couponData) {
+      return;
+    }
+    if (details) {
+      setIsActive(Boolean(details.valid && !details.used));
+      if (!details.valid) {
+        setError("This coupon is not valid for redemption");
       }
-      try {
-        // fetch server-side redeem details to check valid/used
-        const detailsRes = await fetch(process.env.NEXT_PUBLIC_API_URL!, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            query: GET_COUPON_REDEEM_DETAILS_QUERY,
-            variables: { code: couponData.code },
-          }),
-        });
-        const detailsJson = await detailsRes.json();
-        const details = detailsJson.data?.couponRedeemDetails;
-        if (details) {
-          setIsActive(Boolean(details.valid && !details.used));
-          if (!details.valid) {
-            setError("This coupon is not valid for redemption");
-          }
-          if (details.used) {
-            setError("This coupon has already been redeemed");
-          }
-        } else {
-          // allow client-side expiry check
-          if (CouponDecoder.isExpired(couponData.expiresAt)) {
-            setError("This coupon has expired");
-          }
-        }
-      } catch (err) {
-        console.warn("Failed to fetch redeem details:", err);
-        if (CouponDecoder.isExpired(couponData.expiresAt)) {
-          setError("This coupon has expired");
-        }
+      if (details.used) {
+        setError("This coupon has already been redeemed");
       }
-    };
-    void init();
-  }, [couponData]);
+    } else if (!details && !detailsLoading) {
+      // allow client-side expiry check
+      if (CouponDecoder.isExpired(couponData.expiresAt)) {
+        setError("This coupon has expired");
+      }
+    }
+    if (detailsError) {
+      console.warn("Failed to fetch redeem details:", detailsError);
+      if (CouponDecoder.isExpired(couponData.expiresAt)) {
+        setError("This coupon has expired");
+      }
+    }
+  }, [couponData, details, detailsLoading, detailsError]);
 
   useEffect(() => {
     if (!couponData) {
@@ -116,32 +187,20 @@ export default function RedeemDetail({
 
     setRedeeming(true);
     try {
-      const res = await fetch(process.env.NEXT_PUBLIC_API_URL!, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          query: REDEEM_COUPON_BY_STAFF_MUTATION,
-          variables: {
-            code: couponData.code,
-            storeId: couponData.storeId,
-            staffPin: storePin,
-            deviceId,
-          },
-        }),
+      const result = await redeemMutation.mutateAsync({
+        code: couponData.code,
+        storeId: couponData.storeId,
+        staffPin: storePin,
+        deviceId,
       });
-
-      const result = await res.json();
-      if (result.errors) {
-        throw new Error(result.errors[0].message);
-      }
-      const data = result.data.redeemCouponByStaff;
-      if (data.success) {
+      const data = result?.redeemCouponByStaff ?? result;
+      if (data?.success) {
         setRedeemed(true);
         toast({ title: "Redemption successful", description: data.message });
       } else {
         toast({
           title: "Redemption failed",
-          description: data.message,
+          description: data?.message ?? "Unknown error",
           variant: "destructive",
         });
       }
