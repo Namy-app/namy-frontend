@@ -4,6 +4,7 @@ import Image from "next/image";
 
 import CodeInput from "@/domains/redeem/components/CodeInput";
 import RedeemScanOptions from "@/domains/redeem/components/RedeemScanOptions";
+import Link from "next/link";
 
 type Props = {
   couponCode: string;
@@ -26,7 +27,10 @@ export default function RedeemInputCard({
       <div className="pt-14 flex items-center justify-center p-4 min-h-screen">
         <div className="bg-white rounded-2xl shadow-card p-8 w-full max-w-md animate-slide-up">
           <div className="text-center mb-6">
-            <button className="cursor-pointer hover:opacity-80 transition-opacity">
+            <Link
+              href={"/"}
+              className="cursor-pointer flex justify-center hover:opacity-80 transition-opacity"
+            >
               <Image
                 src="/namy-logo.webp"
                 alt="Ñamy Logo"
@@ -34,7 +38,7 @@ export default function RedeemInputCard({
                 height={32}
                 className="h-8 w-auto rounded-lg"
               />
-            </button>
+            </Link>
             <h1 className="text-2xl font-bold text-foreground mb-2">
               Redeem Coupon
             </h1>

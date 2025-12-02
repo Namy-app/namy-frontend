@@ -47,5 +47,18 @@
     "prettier": "^3.6.2",
     "tailwindcss": "^4",
     "typescript": "^5"
+  },
+  "lint-staged": {
+    "*.ts": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.tsx": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,css,js,jsx}": [
+      "prettier --write"
+    ]
   }
 }

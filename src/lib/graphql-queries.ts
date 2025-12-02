@@ -398,6 +398,34 @@ export const GENERATE_COUPON_MUTATION = `
   }
 `;
 
+// ============ ADS ============
+export const REWARD_AD_MUTATION = `
+  mutation RewardAd($input: RewardAdInput!) {
+    rewardAd(input: $input) {
+      canGenerateCoupon
+      remaining
+      token
+    }
+  }
+`;
+
+export const EXCHANGE_UNLOCK_MUTATION = `
+  mutation ExchangeUnlock($input: ExchangeUnlockInput!) {
+    exchangeUnlock(input: $input) {
+      id
+      code
+      qrCode
+      url
+      used
+      usedAt
+      expiresAt
+      createdAt
+      storeId
+      discountId
+    }
+  }
+`;
+
 export const COUPONS_QUERY = `
   query Coupons($pagination: PaginationInput, $filters: CouponFiltersInput) {
     coupons(pagination: $pagination, filters: $filters) {
