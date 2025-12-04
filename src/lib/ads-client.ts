@@ -9,7 +9,9 @@ export async function exchangeUnlockToken({
 }) {
   const state = useAuthStore.getState();
   const t = state.accessToken;
-  if (!t) throw new Error("Not authenticated");
+  if (!t) {
+    throw new Error("Not authenticated");
+  }
 
   const res = await fetch(
     `${process.env.NEXT_PUBLIC_API_BASE_URL || ""}/ads/exchange`,

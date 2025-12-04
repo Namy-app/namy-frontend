@@ -1,4 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
+
 import { graphqlRequest } from "@/lib/graphql-client";
 import { REWARD_AD_MUTATION } from "@/lib/graphql-queries";
 

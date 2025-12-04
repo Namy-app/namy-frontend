@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
 import { type User } from "@/lib/api-types";
-import { setAuthToken } from "@/lib/graphql-client";
+import { setAuthToken, setAuthErrorCallback } from "@/lib/graphql-client";
 
 interface AuthState {
   user: User | null;
@@ -53,6 +53,11 @@ export const useAuthStore = create<AuthState>()(
           rememberMe: false,
           expiresAt: null,
         });
+
+        // Redirect to login page after clearing auth
+        if (typeof window !== "undefined") {
+          window.location.href = "/login";
+        }
       },
 
       updateUser: (updatedUser) => {
@@ -95,3 +100,12 @@ export const useAuthStore = create<AuthState>()(
     }
   )
 );
+
+// Register the auth error callback when the module loads
+// This allows the graphql-client to trigger logout on auth errors
+if (typeof window !== "undefined") {
+  setAuthErrorCallback(() => {
+    const state = useAuthStore.getState();
+    state.clearAuth();
+  });
+}

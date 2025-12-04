@@ -11,7 +11,9 @@ export async function sendRewardEvent({
 }) {
   const state = useAuthStore.getState();
   const token = state.accessToken;
-  if (!token) throw new Error("Not authenticated");
+  if (!token) {
+    throw new Error("Not authenticated");
+  }
 
   const res = await fetch(
     `${process.env.NEXT_PUBLIC_API_BASE_URL || ""}/ads/reward`,

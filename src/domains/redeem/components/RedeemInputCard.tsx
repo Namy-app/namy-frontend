@@ -1,10 +1,10 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 
 import CodeInput from "@/domains/redeem/components/CodeInput";
 import RedeemScanOptions from "@/domains/redeem/components/RedeemScanOptions";
-import Link from "next/link";
 
 type Props = {
   couponCode: string;
@@ -28,7 +28,7 @@ export default function RedeemInputCard({
         <div className="bg-white rounded-2xl shadow-card p-8 w-full max-w-md animate-slide-up">
           <div className="text-center mb-6">
             <Link
-              href={"/"}
+              href="/"
               className="cursor-pointer flex justify-center hover:opacity-80 transition-opacity"
             >
               <Image
