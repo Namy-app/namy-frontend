@@ -43,7 +43,7 @@ export function SubscriptionPrompt({
         return {
           title: "Unlock Premium Features",
           description:
-            "Get instant coupon generation and maximum discounts for just 99 MXN/month.",
+            "Get instant coupon generation and maximum discounts for just $ 99 MXN/month.",
           icon: <Crown className="w-6 h-6" />,
         };
     }
@@ -114,7 +114,7 @@ export function SubscriptionPrompt({
           {/* Pricing */}
           <div className="bg-gray-50 rounded-lg p-4 mb-6 text-center">
             <p className="text-3xl font-bold text-gray-900">
-              99 MXN
+              $ 99 MXN
               <span className="text-lg font-normal text-gray-600">/month</span>
             </p>
             <p className="text-sm text-gray-600 mt-1">

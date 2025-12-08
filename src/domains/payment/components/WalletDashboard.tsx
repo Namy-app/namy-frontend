@@ -52,10 +52,8 @@ export function WalletDashboard({ userId }: WalletDashboardProps) {
   }
 
   const formatAmount = (amount: number, currency: string) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: currency,
-    }).format(amount / 100);
+    const value = (amount / 100).toFixed(2);
+    return `$ ${value} ${currency.toUpperCase()}`;
   };
 
   const formatDate = (dateString: string) => {

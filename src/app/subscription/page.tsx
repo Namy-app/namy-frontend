@@ -50,10 +50,8 @@ export default function SubscriptionPage(): React.JSX.Element {
   const hasEnoughBalance = walletBalance >= premiumCost;
 
   const formatAmount = (amount: number, currency: string = "MXN") => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: currency,
-    }).format(amount / 100);
+    const value = (amount / 100).toFixed(2);
+    return `$ ${value} ${currency.toUpperCase()}`;
   };
 
   // Sync subscription status with auth store
@@ -266,7 +264,7 @@ export default function SubscriptionPage(): React.JSX.Element {
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-2xl font-bold text-gray-900">99 MXN</p>
+                    <p className="text-2xl font-bold text-gray-900">$ 99 MXN</p>
                     <p className="text-sm text-gray-600">per month</p>
                   </div>
                 </div>
@@ -305,7 +303,7 @@ export default function SubscriptionPage(): React.JSX.Element {
                   ⚡ BEST VALUE
                 </div>
                 <h2 className="text-4xl font-bold text-gray-900 mb-2">
-                  99 MXN
+                  $ 99 MXN
                   <span className="text-xl font-normal text-gray-600">
                     /month
                   </span>
