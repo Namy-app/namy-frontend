@@ -5,11 +5,7 @@ import { useState } from "react";
 import { BottomNavigation } from "@/app/explore/components/BottomNavigation";
 import { ExploreHeader } from "@/app/explore/components/ExploreHeader";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import {
-  WalletDashboard,
-  DepositForm,
-  SubscriptionManager,
-} from "@/domains/payment/components";
+import { WalletDashboard, DepositForm } from "@/domains/payment/components";
 import { useCreateWallet, useWallet } from "@/domains/payment/hooks";
 import { useAuthStore } from "@/store/useAuthStore";
 
@@ -117,11 +113,6 @@ export default function PaymentPage(): React.JSX.Element {
 
                     {/* Wallet Dashboard */}
                     <WalletDashboard userId={user.id} />
-
-                    {/* Subscription Manager */}
-                    <div className="mt-8">
-                      <SubscriptionManager walletId={wallet.id} />
-                    </div>
                   </>
                 )}
               </div>

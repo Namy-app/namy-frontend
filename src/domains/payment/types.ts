@@ -12,7 +12,6 @@ export interface Wallet {
 
 export interface WalletBalance {
   balance: number;
-  frozenAmount: number;
   availableBalance: number;
   currency: string;
 }

@@ -10,7 +10,6 @@ export const GET_WALLET = gql`
       balance
       currency
       isActive
-      frozenAmount
       createdAt
       updatedAt
     }
@@ -21,7 +20,6 @@ export const GET_WALLET_BALANCE = gql`
   query GetWalletBalance($walletId: ID!) {
     walletBalance(walletId: $walletId) {
       balance
-      frozenAmount
       availableBalance
       currency
     }

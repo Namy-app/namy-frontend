@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 
+import { useToast } from "@/hooks/use-toast";
+
 import { StripePaymentForm } from "./StripePaymentForm";
 
 interface DepositFormProps {
@@ -12,6 +14,7 @@ interface DepositFormProps {
 const PRESET_AMOUNTS = [1000, 2500, 5000, 10000]; // in cents
 
 export function DepositForm({ onSuccess, onCancel }: DepositFormProps) {
+  const { toast } = useToast();
   const [amount, setAmount] = useState<number>(5000); // Default $50.00
   const [customAmount, setCustomAmount] = useState<string>("");
   const [showPaymentForm, setShowPaymentForm] = useState(false);
@@ -31,22 +34,32 @@ export function DepositForm({ onSuccess, onCancel }: DepositFormProps) {
 
   const handleContinue = () => {
     if (amount < 100) {
-      alert("Minimum deposit amount is $1.00");
+      toast({
+        title: "Invalid Amount",
+        description: "Minimum deposit amount is $1.00",
+        variant: "destructive",
+      });
       return;
     }
     setShowPaymentForm(true);
   };
 
   const handlePaymentSuccess = (_paymentIntentId: string) => {
-    // Show success message and redirect/refresh
-    alert("Payment successful! Your wallet will be credited shortly.");
+    toast({
+      title: "Payment Successful!",
+      description: "Your wallet will be credited shortly.",
+    });
     setShowPaymentForm(false);
     onSuccess?.();
   };
 
   const handlePaymentError = (error: string) => {
     console.error("Payment error:", error);
-    alert(`Payment failed: ${error}`);
+    toast({
+      title: "Payment Failed",
+      description: error,
+      variant: "destructive",
+    });
     setShowPaymentForm(false);
   };
 

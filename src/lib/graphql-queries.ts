@@ -15,6 +15,10 @@ export const LOGIN_MUTATION = `
         country
         verified
         active
+        isPremium
+        premiumStartDate
+        premiumEndDate
+        autoRenew
         createdAt
         updatedAt
         lastSeen
@@ -39,6 +43,10 @@ export const SIGNUP_MUTATION = `
         country
         verified
         active
+        isPremium
+        premiumStartDate
+        premiumEndDate
+        autoRenew
         createdAt
         updatedAt
         lastSeen
@@ -94,6 +102,10 @@ export const GET_CURRENT_USER_QUERY = `
       country
       verified
       active
+      isPremium
+      premiumStartDate
+      premiumEndDate
+      autoRenew
       createdAt
       updatedAt
       lastSeen
@@ -358,6 +370,9 @@ export const GET_COUPON_REDEEM_DETAILS_QUERY = `
         value
         minPurchaseAmount
         maxDiscountAmount
+        excludedDaysOfWeek
+        excludedHours
+        restrictions
       }
     }
   }
@@ -384,6 +399,9 @@ export const GENERATE_COUPON_MUTATION = `
         value
         minPurchaseAmount
         maxDiscountAmount
+        excludedDaysOfWeek
+        excludedHours
+        restrictions
       }
       store {
         id
@@ -445,6 +463,9 @@ export const COUPONS_QUERY = `
         description
         type
         value
+        excludedDaysOfWeek
+        excludedHours
+        restrictions
       }
       store {
         id
@@ -487,11 +508,57 @@ export const DELETE_COUPON_MUTATION = `
       discount {
         id
         title
+        restrictions
       }
       store {
         id
         name
       }
+    }
+  }
+`;
+
+// ============ PREMIUM SUBSCRIPTION ============
+export const CREATE_PREMIUM_CHECKOUT_MUTATION = `
+  mutation CreatePremiumCheckout($input: CreatePremiumCheckoutInput!) {
+    createPremiumCheckoutSession(input: $input) {
+      sessionId
+      url
+    }
+  }
+`;
+
+export const CANCEL_PREMIUM_SUBSCRIPTION_MUTATION = `
+  mutation CancelPremium {
+    cancelPremiumSubscription {
+      message
+    }
+  }
+`;
+
+export const TOGGLE_PREMIUM_AUTO_RENEW_MUTATION = `
+  mutation ToggleAutoRenew($enabled: Boolean!) {
+    togglePremiumAutoRenew(enabled: $enabled) {
+      message
+    }
+  }
+`;
+
+export const MY_SUBSCRIPTION_STATUS_QUERY = `
+  query MySubscriptionStatus {
+    mySubscriptionStatus {
+      isPremium
+      premiumStartDate
+      premiumEndDate
+      autoRenew
+    }
+  }
+`;
+
+export const PAY_PREMIUM_WITH_WALLET_MUTATION = `
+  mutation PayPremiumWithWallet {
+    payPremiumWithWallet {
+      message
     }
   }
 `;

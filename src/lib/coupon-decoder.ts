@@ -23,6 +23,7 @@ export interface DecodedCouponData {
     value: number;
     minPurchaseAmount?: number;
     maxDiscountAmount?: number;
+    restrictions?: string; // Formatted restriction text from backend
   };
 }
 

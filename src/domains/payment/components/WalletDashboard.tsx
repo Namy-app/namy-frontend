@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 import { useWallet, useWalletBalance, useWalletTransactions } from "../hooks";
-import { TransactionStatus, TransactionType } from "../types";
+import { TransactionStatus } from "../types";
 import type { GetWalletInput, GetTransactionsInput } from "../types";
 
 interface WalletDashboardProps {
@@ -68,16 +68,16 @@ export function WalletDashboard({ userId }: WalletDashboardProps) {
     });
   };
 
-  const getTransactionColor = (type: TransactionType) => {
+  const isCredit = (type: string) => {
     const creditTypes = [
-      TransactionType.DEPOSIT,
-      TransactionType.REFUND,
-      TransactionType.REWARD,
-      TransactionType.BONUS,
-      TransactionType.TRANSFER_IN,
-      TransactionType.COMMISSION,
+      "deposit",
+      "refund",
+      "reward",
+      "bonus",
+      "transfer_in",
+      "commission",
     ];
-    return creditTypes.includes(type) ? "text-green-600" : "text-red-600";
+    return creditTypes.includes(type.toLowerCase());
   };
 
   const getStatusBadge = (status: TransactionStatus) => {
@@ -119,33 +119,11 @@ export function WalletDashboard({ userId }: WalletDashboardProps) {
           <div>
             <p className="text-3xl font-bold">
               {formatAmount(
-                balance?.balance || wallet.balance,
+                balance?.availableBalance || wallet.balance,
                 wallet.currency
               )}
             </p>
-            <p className="text-sm opacity-75 mt-1">Total Balance</p>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white border-opacity-20">
-            <div>
-              <p className="text-sm opacity-75">Available</p>
-              <p className="text-lg font-semibold">
-                {formatAmount(
-                  balance?.availableBalance ||
-                    wallet.balance - wallet.frozenAmount,
-                  wallet.currency
-                )}
-              </p>
-            </div>
-            <div>
-              <p className="text-sm opacity-75">Frozen</p>
-              <p className="text-lg font-semibold">
-                {formatAmount(
-                  balance?.frozenAmount || wallet.frozenAmount,
-                  wallet.currency
-                )}
-              </p>
-            </div>
+            <p className="text-sm opacity-75 mt-1">Available Balance</p>
           </div>
         </div>
       </div>
@@ -193,18 +171,13 @@ export function WalletDashboard({ userId }: WalletDashboardProps) {
                     </div>
                     <div className="text-right">
                       <p
-                        className={`text-lg font-semibold ${getTransactionColor(transaction.type)}`}
+                        className={`text-lg font-semibold ${
+                          isCredit(transaction.type)
+                            ? "text-green-600"
+                            : "text-red-600"
+                        }`}
                       >
-                        {[
-                          TransactionType.DEPOSIT,
-                          TransactionType.REFUND,
-                          TransactionType.REWARD,
-                          TransactionType.BONUS,
-                          TransactionType.TRANSFER_IN,
-                          TransactionType.COMMISSION,
-                        ].includes(transaction.type)
-                          ? "+"
-                          : "-"}
+                        {isCredit(transaction.type) ? "+" : "-"}
                         {formatAmount(transaction.amount, transaction.currency)}
                       </p>
                       <p className="text-xs text-gray-500">
