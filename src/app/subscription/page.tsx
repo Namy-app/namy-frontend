@@ -2,7 +2,7 @@
 
 import { Crown, Check, X, Zap, Gift, Wallet } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 
 import { BottomNavigation } from "@/app/explore/components/BottomNavigation";
 import { ExploreHeader } from "@/app/explore/components/ExploreHeader";
@@ -18,7 +18,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useAuthStore } from "@/store/useAuthStore";
 
-export default function SubscriptionPage(): React.JSX.Element {
+function SubscriptionContent(): React.JSX.Element {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { isAuthenticated, user, updateUser } = useAuthStore();
@@ -430,7 +430,7 @@ export default function SubscriptionPage(): React.JSX.Element {
                     </button>
                     <button
                       onClick={() => setPaymentMethod("wallet")}
-                      disabled={!wallet || !hasEnoughBalance}
+                      disabled={!wallet || !hasEnoughBalance || hasActiveSubscription}
                       className={`flex-1 py-2 px-4 rounded-md font-medium text-sm transition-all ${
                         paymentMethod === "wallet"
                           ? "bg-white text-gray-900 shadow"
@@ -538,5 +538,13 @@ export default function SubscriptionPage(): React.JSX.Element {
         <BottomNavigation />
       </div>
     </ProtectedRoute>
+  );
+}
+
+export default function SubscriptionPage(): React.JSX.Element {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-background" />}>
+      <SubscriptionContent />
+    </Suspense>
   );
 }

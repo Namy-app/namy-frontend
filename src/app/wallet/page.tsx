@@ -31,7 +31,7 @@ export default function PaymentPage(): React.JSX.Element {
     try {
       await createWallet.mutateAsync({
         userId: user.id,
-        currency: "USD",
+        currency: "MXN",
       });
       // Refetch wallet after creation
       await refetchWallet();

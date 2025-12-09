@@ -55,7 +55,7 @@ function PaymentForm({
       const { error, paymentIntent } = await stripe.confirmPayment({
         elements,
         confirmParams: {
-          return_url: `${window.location.origin}/payment/success`,
+          return_url: `${window.location.origin}/wallet/success`,
         },
         redirect: "if_required",
       });
@@ -141,7 +141,7 @@ function PaymentForm({
 
 export function StripePaymentForm({
   amount,
-  currency = "USD",
+  currency = "MXN",
   description = "Wallet deposit",
   onSuccess,
   onError,

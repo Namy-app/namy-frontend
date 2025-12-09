@@ -1,14 +1,14 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 
 import { BottomNavigation } from "@/app/explore/components/BottomNavigation";
 import { ExploreHeader } from "@/app/explore/components/ExploreHeader";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { useAuthStore } from "@/store/useAuthStore";
 
-export default function PaymentSuccessPage(): React.JSX.Element {
+function PaymentSuccessContent(): React.JSX.Element {
   const router = useRouter();
   const searchParams = useSearchParams();
   const paymentIntent = searchParams?.get("payment_intent");
@@ -85,5 +85,13 @@ export default function PaymentSuccessPage(): React.JSX.Element {
         <BottomNavigation />
       </div>
     </ProtectedRoute>
+  );
+}
+
+export default function PaymentSuccessPage(): React.JSX.Element {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-background" />}>
+      <PaymentSuccessContent />
+    </Suspense>
   );
 }
