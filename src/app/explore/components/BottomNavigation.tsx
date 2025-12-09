@@ -1,14 +1,17 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 
 export function BottomNavigation(): React.JSX.Element {
   const router = useRouter();
+  const pathname = usePathname();
+
+  const isActive = (path: string) => pathname === path;
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-linear-to-t from-card/95 to-card/90 backdrop-blur-sm border-t border-border shadow-lg z-50">
       <div className="flex justify-around items-center h-16 max-w-5xl mx-auto">
-        <button className="flex flex-col items-center justify-center gap-1 px-6 py-2 transition-all rounded-lg text-primary scale-105">
+        <button className={`flex flex-col items-center justify-center gap-1 px-6 py-2 transition-all rounded-lg ${isActive("/explore") ? "text-primary scale-105" : "text-muted-foreground hover:text-foreground hover:scale-105"}`}>
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="24"
@@ -71,8 +74,8 @@ export function BottomNavigation(): React.JSX.Element {
         </button>
 
         <button
-          onClick={() => router.push("/payment")}
-          className="flex flex-col items-center justify-center gap-1 px-6 py-2 transition-all rounded-lg text-muted-foreground hover:text-foreground hover:scale-105 relative"
+          onClick={() => router.push("/wallet")}
+          className={`flex flex-col items-center justify-center gap-1 px-6 py-2 transition-all rounded-lg relative ${isActive("/wallet") ? "text-primary scale-105" : "text-muted-foreground hover:text-foreground hover:scale-105"}`}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"

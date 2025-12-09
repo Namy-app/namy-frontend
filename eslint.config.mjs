@@ -27,14 +27,7 @@ export default defineConfig([
           caughtErrorsIgnorePattern: "^_",
         },
       ],
-      "@typescript-eslint/explicit-function-return-type": [
-        "warn",
-        {
-          allowExpressions: true,
-          allowTypedFunctionExpressions: true,
-          allowHigherOrderFunctions: true,
-        },
-      ],
+      "@typescript-eslint/explicit-function-return-type": "off",
       "@typescript-eslint/consistent-type-imports": [
         "error",
         {

@@ -11,6 +11,10 @@ export interface User {
   country?: string;
   verified: boolean;
   active: boolean;
+  isPremium: boolean;
+  premiumStartDate?: string;
+  premiumEndDate?: string;
+  autoRenew: boolean;
   createdAt: string;
   updatedAt: string;
   lastSeen?: string;

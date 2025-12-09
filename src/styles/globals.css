@@ -2,6 +2,22 @@
 @import "tailwindcss/utilities";
 
 @layer base {
+  /* Enhanced global fix for all interactive elements to ensure consistent hand cursor */
+  button,
+  [type="button"],
+  [type="submit"],
+  [type="reset"],
+  .cursor-pointer,
+  a[href],
+  input[type="checkbox"],
+  input[type="radio"],
+  .Button,
+  [role="button"],
+  label[for],
+  select {
+    cursor: pointer !important;
+  }
+
   :root {
     /* Base colors */
     --background: 0 0% 100%;

@@ -400,6 +400,21 @@ export default function RedeemDetail({
               </span>
             </div>
           ) : null}
+          {couponData.discount.restrictions ? (
+            <div className="mt-3 p-3 bg-primary/5 border border-primary/20 rounded-lg">
+              <div className="flex items-start gap-2">
+                <Clock className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                <div>
+                  <p className="text-xs font-semibold text-primary mb-1">
+                    Usage Restrictions
+                  </p>
+                  <p className="text-sm text-foreground">
+                    {couponData.discount.restrictions}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : null}
         </div>
       </div>
 

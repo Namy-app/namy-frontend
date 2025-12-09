@@ -22,6 +22,9 @@ import { useState, useEffect } from "react";
 
 import { BottomNavigation } from "@/app/explore/components/BottomNavigation";
 import { ExploreHeader } from "@/app/explore/components/ExploreHeader";
+import { SubscriptionPrompt } from "@/components/SubscriptionPrompt";
+import { useGenerateCoupon } from "@/domains/coupon/hooks/useGenerateCoupon";
+import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/shared/components/Button";
 import { Card } from "@/shared/components/Card";
 import { useAuthStore } from "@/store/useAuthStore";
@@ -145,11 +148,17 @@ export default function RestaurantDetailPage(): React.JSX.Element {
   const router = useRouter();
   const params = useParams();
   const { isAuthenticated } = useAuthStore();
+  const { toast } = useToast();
+  const generateCoupon = useGenerateCoupon();
 
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showSubscriptionPrompt, setShowSubscriptionPrompt] = useState(false);
+  const [cooldownMinutes, setCooldownMinutes] = useState<number | undefined>(
+    undefined
+  );
 
   // Get restaurant ID from params (folder is `[detail]`)
   const restaurantId = (params?.detail ?? params?.id) as string;
@@ -200,9 +209,47 @@ export default function RestaurantDetailPage(): React.JSX.Element {
     );
   };
 
-  const handleUnlockDiscount = (): void => {
-    // TODO: Implement ad viewing and discount unlock logic
-    alert("Unlocking discount... (implement ad viewing)");
+  const handleUnlockDiscount = async (): Promise<void> => {
+    if (!restaurant) {
+      return;
+    }
+
+    try {
+      // TODO: Replace with actual storeId and discountId from the restaurant data
+      // For now, using mock data - in production, these should come from the API
+      const coupon = await generateCoupon.mutateAsync({
+        storeId: restaurant.id,
+        discountId: "discount-1", // This should come from the restaurant data
+      });
+
+      toast({
+        title: "Coupon Generated!",
+        description: `Your ${restaurant.discount.percentage}% discount coupon is ready!`,
+      });
+
+      // Redirect to the generated coupon page
+      router.push(`/redeem/detail?code=${coupon.code}`);
+    } catch (error: unknown) {
+      // Parse error message to extract cooldown time
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+
+      // Check if it's a cooldown error
+      const cooldownMatch = errorMessage.match(/wait (\d+) minutes/i);
+
+      if (cooldownMatch) {
+        const minutes = parseInt(cooldownMatch[1] ?? "0", 10);
+        setCooldownMinutes(minutes);
+        setShowSubscriptionPrompt(true);
+      } else {
+        toast({
+          title: "Error",
+          description:
+            errorMessage || "Failed to generate coupon. Please try again.",
+          variant: "destructive",
+        });
+      }
+    }
   };
 
   const handleWhatsAppContact = (): void => {
@@ -362,7 +409,7 @@ export default function RestaurantDetailPage(): React.JSX.Element {
                   descuento
                 </p>
                 <Button
-                  onClick={handleUnlockDiscount}
+                  onClick={() => void handleUnlockDiscount()}
                   className="w-full bg-white text-primary hover:bg-white/90 font-bold rounded-full shadow-lg"
                 >
                   Ver anuncio y desbloquear descuento
@@ -570,6 +617,14 @@ export default function RestaurantDetailPage(): React.JSX.Element {
       </div>
 
       <BottomNavigation />
+
+      {/* Subscription Prompt Modal */}
+      <SubscriptionPrompt
+        isOpen={showSubscriptionPrompt}
+        onClose={() => setShowSubscriptionPrompt(false)}
+        trigger="coupon_generation"
+        waitTimeMinutes={cooldownMinutes}
+      />
     </div>
   );
 }
