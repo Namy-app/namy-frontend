@@ -27,7 +27,7 @@ export default function UserPage(): React.JSX.Element | null {
         title: "Logged out",
         description: "You have been logged out successfully.",
       });
-      router.push("/auth");
+      router.push("/");
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);

@@ -2,8 +2,6 @@ import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 
 import "../styles/globals.css";
-// import TopBar from "@/components/TopBar";
-// import BottomNav from "@/components/BottomNav";
 import { ReactQueryProvider } from "@/providers/ReactQueryProvider";
 import { Toaster } from "@/shared/components/Toaster";
 
@@ -14,9 +12,27 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: "Ñamy - Unlock delicious discounts",
+  title: "Ñamy - Unlock Restaurant Discounts",
   description:
-    "Discover amazing deals and discounts on your favorite restaurants",
+    "Watch ads, unlock discounts, and discover amazing restaurants in Mexico. Earn rewards and climb the leaderboard!",
+  authors: [{ name: "Ñamy" }],
+  openGraph: {
+    title: "675baa49-1cbe-4559-813b-6547a81e9bdf",
+    description: "Lovable Generated Project",
+    type: "website",
+    images: [
+      {
+        url: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/0bebed91-2ce6-43ba-9e0e-79847b538b06/id-preview-a3dc1a57--07b63e06-4a17-4f54-a013-9463122dcb27.lovable.app-1762586437176.png",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    site: "@lovable_dev",
+    images: [
+      "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/0bebed91-2ce6-43ba-9e0e-79847b538b06/id-preview-a3dc1a57--07b63e06-4a17-4f54-a013-9463122dcb27.lovable.app-1762586437176.png",
+    ],
+  },
 };
 
 export default function RootLayout({

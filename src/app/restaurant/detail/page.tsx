@@ -199,7 +199,7 @@ export default function RestaurantDetailPage(): React.JSX.Element {
         title: "Sign in required",
         description: "Please sign in to unlock discounts.",
       });
-      router.push("/auth");
+      router.push("/");
       return;
     }
 

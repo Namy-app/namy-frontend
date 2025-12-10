@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { Ticket, Share2, CheckCircle, Clock } from "lucide-react";
+import { Ticket, Share2, CheckCircle, Clock, Info } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import { BottomNavigation } from "@/app/explore/components/BottomNavigation";
 import { ExploreHeader } from "@/app/explore/components/ExploreHeader";
 import CouponCard from "@/domains/coupons/CouponCard";
+import { CouponDecoder, type DecodedCouponData } from "@/lib/coupon-decoder";
 import { graphqlRequest, setAuthToken } from "@/lib/graphql-client";
 import { COUPONS_QUERY } from "@/lib/graphql-queries";
 import StatusCard from "@/shared/components/StatusCard/StatusCard";
@@ -41,6 +42,9 @@ export default function MyCouponsPage(): React.JSX.Element {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedCoupon, setSelectedCoupon] = useState<Coupon | null>(null);
+  const [decodedData, setDecodedData] = useState<DecodedCouponData | null>(
+    null
+  );
   const [hydrated, setHydrated] = useState(false);
   const [activeFilter, setActiveFilter] = useState<FilterTab>("all");
 
@@ -153,8 +157,21 @@ export default function MyCouponsPage(): React.JSX.Element {
   };
 
   // Handle view QR code
-  const handleViewQR = (coupon: Coupon): void => {
+  const handleViewQR = async (coupon: Coupon): Promise<void> => {
     setSelectedCoupon(coupon);
+
+    // Decode the coupon URL to extract restrictions
+    try {
+      const urlParts = coupon.url.split("/redeem/");
+      if (urlParts.length === 2 && urlParts[1]) {
+        const encryptedData = urlParts[1];
+        const decoded = await CouponDecoder.decodeAsync(encryptedData);
+        setDecodedData(decoded);
+      }
+    } catch (err) {
+      console.error("Failed to decode coupon:", err);
+      setDecodedData(null);
+    }
   };
 
   // Loading state
@@ -240,6 +257,23 @@ export default function MyCouponsPage(): React.JSX.Element {
                 Show this QR code at the store to redeem your discount
               </p>
 
+              {/* Restrictions Display */}
+              {decodedData?.discount?.restrictions ? (
+                <div className="w-full bg-amber-50 border border-amber-200 rounded-xl p-4">
+                  <div className="flex items-start gap-2">
+                    <Info className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-semibold text-amber-900 mb-1">
+                        Restrictions
+                      </p>
+                      <p className="text-sm text-amber-700">
+                        {decodedData.discount.restrictions}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+
               {/* Actions */}
               <div className="flex gap-3 w-full">
                 <button
@@ -250,7 +284,10 @@ export default function MyCouponsPage(): React.JSX.Element {
                   Share
                 </button>
                 <button
-                  onClick={() => setSelectedCoupon(null)}
+                  onClick={() => {
+                    setSelectedCoupon(null);
+                    setDecodedData(null);
+                  }}
                   className="flex-1 py-3 px-4 bg-primary text-primary-foreground rounded-xl font-semibold hover:opacity-90 transition-opacity"
                 >
                   Close
@@ -457,7 +494,7 @@ export default function MyCouponsPage(): React.JSX.Element {
             >
               <CouponCard
                 coupon={coupon}
-                onViewQr={() => handleViewQR(coupon)}
+                onViewQr={() => void handleViewQR(coupon)}
                 onShare={() => void handleShare(coupon)}
                 onDelete={() => void handleDelete(coupon)}
               />

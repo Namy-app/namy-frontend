@@ -1,6 +1,13 @@
 "use client";
 
-import { User, Ticket, Settings, LogOut, ChevronDown } from "lucide-react";
+import {
+  User,
+  Ticket,
+  Settings,
+  LogOut,
+  ChevronDown,
+  Crown,
+} from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
@@ -42,7 +49,7 @@ export function ExploreHeader({
   const handleLogout = (): void => {
     clearAuth();
     setIsDropdownOpen(false);
-    router.push("/auth");
+    router.push("/");
   };
 
   return (
@@ -73,7 +80,7 @@ export function ExploreHeader({
         </div>
 
         <button
-          onClick={() => router.push("/")}
+          onClick={() => router.push("/explore")}
           className="cursor-pointer hover:opacity-80 transition-opacity"
         >
           <Image
@@ -115,12 +122,23 @@ export function ExploreHeader({
                 className="flex items-center gap-2 px-3 py-1.5 hover:bg-accent rounded-full transition-colors"
                 aria-label="User menu"
               >
-                <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center">
+                <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center relative">
                   <User className="w-4 h-4 text-primary" />
+                  {user?.isPremium ? (
+                    <div className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
+                      <Crown className="w-2 h-2 text-white" />
+                    </div>
+                  ) : null}
                 </div>
                 <span className="text-sm font-medium text-foreground hidden sm:block">
                   {user?.displayName || "User"}
                 </span>
+                {user?.isPremium ? (
+                  <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-xs font-semibold rounded-full">
+                    <Crown className="w-3 h-3" />
+                    Premium
+                  </span>
+                ) : null}
                 <ChevronDown
                   className={`w-4 h-4 text-muted-foreground transition-transform ${
                     isDropdownOpen ? "rotate-180" : ""
@@ -133,12 +151,26 @@ export function ExploreHeader({
                 <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-card border border-border overflow-hidden animate-slide-up">
                   {/* User Info */}
                   <div className="px-4 py-3 border-b border-border bg-muted/30">
-                    <p className="text-sm font-semibold text-foreground">
-                      {user?.displayName || "User"}
-                    </p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-semibold text-foreground">
+                        {user?.displayName || "User"}
+                      </p>
+                      {user?.isPremium ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-[10px] font-bold rounded-full">
+                          <Crown className="w-2.5 h-2.5" />
+                          PREMIUM
+                        </span>
+                      ) : null}
+                    </div>
                     <p className="text-xs text-muted-foreground">
                       {user?.email}
                     </p>
+                    {user?.isPremium && user?.premiumEndDate ? (
+                      <p className="text-[10px] text-yellow-600 mt-1">
+                        Premium until{" "}
+                        {new Date(user.premiumEndDate).toLocaleDateString()}
+                      </p>
+                    ) : null}
                   </div>
 
                   {/* Menu Items */}
@@ -153,6 +185,19 @@ export function ExploreHeader({
                       <Ticket className="w-4 h-4 text-primary" />
                       <span className="text-sm font-medium text-foreground">
                         My Coupons
+                      </span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        router.push("/subscription");
+                        setIsDropdownOpen(false);
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gradient-to-r hover:from-yellow-50 hover:to-orange-50 transition-colors text-left group"
+                    >
+                      <Crown className="w-4 h-4 text-yellow-500 group-hover:text-orange-500 transition-colors" />
+                      <span className="text-sm font-medium text-foreground">
+                        Premium Membership
                       </span>
                     </button>
 
