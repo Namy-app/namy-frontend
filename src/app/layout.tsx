@@ -4,6 +4,8 @@ import { Poppins } from "next/font/google";
 import "../styles/globals.css";
 import { ReactQueryProvider } from "@/providers/ReactQueryProvider";
 import { Toaster } from "@/shared/components/Toaster";
+import { GoogleAdsense } from "@/components/GoogleAdsense";
+import { SideRailAds } from "@/components/SideRailAds";
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -42,11 +44,25 @@ export default function RootLayout({
 }): React.JSX.Element {
   return (
     <html lang="en">
+      <head>
+        <GoogleAdsense />
+        <script
+          async
+          src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${process.env.NEXT_PUBLIC_GOOGLE_ADSENSE_CLIENT_ID}`}
+          crossOrigin="anonymous"
+        />
+        {/* AdSense Rewarded Ads for video rewards */}
+        <script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adconfig.js"
+          crossOrigin="anonymous"
+        />
+      </head>
       <body className={`${poppins.variable}  font-sans`}>
         <ReactQueryProvider>
-          {/* <TopBar /> */}
-          {children}
-          {/* <BottomNav /> */}
+          <SideRailAds>
+            {children}
+          </SideRailAds>
           <Toaster />
         </ReactQueryProvider>
       </body>

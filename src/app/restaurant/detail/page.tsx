@@ -20,10 +20,11 @@ import { BottomNavigation } from "@/app/explore/components/BottomNavigation";
 import { ExploreHeader } from "@/app/explore/components/ExploreHeader";
 import { useToast } from "@/hooks/use-toast";
 import { graphqlRequest } from "@/lib/graphql-client";
-import { GENERATE_COUPON_MUTATION } from "@/lib/graphql-queries";
+import { GENERATE_COUPON_MUTATION, QUICK_PAY_FOR_DISCOUNT_MUTATION } from "@/lib/graphql-queries";
 import { Button } from "@/shared/components/Button";
 import { Card } from "@/shared/components/Card";
 import { useAuthStore } from "@/store/useAuthStore";
+import { RewardedVideoAd } from "@/components/RewardedVideoAd";
 
 // Restaurant type definition
 interface Restaurant {
@@ -154,6 +155,9 @@ export default function RestaurantDetailPage(): React.JSX.Element {
   const [isFavorite, setIsFavorite] = useState(false);
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showVideoAd, setShowVideoAd] = useState(false);
+  const [adsWatched, setAdsWatched] = useState(0);
+  const [totalAdsRequired] = useState(2);
 
   // Get restaurant ID from params
   const restaurantId = (params?.id as string) || "1";
@@ -187,6 +191,61 @@ export default function RestaurantDetailPage(): React.JSX.Element {
   }, [restaurantId]);
 
   // image navigation intentionally removed until carousel controls are needed
+
+  const handleWatchAdClick = (): void => {
+    if (!isAuthenticated) {
+      toast({
+        variant: "default",
+        title: "Sign in required",
+        description: "Please sign in to unlock discounts.",
+      });
+      router.push("/");
+      return;
+    }
+    setShowVideoAd(true);
+  };
+
+  const handleAdComplete = (): void => {
+    const newAdsWatched = adsWatched + 1;
+    setAdsWatched(newAdsWatched);
+
+    if (newAdsWatched >= totalAdsRequired) {
+      // Both ads watched, proceed to unlock discount
+      setShowVideoAd(false);
+      void handleUnlockDiscount();
+    } else {
+      // Show message and prepare for next ad
+      toast({
+        title: `Ad ${newAdsWatched} of ${totalAdsRequired} complete`,
+        description: `Watch ${totalAdsRequired - newAdsWatched} more ad to unlock your discount.`,
+      });
+      // Keep showing video ad for the next round
+      setShowVideoAd(false);
+      // Automatically show next ad after a short delay
+      setTimeout(() => {
+        setShowVideoAd(true);
+      }, 1500);
+    }
+  };
+
+  const handleAdSkipped = (): void => {
+    toast({
+      variant: "default",
+      title: "Ad skipped",
+      description: "Please watch the full video to unlock your coupon.",
+    });
+    setShowVideoAd(false);
+  };
+
+  const handleAdError = (error: Error): void => {
+    console.error("Ad error:", error);
+    toast({
+      variant: "destructive",
+      title: "Ad loading failed",
+      description: "Please try again.",
+    });
+    setShowVideoAd(false);
+  };
 
   const handleUnlockDiscount = async (): Promise<void> => {
     if (!restaurant) {
@@ -257,6 +316,85 @@ export default function RestaurantDetailPage(): React.JSX.Element {
         variant: "destructive",
         title: "Failed to create coupon",
         description: message,
+      });
+    }
+  };
+
+  const handleQuickPay = async (): Promise<void> => {
+    if (!restaurant) {
+      return;
+    }
+
+    if (!isAuthenticated) {
+      toast({
+        variant: "default",
+        title: "Sign in required",
+        description: "Please sign in to use Quick Pay.",
+      });
+      router.push("/");
+      return;
+    }
+
+    const discountId = restaurant.discount?.id ?? restaurant.id;
+
+    try {
+      toast({
+        title: "Processing payment...",
+        description: "Deducting $9MXN from your wallet.",
+      });
+
+      const data = await graphqlRequest<{
+        quickPayForDiscount: {
+          code: string;
+          qrCode: string;
+          url: string;
+          discount: {
+            id: string;
+            title: string;
+            description?: string;
+            type: string;
+            value: number;
+            minPurchaseAmount?: number;
+            maxDiscountAmount?: number;
+          };
+          store: {
+            id: string;
+            name: string;
+            address?: string;
+            city?: string;
+            phoneNumber?: string;
+            averageRating?: number;
+            reviewCounter?: number;
+          };
+        };
+      }>(QUICK_PAY_FOR_DISCOUNT_MUTATION, {
+        discountId,
+      });
+
+      if (data?.quickPayForDiscount) {
+        toast({
+          title: "✅ Coupon purchased!",
+          description: "Discount unlocked with Quick Pay. Added to My Coupons.",
+        });
+        // Ensure coupons cache is refreshed so UI shows the new coupon
+        try {
+          void queryClient.invalidateQueries({ queryKey: ["coupons"] });
+        } catch (_e) {
+          // ignore
+        }
+        router.push("/my-coupons");
+      } else {
+        throw new Error("No coupon returned from server");
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      toast({
+        variant: "destructive",
+        title: "Quick Pay failed",
+        description:
+          message.includes("Insufficient")
+            ? "Not enough balance in your wallet. Please top up first."
+            : message,
       });
     }
   };
@@ -371,12 +509,20 @@ export default function RestaurantDetailPage(): React.JSX.Element {
                       +{restaurant.discount.points} Ñamy points when using this
                       discount
                     </p>
-                    <div className="mt-4">
+                    <div className="mt-4 space-y-3">
                       <Button
-                        onClick={() => void handleUnlockDiscount()}
+                        onClick={handleWatchAdClick}
                         className="w-full bg-white text-rose-600 hover:bg-white/95 font-bold rounded-full shadow-lg py-4"
                       >
-                        Watch ad and unlock discount
+                        {adsWatched > 0 && adsWatched < totalAdsRequired
+                          ? `Watch ad ${adsWatched + 1} of ${totalAdsRequired} and unlock discount`
+                          : "Watch ad and unlock discount"}
+                      </Button>
+                      <Button
+                        onClick={() => void handleQuickPay()}
+                        className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:from-green-600 hover:to-emerald-700 font-bold rounded-full shadow-lg py-4"
+                      >
+                        💰 Quick Pay $9MXN
                       </Button>
                     </div>
                   </div>
@@ -578,6 +724,19 @@ export default function RestaurantDetailPage(): React.JSX.Element {
       </div>
 
       <BottomNavigation />
+
+      {/* Video Ad Modal */}
+      {showVideoAd && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+          <div className="relative w-full max-w-4xl mx-4">
+            <RewardedVideoAd
+              onAdComplete={handleAdComplete}
+              onAdSkipped={handleAdSkipped}
+              onAdError={handleAdError}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

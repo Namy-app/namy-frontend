@@ -53,7 +53,7 @@ export function WalletDashboard({ userId }: WalletDashboardProps) {
 
   const formatAmount = (amount: number, currency: string) => {
     const value = (amount / 100).toFixed(2);
-    return `$ ${value} ${currency.toUpperCase()}`;
+    return `$${value}${currency.toUpperCase()}`;
   };
 
   const formatDate = (dateString: string) => {
@@ -76,6 +76,21 @@ export function WalletDashboard({ userId }: WalletDashboardProps) {
       "commission",
     ];
     return creditTypes.includes(type.toLowerCase());
+  };
+
+  const getTransactionIcon = (type: string) => {
+    const iconMap: Record<string, string> = {
+      deposit: "➕",
+      purchase: "🛒",
+      refund: "↩️",
+      reward: "🎁",
+      bonus: "✨",
+      transfer_in: "📥",
+      transfer_out: "📤",
+      commission: "💰",
+      payment: "💳",
+    };
+    return iconMap[type.toLowerCase()] || "📝";
   };
 
   const getStatusBadge = (status: TransactionStatus) => {
@@ -113,15 +128,14 @@ export function WalletDashboard({ userId }: WalletDashboardProps) {
           </div>
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-1">
           <div>
-            <p className="text-3xl font-bold">
+            <p className="text-4xl font-bold">
               {formatAmount(
                 balance?.availableBalance || wallet.balance,
                 wallet.currency
               )}
             </p>
-            <p className="text-sm opacity-75 mt-1">Available Balance</p>
           </div>
         </div>
       </div>
@@ -151,21 +165,26 @@ export function WalletDashboard({ userId }: WalletDashboardProps) {
                   className="px-6 py-4 hover:bg-gray-50 transition-colors"
                 >
                   <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-1">
-                        <p className="font-medium text-gray-900 capitalize">
-                          {transaction.type.replace(/_/g, " ")}
-                        </p>
-                        {getStatusBadge(transaction.status)}
+                    <div className="flex-1 flex items-start gap-3">
+                      <div className="text-2xl mt-1">
+                        {getTransactionIcon(transaction.type)}
                       </div>
-                      {transaction.description ? (
-                        <p className="text-sm text-gray-600">
-                          {transaction.description}
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <p className="font-medium text-gray-900 capitalize">
+                            {transaction.type.replace(/_/g, " ")}
+                          </p>
+                          {getStatusBadge(transaction.status)}
+                        </div>
+                        {transaction.description ? (
+                          <p className="text-sm text-gray-600">
+                            {transaction.description}
+                          </p>
+                        ) : null}
+                        <p className="text-xs text-gray-500 mt-1">
+                          {formatDate(transaction.createdAt)}
                         </p>
-                      ) : null}
-                      <p className="text-xs text-gray-500 mt-1">
-                        {formatDate(transaction.createdAt)}
-                      </p>
+                      </div>
                     </div>
                     <div className="text-right">
                       <p
@@ -177,13 +196,6 @@ export function WalletDashboard({ userId }: WalletDashboardProps) {
                       >
                         {isCredit(transaction.type) ? "+" : "-"}
                         {formatAmount(transaction.amount, transaction.currency)}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        Balance:{" "}
-                        {formatAmount(
-                          transaction.balanceAfter,
-                          transaction.currency
-                        )}
                       </p>
                     </div>
                   </div>

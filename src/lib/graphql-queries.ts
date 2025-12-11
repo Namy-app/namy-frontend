@@ -416,6 +416,37 @@ export const GENERATE_COUPON_MUTATION = `
   }
 `;
 
+export const QUICK_PAY_FOR_DISCOUNT_MUTATION = `
+  mutation QuickPayForDiscount($discountId: String!) {
+    quickPayForDiscount(discountId: $discountId) {
+      code
+      qrCode
+      url
+      discount {
+        id
+        title
+        description
+        type
+        value
+        minPurchaseAmount
+        maxDiscountAmount
+        excludedDaysOfWeek
+        excludedHours
+        restrictions
+      }
+      store {
+        id
+        name
+        address
+        city
+        phoneNumber
+        averageRating
+        reviewCounter
+      }
+    }
+  }
+`;
+
 // ============ ADS ============
 export const REWARD_AD_MUTATION = `
   mutation RewardAd($input: RewardAdInput!) {
