@@ -25,6 +25,9 @@ import { Button } from "@/shared/components/Button";
 import { Card } from "@/shared/components/Card";
 import { useAuthStore } from "@/store/useAuthStore";
 import { RewardedVideoAd } from "@/components/RewardedVideoAd";
+import { UnlockDiscountModal } from "@/components/UnlockDiscountModal";
+import { CongratulationsModal } from "@/components/CongratulationsModal";
+import { DiscountSuccessModal } from "@/components/DiscountSuccessModal";
 
 // Restaurant type definition
 interface Restaurant {
@@ -146,7 +149,7 @@ const mockRestaurants: Record<string, Restaurant> = {
 export default function RestaurantDetailPage(): React.JSX.Element {
   const router = useRouter();
   const params = useParams();
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, user } = useAuthStore();
   const { toast } = useToast();
 
   const queryClient = useQueryClient();
@@ -158,6 +161,9 @@ export default function RestaurantDetailPage(): React.JSX.Element {
   const [showVideoAd, setShowVideoAd] = useState(false);
   const [adsWatched, setAdsWatched] = useState(0);
   const [totalAdsRequired] = useState(2);
+  const [showUnlockModal, setShowUnlockModal] = useState(false);
+  const [showCongratulations, setShowCongratulations] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   // Get restaurant ID from params
   const restaurantId = (params?.id as string) || "1";
@@ -192,7 +198,7 @@ export default function RestaurantDetailPage(): React.JSX.Element {
 
   // image navigation intentionally removed until carousel controls are needed
 
-  const handleWatchAdClick = (): void => {
+  const handleUnlockDiscountClick = (): void => {
     if (!isAuthenticated) {
       toast({
         variant: "default",
@@ -202,7 +208,24 @@ export default function RestaurantDetailPage(): React.JSX.Element {
       router.push("/");
       return;
     }
+
+    // If user is premium, directly unlock discount
+    if (user?.isPremium) {
+      void handleUnlockDiscount();
+    } else {
+      // Show modal for free users
+      setShowUnlockModal(true);
+    }
+  };
+
+  const handleWatchAdClick = (): void => {
+    setShowUnlockModal(false);
     setShowVideoAd(true);
+  };
+
+  const handleQuickPayClick = (): void => {
+    setShowUnlockModal(false);
+    void handleQuickPay();
   };
 
   const handleAdComplete = (): void => {
@@ -210,9 +233,9 @@ export default function RestaurantDetailPage(): React.JSX.Element {
     setAdsWatched(newAdsWatched);
 
     if (newAdsWatched >= totalAdsRequired) {
-      // Both ads watched, proceed to unlock discount
+      // Both ads watched, show congratulations then success
       setShowVideoAd(false);
-      void handleUnlockDiscount();
+      setShowCongratulations(true);
     } else {
       // Show message and prepare for next ad
       toast({
@@ -226,6 +249,11 @@ export default function RestaurantDetailPage(): React.JSX.Element {
         setShowVideoAd(true);
       }, 1500);
     }
+  };
+
+  const handleCongratulationsComplete = (): void => {
+    setShowCongratulations(false);
+    setShowSuccess(true);
   };
 
   const handleAdSkipped = (): void => {
@@ -509,20 +537,12 @@ export default function RestaurantDetailPage(): React.JSX.Element {
                       +{restaurant.discount.points} Ñamy points when using this
                       discount
                     </p>
-                    <div className="mt-4 space-y-3">
+                    <div className="mt-4">
                       <Button
-                        onClick={handleWatchAdClick}
+                        onClick={handleUnlockDiscountClick}
                         className="w-full bg-white text-rose-600 hover:bg-white/95 font-bold rounded-full shadow-lg py-4"
                       >
-                        {adsWatched > 0 && adsWatched < totalAdsRequired
-                          ? `Watch ad ${adsWatched + 1} of ${totalAdsRequired} and unlock discount`
-                          : "Watch ad and unlock discount"}
-                      </Button>
-                      <Button
-                        onClick={() => void handleQuickPay()}
-                        className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:from-green-600 hover:to-emerald-700 font-bold rounded-full shadow-lg py-4"
-                      >
-                        💰 Quick Pay $9MXN
+                        Unlock discount
                       </Button>
                     </div>
                   </div>
@@ -737,6 +757,29 @@ export default function RestaurantDetailPage(): React.JSX.Element {
           </div>
         </div>
       )}
+
+      {/* Unlock Discount Modal */}
+      <UnlockDiscountModal
+        isOpen={showUnlockModal}
+        onClose={() => setShowUnlockModal(false)}
+        onWatchAd={handleWatchAdClick}
+        onQuickPay={handleQuickPayClick}
+      />
+
+      {/* Congratulations Modal */}
+      <CongratulationsModal
+        isOpen={showCongratulations}
+        onComplete={handleCongratulationsComplete}
+      />
+
+      {/* Success Modal with QR Code */}
+      <DiscountSuccessModal
+        isOpen={showSuccess}
+        onClose={() => setShowSuccess(false)}
+        restaurantName={restaurant?.name || ""}
+        discountPercentage={restaurant?.discount.percentage || 15}
+        points={restaurant?.discount.points || 100}
+      />
     </div>
   );
 }
