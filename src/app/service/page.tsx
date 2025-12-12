@@ -7,89 +7,47 @@ import { useState } from "react";
 
 import { BottomNavigation } from "@/app/explore/components/BottomNavigation";
 import { ExploreHeader } from "@/app/explore/components/ExploreHeader";
+import { useStores } from "@/domains/store/hooks";
 import { Button } from "@/shared/components/Button";
 import { Card } from "@/shared/components/Card";
 import { useAuthStore } from "@/store/useAuthStore";
 
-// Mock data - replace with actual API call
-const servicesData = [
-  {
-    id: "1",
-    slug: "zen-spa-wellness",
-    name: "Zen Spa & Wellness",
-    image:
-      "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=800&auto=format&fit=crop",
-    category: "Spa",
-    discount: 25,
-    rating: 4.8,
-    distance: "0.5 km",
-  },
-  {
-    id: "2",
-    slug: "elite-barber-shop",
-    name: "Elite Barber Shop",
-    image:
-      "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=800&auto=format&fit=crop",
-    category: "Barber",
-    discount: 20,
-    rating: 4.9,
-    distance: "0.8 km",
-  },
-  {
-    id: "3",
-    slug: "glamour-hair-salon",
-    name: "Glamour Hair Salon",
-    image:
-      "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=800&auto=format&fit=crop",
-    category: "Hair Salon",
-    discount: 30,
-    rating: 4.7,
-    distance: "1.2 km",
-  },
-  {
-    id: "4",
-    slug: "relax-massage-center",
-    name: "Relax Massage Center",
-    image:
-      "https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=800&auto=format&fit=crop",
-    category: "Spa",
-    discount: 15,
-    rating: 4.6,
-    distance: "1.5 km",
-  },
-  {
-    id: "5",
-    slug: "classic-cuts-barber",
-    name: "Classic Cuts Barber",
-    image:
-      "https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=800&auto=format&fit=crop",
-    category: "Barber",
-    discount: 20,
-    rating: 4.8,
-    distance: "2.0 km",
-  },
-  {
-    id: "6",
-    slug: "beauty-boulevard-salon",
-    name: "Beauty Boulevard Salon",
-    image:
-      "https://images.unsplash.com/photo-1562322140-8baeececf3df?w=800&auto=format&fit=crop",
-    category: "Hair Salon",
-    discount: 25,
-    rating: 4.9,
-    distance: "2.3 km",
-  },
-];
+// Service type definition
+interface Service {
+  id: string;
+  slug: string;
+  name: string;
+  image: string;
+  category: string;
+  discount: number;
+  rating: number;
+  distance: string;
+}
+
+// (Removed unused mock data to satisfy TypeScript noUnusedLocals)
 
 type ViewMode = "grid" | "map";
 
 export default function ServicesPage(): React.JSX.Element {
   const { isAuthenticated } = useAuthStore();
+  const { data: allStores = [], isLoading } = useStores();
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
 
-  //   const handleServiceClick = (serviceId: string): void => {
-  //     router.push(`ser${serviceId}`);
-  //   };
+  // Filter stores to only show services (categoryId !== "Food & Beverage")
+  const servicesData: Service[] = allStores
+    .filter((store) => store.categoryId?.toLowerCase() !== "food & beverage")
+    .map((store) => ({
+      id: store.id,
+      slug: store.id,
+      name: store.name,
+      image:
+        store.imageUrl ||
+        "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=800&auto=format&fit=crop",
+      category: store.categoryId || "Service",
+      discount: 20, // Default discount
+      rating: store.averageRating ?? 4.7,
+      distance: "N/A", // Distance calculation would need geolocation
+    }));
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -129,55 +87,75 @@ export default function ServicesPage(): React.JSX.Element {
             </div>
 
             {/* Services Grid */}
-            {viewMode === "grid" ? (
+            {isLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="text-center">
+                  <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+                  <p className="text-muted-foreground">Loading services...</p>
+                </div>
+              </div>
+            ) : viewMode === "grid" ? (
               <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {servicesData.map((service, index) => (
-                  <Card
-                    key={service.id}
-                    // onClick={() => handleServiceClick(service.slug)}
-                    className="overflow-hidden cursor-pointer transition-all hover:shadow-card hover:scale-[1.02] bg-card border-border animate-slide-up"
-                    style={{ animationDelay: `${index * 0.1}s` }}
-                  >
-                    <Link href={`service/${service.slug}`}>
-                      {/* Image */}
-                      <div className="relative">
-                        <Image
-                          src={service.image}
-                          alt={service.name}
-                          width={800}
-                          height={400}
-                          className="w-full h-48 object-cover"
-                        />
-                        <div className="absolute top-3 right-3 bg-[hsl(var(--services))] text-[hsl(var(--services-foreground))] px-3 py-1 rounded-full font-bold text-sm shadow-lg">
-                          {service.discount}% OFF
-                        </div>
-                      </div>
-
-                      {/* Content */}
-                      <div className="p-4">
-                        <h3 className="font-bold text-lg text-foreground mb-1">
-                          {service.name}
-                        </h3>
-                        <div className="flex items-center justify-between text-sm text-muted-foreground">
-                          {/* Rating & Category */}
-                          <div className="flex items-center gap-1">
-                            <Star className="w-4 h-4 fill-[hsl(var(--services))] text-[hsl(var(--services))]" />
-                            <span className="font-medium text-foreground">
-                              {service.rating}
-                            </span>
-                            <span>• {service.category}</span>
-                          </div>
-
-                          {/* Distance */}
-                          <div className="flex items-center gap-1">
-                            <MapPin className="w-3 h-3" />
-                            <span>{service.distance}</span>
+                {servicesData.length === 0 ? (
+                  <div className="col-span-full text-center py-12">
+                    <p className="text-muted-foreground text-lg mb-4">
+                      No services found
+                    </p>
+                  </div>
+                ) : (
+                  servicesData.map((service, index) => (
+                    <Card
+                      key={service.id}
+                      className="overflow-hidden cursor-pointer transition-all hover:shadow-card hover:scale-[1.02] bg-card border-border animate-slide-up"
+                      style={{ animationDelay: `${index * 0.1}s` }}
+                    >
+                      <Link href={`/restaurant/${service.id}`}>
+                        {/* Image */}
+                        <div className="relative">
+                          <Image
+                            src={service.image}
+                            alt={service.name}
+                            width={800}
+                            height={400}
+                            className="w-full h-48 object-cover"
+                            unoptimized
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.src =
+                                "https://placehold.co/800x400/e2e8f0/64748b?text=Service+Image";
+                            }}
+                          />
+                          <div className="absolute top-3 right-3 bg-[hsl(var(--services))] text-[hsl(var(--services-foreground))] px-3 py-1 rounded-full font-bold text-sm shadow-lg">
+                            {service.discount}% OFF
                           </div>
                         </div>
-                      </div>
-                    </Link>
-                  </Card>
-                ))}
+
+                        {/* Content */}
+                        <div className="p-4">
+                          <h3 className="font-bold text-lg text-foreground mb-1">
+                            {service.name}
+                          </h3>
+                          <div className="flex items-center justify-between text-sm text-muted-foreground">
+                            {/* Rating & Category */}
+                            <div className="flex items-center gap-1">
+                              <Star className="w-4 h-4 fill-[hsl(var(--services))] text-[hsl(var(--services))]" />
+                              <span className="font-medium text-foreground">
+                                {service.rating}
+                              </span>
+                              <span>• {service.category}</span>
+                            </div>
+
+                            {/* Distance */}
+                            <div className="flex items-center gap-1">
+                              <MapPin className="w-3 h-3" />
+                              <span>{service.distance}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </Link>
+                    </Card>
+                  ))
+                )}
               </div>
             ) : (
               /* Map View Placeholder */

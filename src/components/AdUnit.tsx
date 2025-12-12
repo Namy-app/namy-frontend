@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useEffect } from 'react';
+import { useEffect } from "react";
 
 interface AdUnitProps {
   slot: string;
-  format?: 'auto' | 'fluid' | 'rectangle' | 'vertical' | 'horizontal';
+  format?: "auto" | "fluid" | "rectangle" | "vertical" | "horizontal";
   responsive?: boolean;
   style?: React.CSSProperties;
   className?: string;
@@ -12,7 +12,7 @@ interface AdUnitProps {
 
 export function AdUnit({
   slot,
-  format = 'auto',
+  format = "auto",
   responsive = true,
   style,
   className,
@@ -20,13 +20,18 @@ export function AdUnit({
   useEffect(() => {
     try {
       // Check if adsbygoogle is loaded
-      if (typeof window !== 'undefined' && (window as any).adsbygoogle) {
-        ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push(
-          {}
-        );
+      if (typeof window !== "undefined") {
+        const win = window as unknown as {
+          adsbygoogle?: Array<Record<string, unknown>>;
+        };
+
+        if (win.adsbygoogle) {
+          win.adsbygoogle = win.adsbygoogle || [];
+          win.adsbygoogle.push({});
+        }
       }
     } catch (err) {
-      console.error('AdSense error:', err);
+      console.error("AdSense error:", err);
     }
   }, []);
 
@@ -34,7 +39,7 @@ export function AdUnit({
     <div className={className} style={style}>
       <ins
         className="adsbygoogle"
-        style={{ display: 'block' }}
+        style={{ display: "block" }}
         data-ad-client={process.env.NEXT_PUBLIC_GOOGLE_ADSENSE_CLIENT_ID}
         data-ad-slot={slot}
         data-ad-format={format}

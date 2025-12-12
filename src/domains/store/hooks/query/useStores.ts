@@ -15,7 +15,13 @@ export function useStores(): UseQueryResult<Store[], Error> {
   return useQuery({
     queryKey: ["stores"],
     queryFn: async () => {
-      const data = await graphqlRequest<StoresResponse>(GET_ALL_STORES_QUERY);
+      const data = await graphqlRequest<StoresResponse>(GET_ALL_STORES_QUERY, {
+        pagination: {
+          page: 1,
+          first: 100, // Fetch up to 100 stores at once
+        },
+        filters: {},
+      });
       return data.stores?.data ?? [];
     },
     staleTime: 5 * 60 * 1000, // 5 minutes

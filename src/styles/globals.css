@@ -73,7 +73,7 @@
       hsl(82 65% 65%),
       hsl(82 70% 75%)
     );
-    --gradient-hero: linear-gradient(180deg, hsl(8 95% 95%), hsl(0 0% 100%));
+    --gradient-hero: linear-gradient(180deg, hsl(8 95% 92%), hsl(0 0% 97%));
     --gradient-progress: linear-gradient(
       90deg,
       hsl(340 85% 60%),

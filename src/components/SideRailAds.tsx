@@ -1,14 +1,20 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 
 interface SideRailAdsProps {
   children: React.ReactNode;
 }
 
 // Routes where side rail ads should NOT appear
-const EXCLUDED_ROUTES = ['/', '/auth', '/auth/forgot-password', '/auth/reset-password', '/auth/verify-email'];
+const EXCLUDED_ROUTES = [
+  "/",
+  "/auth",
+  "/auth/forgot-password",
+  "/auth/reset-password",
+  "/auth/verify-email",
+];
 
 /**
  * SideRailAds - Displays ads on the left and right sides of the main content
@@ -17,7 +23,7 @@ const EXCLUDED_ROUTES = ['/', '/auth', '/auth/forgot-password', '/auth/reset-pas
  */
 export function SideRailAds({ children }: SideRailAdsProps): React.JSX.Element {
   const [isWideScreen, setIsWideScreen] = useState(false);
-  const pathname = usePathname();
+  const pathname = usePathname() ?? "";
 
   // Check if current route should show ads
   const shouldShowAds = !EXCLUDED_ROUTES.includes(pathname);
@@ -28,8 +34,8 @@ export function SideRailAds({ children }: SideRailAdsProps): React.JSX.Element {
     };
 
     checkWidth();
-    window.addEventListener('resize', checkWidth);
-    return () => window.removeEventListener('resize', checkWidth);
+    window.addEventListener("resize", checkWidth);
+    return () => window.removeEventListener("resize", checkWidth);
   }, []);
 
   const showSideRails = isWideScreen && shouldShowAds;
@@ -37,8 +43,15 @@ export function SideRailAds({ children }: SideRailAdsProps): React.JSX.Element {
   return (
     <div className="relative min-h-screen">
       {/* Left Side Rail Ad */}
-      {showSideRails && (
-        <div className="fixed left-0 top-1/2 -translate-y-1/2 z-40 hidden xl:block" style={{ width: 'calc((100vw - 1200px) / 2 - 20px)', maxWidth: '160px', marginLeft: '10px' }}>
+      {showSideRails ? (
+        <div
+          className="fixed left-0 top-1/2 -translate-y-1/2 z-40 hidden xl:block"
+          style={{
+            width: "calc((100vw - 1200px) / 2 - 20px)",
+            maxWidth: "160px",
+            marginLeft: "10px",
+          }}
+        >
           <div className="sticky top-20">
             <div className="bg-gradient-to-br from-gray-100 to-gray-200 border border-gray-300 rounded-lg p-2 text-center">
               <p className="text-[10px] text-gray-500 mb-1">Advertisement</p>
@@ -52,16 +65,21 @@ export function SideRailAds({ children }: SideRailAdsProps): React.JSX.Element {
             </div>
           </div>
         </div>
-      )}
+      ) : null}
 
       {/* Main Content */}
-      <div className="relative z-10">
-        {children}
-      </div>
+      <div className="relative z-10">{children}</div>
 
       {/* Right Side Rail Ad */}
-      {showSideRails && (
-        <div className="fixed right-0 top-1/2 -translate-y-1/2 z-40 hidden xl:block" style={{ width: 'calc((100vw - 1200px) / 2 - 20px)', maxWidth: '160px', marginRight: '10px' }}>
+      {showSideRails ? (
+        <div
+          className="fixed right-0 top-1/2 -translate-y-1/2 z-40 hidden xl:block"
+          style={{
+            width: "calc((100vw - 1200px) / 2 - 20px)",
+            maxWidth: "160px",
+            marginRight: "10px",
+          }}
+        >
           <div className="sticky top-20">
             <div className="bg-gradient-to-br from-gray-100 to-gray-200 border border-gray-300 rounded-lg p-2 text-center">
               <p className="text-[10px] text-gray-500 mb-1">Advertisement</p>
@@ -75,7 +93,7 @@ export function SideRailAds({ children }: SideRailAdsProps): React.JSX.Element {
             </div>
           </div>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

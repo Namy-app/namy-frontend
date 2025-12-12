@@ -2,10 +2,10 @@ import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 
 import "../styles/globals.css";
-import { ReactQueryProvider } from "@/providers/ReactQueryProvider";
-import { Toaster } from "@/shared/components/Toaster";
 import { GoogleAdsense } from "@/components/GoogleAdsense";
 import { SideRailAds } from "@/components/SideRailAds";
+import { ReactQueryProvider } from "@/providers/ReactQueryProvider";
+import { Toaster } from "@/shared/components/Toaster";
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -60,9 +60,7 @@ export default function RootLayout({
       </head>
       <body className={`${poppins.variable}  font-sans`}>
         <ReactQueryProvider>
-          <SideRailAds>
-            {children}
-          </SideRailAds>
+          <SideRailAds>{children}</SideRailAds>
           <Toaster />
         </ReactQueryProvider>
       </body>

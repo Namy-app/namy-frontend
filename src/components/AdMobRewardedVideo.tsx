@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 
 interface AdMobRewardedVideoProps {
   onAdComplete: () => void;
@@ -24,7 +24,7 @@ export function AdMobRewardedVideo({
   onAdComplete,
   onAdSkipped: _onAdSkipped,
   onAdError,
-  couponName = 'your coupon',
+  couponName = "your coupon",
 }: AdMobRewardedVideoProps): React.JSX.Element {
   const [adWatched, setAdWatched] = useState(false);
   const [timeLeft, setTimeLeft] = useState(30);
@@ -37,12 +37,14 @@ export function AdMobRewardedVideo({
   useEffect(() => {
     // Load AdMob SDK
     const loadAdMobSDK = () => {
-      if (typeof window !== 'undefined' && !window.admob) {
-        const script = document.createElement('script');
-        script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js';
+      if (typeof window !== "undefined" && !window.admob) {
+        const script = document.createElement("script");
+        script.src =
+          "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js";
         script.async = true;
         script.onload = () => {
-          console.log('AdMob SDK loaded');
+          // eslint-disable-next-line no-console
+          console.log("AdMob SDK loaded");
         };
         document.head.appendChild(script);
       }
@@ -60,17 +62,22 @@ export function AdMobRewardedVideo({
 
       return () => clearTimeout(timer);
     } else if (isPlaying && timeLeft === 0) {
-      setAdWatched(true);
-      setIsPlaying(false);
-      onAdComplete();
+      // Schedule state updates to avoid synchronous setState-in-effect
+      const t = setTimeout(() => {
+        setAdWatched(true);
+        setIsPlaying(false);
+        onAdComplete();
+      }, 0);
+
+      return () => clearTimeout(t);
     }
     return undefined;
   }, [isPlaying, timeLeft, onAdComplete]);
 
   const handleWatchAd = async () => {
     if (!adUnitId) {
-      setAdError('AdMob Ad Unit ID not configured');
-      console.error('Missing NEXT_PUBLIC_ADMOB_REWARDED_AD_ID');
+      setAdError("AdMob Ad Unit ID not configured");
+      console.error("Missing NEXT_PUBLIC_ADMOB_REWARDED_AD_ID");
       // Fall back to test mode
       setIsPlaying(true);
       setTimeLeft(30);
@@ -89,7 +96,7 @@ export function AdMobRewardedVideo({
       setTimeLeft(30); // Reset timer
     } catch (error) {
       setIsLoading(false);
-      setAdError('Failed to load video ad');
+      setAdError("Failed to load video ad");
       if (onAdError) {
         onAdError(error as Error);
       }
@@ -100,9 +107,7 @@ export function AdMobRewardedVideo({
     return (
       <div className="bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-500 rounded-2xl p-8 text-center shadow-2xl">
         <div className="text-green-600 text-7xl mb-6 animate-bounce">✓</div>
-        <h3 className="text-3xl font-bold text-green-900 mb-3">
-          Ad Complete!
-        </h3>
+        <h3 className="text-3xl font-bold text-green-900 mb-3">Ad Complete!</h3>
         <p className="text-xl text-green-700 mb-6">
           You can now redeem {couponName}
         </p>
@@ -136,9 +141,7 @@ export function AdMobRewardedVideo({
 
           <div className="relative z-10 text-white text-center p-8">
             <div className="text-7xl mb-6 animate-pulse">🎬</div>
-            <h3 className="text-3xl font-bold mb-4">
-              Video Ad Playing...
-            </h3>
+            <h3 className="text-3xl font-bold mb-4">Video Ad Playing...</h3>
             <div className="text-6xl font-mono font-bold mb-3 bg-white/10 backdrop-blur-sm px-8 py-4 rounded-2xl">
               {timeLeft}s
             </div>
@@ -164,11 +167,11 @@ export function AdMobRewardedVideo({
           </div>
         </div>
 
-        {adError && (
+        {adError ? (
           <div className="bg-yellow-50 border-t-2 border-yellow-300 p-4 text-center">
             <span className="text-yellow-800">⚠️ {adError}</span>
           </div>
-        )}
+        ) : null}
       </div>
     );
   }
@@ -179,15 +182,13 @@ export function AdMobRewardedVideo({
       <h3 className="text-3xl font-bold text-purple-900 mb-3">
         Watch Video Ad
       </h3>
-      <p className="text-xl text-purple-700 mb-2">
-        Unlock {couponName}
-      </p>
+      <p className="text-xl text-purple-700 mb-2">Unlock {couponName}</p>
       <p className="text-gray-600 mb-8">
         Watch a 30-second video to redeem your coupon
       </p>
 
       <button
-        onClick={handleWatchAd}
+        onClick={() => void handleWatchAd()}
         className="bg-gradient-to-r from-purple-600 via-pink-600 to-orange-600 hover:from-purple-700 hover:via-pink-700 hover:to-orange-700 text-white font-bold py-5 px-10 rounded-full text-xl shadow-xl transform transition hover:scale-105 active:scale-95"
       >
         <span className="flex items-center gap-3">
@@ -224,6 +225,6 @@ export function AdMobRewardedVideo({
 // Add to window object for TypeScript
 declare global {
   interface Window {
-    admob?: any;
+    admob?: unknown;
   }
 }

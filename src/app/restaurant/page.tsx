@@ -13,10 +13,11 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 import { BottomNavigation } from "@/app/explore/components/BottomNavigation";
 import { ExploreHeader } from "@/app/explore/components/ExploreHeader";
+import { useStores } from "@/domains/store/hooks";
 import { Button } from "@/shared/components/Button";
 import { Card } from "@/shared/components/Card";
 import { Input } from "@/shared/components/Input";
@@ -34,108 +35,7 @@ interface Restaurant {
   distance: string;
 }
 
-// Mock restaurant data - replace with API call
-const mockRestaurants: Restaurant[] = [
-  {
-    id: "1",
-    slug: "tacos-el-guero",
-    name: "Tacos El Güero",
-    category: "Tacos",
-    rating: 4.8,
-    image:
-      "https://images.unsplash.com/photo-1565299507177-b0ac66763828?w=800&auto=format&fit=crop",
-    discount: 20,
-    distance: "0.5 km",
-  },
-  {
-    id: "2",
-    slug: "pizza-romana",
-    name: "Pizza Romana",
-    category: "Pizza",
-    rating: 4.6,
-    image:
-      "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800&auto=format&fit=crop",
-    discount: 15,
-    distance: "1.2 km",
-  },
-  {
-    id: "3",
-    slug: "green-bowl",
-    name: "Green Bowl",
-    category: "Healthy",
-    rating: 4.9,
-    image:
-      "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800&auto=format&fit=crop",
-    discount: 25,
-    distance: "0.8 km",
-  },
-  {
-    id: "4",
-    slug: "cafe-central",
-    name: "Café Central",
-    category: "Coffee",
-    rating: 4.7,
-    image:
-      "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=800&auto=format&fit=crop",
-    discount: 10,
-    distance: "0.3 km",
-  },
-  {
-    id: "5",
-    slug: "burger-house",
-    name: "Burger House",
-    category: "Burgers",
-    rating: 4.5,
-    image:
-      "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=800&auto=format&fit=crop",
-    discount: 18,
-    distance: "1.5 km",
-  },
-  {
-    id: "6",
-    slug: "sushi-bar",
-    name: "Sushi Bar",
-    category: "Sushi",
-    rating: 4.8,
-    image:
-      "https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=800&auto=format&fit=crop",
-    discount: 22,
-    distance: "2.1 km",
-  },
-  {
-    id: "7",
-    slug: "thai-express",
-    name: "Thai Express",
-    category: "Thai",
-    rating: 4.7,
-    image:
-      "https://images.unsplash.com/photo-1559314809-0d155014e29e?w=800&auto=format&fit=crop",
-    discount: 20,
-    distance: "1.8 km",
-  },
-  {
-    id: "8",
-    slug: "mediterranean-delight",
-    name: "Mediterranean Delight",
-    category: "Mediterranean",
-    rating: 4.6,
-    image:
-      "https://images.unsplash.com/photo-1544025162-d76694265947?w=800&auto=format&fit=crop",
-    discount: 15,
-    distance: "2.3 km",
-  },
-  {
-    id: "9",
-    slug: "steak-paradise",
-    name: "Steak Paradise",
-    category: "Steakhouse",
-    rating: 4.9,
-    image:
-      "https://images.unsplash.com/photo-1558030006-450675393462?w=800&auto=format&fit=crop",
-    discount: 12,
-    distance: "1.9 km",
-  },
-];
+// (Removed unused mock data to satisfy TypeScript noUnusedLocals)
 
 const categories = [
   "All",
@@ -152,38 +52,30 @@ const categories = [
 
 export default function RestaurantListingPage(): React.JSX.Element {
   const { isAuthenticated } = useAuthStore();
+  const { data: allStores = [], isLoading } = useStores();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
-  const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
-  const [loading, setLoading] = useState(true);
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [sortBy, setSortBy] = useState<"distance" | "rating" | "discount">(
     "distance"
   );
 
-  // Fetch restaurants on mount
-  useEffect(() => {
-    const fetchRestaurants = async (): Promise<void> => {
-      try {
-        setLoading(true);
-        // TODO: Replace with actual API call
-        // const response = await fetch('/api/restaurants');
-        // const data = await response.json();
-        // setRestaurants(data);
-
-        // Simulate API delay
-        await new Promise((resolve) => setTimeout(resolve, 500));
-        setRestaurants(mockRestaurants);
-      } catch (error) {
-        console.error("Error fetching restaurants:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    void fetchRestaurants();
-  }, []);
+  // Filter stores to only show restaurants (categoryId === "Food & Beverage")
+  const restaurants: Restaurant[] = allStores
+    .filter((store) => store.categoryId?.toLowerCase() === "food & beverage")
+    .map((store) => ({
+      id: store.id,
+      slug: store.id,
+      name: store.name,
+      category: store.subCategory || "Restaurant",
+      rating: store.averageRating ?? 4.5,
+      image:
+        store.imageUrl ||
+        "https://images.unsplash.com/photo-1565299507177-b0ac66763828?w=800&auto=format&fit=crop",
+      discount: 15, // Default discount
+      distance: "N/A", // Distance calculation would need geolocation
+    }));
 
   // Filter and sort restaurants
   const filteredRestaurants = restaurants
@@ -334,7 +226,7 @@ export default function RestaurantListingPage(): React.JSX.Element {
           </div>
 
           {/* Loading State */}
-          {loading ? (
+          {isLoading ? (
             <div className="flex items-center justify-center py-12 max-w-5xl mx-auto">
               <div className="text-center">
                 <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
@@ -360,7 +252,7 @@ export default function RestaurantListingPage(): React.JSX.Element {
                       key={restaurant.id}
                       className="animate-slide-up"
                       style={{ animationDelay: `${index * 0.1}s` }}
-                      href="/restaurant/detail"
+                      href={`/restaurant/${restaurant.id}`}
                     >
                       <Card className="overflow-hidden cursor-pointer transition-all hover:shadow-card hover:scale-[1.02] bg-card border-border">
                         {/* Restaurant Image */}
@@ -371,6 +263,12 @@ export default function RestaurantListingPage(): React.JSX.Element {
                             width={400}
                             height={192}
                             className="w-full h-48 object-cover"
+                            unoptimized
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.src =
+                                "https://placehold.co/400x192/fef2f2/f87171?text=Restaurant+Image";
+                            }}
                           />
                           {/* Discount Badge */}
                           <div className="absolute top-3 right-3 bg-primary text-primary-foreground px-3 py-1 rounded-full font-bold text-sm shadow-lg">

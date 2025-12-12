@@ -18,16 +18,19 @@ import { useState, useEffect } from "react";
 
 import { BottomNavigation } from "@/app/explore/components/BottomNavigation";
 import { ExploreHeader } from "@/app/explore/components/ExploreHeader";
+import { CongratulationsModal } from "@/components/CongratulationsModal";
+import { DiscountSuccessModal } from "@/components/DiscountSuccessModal";
+import { RewardedVideoAd } from "@/components/RewardedVideoAd";
+import { UnlockDiscountModal } from "@/components/UnlockDiscountModal";
 import { useToast } from "@/hooks/use-toast";
 import { graphqlRequest } from "@/lib/graphql-client";
-import { GENERATE_COUPON_MUTATION, QUICK_PAY_FOR_DISCOUNT_MUTATION } from "@/lib/graphql-queries";
+import {
+  GENERATE_COUPON_MUTATION,
+  QUICK_PAY_FOR_DISCOUNT_MUTATION,
+} from "@/lib/graphql-queries";
 import { Button } from "@/shared/components/Button";
 import { Card } from "@/shared/components/Card";
 import { useAuthStore } from "@/store/useAuthStore";
-import { RewardedVideoAd } from "@/components/RewardedVideoAd";
-import { UnlockDiscountModal } from "@/components/UnlockDiscountModal";
-import { CongratulationsModal } from "@/components/CongratulationsModal";
-import { DiscountSuccessModal } from "@/components/DiscountSuccessModal";
 
 // Restaurant type definition
 interface Restaurant {
@@ -419,10 +422,9 @@ export default function RestaurantDetailPage(): React.JSX.Element {
       toast({
         variant: "destructive",
         title: "Quick Pay failed",
-        description:
-          message.includes("Insufficient")
-            ? "Not enough balance in your wallet. Please top up first."
-            : message,
+        description: message.includes("Insufficient")
+          ? "Not enough balance in your wallet. Please top up first."
+          : message,
       });
     }
   };
@@ -746,7 +748,7 @@ export default function RestaurantDetailPage(): React.JSX.Element {
       <BottomNavigation />
 
       {/* Video Ad Modal */}
-      {showVideoAd && (
+      {showVideoAd ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
           <div className="relative w-full max-w-4xl mx-4">
             <RewardedVideoAd
@@ -756,7 +758,7 @@ export default function RestaurantDetailPage(): React.JSX.Element {
             />
           </div>
         </div>
-      )}
+      ) : null}
 
       {/* Unlock Discount Modal */}
       <UnlockDiscountModal

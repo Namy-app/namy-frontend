@@ -45,14 +45,16 @@ export function UnlockDiscountModal({
                     <h3 className="text-xl font-bold text-white mb-1">
                       Ver Anuncio
                     </h3>
-                    <p className="text-white/90 text-sm">Gratis • 15 segundos</p>
+                    <p className="text-white/90 text-sm">
+                      Gratis • 15 segundos
+                    </p>
                   </div>
                 </div>
               </button>
             </div>
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-border"></div>
+                <div className="w-full border-t border-border" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
                 <span className="bg-card px-2 text-muted-foreground">O</span>

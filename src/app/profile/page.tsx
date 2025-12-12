@@ -1,0 +1,445 @@
+"use client";
+
+import {
+  Flame,
+  Wallet,
+  Star,
+  Zap,
+  Settings,
+  User as UserIcon,
+  CreditCard,
+  HelpCircle,
+  Phone,
+  LogOut,
+  ChevronRight,
+  Crown,
+  Percent,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
+import React from "react";
+
+import { BottomNavigation } from "@/app/explore/components/BottomNavigation";
+import { ExploreHeader } from "@/app/explore/components/ExploreHeader";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { useStores } from "@/domains/store/hooks";
+import { useLogout } from "@/domains/user/hooks";
+import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/shared/components/Button";
+import { Card } from "@/shared/components/Card";
+import { useAuthStore } from "@/store/useAuthStore";
+
+export default function ProfilePage(): React.JSX.Element | null {
+  const router = useRouter();
+  const { toast } = useToast();
+  const { user } = useAuthStore();
+  const logoutMutation = useLogout();
+  const [expandPoints, setExpandPoints] = React.useState(false);
+  const { data: allStores = [], isLoading: storesLoading } = useStores();
+
+  if (!user) {
+    return null;
+  }
+
+  const handleLogout = async (): Promise<void> => {
+    try {
+      await logoutMutation.mutateAsync();
+      toast({
+        title: "Logged out",
+        description: "You have been logged out successfully.",
+      });
+      router.push("/");
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      toast({
+        variant: "destructive",
+        title: "Logout failed",
+        description: errorMessage || "Could not log out",
+      });
+    }
+  };
+
+  return (
+    <ProtectedRoute>
+      <div className="min-h-screen bg-gradient-hero pb-24">
+        <ExploreHeader isAuthenticated />
+
+        {/* Hero Section */}
+        <div className="bg-linear-to-b from-gradient-primary to-transparent p-6 pb-8 pt-20">
+          <div className="text-center max-w-5xl mx-auto">
+            <div className="w-24 h-24 mx-auto mb-4 rounded-full bg-gradient-primary flex items-center justify-center shadow-glow">
+              <div className="text-4xl">🍴</div>
+            </div>
+            <h1 className="text-2xl font-bold text-foreground mb-1">
+              {user.displayName || user.email}
+            </h1>
+            <p className="text-muted-foreground mb-4">
+              @{user.email?.split("@")[0]}
+            </p>
+
+            {/* Wallet Section */}
+            <div className="inline-block mb-4">
+              <p className="text-sm text-muted-foreground mb-1">
+                Available Balance
+              </p>
+              <div className="flex items-center gap-2 px-4 py-3 rounded-lg bg-card border border-border">
+                <Wallet className="w-5 h-5 text-primary" />
+                <span className="text-2xl font-bold text-foreground">
+                  $250 MXN
+                </span>
+              </div>
+            </div>
+
+            {/* Tier Badge */}
+            {user.isPremium ? (
+              <div className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold transition-colors border-0 bg-gradient-primary text-white shadow-glow ml-2">
+                <Crown className="w-4 h-4 mr-1" />
+                Premium Member
+              </div>
+            ) : null}
+
+            {/* Points Card */}
+            <Card className="mt-4 p-4 bg-card border-border">
+              <div className="text-3xl font-bold text-primary mb-1">
+                8,450 🍽️
+              </div>
+              <p className="text-sm text-muted-foreground">Ñamy Points</p>
+            </Card>
+          </div>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="px-6 py-6 max-w-5xl mx-auto w-full">
+          <div className="grid grid-cols-4 gap-3">
+            {[
+              { icon: Flame, label: "Streaks", color: "bg-gradient-primary" },
+              {
+                icon: Wallet,
+                label: "Mi Billetera",
+                color: "bg-gradient-secondary",
+              },
+              { icon: Star, label: "Reviews", color: "bg-accent/20" },
+              { icon: Zap, label: "Mi nivel", color: "bg-accent/20" },
+            ].map((item) => (
+              <button
+                key={item.label}
+                className="flex flex-col items-center gap-2 p-3 rounded-2xl bg-card hover:shadow-card transition-all"
+              >
+                <div
+                  className={`w-12 h-12 rounded-full ${item.color} flex items-center justify-center`}
+                >
+                  <item.icon className="w-6 h-6 text-white" />
+                </div>
+                <span className="text-xs font-medium text-foreground">
+                  {item.label}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Main Content */}
+        <div className="px-6 space-y-6 max-w-5xl mx-auto w-full">
+          {/* Daily Streak Card */}
+          <Card className="p-6 bg-gradient-primary text-white border-0 shadow-glow">
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <h3 className="text-xl font-bold mb-1">
+                  🔥 Daily Ñamy Streak: 5 Days
+                </h3>
+                <p className="text-white/90 text-sm">
+                  Open daily to earn +10 bonus points
+                </p>
+              </div>
+            </div>
+            <div className="h-2 bg-white/20 rounded-full overflow-hidden mb-4">
+              <div
+                className="h-full bg-white rounded-full transition-all"
+                style={{ width: "71.4286%" }}
+              />
+            </div>
+            <div className="pt-4 border-t border-white/20">
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="text-lg font-bold text-white">
+                  Level 8 – Savory Explorer 🍝
+                </h4>
+                <span className="text-white/90 text-sm">65%</span>
+              </div>
+              <div className="h-2 bg-white/20 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-white rounded-full transition-all"
+                  style={{ width: "65%" }}
+                />
+              </div>
+              <p className="text-white/80 text-xs mt-2">350 XP to next level</p>
+            </div>
+          </Card>
+
+          {/* Points Breakdown */}
+          <Card className="p-5 bg-card border-border">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-foreground">
+                📊 Points Breakdown
+              </h3>
+              <button
+                onClick={() => setExpandPoints(!expandPoints)}
+                className="text-sm font-medium hover:bg-accent hover:text-accent-foreground px-3 py-2 rounded-md transition-colors"
+              >
+                {expandPoints ? "Collapse" : "Expand"}
+              </button>
+            </div>
+            <div className="space-y-3">
+              {[
+                { icon: "📊", label: "Use a Discount", points: "+15 pts" },
+                { icon: "💬", label: "Leave a Text Review", points: "+10 pts" },
+                {
+                  icon: "📸",
+                  label: "Add a Photo to a Review",
+                  points: "+5 pts",
+                },
+                {
+                  icon: "🔥",
+                  label: "Visit a Featured Restaurant",
+                  points: "x2 multiplier",
+                },
+                ...(expandPoints
+                  ? [
+                      {
+                        icon: "👥",
+                        label: "Invite a Friend Who Signs Up",
+                        points: "+50 pts",
+                      },
+                      {
+                        icon: "📅",
+                        label: "Daily Login Streak",
+                        points: "+25 pts",
+                      },
+                      {
+                        icon: "⚡",
+                        label: "Complete a Challenge",
+                        points: "+50–100 pts",
+                      },
+                      {
+                        icon: "👑",
+                        label: "Premium Membership Bonus",
+                        points: "1.25x multiplier",
+                      },
+                    ]
+                  : []),
+              ].map((item, idx) => (
+                <div key={idx} className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span>{item.icon}</span>
+                    <span className="text-sm text-foreground">
+                      {item.label}
+                    </span>
+                  </div>
+                  <span className="font-bold text-primary">{item.points}</span>
+                </div>
+              ))}
+            </div>
+            {expandPoints ? (
+              <div className="mt-4 pt-4 border-t border-border">
+                <p className="text-xs text-muted-foreground">
+                  Detailed earning history and dates will appear here.
+                </p>
+              </div>
+            ) : null}
+          </Card>
+
+          {/* Available Discounts */}
+          <Card className="p-5 bg-card border-border">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-foreground">
+                🎁 Available Discounts
+              </h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => router.push("/restaurant")}
+              >
+                View All
+                <ChevronRight className="w-4 h-4 ml-1" />
+              </Button>
+            </div>
+            {storesLoading ? (
+              <div className="text-center py-8">
+                <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+                <p className="text-sm text-muted-foreground">
+                  Loading discounts...
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {allStores.slice(0, 3).map((store) => (
+                  <button
+                    key={store.id}
+                    onClick={() => router.push(`/restaurant/${store.id}`)}
+                    className="w-full flex items-center gap-4 p-3 rounded-lg bg-gradient-hero hover:shadow-card transition-all"
+                  >
+                    <div className="w-12 h-12 rounded-full bg-gradient-primary flex items-center justify-center flex-shrink-0">
+                      <Percent className="w-6 h-6 text-white" />
+                    </div>
+                    <div className="flex-1 text-left">
+                      <p className="font-semibold text-foreground">
+                        {store.name}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {store.categoryId || "Restaurant"} •{" "}
+                        {store.city || "Location"}
+                      </p>
+                    </div>
+                    <div className="text-right flex-shrink-0">
+                      <p className="font-bold text-primary text-lg">15% OFF</p>
+                      <p className="text-xs text-muted-foreground">+100 pts</p>
+                    </div>
+                  </button>
+                ))}
+                {allStores.length === 0 && !storesLoading && (
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground">
+                      No discounts available
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+          </Card>
+
+          {/* Leaderboard */}
+          <Card className="p-5 bg-card border-border">
+            <h3 className="text-lg font-bold text-foreground mb-4">
+              🏆 You&apos;re ranked #23 in Cancún!
+            </h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Earn 1,200 more points to reach Top 10 and unlock 1 week Premium.
+            </p>
+            <div className="space-y-2 mb-4">
+              {[
+                {
+                  rank: "1",
+                  name: "Sofia M.",
+                  points: "12,500 pts",
+                  isCrown: true,
+                },
+                { rank: "2", name: "Carlos R.", points: "11,200 pts" },
+                { rank: "3", name: "Ana L.", points: "10,800 pts" },
+              ].map((item) => (
+                <div
+                  key={item.rank}
+                  className="flex items-center gap-3 p-2 rounded-lg bg-muted/50"
+                >
+                  {item.isCrown ? (
+                    <Crown className="w-4 h-4 text-yellow-500 absolute -top-2 -right-2" />
+                  ) : null}
+                  <div className="w-10 h-10 rounded-full bg-gradient-primary flex items-center justify-center font-bold text-white">
+                    {item.rank}
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-medium text-foreground">{item.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {item.points}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <Button variant="outline" className="w-full">
+              View Full Leaderboard
+              <ChevronRight className="w-4 h-4 ml-2" />
+            </Button>
+          </Card>
+
+          {/* Premium Section */}
+          {!user.isPremium ? (
+            <Card className="p-6 bg-gradient-secondary text-secondary-foreground border-0 shadow-glow text-center">
+              <Zap className="w-12 h-12 mx-auto mb-3 text-secondary-foreground" />
+              <h3 className="text-xl font-bold mb-2">
+                🚀 Upgrade to Ñamy Premium
+              </h3>
+              <p className="text-secondary-foreground/90 mb-4">
+                Earn 2× points on every order!
+              </p>
+              <Button className="w-full bg-white text-secondary hover:bg-white/90">
+                Hazte Premium
+              </Button>
+            </Card>
+          ) : (
+            <Card className="p-6 bg-gradient-primary text-white border-0 shadow-glow text-center">
+              <Crown className="w-12 h-12 mx-auto mb-3 text-white" />
+              <h3 className="text-xl font-bold mb-2">✨ Ñamy Premium Member</h3>
+              <p className="text-white/90 mb-4">
+                You&apos;re earning 2× points on every order!
+              </p>
+              <div className="space-y-2 text-sm text-white/80">
+                <p>✅ Bonus points multiplier active</p>
+                <p>✅ Priority customer support</p>
+                <p>✅ Exclusive restaurant access</p>
+              </div>
+            </Card>
+          )}
+
+          {/* Settings & Support */}
+          <Card className="p-5 bg-card border-border">
+            <h3 className="text-lg font-bold text-foreground mb-4">
+              Settings & Support
+            </h3>
+            <div className="space-y-1">
+              {[
+                { icon: Settings, label: "Settings", action: undefined },
+                { icon: UserIcon, label: "Edit Profile", action: undefined },
+                {
+                  icon: CreditCard,
+                  label: "Payment Methods",
+                  action: undefined,
+                },
+                {
+                  icon: HelpCircle,
+                  label: "Help & FAQ",
+                  action: () => router.push("/help"),
+                },
+                { icon: Phone, label: "Contact Support", action: undefined },
+              ].map((item) => (
+                <button
+                  key={item.label}
+                  onClick={item.action}
+                  className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-muted transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <item.icon className="w-5 h-5 text-muted-foreground" />
+                    <span className="text-foreground">{item.label}</span>
+                  </div>
+                  <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                </button>
+              ))}
+              <button
+                onClick={() => {
+                  void handleLogout();
+                }}
+                disabled={logoutMutation.isPending}
+                className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-destructive/10 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <LogOut className="w-5 h-5 text-destructive" />
+                  <span className="text-destructive">
+                    {logoutMutation.isPending ? "Logging out..." : "Log Out"}
+                  </span>
+                </div>
+                <ChevronRight className="w-5 h-5 text-destructive" />
+              </button>
+            </div>
+          </Card>
+
+          {/* Footer */}
+          <div className="text-center py-6 pb-8">
+            <p className="text-xs text-muted-foreground">
+              Ñamy — Come inteligente, ahorra más 🍴💚
+            </p>
+          </div>
+        </div>
+
+        <BottomNavigation />
+      </div>
+    </ProtectedRoute>
+  );
+}

@@ -166,18 +166,22 @@ export const GET_ALL_STORES_QUERY = `
         description
         address
         phoneNumber
-        email
-        logo
-        coverImage
-        isActive
-        ownerId
+        imageUrl
+        active
         createdAt
         updatedAt
+        type
+        categoryId
+        subCategory
+        averageRating
+        reviewCounter
+        city
+        lat
+        lng
       }
       paginationInfo {
         total
         page
-        limit
         totalPages
         hasNextPage
         hasPreviousPage

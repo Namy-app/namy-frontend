@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 
 interface RewardedVideoAdProps {
   onAdComplete: () => void;
@@ -13,7 +13,7 @@ export function RewardedVideoAd({
   onAdComplete,
   onAdSkipped,
   onAdError,
-  couponName = 'your coupon',
+  couponName = "your coupon",
 }: RewardedVideoAdProps): React.JSX.Element {
   const [adWatched, setAdWatched] = useState(false);
   const [timeLeft, setTimeLeft] = useState(30); // 30 seconds video
@@ -24,53 +24,60 @@ export function RewardedVideoAd({
     // Try to load AdSense rewarded ad
     const loadRewardedAd = () => {
       try {
-        if (typeof window !== 'undefined' && (window as any).adsbygoogle) {
-          // AdSense rewarded ads implementation
-          const adBreak = (window as any).adBreak;
-          const adConfig = (window as any).adConfig;
+        if (typeof window === "undefined") {
+          return;
+        }
 
-          if (adBreak && adConfig) {
-            adConfig({
-              preloadAdBreaks: 'on',
-              onReady: () => {
-                console.log('AdSense rewarded ad ready');
-              },
-            });
+        const win = window as unknown as {
+          adsbygoogle?: Array<Record<string, unknown>>;
+          adBreak?: (opts: Record<string, unknown>) => void;
+          adConfig?: (opts: Record<string, unknown>) => void;
+        };
 
-            adBreak({
-              type: 'reward',
-              name: 'coupon-unlock',
-              beforeAd: () => {
-                setIsPlaying(true);
-              },
-              afterAd: () => {
-                setAdWatched(true);
-                setIsPlaying(false);
-                onAdComplete();
-              },
-              adDismissed: () => {
-                setIsPlaying(false);
-                if (onAdSkipped) {
-                  onAdSkipped();
-                }
-              },
-              adBreakDone: () => {
-                setAdWatched(true);
-                onAdComplete();
-              },
-            });
-          } else {
-            // Fallback: simulate video ad for testing
-            console.warn('AdSense rewarded ads not available, using test mode');
-            setAdError('Test mode - simulating video ad');
-          }
+        if (!win.adsbygoogle) {
+          // Fallback: AdSense not available
+          console.warn("AdSense not available - entering test mode");
+          setAdError("Test mode - simulating video ad");
+          return;
+        }
+
+        const { adBreak, adConfig } = win;
+        if (adBreak && adConfig) {
+          adConfig({
+            preloadAdBreaks: "on",
+            onReady: () => console.warn("AdSense rewarded ad ready"),
+          });
+
+          adBreak({
+            type: "reward",
+            name: "coupon-unlock",
+            beforeAd: () => setIsPlaying(true),
+            afterAd: () => {
+              setAdWatched(true);
+              setIsPlaying(false);
+              onAdComplete();
+            },
+            adDismissed: () => {
+              setIsPlaying(false);
+              if (onAdSkipped) {
+                onAdSkipped();
+              }
+            },
+            adBreakDone: () => {
+              setAdWatched(true);
+              onAdComplete();
+            },
+          });
+        } else {
+          console.warn("AdSense rewarded ads not available, using test mode");
+          setAdError("Test mode - simulating video ad");
         }
       } catch (err) {
-        console.error('Error loading rewarded ad:', err);
+        console.error("Error loading rewarded ad:", err);
         if (onAdError) {
           onAdError(err as Error);
         }
-        setAdError('Failed to load ad');
+        setAdError("Failed to load ad");
       }
     };
 
@@ -86,10 +93,16 @@ export function RewardedVideoAd({
 
       return () => clearTimeout(timer);
     } else if (isPlaying && timeLeft === 0) {
-      setAdWatched(true);
-      setIsPlaying(false);
-      onAdComplete();
+      // Schedule state updates to avoid synchronous setState-in-effect
+      const t = setTimeout(() => {
+        setAdWatched(true);
+        setIsPlaying(false);
+        onAdComplete();
+      }, 0);
+
+      return () => clearTimeout(t);
     }
+
     return undefined;
   }, [isPlaying, timeLeft, onAdComplete]);
 
@@ -102,12 +115,8 @@ export function RewardedVideoAd({
     return (
       <div className="bg-green-50 border-2 border-green-500 rounded-lg p-6 text-center">
         <div className="text-green-600 text-5xl mb-4">✓</div>
-        <h3 className="text-xl font-bold text-green-900 mb-2">
-          Ad Complete!
-        </h3>
-        <p className="text-green-700">
-          You can now redeem {couponName}
-        </p>
+        <h3 className="text-xl font-bold text-green-900 mb-2">Ad Complete!</h3>
+        <p className="text-green-700">You can now redeem {couponName}</p>
       </div>
     );
   }
@@ -121,10 +130,10 @@ export function RewardedVideoAd({
           <ins
             className="adsbygoogle"
             style={{
-              display: 'block',
-              width: '100%',
-              height: '100%',
-              position: 'absolute',
+              display: "block",
+              width: "100%",
+              height: "100%",
+              position: "absolute",
               top: 0,
               left: 0,
             }}
@@ -137,9 +146,7 @@ export function RewardedVideoAd({
           {/* Test Mode Overlay */}
           <div className="relative z-10 text-white text-center p-8">
             <div className="text-6xl mb-4">📺</div>
-            <h3 className="text-2xl font-bold mb-2">
-              Watching Video Ad...
-            </h3>
+            <h3 className="text-2xl font-bold mb-2">Watching Video Ad...</h3>
             <div className="text-4xl font-mono mb-2">{timeLeft}s</div>
             <p className="text-sm text-gray-300">
               Please wait to unlock your coupon
@@ -155,11 +162,11 @@ export function RewardedVideoAd({
           </div>
         </div>
 
-        {adError && (
+        {adError ? (
           <div className="bg-yellow-50 border-t border-yellow-200 p-3 text-sm text-yellow-800">
             ⚠️ {adError}
           </div>
-        )}
+        ) : null}
       </div>
     );
   }

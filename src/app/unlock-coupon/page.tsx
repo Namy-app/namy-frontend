@@ -1,19 +1,27 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { RewardedVideoAd } from '@/components/RewardedVideoAd';
+import { useState, useMemo } from "react";
+
+import { RewardedVideoAd } from "@/components/RewardedVideoAd";
 
 export default function UnlockCouponPage(): React.JSX.Element {
   const [couponUnlocked, setCouponUnlocked] = useState(false);
   const [showAd, setShowAd] = useState(false);
 
+  // Generate coupon code using useMemo to avoid recreating it on every render
+  const couponCode = useMemo(
+    // eslint-disable-next-line react-hooks/purity
+    () => `COUPON-${Math.random().toString(36).substring(7).toUpperCase()}`,
+    []
+  );
+
   // This would come from your actual coupon data
   const coupon = {
-    name: '50% OFF at Restaurant XYZ',
-    restaurant: 'Tacos El Güero',
-    discount: '50%',
-    value: '$10',
-    expiresAt: '2025-12-31',
+    name: "50% OFF at Restaurant XYZ",
+    restaurant: "Tacos El Güero",
+    discount: "50%",
+    value: "$10",
+    expiresAt: "2025-12-31",
   };
 
   const handleAdComplete = () => {
@@ -23,13 +31,13 @@ export default function UnlockCouponPage(): React.JSX.Element {
   };
 
   const handleAdSkipped = () => {
-    alert('Please watch the full video to unlock your coupon');
+    alert("Please watch the full video to unlock your coupon");
     setShowAd(false);
   };
 
   const handleAdError = (error: Error) => {
-    console.error('Ad error:', error);
-    alert('Failed to load ad. Please try again.');
+    console.error("Ad error:", error);
+    alert("Failed to load ad. Please try again.");
     setShowAd(false);
   };
 
@@ -41,30 +49,22 @@ export default function UnlockCouponPage(): React.JSX.Element {
           <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
             <div className="bg-gradient-to-r from-green-500 to-emerald-500 p-8 text-white text-center">
               <div className="text-6xl mb-4">🎉</div>
-              <h1 className="text-3xl font-bold mb-2">
-                Coupon Unlocked!
-              </h1>
-              <p className="text-green-100">
-                Show this to the cashier
-              </p>
+              <h1 className="text-3xl font-bold mb-2">Coupon Unlocked!</h1>
+              <p className="text-green-100">Show this to the cashier</p>
             </div>
 
             <div className="p-8">
               {/* QR Code / Barcode Placeholder */}
               <div className="bg-gray-100 rounded-lg p-8 mb-6 text-center">
                 <div className="text-6xl mb-4">📱</div>
-                <div className="font-mono text-2xl font-bold">
-                  COUPON-{Math.random().toString(36).substring(7).toUpperCase()}
-                </div>
+                <div className="font-mono text-2xl font-bold">{couponCode}</div>
               </div>
 
               {/* Coupon Details */}
               <div className="space-y-4 mb-6">
                 <div className="flex justify-between items-center border-b pb-3">
                   <span className="text-gray-600">Restaurant</span>
-                  <span className="font-bold text-lg">
-                    {coupon.restaurant}
-                  </span>
+                  <span className="font-bold text-lg">{coupon.restaurant}</span>
                 </div>
                 <div className="flex justify-between items-center border-b pb-3">
                   <span className="text-gray-600">Discount</span>
@@ -127,12 +127,8 @@ export default function UnlockCouponPage(): React.JSX.Element {
               </div>
             </div>
             <div className="text-6xl mb-4 opacity-50">🎟️</div>
-            <h1 className="text-3xl font-bold mb-2">
-              {coupon.name}
-            </h1>
-            <p className="text-purple-100">
-              {coupon.restaurant}
-            </p>
+            <h1 className="text-3xl font-bold mb-2">{coupon.name}</h1>
+            <p className="text-purple-100">{coupon.restaurant}</p>
           </div>
 
           <div className="p-8">
@@ -172,7 +168,9 @@ export default function UnlockCouponPage(): React.JSX.Element {
                 </li>
                 <li className="flex items-start">
                   <span className="font-bold mr-2">3.</span>
-                  <span>Show it at the restaurant and enjoy your discount!</span>
+                  <span>
+                    Show it at the restaurant and enjoy your discount!
+                  </span>
                 </li>
               </ol>
             </div>
@@ -189,21 +187,15 @@ export default function UnlockCouponPage(): React.JSX.Element {
             <div className="mt-6 grid grid-cols-3 gap-4 text-center">
               <div>
                 <div className="text-3xl mb-2">⚡</div>
-                <div className="text-sm text-gray-600">
-                  30 Seconds
-                </div>
+                <div className="text-sm text-gray-600">30 Seconds</div>
               </div>
               <div>
                 <div className="text-3xl mb-2">🎁</div>
-                <div className="text-sm text-gray-600">
-                  100% Free
-                </div>
+                <div className="text-sm text-gray-600">100% Free</div>
               </div>
               <div>
                 <div className="text-3xl mb-2">💰</div>
-                <div className="text-sm text-gray-600">
-                  Save Money
-                </div>
+                <div className="text-sm text-gray-600">Save Money</div>
               </div>
             </div>
           </div>

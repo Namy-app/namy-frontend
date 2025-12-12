@@ -49,7 +49,9 @@ const TIER_OPTIONS: TierOption[] = [
 
 export function DepositForm({ onSuccess, onCancel }: DepositFormProps) {
   const { toast } = useToast();
-  const [selectedTier, setSelectedTier] = useState<TierOption>(TIER_OPTIONS[0]!);
+  const [selectedTier, setSelectedTier] = useState<TierOption>(
+    TIER_OPTIONS[0]!
+  );
   const [customAmount, setCustomAmount] = useState<string>("");
   const [isCustom, setIsCustom] = useState(false);
   const [showPaymentForm, setShowPaymentForm] = useState(false);
@@ -132,11 +134,14 @@ export function DepositForm({ onSuccess, onCancel }: DepositFormProps) {
 
         <div className="bg-blue-50 border border-blue-200 rounded-md p-4 mb-6">
           <p className="text-sm text-blue-800">
-            <span className="font-semibold">You Pay:</span> {formatAmount(currentAmount)} MXN
+            <span className="font-semibold">You Pay:</span>{" "}
+            {formatAmount(currentAmount)} MXN
           </p>
           {bonusAmount > 0 && (
             <p className="text-sm text-green-800 mt-2">
-              <span className="font-semibold">You Get:</span> {formatAmount(currentCredit)} MXN ({bonusAmount > 0 ? '+' : ''}{formatAmount(bonusAmount)} bonus)
+              <span className="font-semibold">You Get:</span>{" "}
+              {formatAmount(currentCredit)} MXN ({bonusAmount > 0 ? "+" : ""}
+              {formatAmount(bonusAmount)} bonus)
             </p>
           )}
         </div>
@@ -161,11 +166,11 @@ export function DepositForm({ onSuccess, onCancel }: DepositFormProps) {
         <div className="space-y-3 mb-6">
           {TIER_OPTIONS.map((tier, idx) => (
             <div key={idx} className="relative">
-              {tier.isPopular && (
+              {tier.isPopular ? (
                 <div className="absolute -top-2 -right-2 bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-xs font-bold px-2 py-1 rounded-full">
                   Most popular 💥
                 </div>
-              )}
+              ) : null}
               <button
                 onClick={() => handleTierClick(tier)}
                 className={`w-full p-4 rounded-lg border-2 transition-all text-left ${
@@ -235,7 +240,7 @@ export function DepositForm({ onSuccess, onCancel }: DepositFormProps) {
               {formatAmount(currentAmount)} MXN
             </span>
           </div>
-          
+
           {bonusAmount > 0 && (
             <div className="bg-white rounded-lg p-3 border border-green-300">
               <div className="flex items-center justify-between mb-2">
@@ -288,4 +293,3 @@ export function DepositForm({ onSuccess, onCancel }: DepositFormProps) {
     </div>
   );
 }
-

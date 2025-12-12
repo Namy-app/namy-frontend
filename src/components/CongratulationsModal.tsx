@@ -14,13 +14,23 @@ export function CongratulationsModal({
   const [confetti, setConfetti] = useState<
     Array<{ left: string; delay: string; icon: string }>
   >([]);
+  const hasAutoClosed = useRef(false);
   const hasGenerated = useRef(false);
 
   useEffect(() => {
-    if (isOpen && !hasGenerated.current) {
-      // Generate random confetti - doing this in effect is allowed
+    if (!isOpen) {
+      hasAutoClosed.current = false;
+      hasGenerated.current = false;
+      return undefined;
+    }
+
+    if (!hasGenerated.current) {
       const icons = ["✨", "🎉", "💫", "🌟"];
-      const confettiItems: Array<{ left: string; delay: string; icon: string }> = [];
+      const confettiItems: Array<{
+        left: string;
+        delay: string;
+        icon: string;
+      }> = [];
 
       for (let i = 0; i < 30; i++) {
         const randomIcon = icons[Math.floor(Math.random() * icons.length)];
@@ -31,20 +41,24 @@ export function CongratulationsModal({
         });
       }
 
-      setConfetti(confettiItems);
+      // Schedule state update to avoid synchronous setState inside effect
+      const t = setTimeout(() => setConfetti(confettiItems), 0);
       hasGenerated.current = true;
 
       // Auto close after 2 seconds and proceed to next screen
-      const timer = setTimeout(() => {
-        onComplete();
-      }, 2000);
+      if (!hasAutoClosed.current) {
+        hasAutoClosed.current = true;
+        const closeTimer = setTimeout(() => {
+          onComplete();
+        }, 2000);
 
-      return () => {
-        clearTimeout(timer);
-      };
-    } else if (!isOpen) {
-      hasGenerated.current = false;
+        return () => {
+          clearTimeout(t);
+          clearTimeout(closeTimer);
+        };
+      }
     }
+
     return undefined;
   }, [isOpen, onComplete]);
 

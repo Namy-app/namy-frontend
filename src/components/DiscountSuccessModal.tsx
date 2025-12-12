@@ -1,8 +1,8 @@
 "use client";
 
 import { X } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 
 interface DiscountSuccessModalProps {
   isOpen: boolean;
@@ -37,11 +37,14 @@ export function DiscountSuccessModal({
         });
       }
 
-      setConfetti(confettiItems);
+      // Update state in a microtask to avoid synchronous setState-in-effect warning
+      const t = setTimeout(() => setConfetti(confettiItems), 0);
       hasGenerated.current = true;
+      return () => clearTimeout(t);
     } else if (!isOpen) {
       hasGenerated.current = false;
     }
+    return undefined;
   }, [isOpen]);
 
   if (!isOpen) {
