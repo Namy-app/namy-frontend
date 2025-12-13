@@ -51,7 +51,7 @@ function SubscriptionContent(): React.JSX.Element {
 
   const formatAmount = (amount: number, currency: string = "MXN") => {
     const value = (amount / 100).toFixed(2);
-    return `$ ${value} ${currency.toUpperCase()}`;
+    return `$${value}${currency.toUpperCase()}`;
   };
 
   // Sync subscription status with auth store

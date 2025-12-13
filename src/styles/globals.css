@@ -73,7 +73,7 @@
       hsl(82 65% 65%),
       hsl(82 70% 75%)
     );
-    --gradient-hero: linear-gradient(180deg, hsl(8 95% 95%), hsl(0 0% 100%));
+    --gradient-hero: linear-gradient(180deg, hsl(8 95% 92%), hsl(0 0% 97%));
     --gradient-progress: linear-gradient(
       90deg,
       hsl(340 85% 60%),
@@ -222,6 +222,34 @@
 
   .animate-bounce-in {
     animation: bounce-in 0.3s ease-out;
+  }
+
+  @keyframes fade-in {
+    0% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+
+  .animate-fade-in {
+    animation: fade-in 0.3s ease-out;
+  }
+
+  @keyframes scale-in {
+    0% {
+      transform: scale(0.9);
+      opacity: 0;
+    }
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
+  .animate-scale-in {
+    animation: scale-in 0.4s ease-out;
   }
 
   /* Additional animations from the new design */

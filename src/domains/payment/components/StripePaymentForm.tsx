@@ -129,7 +129,7 @@ function PaymentForm({
           ? "Loading payment form..."
           : isProcessing
             ? "Processing..."
-            : `Pay $${(amount / 100).toFixed(2)}`}
+            : `Pay $${(amount / 100).toFixed(2)}MXN`}
       </button>
 
       {description ? (

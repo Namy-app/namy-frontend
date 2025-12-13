@@ -166,18 +166,22 @@ export const GET_ALL_STORES_QUERY = `
         description
         address
         phoneNumber
-        email
-        logo
-        coverImage
-        isActive
-        ownerId
+        imageUrl
+        active
         createdAt
         updatedAt
+        type
+        categoryId
+        subCategory
+        averageRating
+        reviewCounter
+        city
+        lat
+        lng
       }
       paginationInfo {
         total
         page
-        limit
         totalPages
         hasNextPage
         hasPreviousPage
@@ -388,6 +392,37 @@ export const GET_COUPON_REDEEM_DETAILS_QUERY = `
 export const GENERATE_COUPON_MUTATION = `
   mutation GenerateCoupon($input: GenerateCouponInput!) {
     generateCoupon(input: $input) {
+      code
+      qrCode
+      url
+      discount {
+        id
+        title
+        description
+        type
+        value
+        minPurchaseAmount
+        maxDiscountAmount
+        excludedDaysOfWeek
+        excludedHours
+        restrictions
+      }
+      store {
+        id
+        name
+        address
+        city
+        phoneNumber
+        averageRating
+        reviewCounter
+      }
+    }
+  }
+`;
+
+export const QUICK_PAY_FOR_DISCOUNT_MUTATION = `
+  mutation QuickPayForDiscount($discountId: String!) {
+    quickPayForDiscount(discountId: $discountId) {
       code
       qrCode
       url
