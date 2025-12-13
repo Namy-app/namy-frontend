@@ -49,6 +49,9 @@ export default function AdminStoresPage() {
   const deleteStore = useDeleteStore();
   const toggleStoreActive = useToggleStoreActive();
 
+  const stores = storesData?.data ?? [];
+  const paginationInfo = storesData?.paginationInfo;
+
   // Check if user is admin
   const isAdmin =
     user?.role === UserRole.ADMIN || user?.role === UserRole.SUPER_ADMIN;
@@ -267,7 +270,7 @@ export default function AdminStoresPage() {
               <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
               <p className="text-muted-foreground mt-2">Loading stores...</p>
             </div>
-          ) : storesData && storesData.data.length > 0 ? (
+          ) : stores.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-gradient-hero">
@@ -293,7 +296,7 @@ export default function AdminStoresPage() {
                   </tr>
                 </thead>
                 <tbody className="bg-card divide-y divide-border">
-                  {storesData.data.map((store) => (
+                  {stores.map((store) => (
                     <tr
                       key={store.id}
                       className="hover:bg-gradient-hero transition-colors"
@@ -397,20 +400,17 @@ export default function AdminStoresPage() {
               </table>
 
               {/* Pagination Controls */}
-              {storesData && storesData.paginationInfo ? (
+              {paginationInfo ? (
                 <div className="flex items-center justify-between px-6 py-4 border-t border-border">
                   <div className="text-sm text-muted-foreground">
                     Showing {(currentPage - 1) * itemsPerPage + 1} to{" "}
-                    {Math.min(
-                      currentPage * itemsPerPage,
-                      storesData.paginationInfo.total
-                    )}{" "}
-                    of {storesData.paginationInfo.total} stores
+                    {Math.min(currentPage * itemsPerPage, paginationInfo.total)}{" "}
+                    of {paginationInfo.total} stores
                   </div>
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                      disabled={!storesData.paginationInfo.hasPreviousPage}
+                      disabled={!paginationInfo.hasPreviousPage}
                       className="flex items-center gap-1 px-3 py-2 rounded-lg border border-border hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                       title="Previous page"
                     >
@@ -420,7 +420,7 @@ export default function AdminStoresPage() {
 
                     <div className="flex items-center gap-2 px-3 py-2">
                       {Array.from(
-                        { length: storesData.paginationInfo.totalPages },
+                        { length: paginationInfo.totalPages },
                         (_, i) => i + 1
                       ).map((page) => (
                         <button
@@ -439,7 +439,7 @@ export default function AdminStoresPage() {
 
                     <button
                       onClick={() => setCurrentPage((p) => p + 1)}
-                      disabled={!storesData.paginationInfo.hasNextPage}
+                      disabled={!paginationInfo.hasNextPage}
                       className="flex items-center gap-1 px-3 py-2 rounded-lg border border-border hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                       title="Next page"
                     >

@@ -140,8 +140,8 @@ export function DepositForm({ onSuccess, onCancel }: DepositFormProps) {
           {bonusAmount > 0 && (
             <p className="text-sm text-green-800 mt-2">
               <span className="font-semibold">You Get:</span>{" "}
-              {formatAmount(currentCredit)} MXN ({bonusAmount > 0 ? "+" : ""}
-              {formatAmount(bonusAmount)} bonus)
+              {formatAmount(currentCredit)} MXN (+{formatAmount(bonusAmount)}
+              bonus)
             </p>
           )}
         </div>
