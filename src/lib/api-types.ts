@@ -50,10 +50,17 @@ export interface Store {
   email?: string;
   logo?: string;
   coverImage?: string;
+  imageUrl?: string;
   isActive: boolean;
   ownerId: string;
   createdAt: string;
   updatedAt: string;
+  type?: "PRODUCT" | "SERVICE";
+  categoryId?: string;
+  subCategory?: string;
+  averageRating?: number;
+  reviewCounter?: number;
+  city?: string;
 }
 
 export interface Discount {
