@@ -14,7 +14,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { CreateStoreForm } from "@/domains/admin/components/CreateStoreForm";
 import { EditStoreForm } from "@/domains/admin/components/EditStoreForm";
@@ -33,11 +33,16 @@ export default function AdminStoresPage() {
   const { user } = useAuthStore();
   const { toast } = useToast();
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const [isHydrated] = useState(true);
   const [storeToDelete, setStoreToDelete] = useState<Store | null>(null);
   const [storeToEdit, setStoreToEdit] = useState<Store | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+
+  useEffect(() => {
+    if (!user) {
+      router.replace("/auth");
+    }
+  }, [router, user]);
 
   const { data: stats, isLoading: statsLoading } = useStoreStatistics({
     active: null,
@@ -112,19 +117,13 @@ export default function AdminStoresPage() {
     }
   };
 
-  // Show loading while hydrating
-  if (!isHydrated) {
+  // Redirect effect will run on client after hydration
+  if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-hero">
         <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
       </div>
     );
-  }
-
-  // Redirect if not authenticated
-  if (!user) {
-    router.push("/auth");
-    return null;
   }
 
   if (!isAdmin) {
