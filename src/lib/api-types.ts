@@ -51,6 +51,9 @@ export interface Store {
   logo?: string;
   coverImage?: string;
   imageUrl?: string;
+  lat?: number;
+  lng?: number;
+  distance?: number;
   isActive: boolean;
   ownerId: string;
   createdAt: string;

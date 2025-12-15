@@ -4,14 +4,20 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 
-import { useStores } from "@/domains/store/hooks";
 import { type Store } from "@/lib/api-types";
 import { Button } from "@/shared/components/Button";
 import { Card } from "@/shared/components/Card";
 
-export function FeaturedCarousel(): React.JSX.Element {
-  const { data: storesResult, isLoading } = useStores();
-  const allStores = storesResult?.data ?? [];
+export function FeaturedCarousel({
+  discountPercentage = 10,
+  isLoading,
+  stores,
+}: {
+  discountPercentage?: number;
+  isLoading?: boolean;
+  stores?: Store[];
+}): React.JSX.Element {
+  const allStores = stores ?? [];
   const [currentSlide, setCurrentSlide] = useState(0);
 
   // Get first 6 stores for carousel
@@ -67,13 +73,22 @@ export function FeaturedCarousel(): React.JSX.Element {
                         className="object-cover group-hover:scale-110 transition-transform duration-300"
                       />
                     ) : (
-                      <div className="w-full h-full bg-linear-to-br from-slate-400 via-slate-500 to-slate-600" />
+                      <Image
+                        src={
+                          item.categoryId?.toLowerCase() === "restaurant"
+                            ? "/img/placeholders/placeholder-restaurant.jpg"
+                            : "/img/placeholders/placeholder-shop.jpg"
+                        }
+                        alt={item.name}
+                        fill
+                        className="object-cover group-hover:scale-110 transition-transform duration-300"
+                      />
                     )}
                     <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/40 to-transparent" />
                     <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
                       <h3 className="font-bold text-lg mb-1">{item.name}</h3>
                       <p className="text-sm text-white/90">
-                        {item.averageRating}% de descuento hoy
+                        {discountPercentage}% de descuento hoy
                       </p>
                     </div>
                   </Card>
