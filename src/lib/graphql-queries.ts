@@ -477,6 +477,23 @@ export const QUICK_PAY_FOR_DISCOUNT_MUTATION = `
   }
 `;
 
+// ============ USER LEVEL ============
+export const GET_MY_LEVEL_QUERY = `
+  query GetMyLevel {
+    myLevel {
+      level
+      levelName
+      discountPercentage
+      monthlyUsageCount
+      previousMonthUsageCount
+      totalUsageCount
+      usesUntilNextLevel
+      currentMonthStart
+      lastLevelUpdate
+    }
+  }
+`;
+
 // ============ ADS ============
 export const REWARD_AD_MUTATION = `
   mutation RewardAd($input: RewardAdInput!) {
@@ -484,6 +501,7 @@ export const REWARD_AD_MUTATION = `
       canGenerateCoupon
       remaining
       token
+      adsWatched
     }
   }
 `;
@@ -506,8 +524,8 @@ export const EXCHANGE_UNLOCK_MUTATION = `
 `;
 
 export const COUPONS_QUERY = `
-  query Coupons($pagination: PaginationInput, $filters: CouponFiltersInput) {
-    coupons(pagination: $pagination, filters: $filters) {
+  query MyCoupons($filters: CouponFiltersInput) {
+    myCoupons(filters: $filters) {
       id
       code
       qrCode

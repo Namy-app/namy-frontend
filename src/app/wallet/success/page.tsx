@@ -3,16 +3,13 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect } from "react";
 
-import { ExploreHeader } from "@/app/explore/components/ExploreHeader";
-import { BottomNavigation } from "@/components/BottomNavigation";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import { useAuthStore } from "@/store/useAuthStore";
+import { BasicLayout } from "@/layouts/BasicLayout";
 
 function PaymentSuccessContent(): React.JSX.Element {
   const router = useRouter();
   const searchParams = useSearchParams();
   const paymentIntent = searchParams?.get("payment_intent");
-  const { isAuthenticated } = useAuthStore();
 
   useEffect(() => {
     // Redirect to payment page after 3 seconds
@@ -25,10 +22,7 @@ function PaymentSuccessContent(): React.JSX.Element {
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-background pb-20">
-        {/* Top Navigation */}
-        <ExploreHeader isAuthenticated={isAuthenticated} />
-
+      <BasicLayout className="pb-20">
         {/* Main Content - with padding for fixed header and bottom nav */}
         <div className="pt-14 pb-16 bg-gradient-hero flex items-center justify-center p-6 min-h-screen">
           <div className="max-w-md w-full bg-white rounded-lg shadow-xl p-8 text-center">
@@ -80,10 +74,7 @@ function PaymentSuccessContent(): React.JSX.Element {
             </div>
           </div>
         </div>
-
-        {/* Bottom Navigation */}
-        <BottomNavigation />
-      </div>
+      </BasicLayout>
     </ProtectedRoute>
   );
 }

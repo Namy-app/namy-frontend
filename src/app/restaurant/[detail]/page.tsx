@@ -16,14 +16,14 @@ import Image from "next/image";
 import { useRouter, useParams } from "next/navigation";
 import { useState } from "react";
 
-import { ExploreHeader } from "@/app/explore/components/ExploreHeader";
-import { BottomNavigation } from "@/components/BottomNavigation";
 import { CongratulationsModal } from "@/components/CongratulationsModal";
 import { DiscountSuccessModal } from "@/components/DiscountSuccessModal";
 import { RewardedVideoAd } from "@/components/RewardedVideoAd";
 import { UnlockDiscountModal } from "@/components/UnlockDiscountModal";
-import { useStore, useStores } from "@/domains/store/hooks";
+import { useStoreDiscounts } from "@/domains/admin/hooks";
+import { useStore } from "@/domains/store/hooks";
 import { useToast } from "@/hooks/use-toast";
+import { BasicLayout } from "@/layouts/BasicLayout";
 import { graphqlRequest } from "@/lib/graphql-client";
 import {
   GENERATE_COUPON_MUTATION,
@@ -73,9 +73,6 @@ export default function RestaurantDetailPage(): React.JSX.Element {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Fetch all stores
-  const { data: allStores = [], isLoading } = useStores();
-
   const [currentImageIndex] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
   const [showVideoAd, setShowVideoAd] = useState(false);
@@ -87,12 +84,13 @@ export default function RestaurantDetailPage(): React.JSX.Element {
 
   // Get restaurant ID from params
   const restaurantId = (params?.detail as string) || null;
-  const { data: storeData } = useStore(restaurantId);
+  const { data: store, isLoading } = useStore(restaurantId);
 
-  console.log("storeData => ", storeData);
-
-  // Find the specific store from the stores list
-  const store = allStores.find((s) => s.id === restaurantId);
+  // Fetch discounts for this store
+  const { data: discountsData } = useStoreDiscounts(
+    { storeId: restaurantId },
+    { page: 1, first: 10 }
+  );
 
   // Convert store data to restaurant format for the UI
   const restaurant: Restaurant | null = store
@@ -213,7 +211,20 @@ export default function RestaurantDetailPage(): React.JSX.Element {
       return;
     }
 
-    const discountId = restaurant.discount?.id ?? restaurant.id;
+    // Get the first active discount for this store
+    const firstActiveDiscount = discountsData?.data?.find((d) => d.active);
+
+    if (!firstActiveDiscount) {
+      toast({
+        variant: "destructive",
+        title: "No discounts available",
+        description:
+          "This store doesn't have any active discounts at the moment.",
+      });
+      return;
+    }
+
+    const discountId = firstActiveDiscount.id;
 
     try {
       toast({ title: "Generating coupon...", description: "Please wait." });
@@ -358,8 +369,7 @@ export default function RestaurantDetailPage(): React.JSX.Element {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background pb-20">
-        <ExploreHeader isAuthenticated={isAuthenticated} />
+      <BasicLayout className="pb-20">
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-center">
             <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
@@ -368,15 +378,13 @@ export default function RestaurantDetailPage(): React.JSX.Element {
             </p>
           </div>
         </div>
-        <BottomNavigation />
-      </div>
+      </BasicLayout>
     );
   }
 
-  if (!restaurant) {
-    return (
-      <div className="min-h-screen bg-background pb-20">
-        <ExploreHeader isAuthenticated={isAuthenticated} />
+  return (
+    <BasicLayout className="pb-20">
+      {!restaurant ? (
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-center">
             <p className="text-muted-foreground text-lg mb-4">
@@ -387,314 +395,307 @@ export default function RestaurantDetailPage(): React.JSX.Element {
             </Button>
           </div>
         </div>
-        <BottomNavigation />
-      </div>
-    );
-  }
+      ) : (
+        <div className="pt-8 pb-16">
+          <div className="mx-auto max-w-6xl px-4">
+            <div className="relative h-96 md:h-[520px] rounded-2xl overflow-hidden shadow-2xl">
+              <Image
+                src={restaurant.images[currentImageIndex] ?? ""}
+                alt={restaurant.name}
+                fill
+                className="object-cover transform-gpu scale-105 transition-transform duration-700"
+                priority
+                unoptimized
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.src =
+                    "https://placehold.co/800x520/fef2f2/f87171?text=Restaurant+Image";
+                }}
+              />
+              <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-black/10" />
 
-  return (
-    <div className="min-h-screen bg-background pb-20">
-      <ExploreHeader isAuthenticated={isAuthenticated} />
-
-      <div className="pt-8 pb-16">
-        <div className="mx-auto max-w-6xl px-4">
-          <div className="relative h-96 md:h-[520px] rounded-2xl overflow-hidden shadow-2xl">
-            <Image
-              src={restaurant.images[currentImageIndex] ?? ""}
-              alt={restaurant.name}
-              fill
-              className="object-cover transform-gpu scale-105 transition-transform duration-700"
-              priority
-              unoptimized
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                target.src =
-                  "https://placehold.co/800x520/fef2f2/f87171?text=Restaurant+Image";
-              }}
-            />
-            <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-black/10" />
-
-            <div className="absolute inset-0 flex items-start justify-between p-4">
-              <div className="flex gap-3 items-center">
-                <Button
-                  onClick={() => router.back()}
-                  size="icon"
-                  className="bg-white/90 backdrop-blur-sm rounded-full hover:bg-white shadow"
-                >
-                  <ArrowLeft className="w-5 h-5 text-foreground" />
-                </Button>
+              <div className="absolute inset-0 flex items-start justify-between p-4">
+                <div className="flex gap-3 items-center">
+                  <Button
+                    onClick={() => router.back()}
+                    size="icon"
+                    className="bg-white/90 backdrop-blur-sm rounded-full hover:bg-white shadow"
+                  >
+                    <ArrowLeft className="w-5 h-5 text-foreground" />
+                  </Button>
+                </div>
+                <div className="flex gap-3 items-center">
+                  <Button
+                    onClick={() => setIsFavorite(!isFavorite)}
+                    size="icon"
+                    className="bg-white/90 backdrop-blur-sm rounded-full hover:bg-white shadow"
+                  >
+                    <Heart
+                      className={`w-5 h-5 text-foreground transition-all ${
+                        isFavorite ? "fill-red-500 text-red-500" : ""
+                      }`}
+                    />
+                  </Button>
+                </div>
               </div>
-              <div className="flex gap-3 items-center">
-                <Button
-                  onClick={() => setIsFavorite(!isFavorite)}
-                  size="icon"
-                  className="bg-white/90 backdrop-blur-sm rounded-full hover:bg-white shadow"
-                >
-                  <Heart
-                    className={`w-5 h-5 text-foreground transition-all ${
-                      isFavorite ? "fill-red-500 text-red-500" : ""
-                    }`}
-                  />
-                </Button>
+
+              <div className="absolute left-6 bottom-6 text-left text-white">
+                <h1 className="text-3xl md:text-4xl font-extrabold drop-shadow-lg">
+                  {restaurant.name}
+                </h1>
+                <div className="mt-2 flex items-center gap-4 text-sm md:text-base text-white/90">
+                  <div className="inline-flex items-center gap-2">
+                    <span>{restaurant.emoji}</span>
+                    <span className="font-medium">{restaurant.category}</span>
+                  </div>
+                  <div className="inline-flex items-center gap-2">
+                    <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                    <span className="font-semibold">{restaurant.rating}</span>
+                    <span className="text-sm">
+                      ({restaurant.reviewCount} reviews)
+                    </span>
+                  </div>
+                </div>
+                {restaurant.isAdPartner ? (
+                  <div className="mt-3 inline-block bg-yellow-400 text-black px-3 py-1 rounded-full text-xs font-bold">
+                    ⭐ Ad Partner
+                  </div>
+                ) : null}
               </div>
             </div>
 
-            <div className="absolute left-6 bottom-6 text-left text-white">
-              <h1 className="text-3xl md:text-4xl font-extrabold drop-shadow-lg">
-                {restaurant.name}
-              </h1>
-              <div className="mt-2 flex items-center gap-4 text-sm md:text-base text-white/90">
-                <div className="inline-flex items-center gap-2">
-                  <span>{restaurant.emoji}</span>
-                  <span className="font-medium">{restaurant.category}</span>
-                </div>
-                <div className="inline-flex items-center gap-2">
-                  <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                  <span className="font-semibold">{restaurant.rating}</span>
-                  <span className="text-sm">
-                    ({restaurant.reviewCount} reviews)
-                  </span>
-                </div>
-              </div>
-              {restaurant.isAdPartner ? (
-                <div className="mt-3 inline-block bg-yellow-400 text-black px-3 py-1 rounded-full text-xs font-bold">
-                  ⭐ Ad Partner
-                </div>
-              ) : null}
-            </div>
-          </div>
-
-          <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2 space-y-6">
-              <div className="rounded-3xl overflow-hidden shadow-glow">
-                <div className="p-6 md:p-8 bg-gradient-to-br from-rose-300 via-amber-300 to-lime-200 rounded-3xl">
-                  <div className="max-w-5xl mx-auto text-center text-white">
-                    <h2 className="text-2xl md:text-3xl font-bold mb-2">
-                      🎉 {restaurant.discount.percentage}% discount with Ñamy!
-                    </h2>
-                    <p className="text-white/90 mb-1 text-sm">
-                      {user?.isPremium
-                        ? "As a premium member, unlock instantly!"
-                        : "Watch an ad or Quick Pay to unlock"}
-                    </p>
-                    <p className="text-xs text-white/80 mb-4">
-                      +{restaurant.discount.points} Ñamy points when using this
-                      discount
-                    </p>
-                    <div className="mt-4">
-                      <Button
-                        onClick={handleUnlockDiscountClick}
-                        className="w-full bg-white text-rose-600 hover:bg-white/95 font-bold rounded-full shadow-lg py-4"
-                      >
+            <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div className="lg:col-span-2 space-y-6">
+                <div className="rounded-3xl overflow-hidden shadow-glow">
+                  <div className="p-6 md:p-8 bg-gradient-to-br from-rose-300 via-amber-300 to-lime-200 rounded-3xl">
+                    <div className="max-w-5xl mx-auto text-center text-white">
+                      <h2 className="text-2xl md:text-3xl font-bold mb-2">
+                        🎉 {restaurant.discount.percentage}% discount with Ñamy!
+                      </h2>
+                      <p className="text-white/90 mb-1 text-sm">
                         {user?.isPremium
-                          ? "Unlock Discount Now"
-                          : "Unlock Discount"}
-                      </Button>
+                          ? "As a premium member, unlock instantly!"
+                          : "Watch an ad or Quick Pay to unlock"}
+                      </p>
+                      <p className="text-xs text-white/80 mb-4">
+                        +{restaurant.discount.points} Ñamy points when using
+                        this discount
+                      </p>
+                      <div className="mt-4">
+                        <Button
+                          onClick={handleUnlockDiscountClick}
+                          className="w-full bg-white text-rose-600 hover:bg-white/95 font-bold rounded-full shadow-lg py-4"
+                        >
+                          {user?.isPremium
+                            ? "Unlock Discount Now"
+                            : "Unlock Discount"}
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              <Card className="p-6 space-y-4 bg-white border border-[#f1e9e6] rounded-xl shadow-md">
-                <div className="flex items-start gap-3">
-                  <Clock className="w-5 h-5 text-rose-500 mt-0.5 flex-shrink-0" />
-                  <div>
-                    <p className="font-semibold text-foreground">Hours</p>
-                    <p className="text-sm text-muted-foreground">
-                      {restaurant.hours}
-                    </p>
+                <Card className="p-6 space-y-4 bg-white border border-[#f1e9e6] rounded-xl shadow-md">
+                  <div className="flex items-start gap-3">
+                    <Clock className="w-5 h-5 text-rose-500 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-semibold text-foreground">Hours</p>
+                      <p className="text-sm text-muted-foreground">
+                        {restaurant.hours}
+                      </p>
+                    </div>
                   </div>
-                </div>
 
-                <div className="h-px bg-border" />
+                  <div className="h-px bg-border" />
 
-                <div className="flex items-start gap-3">
-                  <MapPin className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-                  <div className="flex-1">
-                    <p className="font-semibold text-foreground">Location</p>
-                    <p className="text-sm text-muted-foreground mb-2">
-                      {restaurant.location.address}, {restaurant.location.city}
-                    </p>
-                    <Button variant="outline" size="sm" className="text-xs">
-                      View on map 📍
+                  <div className="flex items-start gap-3">
+                    <MapPin className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                    <div className="flex-1">
+                      <p className="font-semibold text-foreground">Location</p>
+                      <p className="text-sm text-muted-foreground mb-2">
+                        {restaurant.location.address},{" "}
+                        {restaurant.location.city}
+                      </p>
+                      <Button variant="outline" size="sm" className="text-xs">
+                        View on map 📍
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="h-px bg-border" />
+
+                  <div className="flex items-center gap-3">
+                    <Phone className="w-5 h-5 text-rose-500 flex-shrink-0" />
+                    <div>
+                      <p className="font-semibold text-foreground">Phone</p>
+                      <a
+                        href={`tel:${restaurant.phone}`}
+                        className="text-sm text-rose-600 hover:underline"
+                      >
+                        {restaurant.phone}
+                      </a>
+                    </div>
+                  </div>
+
+                  <div className="h-px bg-border" />
+
+                  <Button
+                    onClick={handleWhatsAppContact}
+                    className="w-full bg-green-500 hover:bg-green-600 text-white"
+                  >
+                    <MessageCircle className="w-4 h-4 mr-2" />
+                    Contact via WhatsApp
+                  </Button>
+                </Card>
+
+                {restaurant.menuItems.length > 0 ? (
+                  <div>
+                    <h2 className="text-2xl font-bold text-foreground mb-4">
+                      📖 Menu
+                    </h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                      {restaurant.menuItems.map((item, idx) => (
+                        <div
+                          key={item.id}
+                          className={`relative overflow-hidden rounded-2xl shadow-md cursor-pointer transition-transform hover:scale-105 ${
+                            idx === 0
+                              ? "md:col-span-2 md:row-span-2 h-[420px]"
+                              : "h-52"
+                          }`}
+                        >
+                          <Image
+                            src={item.image}
+                            alt={item.name}
+                            fill
+                            className="object-cover"
+                          />
+                          <div className="absolute bottom-3 left-3 bg-white/80 text-sm px-3 py-1 rounded-full font-semibold">
+                            {item.name}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+
+                <Card className="p-5 bg-white border border-[#f1e9e6] rounded-xl">
+                  <h2 className="text-xl font-bold text-foreground mb-4">
+                    🕑 Discount Restrictions
+                  </h2>
+                  <ul className="space-y-3">
+                    {restaurant.discount.restrictions.map(
+                      (restriction, index) => (
+                        <li
+                          key={index}
+                          className="flex items-start gap-3 text-sm"
+                        >
+                          <span className="text-base mt-0.5">
+                            {index ===
+                            restaurant.discount.restrictions.length - 1
+                              ? "✅"
+                              : "❌"}
+                          </span>
+                          <span className="text-muted-foreground">
+                            {restriction}
+                          </span>
+                        </li>
+                      )
+                    )}
+                  </ul>
+                </Card>
+
+                {restaurant.reviews.length > 0 ? (
+                  <div>
+                    <h2 className="text-2xl font-bold text-foreground mb-4">
+                      ⭐ Reviews
+                    </h2>
+                    <div className="space-y-3 mb-4">
+                      {restaurant.reviews.map((review) => (
+                        <div
+                          key={review.id}
+                          className="p-4 bg-white border border-[#f1e9e6] rounded-xl shadow-sm"
+                        >
+                          <div className="flex items-start gap-4">
+                            <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center text-2xl">
+                              {review.avatar}
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex items-center justify-between mb-1">
+                                <p className="font-semibold text-foreground">
+                                  {review.name}
+                                </p>
+                                <div className="flex items-center gap-1">
+                                  {[...Array(review.rating)].map((_, i) => (
+                                    <Star
+                                      key={i}
+                                      className="w-4 h-4 fill-yellow-400 text-yellow-400"
+                                    />
+                                  ))}
+                                </div>
+                              </div>
+                              <p className="text-sm text-muted-foreground">
+                                {review.comment}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <Button variant="outline" className="w-full mb-2">
+                      See all reviews
+                    </Button>
+                    <Button className="w-full bg-rose-500 hover:bg-rose-600 text-white">
+                      Write your review 🍽️{" "}
+                      <span className="ml-2 text-xs">+50 pts 📸</span>
                     </Button>
                   </div>
-                </div>
+                ) : null}
+              </div>
 
-                <div className="h-px bg-border" />
-
-                <div className="flex items-center gap-3">
-                  <Phone className="w-5 h-5 text-rose-500 flex-shrink-0" />
-                  <div>
-                    <p className="font-semibold text-foreground">Phone</p>
-                    <a
-                      href={`tel:${restaurant.phone}`}
-                      className="text-sm text-rose-600 hover:underline"
-                    >
-                      {restaurant.phone}
-                    </a>
+              <aside className="space-y-6">
+                <Card className="p-5 bg-white border border-[#f1e9e6] rounded-xl shadow-md">
+                  <h3 className="font-semibold mb-3">📍 Location</h3>
+                  {/* Hide until we sort out the map */}
+                  <div className="aspect-video hidden bg-[#fbf7f6] rounded-xl mb-3 flex items-center justify-center">
+                    <span className="text-4xl">🗺️</span>
                   </div>
-                </div>
-
-                <div className="h-px bg-border" />
-
-                <Button
-                  onClick={handleWhatsAppContact}
-                  className="w-full bg-green-500 hover:bg-green-600 text-white"
-                >
-                  <MessageCircle className="w-4 h-4 mr-2" />
-                  Contact via WhatsApp
-                </Button>
-              </Card>
-
-              {restaurant.menuItems.length > 0 ? (
-                <div>
-                  <h2 className="text-2xl font-bold text-foreground mb-4">
-                    📖 Menu
-                  </h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                    {restaurant.menuItems.map((item, idx) => (
-                      <div
-                        key={item.id}
-                        className={`relative overflow-hidden rounded-2xl shadow-md cursor-pointer transition-transform hover:scale-105 ${
-                          idx === 0
-                            ? "md:col-span-2 md:row-span-2 h-[420px]"
-                            : "h-52"
-                        }`}
-                      >
-                        <Image
-                          src={item.image}
-                          alt={item.name}
-                          fill
-                          className="object-cover"
-                        />
-                        <div className="absolute bottom-3 left-3 bg-white/80 text-sm px-3 py-1 rounded-full font-semibold">
-                          {item.name}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
-
-              <Card className="p-5 bg-white border border-[#f1e9e6] rounded-xl">
-                <h2 className="text-xl font-bold text-foreground mb-4">
-                  🕑 Discount Restrictions
-                </h2>
-                <ul className="space-y-3">
-                  {restaurant.discount.restrictions.map(
-                    (restriction, index) => (
-                      <li
-                        key={index}
-                        className="flex items-start gap-3 text-sm"
-                      >
-                        <span className="text-base mt-0.5">
-                          {index === restaurant.discount.restrictions.length - 1
-                            ? "✅"
-                            : "❌"}
-                        </span>
-                        <span className="text-muted-foreground">
-                          {restriction}
-                        </span>
-                      </li>
-                    )
-                  )}
-                </ul>
-              </Card>
-
-              {restaurant.reviews.length > 0 ? (
-                <div>
-                  <h2 className="text-2xl font-bold text-foreground mb-4">
-                    ⭐ Reviews
-                  </h2>
-                  <div className="space-y-3 mb-4">
-                    {restaurant.reviews.map((review) => (
-                      <div
-                        key={review.id}
-                        className="p-4 bg-white border border-[#f1e9e6] rounded-xl shadow-sm"
-                      >
-                        <div className="flex items-start gap-4">
-                          <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center text-2xl">
-                            {review.avatar}
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex items-center justify-between mb-1">
-                              <p className="font-semibold text-foreground">
-                                {review.name}
-                              </p>
-                              <div className="flex items-center gap-1">
-                                {[...Array(review.rating)].map((_, i) => (
-                                  <Star
-                                    key={i}
-                                    className="w-4 h-4 fill-yellow-400 text-yellow-400"
-                                  />
-                                ))}
-                              </div>
-                            </div>
-                            <p className="text-sm text-muted-foreground">
-                              {review.comment}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <Button variant="outline" className="w-full mb-2">
-                    See all reviews
-                  </Button>
                   <Button className="w-full bg-rose-500 hover:bg-rose-600 text-white">
-                    Write your review 🍽️{" "}
-                    <span className="ml-2 text-xs">+50 pts 📸</span>
+                    Get directions 📍
                   </Button>
-                </div>
-              ) : null}
+
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {restaurant.amenities.map((amenity, index) => (
+                      <span
+                        key={index}
+                        className="text-xs bg-[#faf7f6] px-3 py-1 rounded-full text-muted-foreground"
+                      >
+                        {amenity}
+                      </span>
+                    ))}
+                  </div>
+                </Card>
+
+                <Card className="p-5 bg-white border border-[#f1e9e6] rounded-xl shadow-md">
+                  <h3 className="font-semibold mb-2">Contact</h3>
+                  <a
+                    href={`tel:${restaurant.phone}`}
+                    className="block text-rose-600 font-medium mb-3"
+                  >
+                    {restaurant.phone}
+                  </a>
+                  <Button
+                    onClick={handleWhatsAppContact}
+                    className="w-full bg-green-500 hover:bg-green-600 text-white"
+                  >
+                    Contact via WhatsApp
+                  </Button>
+                </Card>
+              </aside>
             </div>
-
-            <aside className="space-y-6">
-              <Card className="p-5 bg-white border border-[#f1e9e6] rounded-xl shadow-md">
-                <h3 className="font-semibold mb-3">📍 Location</h3>
-                {/* Hide until we sort out the map */}
-                <div className="aspect-video hidden bg-[#fbf7f6] rounded-xl mb-3 flex items-center justify-center">
-                  <span className="text-4xl">🗺️</span>
-                </div>
-                <Button className="w-full bg-rose-500 hover:bg-rose-600 text-white">
-                  Get directions 📍
-                </Button>
-
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {restaurant.amenities.map((amenity, index) => (
-                    <span
-                      key={index}
-                      className="text-xs bg-[#faf7f6] px-3 py-1 rounded-full text-muted-foreground"
-                    >
-                      {amenity}
-                    </span>
-                  ))}
-                </div>
-              </Card>
-
-              <Card className="p-5 bg-white border border-[#f1e9e6] rounded-xl shadow-md">
-                <h3 className="font-semibold mb-2">Contact</h3>
-                <a
-                  href={`tel:${restaurant.phone}`}
-                  className="block text-rose-600 font-medium mb-3"
-                >
-                  {restaurant.phone}
-                </a>
-                <Button
-                  onClick={handleWhatsAppContact}
-                  className="w-full bg-green-500 hover:bg-green-600 text-white"
-                >
-                  Contact via WhatsApp
-                </Button>
-              </Card>
-            </aside>
           </div>
         </div>
-      </div>
-
-      <BottomNavigation />
+      )}
 
       {/* Modals */}
       <UnlockDiscountModal
@@ -719,10 +720,10 @@ export default function RestaurantDetailPage(): React.JSX.Element {
       <DiscountSuccessModal
         isOpen={showSuccess}
         onClose={() => setShowSuccess(false)}
-        restaurantName={restaurant.name}
-        discountPercentage={restaurant.discount.percentage}
-        points={restaurant.discount.points}
+        restaurantName={restaurant?.name ?? ""}
+        discountPercentage={restaurant?.discount.percentage ?? 10}
+        points={restaurant?.discount.points ?? 0}
       />
-    </div>
+    </BasicLayout>
   );
 }

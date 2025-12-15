@@ -16,13 +16,12 @@ import Image from "next/image";
 import { useRouter, useParams } from "next/navigation";
 import { useState, useEffect } from "react";
 
-import { ExploreHeader } from "@/app/explore/components/ExploreHeader";
-import { BottomNavigation } from "@/components/BottomNavigation";
 import { CongratulationsModal } from "@/components/CongratulationsModal";
 import { DiscountSuccessModal } from "@/components/DiscountSuccessModal";
 import { RewardedVideoAd } from "@/components/RewardedVideoAd";
 import { UnlockDiscountModal } from "@/components/UnlockDiscountModal";
 import { useToast } from "@/hooks/use-toast";
+import { BasicLayout } from "@/layouts/BasicLayout";
 import { graphqlRequest } from "@/lib/graphql-client";
 import {
   GENERATE_COUPON_MUTATION,
@@ -443,8 +442,7 @@ export default function RestaurantDetailPage(): React.JSX.Element {
 
   if (loading || !restaurant) {
     return (
-      <div className="min-h-screen bg-background pb-20">
-        <ExploreHeader isAuthenticated={isAuthenticated} />
+      <BasicLayout className="pb-20">
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-center">
             <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
@@ -453,15 +451,12 @@ export default function RestaurantDetailPage(): React.JSX.Element {
             </p>
           </div>
         </div>
-        <BottomNavigation />
-      </div>
+      </BasicLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background pb-20">
-      <ExploreHeader isAuthenticated={isAuthenticated} />
-
+    <BasicLayout className="pb-20">
       <div className="pt-8 pb-16">
         <div className="mx-auto max-w-6xl px-4">
           <div className="relative h-96 md:h-[520px] rounded-2xl overflow-hidden shadow-2xl">
@@ -745,8 +740,6 @@ export default function RestaurantDetailPage(): React.JSX.Element {
         </div>
       </div>
 
-      <BottomNavigation />
-
       {/* Video Ad Modal */}
       {showVideoAd ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
@@ -782,6 +775,6 @@ export default function RestaurantDetailPage(): React.JSX.Element {
         discountPercentage={restaurant?.discount.percentage || 15}
         points={restaurant?.discount.points || 100}
       />
-    </div>
+    </BasicLayout>
   );
 }

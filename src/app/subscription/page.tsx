@@ -4,8 +4,6 @@ import { Crown, Check, X, Zap, Gift, Wallet } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect, Suspense } from "react";
 
-import { ExploreHeader } from "@/app/explore/components/ExploreHeader";
-import { BottomNavigation } from "@/components/BottomNavigation";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { useWallet, useWalletBalance } from "@/domains/payment/hooks";
 import {
@@ -16,12 +14,13 @@ import {
   usePayPremiumWithWallet,
 } from "@/domains/subscription/hooks";
 import { useToast } from "@/hooks/use-toast";
+import { BasicLayout } from "@/layouts/BasicLayout";
 import { useAuthStore } from "@/store/useAuthStore";
 
 function SubscriptionContent(): React.JSX.Element {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { isAuthenticated, user, updateUser } = useAuthStore();
+  const { user, updateUser } = useAuthStore();
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<"stripe" | "wallet">(
@@ -225,10 +224,7 @@ function SubscriptionContent(): React.JSX.Element {
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-background pb-20">
-        {/* Top Navigation */}
-        <ExploreHeader isAuthenticated={isAuthenticated} />
-
+      <BasicLayout className="pb-20">
         {/* Main Content */}
         <div className="pt-14 pb-16 bg-gradient-hero p-6">
           <div className="max-w-4xl mx-auto">
@@ -537,8 +533,7 @@ function SubscriptionContent(): React.JSX.Element {
         </div>
 
         {/* Bottom Navigation */}
-        <BottomNavigation />
-      </div>
+      </BasicLayout>
     </ProtectedRoute>
   );
 }
