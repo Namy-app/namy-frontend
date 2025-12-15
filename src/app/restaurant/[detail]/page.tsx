@@ -29,6 +29,8 @@ import { graphqlRequest } from "@/lib/graphql-client";
 import {
   GENERATE_COUPON_MUTATION,
   QUICK_PAY_FOR_DISCOUNT_MUTATION,
+  REWARD_AD_MUTATION,
+  EXCHANGE_UNLOCK_MUTATION,
 } from "@/lib/graphql-queries";
 import { Button } from "@/shared/components/Button";
 import { Card } from "@/shared/components/Card";
@@ -86,6 +88,7 @@ export default function RestaurantDetailPage(): React.JSX.Element {
   const [showUnlockModal, setShowUnlockModal] = useState(false);
   const [showCongratulations, setShowCongratulations] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [unlockToken, setUnlockToken] = useState<string | null>(null);
 
   // Get restaurant ID from params
   const restaurantId = (params?.detail as string) || "1";
@@ -166,32 +169,124 @@ export default function RestaurantDetailPage(): React.JSX.Element {
     void handleQuickPay();
   };
 
-  const handleVideoComplete = (): void => {
-    const newAdsWatched = adsWatched + 1;
-    setAdsWatched(newAdsWatched);
-
-    if (newAdsWatched >= totalAdsRequired) {
-      // Both ads watched, show congratulations then success
-      setShowVideoAd(false);
-      setShowCongratulations(true);
-    } else {
-      // Show message and prepare for next ad
-      toast({
-        title: `Ad ${newAdsWatched} of ${totalAdsRequired} complete`,
-        description: `Watch ${totalAdsRequired - newAdsWatched} more ad to unlock your discount.`,
+  const handleVideoComplete = async (): Promise<void> => {
+    try {
+      // Call rewardAd mutation to record the ad view
+      const rewardData = await graphqlRequest<{
+        rewardAd: {
+          canGenerateCoupon: boolean;
+          remaining?: number;
+          token?: string;
+          adsWatched?: number;
+        };
+      }>(REWARD_AD_MUTATION, {
+        input: {
+          adUnitId: "test-ad-unit",
+          rewardToken: `reward-${Date.now()}-${Math.random()}`,
+          deviceId:
+            typeof navigator !== "undefined" ? navigator.userAgent : undefined,
+        },
       });
-      // Keep showing video ad for the next round
+
+      const newAdsWatched = rewardData.rewardAd.adsWatched ?? adsWatched + 1;
+      setAdsWatched(newAdsWatched);
+
+      if (rewardData.rewardAd.canGenerateCoupon && rewardData.rewardAd.token) {
+        // Got unlock token, exchange it for coupon
+        setUnlockToken(rewardData.rewardAd.token);
+        setShowVideoAd(false);
+        setShowCongratulations(true);
+      } else {
+        // Show message and prepare for next ad
+        const remaining =
+          rewardData.rewardAd.remaining ?? totalAdsRequired - newAdsWatched;
+        toast({
+          title: `Ad ${newAdsWatched} of ${totalAdsRequired} complete`,
+          description: `Watch ${remaining} more ad${remaining !== 1 ? "s" : ""} to unlock your discount.`,
+        });
+        setShowVideoAd(false);
+        // Automatically show next ad after a short delay
+        setTimeout(() => {
+          setShowVideoAd(true);
+        }, 1500);
+      }
+    } catch (error) {
+      console.error("Error recording ad view:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to record ad view. Please try again.",
+      });
       setShowVideoAd(false);
-      // Automatically show next ad after a short delay
-      setTimeout(() => {
-        setShowVideoAd(true);
-      }, 1500);
     }
   };
 
-  const handleCongratulationsComplete = (): void => {
-    setShowCongratulations(false);
-    setShowSuccess(true);
+  const handleCongratulationsComplete = async (): Promise<void> => {
+    if (!unlockToken || !restaurant) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Missing unlock token. Please try again.",
+      });
+      setShowCongratulations(false);
+      return;
+    }
+
+    try {
+      // Get the first active discount for this store
+      const firstActiveDiscount = discountsData?.data?.find((d) => d.active);
+
+      if (!firstActiveDiscount) {
+        toast({
+          variant: "destructive",
+          title: "No discounts available",
+          description:
+            "This store doesn't have any active discounts at the moment.",
+        });
+        setShowCongratulations(false);
+        return;
+      }
+
+      // Exchange unlock token for coupon
+      const exchangeData = await graphqlRequest<{
+        exchangeUnlock: {
+          id: string;
+          code: string;
+          qrCode: string;
+          url: string;
+        };
+      }>(EXCHANGE_UNLOCK_MUTATION, {
+        input: {
+          token: unlockToken,
+          discountId: firstActiveDiscount.id,
+        },
+      });
+
+      if (exchangeData?.exchangeUnlock) {
+        // Invalidate coupons cache
+        try {
+          void queryClient.invalidateQueries({ queryKey: ["coupons"] });
+        } catch (_e) {
+          // ignore
+        }
+
+        setShowCongratulations(false);
+        setShowSuccess(true);
+        setUnlockToken(null);
+      }
+    } catch (error) {
+      console.error("Error exchanging unlock token:", error);
+      toast({
+        variant: "destructive",
+        title: "Failed to unlock coupon",
+        description:
+          error instanceof Error ? error.message : "Please try again.",
+      });
+      setShowCongratulations(false);
+    }
   };
 
   const handleVideoSkip = (): void => {
@@ -723,14 +818,18 @@ export default function RestaurantDetailPage(): React.JSX.Element {
 
       {showVideoAd ? (
         <RewardedVideoAd
-          onAdComplete={handleVideoComplete}
+          onAdComplete={() => {
+            void handleVideoComplete();
+          }}
           onAdSkipped={handleVideoSkip}
         />
       ) : null}
 
       <CongratulationsModal
         isOpen={showCongratulations}
-        onComplete={handleCongratulationsComplete}
+        onComplete={() => {
+          void handleCongratulationsComplete();
+        }}
       />
 
       <DiscountSuccessModal
