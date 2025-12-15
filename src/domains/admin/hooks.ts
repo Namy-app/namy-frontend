@@ -49,9 +49,17 @@ export function useCreateStore() {
 
   return useMutation<StoreCreationResponse, Error, CreateStoreInput>({
     mutationFn: async (input: CreateStoreInput) => {
+      // Clean the input by removing empty strings and undefined values
+      const cleanInput = Object.fromEntries(
+        Object.entries(input).filter(([_, value]) => {
+          // Keep the value if it's not empty string, undefined, or null
+          return value !== "" && value !== undefined && value !== null;
+        })
+      ) as CreateStoreInput;
+
       const data = await graphqlClient.request<{
         createStore: StoreCreationResponse;
-      }>(CREATE_STORE_MUTATION, { input });
+      }>(CREATE_STORE_MUTATION, { input: cleanInput });
       return data.createStore;
     },
     onSuccess: () => {

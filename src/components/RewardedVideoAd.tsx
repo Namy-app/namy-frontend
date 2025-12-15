@@ -172,7 +172,7 @@ export function RewardedVideoAd({
   }
 
   return (
-    <div className="bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-200 rounded-lg p-8 text-center">
+    <div className="bg-linear-to-br from-purple-50 to-pink-50 border-2 border-purple-200 rounded-lg p-8 text-center">
       <div className="text-6xl mb-4">🎬</div>
       <h3 className="text-2xl font-bold text-purple-900 mb-2">
         Watch Ad to Unlock Coupon
@@ -183,7 +183,7 @@ export function RewardedVideoAd({
 
       <button
         onClick={handleWatchAd}
-        className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-4 px-8 rounded-full text-lg shadow-lg transform transition hover:scale-105"
+        className="bg-linear-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-4 px-8 rounded-full text-lg shadow-lg transform transition hover:scale-105"
       >
         Watch Video (30s)
       </button>

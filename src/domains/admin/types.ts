@@ -1,15 +1,15 @@
 // ==================== Enums ====================
 
 export enum StoreType {
-  PRODUCT = "product",
-  SERVICE = "service",
+  PRODUCT = "PRODUCT",
+  SERVICE = "SERVICE",
 }
 
 export enum PriceRange {
-  BUDGET = "budget",
-  MODERATE = "moderate",
-  EXPENSIVE = "expensive",
-  LUXURY = "luxury",
+  BUDGET = "BUDGET",
+  MODERATE = "MODERATE",
+  EXPENSIVE = "EXPENSIVE",
+  LUXURY = "LUXURY",
 }
 
 export enum UserRole {

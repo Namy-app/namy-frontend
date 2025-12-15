@@ -50,7 +50,7 @@ export function useClosestStores(
 ): UseQueryResult<UseClosestStoresResult, Error> {
   const paginationParams = {
     page: pagination?.page ?? 1,
-    first: pagination?.first ?? 100,
+    first: pagination?.first ?? 3,
   };
 
   return useQuery({

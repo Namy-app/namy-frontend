@@ -220,31 +220,33 @@ export const GET_STORE_QUERY = `
 // for redeem flows which already return `store` + `discount` nested data.
 
 export const CREATE_STORE_MUTATION = `
-  mutation CreateStore(
-    $name: String!
-    $description: String
-    $address: String
-    $phoneNumber: String
-    $email: String
-    $logo: String
-    $coverImage: String
-    $ownerId: String!
-  ) {
-    createStore(
-      name: $name
-      description: $description
-      address: $address
-      phoneNumber: $phoneNumber
-      email: $email
-      logo: $logo
-      coverImage: $coverImage
-      ownerId: $ownerId
-    ) {
-      id
-      name
-      description
-      isActive
-      createdAt
+  mutation CreateStore($input: CreateStoreInput!) {
+    createStore(input: $input) {
+      store {
+        id
+        name
+        description
+        address
+        phoneNumber
+        imageUrl
+        active
+        createdAt
+        updatedAt
+        type
+        categoryId
+        subCategory
+        city
+        lat
+        lng
+        price
+        averageRating
+        reviewCounter
+        additionalInfo
+        openDays
+        tags
+        url
+      }
+      plainPin
     }
   }
 `;

@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 
+import { StoreType } from "@/domains/admin";
 import { useStores } from "@/domains/store/hooks";
 import { BasicLayout } from "@/layouts/BasicLayout";
 import { type Store } from "@/lib/api-types";
@@ -22,7 +23,7 @@ export default function ProductListingPage(): React.JSX.Element {
 
   // Filter stores to only show service type
   const products: Store[] = allStores.filter(
-    (store) => store.type === "service"
+    (store) => store.type === StoreType.SERVICE
   );
 
   // Filter and sort products

@@ -20,8 +20,12 @@ import { CongratulationsModal } from "@/components/CongratulationsModal";
 import { DiscountSuccessModal } from "@/components/DiscountSuccessModal";
 import { RewardedVideoAd } from "@/components/RewardedVideoAd";
 import { UnlockDiscountModal } from "@/components/UnlockDiscountModal";
+import { PlaceHolderTypeEnum } from "@/data/constants";
+import { StoreType } from "@/domains/admin";
 import { useStoreDiscounts } from "@/domains/admin/hooks";
+import { useWallet } from "@/domains/payment/hooks";
 import { useStore } from "@/domains/store/hooks";
+import { useMyLevel } from "@/domains/user/hooks/query/useMyLevel";
 import { useToast } from "@/hooks/use-toast";
 import { BasicLayout } from "@/layouts/BasicLayout";
 import { graphqlRequest } from "@/lib/graphql-client";
@@ -29,6 +33,7 @@ import {
   GENERATE_COUPON_MUTATION,
   QUICK_PAY_FOR_DISCOUNT_MUTATION,
 } from "@/lib/graphql-queries";
+import { openInGoogleMaps } from "@/lib/maps";
 import { Button } from "@/shared/components/Button";
 import { Card } from "@/shared/components/Card";
 import { useAuthStore } from "@/store/useAuthStore";
@@ -52,6 +57,8 @@ interface Restaurant {
   location: {
     address: string;
     city: string;
+    lat?: number;
+    lng?: number;
   };
   phone: string;
   images: string[];
@@ -82,29 +89,32 @@ export default function RestaurantDetailPage(): React.JSX.Element {
   const [showCongratulations, setShowCongratulations] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
+  const { data: userLevel } = useMyLevel();
+  const { data: walletData } = useWallet({ userId: user?.id });
+  const balance = walletData?.balance ?? 0;
   // Get restaurant ID from params
-  const restaurantId = (params?.detail as string) || null;
-  const { data: store, isLoading } = useStore(restaurantId);
+  const storeId = (params?.detail as string) || null;
+  const { data: store, isLoading } = useStore(storeId);
 
   // Fetch discounts for this store
   const { data: discountsData } = useStoreDiscounts(
-    { storeId: restaurantId },
+    { storeId: storeId },
     { page: 1, first: 10 }
   );
 
   // Convert store data to restaurant format for the UI
-  const restaurant: Restaurant | null = store
+  const parsedStore: Restaurant | null = store
     ? {
         id: store.id,
         name: store.name,
         category: store.categoryId || store.subCategory || "Restaurant",
-        emoji: store.type === "product" ? "🍽️" : "🔧",
+        emoji: store.type === StoreType.PRODUCT ? "🍽️" : "🔧",
         rating: store.averageRating ?? 4.5,
         reviewCount: store.reviewCounter ?? 0,
         isAdPartner: false,
         discount: {
           id: store.id,
-          percentage: 15, // Default discount
+          percentage: userLevel?.discountPercentage ?? 10,
           points: 100,
           restrictions: [
             "Show your QR code before paying",
@@ -116,12 +126,16 @@ export default function RestaurantDetailPage(): React.JSX.Element {
         location: {
           address: store.address || "Address not available",
           city: store.city || "City not available",
+          lat: store.lat,
+          lng: store.lng,
         },
-        phone: store.phoneNumber || "+1 234 567 8900",
+        phone: store.phoneNumber || "--",
         images: store.imageUrl
           ? [store.imageUrl]
           : [
-              "https://images.unsplash.com/photo-1565299507177-b0ac66763828?w=800&auto=format&fit=crop",
+              store.categoryId?.toLowerCase() === "restaurant"
+                ? PlaceHolderTypeEnum.RESTAURANT
+                : PlaceHolderTypeEnum.SHOP,
             ],
         menuItems: [],
         reviews: [],
@@ -197,7 +211,7 @@ export default function RestaurantDetailPage(): React.JSX.Element {
   };
 
   const handleUnlockDiscount = async (): Promise<void> => {
-    if (!restaurant) {
+    if (!parsedStore) {
       return;
     }
 
@@ -283,7 +297,7 @@ export default function RestaurantDetailPage(): React.JSX.Element {
   };
 
   const handleQuickPay = async (): Promise<void> => {
-    if (!restaurant) {
+    if (!parsedStore) {
       return;
     }
 
@@ -297,7 +311,16 @@ export default function RestaurantDetailPage(): React.JSX.Element {
       return;
     }
 
-    const discountId = restaurant.discount?.id ?? restaurant.id;
+    if (balance < 900) {
+      toast({
+        variant: "default",
+        title: "Insufficient balance",
+        description: "You need at least $9MXN in your wallet to use Quick Pay.",
+      });
+      return;
+    }
+
+    const discountId = parsedStore.discount?.id ?? parsedStore.id;
 
     try {
       toast({
@@ -358,11 +381,11 @@ export default function RestaurantDetailPage(): React.JSX.Element {
   };
 
   const handleWhatsAppContact = (): void => {
-    if (!restaurant) {
+    if (!parsedStore) {
       return;
     }
     window.open(
-      `https://wa.me/${restaurant.phone.replace(/\D/g, "")}`,
+      `https://wa.me/${parsedStore.phone.replace(/\D/g, "")}`,
       "_blank"
     );
   };
@@ -382,9 +405,23 @@ export default function RestaurantDetailPage(): React.JSX.Element {
     );
   }
 
+  const handleGetDirections = (): void => {
+    if (!parsedStore) {
+      return;
+    }
+    openInGoogleMaps({
+      ...(parsedStore.location.lat &&
+        parsedStore.location.lng && {
+          lat: +Number(parsedStore.location.lat).toFixed(6),
+          lng: +Number(parsedStore.location.lng).toFixed(6),
+        }),
+      address: `${parsedStore.location.address}, ${parsedStore.location.city}`,
+    });
+  };
+
   return (
     <BasicLayout className="pb-20">
-      {!restaurant ? (
+      {!parsedStore ? (
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-center">
             <p className="text-muted-foreground text-lg mb-4">
@@ -400,8 +437,8 @@ export default function RestaurantDetailPage(): React.JSX.Element {
           <div className="mx-auto max-w-6xl px-4">
             <div className="relative h-96 md:h-[520px] rounded-2xl overflow-hidden shadow-2xl">
               <Image
-                src={restaurant.images[currentImageIndex] ?? ""}
-                alt={restaurant.name}
+                src={parsedStore.images[currentImageIndex] ?? ""}
+                alt={parsedStore.name}
                 fill
                 className="object-cover transform-gpu scale-105 transition-transform duration-700"
                 priority
@@ -441,22 +478,22 @@ export default function RestaurantDetailPage(): React.JSX.Element {
 
               <div className="absolute left-6 bottom-6 text-left text-white">
                 <h1 className="text-3xl md:text-4xl font-extrabold drop-shadow-lg">
-                  {restaurant.name}
+                  {parsedStore.name}
                 </h1>
                 <div className="mt-2 flex items-center gap-4 text-sm md:text-base text-white/90">
                   <div className="inline-flex items-center gap-2">
-                    <span>{restaurant.emoji}</span>
-                    <span className="font-medium">{restaurant.category}</span>
+                    <span>{parsedStore.emoji}</span>
+                    <span className="font-medium">{parsedStore.category}</span>
                   </div>
                   <div className="inline-flex items-center gap-2">
                     <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                    <span className="font-semibold">{restaurant.rating}</span>
+                    <span className="font-semibold">{parsedStore.rating}</span>
                     <span className="text-sm">
-                      ({restaurant.reviewCount} reviews)
+                      ({parsedStore.reviewCount} reviews)
                     </span>
                   </div>
                 </div>
-                {restaurant.isAdPartner ? (
+                {parsedStore.isAdPartner ? (
                   <div className="mt-3 inline-block bg-yellow-400 text-black px-3 py-1 rounded-full text-xs font-bold">
                     ⭐ Ad Partner
                   </div>
@@ -467,28 +504,29 @@ export default function RestaurantDetailPage(): React.JSX.Element {
             <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
               <div className="lg:col-span-2 space-y-6">
                 <div className="rounded-3xl overflow-hidden shadow-glow">
-                  <div className="p-6 md:p-8 bg-gradient-to-br from-rose-300 via-amber-300 to-lime-200 rounded-3xl">
+                  <div className="p-6 md:p-8 bg-linear-to-br from-rose-300 via-amber-300 to-lime-200 rounded-3xl">
                     <div className="max-w-5xl mx-auto text-center text-white">
                       <h2 className="text-2xl md:text-3xl font-bold mb-2">
-                        🎉 {restaurant.discount.percentage}% discount with Ñamy!
+                        🎉 {parsedStore.discount.percentage}% de descuento con
+                        Ñamy!
                       </h2>
                       <p className="text-white/90 mb-1 text-sm">
                         {user?.isPremium
-                          ? "As a premium member, unlock instantly!"
-                          : "Watch an ad or Quick Pay to unlock"}
+                          ? "Como miembro premium, ¡desbloquea instantáneamente!"
+                          : "Solo muestra tu código QR después de ver un anuncio"}
                       </p>
-                      <p className="text-xs text-white/80 mb-4">
+                      {/* <p className="text-xs text-white/80 mb-4">
                         +{restaurant.discount.points} Ñamy points when using
                         this discount
-                      </p>
+                      </p> */}
                       <div className="mt-4">
                         <Button
                           onClick={handleUnlockDiscountClick}
                           className="w-full bg-white text-rose-600 hover:bg-white/95 font-bold rounded-full shadow-lg py-4"
                         >
                           {user?.isPremium
-                            ? "Unlock Discount Now"
-                            : "Unlock Discount"}
+                            ? "Desbloquear descuento ahora"
+                            : "Desbloquear descuento"}
                         </Button>
                       </div>
                     </div>
@@ -496,27 +534,36 @@ export default function RestaurantDetailPage(): React.JSX.Element {
                 </div>
 
                 <Card className="p-6 space-y-4 bg-white border border-[#f1e9e6] rounded-xl shadow-md">
-                  <div className="flex items-start gap-3">
-                    <Clock className="w-5 h-5 text-rose-500 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="font-semibold text-foreground">Hours</p>
-                      <p className="text-sm text-muted-foreground">
-                        {restaurant.hours}
-                      </p>
-                    </div>
-                  </div>
+                  {parsedStore.hours ? (
+                    <>
+                      <div className="flex items-start gap-3">
+                        <Clock className="w-5 h-5 text-rose-500 mt-0.5 flex-shrink-0" />
+                        <div>
+                          <p className="font-semibold text-foreground">Hours</p>
+                          <p className="text-sm text-muted-foreground">
+                            {parsedStore.hours}
+                          </p>
+                        </div>
+                      </div>
 
-                  <div className="h-px bg-border" />
+                      <div className="h-px bg-border" />
+                    </>
+                  ) : null}
 
                   <div className="flex items-start gap-3">
                     <MapPin className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
                     <div className="flex-1">
                       <p className="font-semibold text-foreground">Location</p>
                       <p className="text-sm text-muted-foreground mb-2">
-                        {restaurant.location.address},{" "}
-                        {restaurant.location.city}
+                        {parsedStore.location.address},{" "}
+                        {parsedStore.location.city}
                       </p>
-                      <Button variant="outline" size="sm" className="text-xs">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-xs"
+                        onClick={handleGetDirections}
+                      >
                         View on map 📍
                       </Button>
                     </div>
@@ -529,10 +576,10 @@ export default function RestaurantDetailPage(): React.JSX.Element {
                     <div>
                       <p className="font-semibold text-foreground">Phone</p>
                       <a
-                        href={`tel:${restaurant.phone}`}
+                        href={`tel:${parsedStore.phone}`}
                         className="text-sm text-rose-600 hover:underline"
                       >
-                        {restaurant.phone}
+                        {parsedStore.phone}
                       </a>
                     </div>
                   </div>
@@ -548,13 +595,13 @@ export default function RestaurantDetailPage(): React.JSX.Element {
                   </Button>
                 </Card>
 
-                {restaurant.menuItems.length > 0 ? (
+                {parsedStore.menuItems.length > 0 ? (
                   <div>
                     <h2 className="text-2xl font-bold text-foreground mb-4">
                       📖 Menu
                     </h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                      {restaurant.menuItems.map((item, idx) => (
+                      {parsedStore.menuItems.map((item, idx) => (
                         <div
                           key={item.id}
                           className={`relative overflow-hidden rounded-2xl shadow-md cursor-pointer transition-transform hover:scale-105 ${
@@ -583,7 +630,7 @@ export default function RestaurantDetailPage(): React.JSX.Element {
                     🕑 Discount Restrictions
                   </h2>
                   <ul className="space-y-3">
-                    {restaurant.discount.restrictions.map(
+                    {parsedStore.discount.restrictions.map(
                       (restriction, index) => (
                         <li
                           key={index}
@@ -591,7 +638,7 @@ export default function RestaurantDetailPage(): React.JSX.Element {
                         >
                           <span className="text-base mt-0.5">
                             {index ===
-                            restaurant.discount.restrictions.length - 1
+                            parsedStore.discount.restrictions.length - 1
                               ? "✅"
                               : "❌"}
                           </span>
@@ -604,13 +651,13 @@ export default function RestaurantDetailPage(): React.JSX.Element {
                   </ul>
                 </Card>
 
-                {restaurant.reviews.length > 0 ? (
+                {parsedStore.reviews.length > 0 ? (
                   <div>
                     <h2 className="text-2xl font-bold text-foreground mb-4">
                       ⭐ Reviews
                     </h2>
                     <div className="space-y-3 mb-4">
-                      {restaurant.reviews.map((review) => (
+                      {parsedStore.reviews.map((review) => (
                         <div
                           key={review.id}
                           className="p-4 bg-white border border-[#f1e9e6] rounded-xl shadow-sm"
@@ -660,12 +707,15 @@ export default function RestaurantDetailPage(): React.JSX.Element {
                   <div className="aspect-video hidden bg-[#fbf7f6] rounded-xl mb-3 flex items-center justify-center">
                     <span className="text-4xl">🗺️</span>
                   </div>
-                  <Button className="w-full bg-rose-500 hover:bg-rose-600 text-white">
+                  <Button
+                    className="w-full bg-rose-500 hover:bg-rose-600 text-white"
+                    onClick={handleGetDirections}
+                  >
                     Get directions 📍
                   </Button>
 
                   <div className="mt-4 flex flex-wrap gap-2">
-                    {restaurant.amenities.map((amenity, index) => (
+                    {parsedStore.amenities.map((amenity, index) => (
                       <span
                         key={index}
                         className="text-xs bg-[#faf7f6] px-3 py-1 rounded-full text-muted-foreground"
@@ -679,10 +729,10 @@ export default function RestaurantDetailPage(): React.JSX.Element {
                 <Card className="p-5 bg-white border border-[#f1e9e6] rounded-xl shadow-md">
                   <h3 className="font-semibold mb-2">Contact</h3>
                   <a
-                    href={`tel:${restaurant.phone}`}
+                    href={`tel:${parsedStore.phone}`}
                     className="block text-rose-600 font-medium mb-3"
                   >
-                    {restaurant.phone}
+                    {parsedStore.phone}
                   </a>
                   <Button
                     onClick={handleWhatsAppContact}
@@ -720,9 +770,9 @@ export default function RestaurantDetailPage(): React.JSX.Element {
       <DiscountSuccessModal
         isOpen={showSuccess}
         onClose={() => setShowSuccess(false)}
-        restaurantName={restaurant?.name ?? ""}
-        discountPercentage={restaurant?.discount.percentage ?? 10}
-        points={restaurant?.discount.points ?? 0}
+        restaurantName={parsedStore?.name ?? ""}
+        discountPercentage={parsedStore?.discount.percentage ?? 10}
+        points={parsedStore?.discount.points ?? 0}
       />
     </BasicLayout>
   );

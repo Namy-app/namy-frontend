@@ -28,7 +28,7 @@ export function CreateStoreForm({ onClose, onSuccess }: CreateStoreFormProps) {
     city: "",
     address: "",
     phoneNumber: "",
-    price: PriceRange.MODERATE,
+    price: PriceRange.BUDGET,
     active: true,
     url: "",
     tags: "",

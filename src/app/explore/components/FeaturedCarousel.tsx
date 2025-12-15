@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 
+import { PlaceHolderTypeEnum } from "@/data/constants";
 import { type Store } from "@/lib/api-types";
 import { Button } from "@/shared/components/Button";
 import { Card } from "@/shared/components/Card";
@@ -76,8 +77,8 @@ export function FeaturedCarousel({
                       <Image
                         src={
                           item.categoryId?.toLowerCase() === "restaurant"
-                            ? "/img/placeholders/placeholder-restaurant.jpg"
-                            : "/img/placeholders/placeholder-shop.jpg"
+                            ? PlaceHolderTypeEnum.RESTAURANT
+                            : PlaceHolderTypeEnum.SHOP
                         }
                         alt={item.name}
                         fill

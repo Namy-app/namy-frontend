@@ -81,11 +81,19 @@ export default function AdminDashboardPage() {
       stats: [
         {
           label: "Total Stores",
-          value: storeStatsLoading ? "..." : String(storeStats?.total ?? 0),
+          value: storeStatsLoading ? (
+            <span className="h-4 w-4 block rounded-full border border-gray-600 animate-spin" />
+          ) : (
+            String(storeStats?.total ?? 0)
+          ),
         },
         {
           label: "Active",
-          value: storeStatsLoading ? "..." : String(storeStats?.active ?? 0),
+          value: storeStatsLoading ? (
+            <span className="h-4 w-4 block rounded-full border border-gray-600 animate-spin" />
+          ) : (
+            String(storeStats?.active ?? 0)
+          ),
         },
       ],
     },
@@ -98,13 +106,19 @@ export default function AdminDashboardPage() {
       stats: [
         {
           label: "Total Users",
-          value: usersLoading
-            ? "..."
-            : String(usersData?.paginationInfo.total ?? 0),
+          value: usersLoading ? (
+            <span className="h-4 w-4 block rounded-full border border-gray-600 animate-spin" />
+          ) : (
+            String(usersData?.paginationInfo.total ?? 0)
+          ),
         },
         {
           label: "Active",
-          value: usersLoading ? "..." : String(activeUsersCount),
+          value: usersLoading ? (
+            <span className="h-4 w-4 block rounded-full border border-gray-600 animate-spin" />
+          ) : (
+            String(activeUsersCount)
+          ),
         },
       ],
     },
@@ -191,7 +205,7 @@ export default function AdminDashboardPage() {
             {/* Namy Logo - Center */}
             <button
               onClick={() => router.push("/explore")}
-              className="flex-shrink-0 mx-8 cursor-pointer hover:opacity-80 transition-opacity"
+              className="shrink-0 mx-8 cursor-pointer hover:opacity-80 transition-opacity"
               aria-label="Go to Explore"
             >
               <Image

@@ -45,7 +45,6 @@ export default function ProfilePage(): React.JSX.Element | null {
     wallet?.id || ""
   );
   const allStores = storesResult?.data ?? [];
-  console.log("myLevel => ", myLevel);
 
   if (!user) {
     return null;
