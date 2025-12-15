@@ -26,12 +26,12 @@ export function UnlockDiscountModal({
   }
 
   return (
-    <div className="fixed inset-0 bg-background/95 z-50 flex items-center justify-center p-6">
+    <div className="fixed inset-0 bg-white/80 backdrop-blur-sm z-9999 flex items-center justify-center p-6">
       <div className="w-full max-w-md">
         <div className="flex justify-end mb-4">
           <button
             onClick={onClose}
-            className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 hover:bg-accent hover:text-accent-foreground h-10 w-10 rounded-full"
+            className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 hover:bg-lime-300 h-10 w-10 rounded-full"
           >
             <X className="w-6 h-6" />
           </button>
@@ -43,7 +43,7 @@ export function UnlockDiscountModal({
           <p className="text-sm text-muted-foreground text-center mb-6">
             Nivel: {levelName}
           </p>
-          <div className="space-y-4">
+          <div className="space-y-4 mt-6">
             <div className="rounded-lg text-card-foreground shadow-sm p-6 bg-gradient-primary border-0 hover:shadow-glow transition-all cursor-pointer group">
               <button onClick={onWatchAd} className="w-full">
                 <div className="flex items-center gap-4">
@@ -69,10 +69,10 @@ export function UnlockDiscountModal({
                 <span className="bg-card px-2 text-muted-foreground">O</span>
               </div>
             </div>
-            <div className="rounded-lg text-card-foreground shadow-sm p-6 bg-secondary border-0 hover:shadow-glow transition-all cursor-pointer group">
+            <div className="rounded-lg text-card-foreground bg-lime-300 shadow-sm p-6 bg-secondary border-0 hover:shadow-glow transition-all cursor-pointer group">
               <button onClick={onQuickPay} className="w-full">
                 <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <div className="w-16 h-16 rounded-full bg-white/30 flex items-center justify-center group-hover:scale-110 transition-transform">
                     <CreditCard className="w-8 h-8 text-secondary-foreground" />
                   </div>
                   <div className="flex-1 text-left">
@@ -89,7 +89,7 @@ export function UnlockDiscountModal({
           </div>
           <p className="text-xs text-muted-foreground text-center mt-6">
             Al desbloquear obtendrás un código QR único para usar en el
-            restaurante
+            restaurante/almacenar
           </p>
         </div>
       </div>

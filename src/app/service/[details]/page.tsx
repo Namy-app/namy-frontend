@@ -20,11 +20,9 @@ import Image from "next/image";
 import { useRouter, useParams } from "next/navigation";
 import { useState, useEffect } from "react";
 
-import { BottomNavigation } from "@/app/explore/components/BottomNavigation";
-import { ExploreHeader } from "@/app/explore/components/ExploreHeader";
+import { BasicLayout } from "@/layouts/BasicLayout";
 import { Button } from "@/shared/components/Button";
 import { Card } from "@/shared/components/Card";
-import { useAuthStore } from "@/store/useAuthStore";
 
 // Service type definition
 interface Service {
@@ -144,7 +142,6 @@ const mockServices: Record<string, Service> = {
 export default function ServiceDetailPage(): React.JSX.Element {
   const router = useRouter();
   const params = useParams();
-  const { isAuthenticated } = useAuthStore();
 
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
@@ -259,23 +256,19 @@ export default function ServiceDetailPage(): React.JSX.Element {
   // Loading state
   if (loading || !serviceData) {
     return (
-      <div className="min-h-screen bg-background pb-20">
-        <ExploreHeader isAuthenticated={isAuthenticated} />
+      <BasicLayout className="pb-20">
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-center">
             <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
             <p className="text-muted-foreground">Loading service details...</p>
           </div>
         </div>
-        <BottomNavigation />
-      </div>
+      </BasicLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background pb-20">
-      <ExploreHeader isAuthenticated={isAuthenticated} />
-
+    <BasicLayout className="pb-20">
       {/* Hero Image Carousel */}
       <div className="relative h-80 overflow-hidden">
         <Image
@@ -580,8 +573,6 @@ export default function ServiceDetailPage(): React.JSX.Element {
           </p>
         </div>
       </div>
-
-      <BottomNavigation />
-    </div>
+    </BasicLayout>
   );
 }

@@ -68,11 +68,11 @@ export function CongratulationsModal({
 
   return (
     <div className="fixed inset-0 bg-background/95 backdrop-blur-sm z-50 flex items-center justify-center p-6">
-      <div className="rounded-lg border text-card-foreground shadow-sm w-full max-w-md p-6 bg-card border-border shadow-glow">
+      <div className="rounded-lg border shadow-sm w-full max-w-md p-8 bg-gradient-to-br from-green-500 to-green-600 border-0 shadow-glow">
         <div className="text-center animate-bounce-in">
           <div className="text-8xl mb-4">🎉</div>
-          <h3 className="text-3xl font-bold text-primary mb-2">You Did It!</h3>
-          <p className="text-muted-foreground">
+          <h3 className="text-3xl font-bold text-white mb-2">You Did It!</h3>
+          <p className="text-white/90 text-lg">
             Discount unlocked! +100 points earned
           </p>
           <div className="fixed inset-0 pointer-events-none">

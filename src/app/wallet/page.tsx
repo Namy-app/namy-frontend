@@ -2,15 +2,14 @@
 
 import { useState } from "react";
 
-import { BottomNavigation } from "@/app/explore/components/BottomNavigation";
-import { ExploreHeader } from "@/app/explore/components/ExploreHeader";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { WalletDashboard, DepositForm } from "@/domains/payment/components";
 import { useCreateWallet, useWallet } from "@/domains/payment/hooks";
+import { BasicLayout } from "@/layouts/BasicLayout";
 import { useAuthStore } from "@/store/useAuthStore";
 
 export default function PaymentPage(): React.JSX.Element {
-  const { user, isAuthenticated } = useAuthStore();
+  const { user } = useAuthStore();
   const [showDepositForm, setShowDepositForm] = useState(false);
   const createWallet = useCreateWallet();
 
@@ -48,10 +47,7 @@ export default function PaymentPage(): React.JSX.Element {
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-background pb-20">
-        {/* Top Navigation */}
-        <ExploreHeader isAuthenticated={isAuthenticated} />
-
+      <BasicLayout className="pb-20">
         {/* Main Content - with padding for fixed header and bottom nav */}
         <div className="pt-14 pb-16 bg-gradient-hero p-6">
           <div className="max-w-4xl mx-auto">
@@ -119,10 +115,7 @@ export default function PaymentPage(): React.JSX.Element {
             )}
           </div>
         </div>
-
-        {/* Bottom Navigation */}
-        <BottomNavigation />
-      </div>
+      </BasicLayout>
     </ProtectedRoute>
   );
 }

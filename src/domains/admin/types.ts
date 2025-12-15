@@ -229,7 +229,7 @@ export interface UpdateDiscountInput {
 }
 
 export interface DiscountFiltersInput {
-  storeId?: string;
+  storeId?: string | null;
   active?: boolean;
   type?: DiscountType;
 }

@@ -93,10 +93,12 @@ export function DiscountSuccessModal({
               {discountPercentage}% OFF at {restaurantName}
             </p>
             <div className="bg-white p-6 rounded-2xl mb-6 qr-glow animate-scale-in">
-              <div className="w-48 h-48 bg-gradient-to-br from-gray-100 to-gray-200 mx-auto rounded-xl flex items-center justify-center">
+              <div className="w-48 h-48 bg-gradient-to-br from-gray-50 to-gray-100 mx-auto rounded-xl flex items-center justify-center border-2 border-gray-200">
                 <div className="text-center">
                   <span className="text-6xl">📱</span>
-                  <p className="text-xs text-gray-600 mt-2">QR Code</p>
+                  <p className="text-xs text-gray-700 font-semibold mt-2">
+                    Scan QR Code
+                  </p>
                 </div>
               </div>
             </div>

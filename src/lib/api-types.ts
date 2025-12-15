@@ -51,6 +51,9 @@ export interface Store {
   logo?: string;
   coverImage?: string;
   imageUrl?: string;
+  lat?: number;
+  lng?: number;
+  distance?: number;
   isActive: boolean;
   ownerId: string;
   createdAt: string;
@@ -61,6 +64,8 @@ export interface Store {
   averageRating?: number;
   reviewCounter?: number;
   city?: string;
+  openDays?: Record<string, unknown>;
+  additionalInfo?: Record<string, unknown>;
 }
 
 export interface Discount {

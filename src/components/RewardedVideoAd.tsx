@@ -113,84 +113,102 @@ export function RewardedVideoAd({
 
   if (adWatched) {
     return (
-      <div className="bg-green-50 border-2 border-green-500 rounded-lg p-6 text-center">
-        <div className="text-green-600 text-5xl mb-4">✓</div>
-        <h3 className="text-xl font-bold text-green-900 mb-2">Ad Complete!</h3>
-        <p className="text-green-700">You can now redeem {couponName}</p>
+      <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-9999 flex items-center justify-center p-6">
+        <div className="w-full max-w-md">
+          <div className="bg-green-50 border-2 border-green-500 rounded-lg p-6 text-center">
+            <div className="text-green-600 text-5xl mb-4">✓</div>
+            <h3 className="text-xl font-bold text-green-900 mb-2">
+              Ad Complete!
+            </h3>
+            <p className="text-green-700">You can now redeem {couponName}</p>
+          </div>
+        </div>
       </div>
     );
   }
 
   if (isPlaying) {
     return (
-      <div className="bg-black rounded-lg overflow-hidden relative">
-        {/* Video Ad Container */}
-        <div className="aspect-video bg-gray-900 flex items-center justify-center relative">
-          {/* AdSense Video Ad Slot */}
-          <ins
-            className="adsbygoogle"
-            style={{
-              display: "block",
-              width: "100%",
-              height: "100%",
-              position: "absolute",
-              top: 0,
-              left: 0,
-            }}
-            data-ad-client={process.env.NEXT_PUBLIC_GOOGLE_ADSENSE_CLIENT_ID}
-            data-ad-slot="YOUR_VIDEO_AD_SLOT_ID"
-            data-ad-format="fluid"
-            data-adtest="on"
-          />
+      <div className="fixed inset-0 bg-black/95 z-9999 flex items-center justify-center p-6">
+        <div className="w-full max-w-4xl">
+          <div className="bg-black rounded-lg overflow-hidden relative">
+            {/* Video Ad Container */}
+            <div className="aspect-video bg-gray-900 flex items-center justify-center relative">
+              {/* AdSense Video Ad Slot */}
+              <ins
+                className="adsbygoogle"
+                style={{
+                  display: "block",
+                  width: "100%",
+                  height: "100%",
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                }}
+                data-ad-client={
+                  process.env.NEXT_PUBLIC_GOOGLE_ADSENSE_CLIENT_ID
+                }
+                data-ad-slot="YOUR_VIDEO_AD_SLOT_ID"
+                data-ad-format="fluid"
+                data-adtest="on"
+              />
 
-          {/* Test Mode Overlay */}
-          <div className="relative z-10 text-white text-center p-8">
-            <div className="text-6xl mb-4">📺</div>
-            <h3 className="text-2xl font-bold mb-2">Watching Video Ad...</h3>
-            <div className="text-4xl font-mono mb-2">{timeLeft}s</div>
-            <p className="text-sm text-gray-300">
-              Please wait to unlock your coupon
-            </p>
-          </div>
+              {/* Test Mode Overlay */}
+              <div className="relative z-10 text-white text-center p-8">
+                <div className="text-6xl mb-4">📺</div>
+                <h3 className="text-2xl font-bold mb-2">
+                  Watching Video Ad...
+                </h3>
+                <div className="text-4xl font-mono mb-2">{timeLeft}s</div>
+                <p className="text-sm text-gray-300">
+                  Please wait to unlock your coupon
+                </p>
+              </div>
 
-          {/* Progress Bar */}
-          <div className="absolute bottom-0 left-0 right-0 h-2 bg-gray-700">
-            <div
-              className="h-full bg-green-500 transition-all duration-1000"
-              style={{ width: `${((30 - timeLeft) / 30) * 100}%` }}
-            />
+              {/* Progress Bar */}
+              <div className="absolute bottom-0 left-0 right-0 h-2 bg-gray-700">
+                <div
+                  className="h-full bg-green-500 transition-all duration-1000"
+                  style={{ width: `${((30 - timeLeft) / 30) * 100}%` }}
+                />
+              </div>
+            </div>
+
+            {adError ? (
+              <div className="bg-yellow-50 border-t border-yellow-200 p-3 text-sm text-yellow-800">
+                ⚠️ {adError}
+              </div>
+            ) : null}
           </div>
         </div>
-
-        {adError ? (
-          <div className="bg-yellow-50 border-t border-yellow-200 p-3 text-sm text-yellow-800">
-            ⚠️ {adError}
-          </div>
-        ) : null}
       </div>
     );
   }
 
   return (
-    <div className="bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-200 rounded-lg p-8 text-center">
-      <div className="text-6xl mb-4">🎬</div>
-      <h3 className="text-2xl font-bold text-purple-900 mb-2">
-        Watch Ad to Unlock Coupon
-      </h3>
-      <p className="text-purple-700 mb-6">
-        Watch a short video to redeem {couponName}
-      </p>
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-9999 flex items-center justify-center p-6">
+      <div className="w-full max-w-2xl">
+        <div className="bg-linear-to-br from-purple-50 to-pink-50 border-2 border-purple-200 rounded-lg p-8 text-center">
+          <div className="text-6xl mb-4">🎬</div>
+          <h3 className="text-2xl font-bold text-purple-900 mb-2">
+            Watch Ad to Unlock Coupon
+          </h3>
+          <p className="text-purple-700 mb-6">
+            Watch a short video to redeem {couponName}
+          </p>
 
-      <button
-        onClick={handleWatchAd}
-        className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-4 px-8 rounded-full text-lg shadow-lg transform transition hover:scale-105"
-      >
-        Watch Video (30s)
-      </button>
+          <button
+            onClick={handleWatchAd}
+            className="bg-linear-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-4 px-8 rounded-full text-lg shadow-lg transform transition hover:scale-105"
+          >
+            Watch Video (30s)
+          </button>
 
-      <div className="mt-6 text-sm text-gray-600">
-        <p>✨ Free coupons in exchange for watching ads</p>
-        <p>🎯 Support local restaurants and save money</p>
+          <div className="mt-6 text-sm text-gray-600">
+            <p>✨ Free coupons in exchange for watching ads</p>
+            <p>🎯 Support local restaurants and save money</p>
+          </div>
+        </div>
       </div>
     </div>
   );

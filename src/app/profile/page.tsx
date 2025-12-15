@@ -1,13 +1,13 @@
 "use client";
 
 import {
-  Flame,
+  // Flame,
   Wallet,
-  Star,
+  // Star,
   Zap,
-  Settings,
-  User as UserIcon,
-  CreditCard,
+  // Settings,
+  // User as UserIcon,
+  // CreditCard,
   HelpCircle,
   Phone,
   LogOut,
@@ -15,15 +15,18 @@ import {
   Crown,
   Percent,
 } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import React from "react";
+import React, { useState } from "react";
 
-import { BottomNavigation } from "@/app/explore/components/BottomNavigation";
-import { ExploreHeader } from "@/app/explore/components/ExploreHeader";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { useWallet, useWalletBalance } from "@/domains/payment/hooks";
 import { useStores } from "@/domains/store/hooks";
 import { useLogout } from "@/domains/user/hooks";
+import { useMyLevel } from "@/domains/user/hooks/query/useMyLevel";
 import { useToast } from "@/hooks/use-toast";
+import { BasicLayout } from "@/layouts/BasicLayout";
+import { getInitials, getUserLevelTitle } from "@/lib/user.lib";
 import { Button } from "@/shared/components/Button";
 import { Card } from "@/shared/components/Card";
 import { useAuthStore } from "@/store/useAuthStore";
@@ -32,9 +35,15 @@ export default function ProfilePage(): React.JSX.Element | null {
   const router = useRouter();
   const { toast } = useToast();
   const { user } = useAuthStore();
+  const { data: myLevel } = useMyLevel();
   const logoutMutation = useLogout();
-  const [expandPoints, setExpandPoints] = React.useState(false);
+  const [expandPoints, setExpandPoints] = useState(false);
+
   const { data: storesResult, isLoading: storesLoading } = useStores();
+  const { data: wallet } = useWallet({ userId: user?.id });
+  const { data: walletBalance, isLoading: walletLoading } = useWalletBalance(
+    wallet?.id || ""
+  );
   const allStores = storesResult?.data ?? [];
 
   if (!user) {
@@ -62,18 +71,22 @@ export default function ProfilePage(): React.JSX.Element | null {
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-gradient-hero pb-24">
-        <ExploreHeader isAuthenticated />
-
+      <BasicLayout>
         {/* Hero Section */}
         <div className="bg-linear-to-b from-gradient-primary to-transparent p-6 pb-8 pt-20">
           <div className="text-center max-w-5xl mx-auto">
             <div className="w-24 h-24 mx-auto mb-4 rounded-full bg-gradient-primary flex items-center justify-center shadow-glow">
-              <div className="text-4xl">🍴</div>
+              <div className="text-4xl">{getInitials(user.displayName)}</div>
             </div>
             <h1 className="text-2xl font-bold text-foreground mb-1">
               {user.displayName || user.email}
             </h1>
+            {!user.isPremium ? (
+              <div className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold transition-colors border-0 bg-gradient-primary text-white shadow-glow ml-2">
+                <Crown className="w-4 h-4 mr-1" />
+                Premium Member
+              </div>
+            ) : null}
             <p className="text-muted-foreground mb-4">
               @{user.email?.split("@")[0]}
             </p>
@@ -85,27 +98,33 @@ export default function ProfilePage(): React.JSX.Element | null {
               </p>
               <div className="flex items-center gap-2 px-4 py-3 rounded-lg bg-card border border-border">
                 <Wallet className="w-5 h-5 text-primary" />
-                <span className="text-2xl font-bold text-foreground">
-                  $250 MXN
-                </span>
+                {walletLoading ? (
+                  <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <span className="text-2xl font-bold text-foreground">
+                    ${walletBalance?.balance || "0"}{" "}
+                    {walletBalance?.currency || "MXN"}
+                  </span>
+                )}
               </div>
             </div>
 
             {/* Tier Badge */}
-            {user.isPremium ? (
+            {/* {user.isPremium ? (
               <div className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold transition-colors border-0 bg-gradient-primary text-white shadow-glow ml-2">
                 <Crown className="w-4 h-4 mr-1" />
                 Premium Member
               </div>
-            ) : null}
+            ) : null} */}
 
             {/* Points Card */}
-            <Card className="mt-4 p-4 bg-card border-border">
+            {/* TODO: Hide until points is implemented */}
+            {/* <Card className="mt-4 p-4 bg-card border-border">
               <div className="text-3xl font-bold text-primary mb-1">
                 8,450 🍽️
               </div>
               <p className="text-sm text-muted-foreground">Ñamy Points</p>
-            </Card>
+            </Card> */}
           </div>
         </div>
 
@@ -113,28 +132,43 @@ export default function ProfilePage(): React.JSX.Element | null {
         <div className="px-6 py-6 max-w-5xl mx-auto w-full">
           <div className="grid grid-cols-4 gap-3">
             {[
-              { icon: Flame, label: "Streaks", color: "bg-gradient-primary" },
+              // { icon: Flame, label: "Streaks", color: "bg-gradient-primary", href: "#" },
               {
                 icon: Wallet,
-                label: "Mi Billetera",
+                label: "Ve a mi billetera",
+                // label: "Mi Billetera",
                 color: "bg-gradient-secondary",
+                href: "/wallet",
               },
-              { icon: Star, label: "Reviews", color: "bg-accent/20" },
-              { icon: Zap, label: "Mi nivel", color: "bg-accent/20" },
+              // { icon: Star, label: "Reviews", color: "bg-accent/20", href: "#" },
+              // { icon: Zap, label: "Mi nivel", color: "bg-accent/20", href: "#" },
             ].map((item) => (
-              <button
+              <Link
+                key={item.label}
+                className="flex flex-col col-span-4 items-center hover:shadow-card transition-all"
+                href={item.href}
+              >
+                {/* <Link
                 key={item.label}
                 className="flex flex-col items-center gap-2 p-3 rounded-2xl bg-card hover:shadow-card transition-all"
-              >
-                <div
+                href={item.href}
+              > */}
+                {/* TODO:Put Back once we start implementing other features */}
+                {/* <div
                   className={`w-12 h-12 rounded-full ${item.color} flex items-center justify-center`}
                 >
                   <item.icon className="w-6 h-6 text-white" />
                 </div>
                 <span className="text-xs font-medium text-foreground">
                   {item.label}
-                </span>
-              </button>
+                </span> */}
+                <div
+                  className={`w-full h-12 rounded-sm font-bold text-gray-800 ${item.color} flex items-center justify-center`}
+                >
+                  {item.icon ? <item.icon className="w-6 h-6 mr-2" /> : null}
+                  {item.label}
+                </div>
+              </Link>
             ))}
           </div>
         </div>
@@ -144,6 +178,26 @@ export default function ProfilePage(): React.JSX.Element | null {
           {/* Daily Streak Card */}
           <Card className="p-6 bg-gradient-primary text-white border-0 shadow-glow">
             <div className="flex items-start justify-between mb-4">
+              <div>
+                <h3 className="text-xl font-bold mb-1">
+                  🔥 Level {myLevel?.level} -{" "}
+                  {getUserLevelTitle(myLevel?.level ?? 1)}
+                </h3>
+                <p className="text-white/90 text-sm">
+                  <b className="text-base">{myLevel?.usesUntilNextLevel}</b>{" "}
+                  more uses to next level
+                </p>
+              </div>
+            </div>
+            <div className="h-2 bg-white/20 rounded-full overflow-hidden mb-4">
+              <div
+                className="h-full bg-white rounded-full transition-all"
+                style={{ width: "71.4286%" }}
+              />
+            </div>
+            {/* TODO: Hide until leadership is implemented */}
+            {/* <div className="flex items-start justify-between mb-4"> */}
+            {/* <div className="items-start justify-between mb-4">
               <div>
                 <h3 className="text-xl font-bold mb-1">
                   🔥 Daily Ñamy Streak: 5 Days
@@ -158,8 +212,8 @@ export default function ProfilePage(): React.JSX.Element | null {
                 className="h-full bg-white rounded-full transition-all"
                 style={{ width: "71.4286%" }}
               />
-            </div>
-            <div className="pt-4 border-t border-white/20">
+            </div> */}
+            <div className="hidden pt-4 border-t border-white/20">
               <div className="flex items-center justify-between mb-2">
                 <h4 className="text-lg font-bold text-white">
                   Level 8 – Savory Explorer 🍝
@@ -177,7 +231,8 @@ export default function ProfilePage(): React.JSX.Element | null {
           </Card>
 
           {/* Points Breakdown */}
-          <Card className="p-5 bg-card border-border">
+          {/* TODO: Hide until leadership is implemented */}
+          <Card className="p-5 bg-card border-border hidden">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-bold text-foreground">
                 📊 Points Breakdown
@@ -290,9 +345,11 @@ export default function ProfilePage(): React.JSX.Element | null {
                         {store.city || "Location"}
                       </p>
                     </div>
-                    <div className="text-right flex-shrink-0">
-                      <p className="font-bold text-primary text-lg">15% OFF</p>
-                      <p className="text-xs text-muted-foreground">+100 pts</p>
+                    <div className="text-right shrink-0">
+                      <p className="font-bold text-primary text-lg">
+                        {myLevel?.discountPercentage ?? 10}% OFF
+                      </p>
+                      {/* <p className="text-xs text-muted-foreground">+100 pts</p> */}
                     </div>
                   </button>
                 ))}
@@ -307,8 +364,8 @@ export default function ProfilePage(): React.JSX.Element | null {
             )}
           </Card>
 
-          {/* Leaderboard */}
-          <Card className="p-5 bg-card border-border">
+          {/* Leaderboard: TODO: Hide until leadership is implemented */}
+          <Card className="p-5 bg-card border-border hidden">
             <h3 className="text-lg font-bold text-foreground mb-4">
               🏆 You&apos;re ranked #23 in Cancún!
             </h3>
@@ -387,13 +444,13 @@ export default function ProfilePage(): React.JSX.Element | null {
             </h3>
             <div className="space-y-1">
               {[
-                { icon: Settings, label: "Settings", action: undefined },
-                { icon: UserIcon, label: "Edit Profile", action: undefined },
-                {
-                  icon: CreditCard,
-                  label: "Payment Methods",
-                  action: undefined,
-                },
+                // { icon: Settings, label: "Settings", action: undefined },
+                // { icon: UserIcon, label: "Edit Profile", action: undefined },
+                // {
+                //   icon: CreditCard,
+                //   label: "Payment Methods",
+                //   action: undefined,
+                // },
                 {
                   icon: HelpCircle,
                   label: "Help & FAQ",
@@ -420,13 +477,13 @@ export default function ProfilePage(): React.JSX.Element | null {
                 disabled={logoutMutation.isPending}
                 className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-destructive/10 transition-colors"
               >
-                <div className="flex items-center gap-3">
-                  <LogOut className="w-5 h-5 text-destructive" />
-                  <span className="text-destructive">
+                <div className="flex items-center gap-3 text-red-500">
+                  <LogOut className="w-5 h-5" />
+                  <span>
                     {logoutMutation.isPending ? "Logging out..." : "Log Out"}
                   </span>
                 </div>
-                <ChevronRight className="w-5 h-5 text-destructive" />
+                <ChevronRight className="w-5 h-5" />
               </button>
             </div>
           </Card>
@@ -438,9 +495,7 @@ export default function ProfilePage(): React.JSX.Element | null {
             </p>
           </div>
         </div>
-
-        <BottomNavigation />
-      </div>
+      </BasicLayout>
     </ProtectedRoute>
   );
 }
