@@ -120,24 +120,33 @@ export default function RestaurantDetailPage(): React.JSX.Element {
         reviewCount: store.reviewCounter ?? 0,
         isAdPartner: false,
         discount: {
-          id: firstActiveDiscount?.id, // Use actual discount ID
+          id: firstActiveDiscount?.id,
           percentage:
             firstActiveDiscount?.type === "PERCENTAGE"
               ? firstActiveDiscount.value
-              : 15, // Default if fixed discount
-          points: 100,
-          restrictions: [
-            "Show your QR code before paying",
-            "Valid for dine-in only",
-            "Cannot be combined with other offers",
-          ],
+              : firstActiveDiscount?.type === "FIXED_AMOUNT"
+                ? Math.round((firstActiveDiscount.value / 100) * 10) // Convert fixed amount to approximate percentage
+                : 15, // Fallback if no discount
+          points: firstActiveDiscount?.usedCount ?? 0, // Use actual usage count
+          restrictions: firstActiveDiscount?.description
+            ? [firstActiveDiscount.description]
+            : [
+                "Show your QR code before paying",
+                "Valid for dine-in only",
+                "Cannot be combined with other offers",
+              ],
         },
-        hours: "Mon–Sun: 11:00 AM – 11:00 PM",
+        hours:
+          store.openDays && typeof store.openDays === "object"
+            ? Object.entries(store.openDays as Record<string, unknown>)
+                .map(([day, hours]) => `${day}: ${String(hours)}`)
+                .join(", ") || "Hours not available"
+            : "Hours not available",
         location: {
           address: store.address || "Address not available",
           city: store.city || "City not available",
         },
-        phone: store.phoneNumber || "+1 234 567 8900",
+        phone: store.phoneNumber || "Phone not available",
         images: store.imageUrl
           ? [store.imageUrl]
           : [
@@ -145,7 +154,16 @@ export default function RestaurantDetailPage(): React.JSX.Element {
             ],
         menuItems: [],
         reviews: [],
-        amenities: ["🅿️ Parking available", "📶 Free WiFi"],
+        amenities:
+          store.additionalInfo &&
+          typeof store.additionalInfo === "object" &&
+          "amenities" in store.additionalInfo &&
+          Array.isArray(
+            (store.additionalInfo as { amenities?: string[] }).amenities
+          )
+            ? ((store.additionalInfo as { amenities: string[] })
+                .amenities as string[])
+            : ["Store amenities not available"],
       }
     : null;
 
@@ -191,7 +209,7 @@ export default function RestaurantDetailPage(): React.JSX.Element {
         };
       }>(REWARD_AD_MUTATION, {
         input: {
-          adUnitId: "test-ad-unit",
+          adUnitId: process.env.NEXT_PUBLIC_ADMOB_AD_UNIT_ID || "test-ad-unit",
           rewardToken: `reward-${Date.now()}-${Math.random()}`,
           deviceId:
             typeof navigator !== "undefined" ? navigator.userAgent : undefined,

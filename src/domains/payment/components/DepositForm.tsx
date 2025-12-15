@@ -19,6 +19,8 @@ interface TierOption {
   isPopular?: boolean;
 }
 
+// TODO: Fetch these from backend configuration API
+// These tiers define deposit bonuses (e.g., 10% bonus on $100 deposit)
 const TIER_OPTIONS: TierOption[] = [
   {
     userPays: 5000, // $50 MXN
