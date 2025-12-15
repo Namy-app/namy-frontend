@@ -64,6 +64,8 @@ export interface Store {
   averageRating?: number;
   reviewCounter?: number;
   city?: string;
+  openDays?: Record<string, unknown>;
+  additionalInfo?: Record<string, unknown>;
 }
 
 export interface Discount {

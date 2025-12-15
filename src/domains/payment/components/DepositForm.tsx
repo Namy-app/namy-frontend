@@ -19,6 +19,8 @@ interface TierOption {
   isPopular?: boolean;
 }
 
+// TODO: Fetch these from backend configuration API
+// These tiers define deposit bonuses (e.g., 10% bonus on $100 deposit)
 const TIER_OPTIONS: TierOption[] = [
   {
     userPays: 5000, // $50 MXN
@@ -135,12 +137,12 @@ export function DepositForm({ onSuccess, onCancel }: DepositFormProps) {
         <div className="bg-blue-50 border border-blue-200 rounded-md p-4 mb-6">
           <p className="text-sm text-blue-800">
             <span className="font-semibold">You Pay:</span>{" "}
-            {formatAmount(currentAmount)} MXN
+            {formatAmount(currentAmount)}
           </p>
           {bonusAmount > 0 && (
             <p className="text-sm text-green-800 mt-2">
               <span className="font-semibold">You Get:</span>{" "}
-              {formatAmount(currentCredit)} MXN (+{formatAmount(bonusAmount)}
+              {formatAmount(currentCredit)} (+{formatAmount(bonusAmount)}
               bonus)
             </p>
           )}
@@ -148,7 +150,7 @@ export function DepositForm({ onSuccess, onCancel }: DepositFormProps) {
 
         <StripePaymentForm
           amount={currentAmount}
-          description={`Wallet deposit - ${formatAmount(currentCredit)} MXN credit`}
+          description={`Wallet deposit - ${formatAmount(currentCredit)} credit`}
           onSuccess={handlePaymentSuccess}
           onError={handlePaymentError}
         />
@@ -182,7 +184,7 @@ export function DepositForm({ onSuccess, onCancel }: DepositFormProps) {
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <p className="font-semibold text-gray-900">
-                      {formatAmount(tier.userPays)} MXN
+                      {formatAmount(tier.userPays)}
                     </p>
                     <p className="text-sm text-gray-600 mt-1">
                       {tier.description}
@@ -190,7 +192,7 @@ export function DepositForm({ onSuccess, onCancel }: DepositFormProps) {
                   </div>
                   <div className="text-right ml-4">
                     <p className="text-lg font-bold text-green-600">
-                      {formatAmount(tier.walletCredit)} MXN
+                      {formatAmount(tier.walletCredit)}
                     </p>
                     {tier.bonusPercentage > 0 && (
                       <p className="text-xs text-green-600 font-semibold">
@@ -237,7 +239,7 @@ export function DepositForm({ onSuccess, onCancel }: DepositFormProps) {
           <div className="flex items-center justify-between">
             <span className="text-gray-700">You Pay</span>
             <span className="text-2xl font-bold text-gray-900">
-              {formatAmount(currentAmount)} MXN
+              {formatAmount(currentAmount)}
             </span>
           </div>
 
@@ -248,7 +250,7 @@ export function DepositForm({ onSuccess, onCancel }: DepositFormProps) {
                   💰 Bonus Points
                 </span>
                 <span className="text-lg font-bold text-green-600">
-                  +{formatAmount(bonusAmount)} MXN
+                  +{formatAmount(bonusAmount)}
                 </span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
@@ -266,7 +268,7 @@ export function DepositForm({ onSuccess, onCancel }: DepositFormProps) {
             <div className="flex items-center justify-between">
               <span className="font-semibold text-gray-900">Total Credit</span>
               <span className="text-3xl font-bold bg-gradient-to-r from-green-600 to-green-500 bg-clip-text text-transparent">
-                {formatAmount(currentCredit)} MXN
+                {formatAmount(currentCredit)}
               </span>
             </div>
           </div>
