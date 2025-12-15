@@ -52,7 +52,8 @@ const categories = [
 
 export default function RestaurantListingPage(): React.JSX.Element {
   const { isAuthenticated } = useAuthStore();
-  const { data: allStores = [], isLoading } = useStores();
+  const { data: storesResult, isLoading } = useStores();
+  const allStores = storesResult?.data ?? [];
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");

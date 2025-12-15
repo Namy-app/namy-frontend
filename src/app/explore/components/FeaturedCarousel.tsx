@@ -10,7 +10,8 @@ import { Button } from "@/shared/components/Button";
 import { Card } from "@/shared/components/Card";
 
 export function FeaturedCarousel(): React.JSX.Element {
-  const { data: allStores = [], isLoading } = useStores();
+  const { data: storesResult, isLoading } = useStores();
+  const allStores = storesResult?.data ?? [];
   const [currentSlide, setCurrentSlide] = useState(0);
 
   // Get first 6 stores for carousel

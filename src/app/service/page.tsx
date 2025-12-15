@@ -30,7 +30,8 @@ type ViewMode = "grid" | "map";
 
 export default function ServicesPage(): React.JSX.Element {
   const { isAuthenticated } = useAuthStore();
-  const { data: allStores = [], isLoading } = useStores();
+  const { data: storesResult, isLoading } = useStores();
+  const allStores = storesResult?.data ?? [];
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
 
   // Filter stores to only show services (categoryId !== "Food & Beverage")
