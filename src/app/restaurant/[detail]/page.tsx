@@ -23,12 +23,15 @@ import { DiscountSuccessModal } from "@/components/DiscountSuccessModal";
 import { RewardedVideoAd } from "@/components/RewardedVideoAd";
 import { UnlockDiscountModal } from "@/components/UnlockDiscountModal";
 import { useStoreDiscounts } from "@/domains/admin/hooks";
+import { useWallet } from "@/domains/payment/hooks";
 import { useStores } from "@/domains/store/hooks";
 import { useToast } from "@/hooks/use-toast";
 import { graphqlRequest } from "@/lib/graphql-client";
 import {
   GENERATE_COUPON_MUTATION,
   QUICK_PAY_FOR_DISCOUNT_MUTATION,
+  REWARD_AD_MUTATION,
+  EXCHANGE_UNLOCK_MUTATION,
 } from "@/lib/graphql-queries";
 import { Button } from "@/shared/components/Button";
 import { Card } from "@/shared/components/Card";
@@ -86,6 +89,7 @@ export default function RestaurantDetailPage(): React.JSX.Element {
   const [showUnlockModal, setShowUnlockModal] = useState(false);
   const [showCongratulations, setShowCongratulations] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [unlockToken, setUnlockToken] = useState<string | null>(null);
 
   // Get restaurant ID from params
   const restaurantId = (params?.detail as string) || "1";
@@ -99,6 +103,12 @@ export default function RestaurantDetailPage(): React.JSX.Element {
     { page: 1, first: 10 }
   );
 
+  // Get user's wallet
+  const { data: wallet } = useWallet({ userId: user?.id || "" });
+
+  // Get the first active discount for this store
+  const firstActiveDiscount = discountsData?.data?.find((d) => d.active);
+
   // Convert store data to restaurant format for the UI
   const restaurant: Restaurant | null = store
     ? {
@@ -110,21 +120,33 @@ export default function RestaurantDetailPage(): React.JSX.Element {
         reviewCount: store.reviewCounter ?? 0,
         isAdPartner: false,
         discount: {
-          id: store.id,
-          percentage: 15, // Default discount
-          points: 100,
-          restrictions: [
-            "Show your QR code before paying",
-            "Valid for dine-in only",
-            "Cannot be combined with other offers",
-          ],
+          id: firstActiveDiscount?.id,
+          percentage:
+            firstActiveDiscount?.type === "PERCENTAGE"
+              ? firstActiveDiscount.value
+              : firstActiveDiscount?.type === "FIXED_AMOUNT"
+                ? Math.round((firstActiveDiscount.value / 100) * 10) // Convert fixed amount to approximate percentage
+                : 15, // Fallback if no discount
+          points: firstActiveDiscount?.usedCount ?? 0, // Use actual usage count
+          restrictions: firstActiveDiscount?.description
+            ? [firstActiveDiscount.description]
+            : [
+                "Show your QR code before paying",
+                "Valid for dine-in only",
+                "Cannot be combined with other offers",
+              ],
         },
-        hours: "Mon–Sun: 11:00 AM – 11:00 PM",
+        hours:
+          store.openDays && typeof store.openDays === "object"
+            ? Object.entries(store.openDays as Record<string, unknown>)
+                .map(([day, hours]) => `${day}: ${String(hours)}`)
+                .join(", ") || "Hours not available"
+            : "Hours not available",
         location: {
           address: store.address || "Address not available",
           city: store.city || "City not available",
         },
-        phone: store.phoneNumber || "+1 234 567 8900",
+        phone: store.phoneNumber || "Phone not available",
         images: store.imageUrl
           ? [store.imageUrl]
           : [
@@ -132,7 +154,16 @@ export default function RestaurantDetailPage(): React.JSX.Element {
             ],
         menuItems: [],
         reviews: [],
-        amenities: ["🅿️ Parking available", "📶 Free WiFi"],
+        amenities:
+          store.additionalInfo &&
+          typeof store.additionalInfo === "object" &&
+          "amenities" in store.additionalInfo &&
+          Array.isArray(
+            (store.additionalInfo as { amenities?: string[] }).amenities
+          )
+            ? ((store.additionalInfo as { amenities: string[] })
+                .amenities as string[])
+            : ["Store amenities not available"],
       }
     : null;
 
@@ -166,32 +197,124 @@ export default function RestaurantDetailPage(): React.JSX.Element {
     void handleQuickPay();
   };
 
-  const handleVideoComplete = (): void => {
-    const newAdsWatched = adsWatched + 1;
-    setAdsWatched(newAdsWatched);
-
-    if (newAdsWatched >= totalAdsRequired) {
-      // Both ads watched, show congratulations then success
-      setShowVideoAd(false);
-      setShowCongratulations(true);
-    } else {
-      // Show message and prepare for next ad
-      toast({
-        title: `Ad ${newAdsWatched} of ${totalAdsRequired} complete`,
-        description: `Watch ${totalAdsRequired - newAdsWatched} more ad to unlock your discount.`,
+  const handleVideoComplete = async (): Promise<void> => {
+    try {
+      // Call rewardAd mutation to record the ad view
+      const rewardData = await graphqlRequest<{
+        rewardAd: {
+          canGenerateCoupon: boolean;
+          remaining?: number;
+          token?: string;
+          adsWatched?: number;
+        };
+      }>(REWARD_AD_MUTATION, {
+        input: {
+          adUnitId: process.env.NEXT_PUBLIC_ADMOB_AD_UNIT_ID || "test-ad-unit",
+          rewardToken: `reward-${Date.now()}-${Math.random()}`,
+          deviceId:
+            typeof navigator !== "undefined" ? navigator.userAgent : undefined,
+        },
       });
-      // Keep showing video ad for the next round
+
+      const newAdsWatched = rewardData.rewardAd.adsWatched ?? adsWatched + 1;
+      setAdsWatched(newAdsWatched);
+
+      if (rewardData.rewardAd.canGenerateCoupon && rewardData.rewardAd.token) {
+        // Got unlock token, exchange it for coupon
+        setUnlockToken(rewardData.rewardAd.token);
+        setShowVideoAd(false);
+        setShowCongratulations(true);
+      } else {
+        // Show message and prepare for next ad
+        const remaining =
+          rewardData.rewardAd.remaining ?? totalAdsRequired - newAdsWatched;
+        toast({
+          title: `Ad ${newAdsWatched} of ${totalAdsRequired} complete`,
+          description: `Watch ${remaining} more ad${remaining !== 1 ? "s" : ""} to unlock your discount.`,
+        });
+        setShowVideoAd(false);
+        // Automatically show next ad after a short delay
+        setTimeout(() => {
+          setShowVideoAd(true);
+        }, 1500);
+      }
+    } catch (error) {
+      console.error("Error recording ad view:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to record ad view. Please try again.",
+      });
       setShowVideoAd(false);
-      // Automatically show next ad after a short delay
-      setTimeout(() => {
-        setShowVideoAd(true);
-      }, 1500);
     }
   };
 
-  const handleCongratulationsComplete = (): void => {
-    setShowCongratulations(false);
-    setShowSuccess(true);
+  const handleCongratulationsComplete = async (): Promise<void> => {
+    if (!unlockToken || !restaurant) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Missing unlock token. Please try again.",
+      });
+      setShowCongratulations(false);
+      return;
+    }
+
+    try {
+      // Get the first active discount for this store
+      const firstActiveDiscount = discountsData?.data?.find((d) => d.active);
+
+      if (!firstActiveDiscount) {
+        toast({
+          variant: "destructive",
+          title: "No discounts available",
+          description:
+            "This store doesn't have any active discounts at the moment.",
+        });
+        setShowCongratulations(false);
+        return;
+      }
+
+      // Exchange unlock token for coupon
+      const exchangeData = await graphqlRequest<{
+        exchangeUnlock: {
+          id: string;
+          code: string;
+          qrCode: string;
+          url: string;
+        };
+      }>(EXCHANGE_UNLOCK_MUTATION, {
+        input: {
+          token: unlockToken,
+          discountId: firstActiveDiscount.id,
+        },
+      });
+
+      if (exchangeData?.exchangeUnlock) {
+        // Invalidate coupons cache
+        try {
+          void queryClient.invalidateQueries({ queryKey: ["coupons"] });
+        } catch (_e) {
+          // ignore
+        }
+
+        setShowCongratulations(false);
+        setShowSuccess(true);
+        setUnlockToken(null);
+      }
+    } catch (error) {
+      console.error("Error exchanging unlock token:", error);
+      toast({
+        variant: "destructive",
+        title: "Failed to unlock coupon",
+        description:
+          error instanceof Error ? error.message : "Please try again.",
+      });
+      setShowCongratulations(false);
+    }
   };
 
   const handleVideoSkip = (): void => {
@@ -304,7 +427,37 @@ export default function RestaurantDetailPage(): React.JSX.Element {
       return;
     }
 
-    const discountId = restaurant.discount?.id ?? restaurant.id;
+    // Check if discount ID is available
+    if (!restaurant.discount?.id) {
+      toast({
+        variant: "destructive",
+        title: "No discount available",
+        description:
+          "This store doesn't have any active discounts at the moment.",
+      });
+      return;
+    }
+
+    // Check wallet balance before attempting payment
+    const QUICK_PAY_COST = 900; // $9 MXN in cents
+    if (wallet && wallet.balance < QUICK_PAY_COST) {
+      toast({
+        variant: "destructive",
+        title: "Insufficient funds",
+        description: `You need $${QUICK_PAY_COST / 100} MXN but only have $${wallet.balance / 100} MXN. Add funds to continue.`,
+        action: (
+          <button
+            onClick={() => router.push("/wallet")}
+            className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700"
+          >
+            Add Funds
+          </button>
+        ),
+      });
+      return;
+    }
+
+    const discountId = restaurant.discount.id;
 
     try {
       toast({
@@ -356,11 +509,30 @@ export default function RestaurantDetailPage(): React.JSX.Element {
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      toast({
-        variant: "destructive",
-        title: "Payment failed",
-        description: message,
-      });
+
+      // Check if error is due to insufficient funds
+      if (message.toLowerCase().includes("insufficient funds")) {
+        toast({
+          variant: "destructive",
+          title: "Insufficient funds",
+          description:
+            "You don't have enough balance. Add funds to your wallet.",
+          action: (
+            <button
+              onClick={() => router.push("/wallet")}
+              className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700"
+            >
+              Add Funds
+            </button>
+          ),
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Payment failed",
+          description: message,
+        });
+      }
     }
   };
 
@@ -723,14 +895,18 @@ export default function RestaurantDetailPage(): React.JSX.Element {
 
       {showVideoAd ? (
         <RewardedVideoAd
-          onAdComplete={handleVideoComplete}
+          onAdComplete={() => {
+            void handleVideoComplete();
+          }}
           onAdSkipped={handleVideoSkip}
         />
       ) : null}
 
       <CongratulationsModal
         isOpen={showCongratulations}
-        onComplete={handleCongratulationsComplete}
+        onComplete={() => {
+          void handleCongratulationsComplete();
+        }}
       />
 
       <DiscountSuccessModal
