@@ -9,7 +9,7 @@ export function BottomNavigation(): React.JSX.Element {
   const isActive = (path: string) => pathname === path;
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-linear-to-t from-card/95 to-card/90 backdrop-blur-sm border-t border-border shadow-lg z-50">
+    <nav className="fixed bottom-0 left-0 right-0 bg-linear-to-t from-card/95 to-card/90 backdrop-blur-sm bg-white/90 border-t border-border shadow-lg z-50">
       <div className="flex justify-around items-center h-16 max-w-5xl mx-auto">
         <button
           onClick={() => router.push("/explore")}

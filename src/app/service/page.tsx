@@ -5,12 +5,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 
-import { BottomNavigation } from "@/app/explore/components/BottomNavigation";
-import { ExploreHeader } from "@/app/explore/components/ExploreHeader";
 import { useStores } from "@/domains/store/hooks";
+import { BasicLayout } from "@/layouts/BasicLayout";
 import { Button } from "@/shared/components/Button";
 import { Card } from "@/shared/components/Card";
-import { useAuthStore } from "@/store/useAuthStore";
 
 // Service type definition
 interface Service {
@@ -29,7 +27,6 @@ interface Service {
 type ViewMode = "grid" | "map";
 
 export default function ServicesPage(): React.JSX.Element {
-  const { isAuthenticated } = useAuthStore();
   const { data: storesResult, isLoading } = useStores();
   const allStores = storesResult?.data ?? [];
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
@@ -51,9 +48,7 @@ export default function ServicesPage(): React.JSX.Element {
     }));
 
   return (
-    <div className="min-h-screen bg-background pb-20">
-      <ExploreHeader isAuthenticated={isAuthenticated} />
-
+    <BasicLayout className="pb-20">
       <div className="pt-14 pb-16">
         {/* Hero Section */}
         <div className="bg-gradient-hero p-6 pb-8">
@@ -176,8 +171,6 @@ export default function ServicesPage(): React.JSX.Element {
           </div>
         </div>
       </div>
-
-      <BottomNavigation />
-    </div>
+    </BasicLayout>
   );
 }

@@ -5,16 +5,14 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 
-import { BottomNavigation } from "@/app/explore/components/BottomNavigation";
-import { ExploreHeader } from "@/app/explore/components/ExploreHeader";
+import { StoreType } from "@/domains/admin";
 import { useStores } from "@/domains/store/hooks";
+import { BasicLayout } from "@/layouts/BasicLayout";
 import { type Store } from "@/lib/api-types";
 import { Card } from "@/shared/components/Card";
 import { Input } from "@/shared/components/Input";
-import { useAuthStore } from "@/store/useAuthStore";
 
 export default function ProductListingPage(): React.JSX.Element {
-  const { isAuthenticated } = useAuthStore();
   const { data: storesResult, isLoading } = useStores();
   const allStores = storesResult?.data ?? [];
 
@@ -25,7 +23,7 @@ export default function ProductListingPage(): React.JSX.Element {
 
   // Filter stores to only show service type
   const products: Store[] = allStores.filter(
-    (store) => store.type === "SERVICE"
+    (store) => store.type === StoreType.SERVICE
   );
 
   // Filter and sort products
@@ -39,9 +37,7 @@ export default function ProductListingPage(): React.JSX.Element {
   });
 
   return (
-    <div className="bg-background min-h-screen">
-      <ExploreHeader isAuthenticated={isAuthenticated} />
-
+    <BasicLayout>
       <div className="pt-4 pb-20">
         {/* Search Bar */}
         <div className="px-6 mb-6 max-w-5xl mx-auto">
@@ -164,8 +160,6 @@ export default function ProductListingPage(): React.JSX.Element {
           </>
         )}
       </div>
-
-      <BottomNavigation />
-    </div>
+    </BasicLayout>
   );
 }

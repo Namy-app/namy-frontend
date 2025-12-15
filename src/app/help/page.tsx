@@ -12,8 +12,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 
-import { BottomNavigation } from "@/app/explore/components/BottomNavigation";
-import { ExploreHeader } from "@/app/explore/components/ExploreHeader";
+import { BasicLayout } from "@/layouts/BasicLayout";
 import {
   Accordion,
   AccordionItem,
@@ -23,7 +22,6 @@ import {
 import { Button } from "@/shared/components/Button";
 import { Card } from "@/shared/components/Card";
 import { Input } from "@/shared/components/Input";
-import { useAuthStore } from "@/store/useAuthStore";
 
 interface FAQCategory {
   id: string;
@@ -150,7 +148,6 @@ const faqCategories: FAQCategory[] = [
 ];
 
 export default function HelpPage(): React.JSX.Element {
-  const { isAuthenticated } = useAuthStore();
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredCategories, setFilteredCategories] = useState(faqCategories);
 
@@ -177,9 +174,7 @@ export default function HelpPage(): React.JSX.Element {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <ExploreHeader isAuthenticated={isAuthenticated} />
-
+    <BasicLayout>
       <div className="pb-20">
         {/* Header Section with Search */}
         <div className="bg-gradient-hero p-6 pt-16 pb-4">
@@ -273,8 +268,6 @@ export default function HelpPage(): React.JSX.Element {
             </div>
           )}
       </div>
-
-      <BottomNavigation />
-    </div>
+    </BasicLayout>
   );
 }
