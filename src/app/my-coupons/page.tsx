@@ -75,8 +75,6 @@ export default function MyCouponsPage(): React.JSX.Element {
   }, []);
 
   // Fetch user's coupons via react-query to enable client-side caching
-  const pagination = { first: 20, page: 1 };
-
   const filters: Record<string, unknown> = { includeExpired: true };
   if (user?.id) {
     filters.userId = user.id;
@@ -87,15 +85,14 @@ export default function MyCouponsPage(): React.JSX.Element {
     isLoading: queryLoading,
     error: queryError,
   } = useQuery({
-    queryKey: ["coupons", { pagination, filters }],
+    queryKey: ["coupons", { filters }],
     queryFn: async () => {
       // Ensure auth header is set for the graphql client
       setAuthToken(accessToken ?? null);
-      const res = await graphqlRequest<{ coupons: Coupon[] }>(COUPONS_QUERY, {
-        pagination,
+      const res = await graphqlRequest<{ myCoupons: Coupon[] }>(COUPONS_QUERY, {
         filters,
       });
-      return res.coupons ?? [];
+      return res.myCoupons ?? [];
     },
     enabled: hydrated && isAuthenticated,
     staleTime: 30_000,

@@ -2,6 +2,8 @@
 
 import { X, Play, CreditCard } from "lucide-react";
 
+import { useMyLevel } from "@/domains/user/hooks/query/useMyLevel";
+
 interface UnlockDiscountModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -15,6 +17,10 @@ export function UnlockDiscountModal({
   onWatchAd,
   onQuickPay,
 }: UnlockDiscountModalProps): React.JSX.Element | null {
+  const { data: levelInfo } = useMyLevel();
+  const discountPercentage = levelInfo?.discountPercentage ?? 10;
+  const levelName = levelInfo?.levelName ?? "Novato";
+
   if (!isOpen) {
     return null;
   }
@@ -31,9 +37,12 @@ export function UnlockDiscountModal({
           </button>
         </div>
         <div className="rounded-lg border text-card-foreground shadow-sm p-8 bg-card border-border shadow-card">
-          <h2 className="text-2xl font-bold text-foreground mb-6 text-center">
-            ¡Desbloquea tu 15% de descuento!
+          <h2 className="text-2xl font-bold text-foreground mb-2 text-center">
+            ¡Desbloquea tu {discountPercentage}% de descuento!
           </h2>
+          <p className="text-sm text-muted-foreground text-center mb-6">
+            Nivel: {levelName}
+          </p>
           <div className="space-y-4">
             <div className="rounded-lg text-card-foreground shadow-sm p-6 bg-gradient-primary border-0 hover:shadow-glow transition-all cursor-pointer group">
               <button onClick={onWatchAd} className="w-full">

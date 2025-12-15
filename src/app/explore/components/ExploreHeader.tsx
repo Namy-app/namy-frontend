@@ -219,7 +219,7 @@ export function ExploreHeader({
                       user?.role === "super_admin") && (
                       <button
                         onClick={() => {
-                          router.push("/admin/stores");
+                          router.push("/admin");
                           setIsDropdownOpen(false);
                         }}
                         className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-primary/10 transition-colors text-left"

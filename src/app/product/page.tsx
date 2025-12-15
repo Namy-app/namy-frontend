@@ -15,7 +15,8 @@ import { useAuthStore } from "@/store/useAuthStore";
 
 export default function ProductListingPage(): React.JSX.Element {
   const { isAuthenticated } = useAuthStore();
-  const { data: allStores = [], isLoading } = useStores();
+  const { data: storesResult, isLoading } = useStores();
+  const allStores = storesResult?.data ?? [];
 
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<"distance" | "rating" | "discount">(

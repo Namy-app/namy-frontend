@@ -12,7 +12,8 @@ import { useAuthStore } from "@/store/useAuthStore";
 export default function StorePage(): React.JSX.Element {
   const router = useRouter();
   const { isAuthenticated } = useAuthStore();
-  const { data: stores, isLoading, error } = useStores();
+  const { data: storesResult, isLoading, error } = useStores();
+  const stores = storesResult?.data ?? [];
 
   return (
     <ProtectedRoute>

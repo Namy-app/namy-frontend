@@ -80,11 +80,11 @@ export default function AdminUsersPage() {
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-4">
                 <button
-                  onClick={() => router.push("/explore")}
+                  onClick={() => router.push("/admin")}
                   className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
                 >
                   <ArrowLeft className="w-5 h-5" />
-                  Back to Explore
+                  Back to Dashboard
                 </button>
                 <h1 className="text-3xl font-bold text-foreground">
                   User Management

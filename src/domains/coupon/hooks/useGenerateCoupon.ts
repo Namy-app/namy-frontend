@@ -4,7 +4,6 @@ import { graphqlRequest } from "@/lib/graphql-client";
 import { GENERATE_COUPON_MUTATION } from "@/lib/graphql-queries";
 
 export interface GenerateCouponInput {
-  storeId: string;
   discountId: string;
 }
 

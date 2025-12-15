@@ -16,6 +16,7 @@ export function useRewardAd() {
           canGenerateCoupon: boolean;
           remaining?: number;
           token?: string;
+          adsWatched?: number;
         };
       }>(REWARD_AD_MUTATION, { input });
       return res.rewardAd;
