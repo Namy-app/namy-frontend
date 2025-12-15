@@ -12,8 +12,8 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 
-import { BottomNavigation } from "@/app/explore/components/BottomNavigation";
 import { ExploreHeader } from "@/app/explore/components/ExploreHeader";
+import { BottomNavigation } from "@/components/BottomNavigation";
 import {
   Accordion,
   AccordionItem,

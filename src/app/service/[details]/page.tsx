@@ -20,8 +20,8 @@ import Image from "next/image";
 import { useRouter, useParams } from "next/navigation";
 import { useState, useEffect } from "react";
 
-import { BottomNavigation } from "@/app/explore/components/BottomNavigation";
 import { ExploreHeader } from "@/app/explore/components/ExploreHeader";
+import { BottomNavigation } from "@/components/BottomNavigation";
 import { Button } from "@/shared/components/Button";
 import { Card } from "@/shared/components/Card";
 import { useAuthStore } from "@/store/useAuthStore";

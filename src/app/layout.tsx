@@ -3,14 +3,15 @@ import { Poppins } from "next/font/google";
 
 import "../styles/globals.css";
 import { GoogleAdsense } from "@/components/GoogleAdsense";
-import { SideRailAds } from "@/components/SideRailAds";
 import { ReactQueryProvider } from "@/providers/ReactQueryProvider";
 import { Toaster } from "@/shared/components/Toaster";
 
 const poppins = Poppins({
   variable: "--font-poppins",
   subsets: ["latin"],
-  weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
+  // weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
+  weight: ["300", "400", "500", "600", "700"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -52,15 +53,15 @@ export default function RootLayout({
           crossOrigin="anonymous"
         />
         {/* AdSense Rewarded Ads for video rewards */}
-        <script
+        {/* <script
           async
           src="https://pagead2.googlesyndication.com/pagead/js/adconfig.js"
           crossOrigin="anonymous"
-        />
+        /> */}
       </head>
       <body className={`${poppins.variable}  font-sans`}>
         <ReactQueryProvider>
-          <SideRailAds>{children}</SideRailAds>
+          {children}
           <Toaster />
         </ReactQueryProvider>
       </body>

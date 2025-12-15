@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 
-import { BottomNavigation } from "@/app/explore/components/BottomNavigation";
 import { ExploreHeader } from "@/app/explore/components/ExploreHeader";
+import { BottomNavigation } from "@/components/BottomNavigation";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { WalletDashboard, DepositForm } from "@/domains/payment/components";
 import { useCreateWallet, useWallet } from "@/domains/payment/hooks";

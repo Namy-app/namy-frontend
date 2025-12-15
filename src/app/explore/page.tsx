@@ -2,7 +2,8 @@
 
 import { useAuthStore } from "@/store/useAuthStore";
 
-import { BottomNavigation } from "./components/BottomNavigation";
+import { BottomNavigation } from "../../components/BottomNavigation";
+
 import { CategoryCards } from "./components/CategoryCards";
 import { ExploreHeader } from "./components/ExploreHeader";
 import { FeaturedCarousel } from "./components/FeaturedCarousel";

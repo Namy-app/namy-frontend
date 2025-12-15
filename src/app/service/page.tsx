@@ -5,8 +5,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 
-import { BottomNavigation } from "@/app/explore/components/BottomNavigation";
 import { ExploreHeader } from "@/app/explore/components/ExploreHeader";
+import { BottomNavigation } from "@/components/BottomNavigation";
 import { useStores } from "@/domains/store/hooks";
 import { Button } from "@/shared/components/Button";
 import { Card } from "@/shared/components/Card";

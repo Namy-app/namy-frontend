@@ -6,8 +6,8 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import { BottomNavigation } from "@/app/explore/components/BottomNavigation";
 import { ExploreHeader } from "@/app/explore/components/ExploreHeader";
+import { BottomNavigation } from "@/components/BottomNavigation";
 import CouponCard from "@/domains/coupons/CouponCard";
 import { CouponDecoder, type DecodedCouponData } from "@/lib/coupon-decoder";
 import { graphqlRequest, setAuthToken } from "@/lib/graphql-client";

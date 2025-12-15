@@ -18,9 +18,10 @@ import {
 import { useRouter } from "next/navigation";
 import React from "react";
 
-import { BottomNavigation } from "@/app/explore/components/BottomNavigation";
 import { ExploreHeader } from "@/app/explore/components/ExploreHeader";
+import { BottomNavigation } from "@/components/BottomNavigation";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { useWallet, useWalletBalance } from "@/domains/payment/hooks";
 import { useStores } from "@/domains/store/hooks";
 import { useLogout } from "@/domains/user/hooks";
 import { useToast } from "@/hooks/use-toast";
@@ -35,6 +36,10 @@ export default function ProfilePage(): React.JSX.Element | null {
   const logoutMutation = useLogout();
   const [expandPoints, setExpandPoints] = React.useState(false);
   const { data: allStores = [], isLoading: storesLoading } = useStores();
+  const { data: wallet } = useWallet({ userId: user?.id });
+  const { data: walletBalance, isLoading: walletLoading } = useWalletBalance(
+    wallet?.id || ""
+  );
 
   if (!user) {
     return null;
@@ -84,27 +89,33 @@ export default function ProfilePage(): React.JSX.Element | null {
               </p>
               <div className="flex items-center gap-2 px-4 py-3 rounded-lg bg-card border border-border">
                 <Wallet className="w-5 h-5 text-primary" />
-                <span className="text-2xl font-bold text-foreground">
-                  $250 MXN
-                </span>
+                {walletLoading ? (
+                  <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <span className="text-2xl font-bold text-foreground">
+                    ${walletBalance?.balance || "0"}{" "}
+                    {walletBalance?.currency || "MXN"}
+                  </span>
+                )}
               </div>
             </div>
 
             {/* Tier Badge */}
-            {user.isPremium ? (
+            {/* {user.isPremium ? (
               <div className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold transition-colors border-0 bg-gradient-primary text-white shadow-glow ml-2">
                 <Crown className="w-4 h-4 mr-1" />
                 Premium Member
               </div>
-            ) : null}
+            ) : null} */}
 
             {/* Points Card */}
-            <Card className="mt-4 p-4 bg-card border-border">
+            {/* TODO: Hide until points is implemented */}
+            {/* <Card className="mt-4 p-4 bg-card border-border">
               <div className="text-3xl font-bold text-primary mb-1">
                 8,450 🍽️
               </div>
               <p className="text-sm text-muted-foreground">Ñamy Points</p>
-            </Card>
+            </Card> */}
           </div>
         </div>
 
@@ -145,6 +156,24 @@ export default function ProfilePage(): React.JSX.Element | null {
             <div className="flex items-start justify-between mb-4">
               <div>
                 <h3 className="text-xl font-bold mb-1">
+                  🔥 Current Level: 5 Days
+                </h3>
+                <p className="text-white/90 text-sm">
+                  You have X more uses to reach the next level
+                </p>
+              </div>
+            </div>
+            <div className="h-2 bg-white/20 rounded-full overflow-hidden mb-4">
+              <div
+                className="h-full bg-white rounded-full transition-all"
+                style={{ width: "71.4286%" }}
+              />
+            </div>
+            {/* TODO: Hide until leadership is implemented */}
+            {/* <div className="flex items-start justify-between mb-4"> */}
+            {/* <div className="items-start justify-between mb-4">
+              <div>
+                <h3 className="text-xl font-bold mb-1">
                   🔥 Daily Ñamy Streak: 5 Days
                 </h3>
                 <p className="text-white/90 text-sm">
@@ -157,8 +186,8 @@ export default function ProfilePage(): React.JSX.Element | null {
                 className="h-full bg-white rounded-full transition-all"
                 style={{ width: "71.4286%" }}
               />
-            </div>
-            <div className="pt-4 border-t border-white/20">
+            </div> */}
+            <div className="hidden pt-4 border-t border-white/20">
               <div className="flex items-center justify-between mb-2">
                 <h4 className="text-lg font-bold text-white">
                   Level 8 – Savory Explorer 🍝
@@ -176,7 +205,8 @@ export default function ProfilePage(): React.JSX.Element | null {
           </Card>
 
           {/* Points Breakdown */}
-          <Card className="p-5 bg-card border-border">
+          {/* TODO: Hide until leadership is implemented */}
+          <Card className="p-5 bg-card border-border hidden">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-bold text-foreground">
                 📊 Points Breakdown
@@ -289,7 +319,7 @@ export default function ProfilePage(): React.JSX.Element | null {
                         {store.city || "Location"}
                       </p>
                     </div>
-                    <div className="text-right flex-shrink-0">
+                    <div className="text-right shrink-0">
                       <p className="font-bold text-primary text-lg">15% OFF</p>
                       <p className="text-xs text-muted-foreground">+100 pts</p>
                     </div>
@@ -306,8 +336,8 @@ export default function ProfilePage(): React.JSX.Element | null {
             )}
           </Card>
 
-          {/* Leaderboard */}
-          <Card className="p-5 bg-card border-border">
+          {/* Leaderboard: TODO: Hide until leadership is implemented */}
+          <Card className="p-5 bg-card border-border hidden">
             <h3 className="text-lg font-bold text-foreground mb-4">
               🏆 You&apos;re ranked #23 in Cancún!
             </h3>

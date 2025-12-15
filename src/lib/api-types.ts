@@ -55,7 +55,7 @@ export interface Store {
   ownerId: string;
   createdAt: string;
   updatedAt: string;
-  type?: "PRODUCT" | "SERVICE";
+  type?: "product" | "service";
   categoryId?: string;
   subCategory?: string;
   averageRating?: number;

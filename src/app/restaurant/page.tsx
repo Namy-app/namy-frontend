@@ -15,13 +15,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 
-import { BottomNavigation } from "@/app/explore/components/BottomNavigation";
-import { ExploreHeader } from "@/app/explore/components/ExploreHeader";
 import { useStores } from "@/domains/store/hooks";
+import { BasicLayout } from "@/layouts/BasicLayout";
 import { Button } from "@/shared/components/Button";
 import { Card } from "@/shared/components/Card";
 import { Input } from "@/shared/components/Input";
-import { useAuthStore } from "@/store/useAuthStore";
 
 // Restaurant type definition
 interface Restaurant {
@@ -51,7 +49,6 @@ const categories = [
 ];
 
 export default function RestaurantListingPage(): React.JSX.Element {
-  const { isAuthenticated } = useAuthStore();
   const { data: allStores = [], isLoading } = useStores();
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -117,9 +114,7 @@ export default function RestaurantListingPage(): React.JSX.Element {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-20">
-      <ExploreHeader isAuthenticated={isAuthenticated} />
-
+    <BasicLayout>
       <div className="pt-14 pb-16 ">
         <div className="min-h-screen bg-background pb-20">
           {/* Header Section with Search */}
@@ -135,7 +130,7 @@ export default function RestaurantListingPage(): React.JSX.Element {
                     className="w-12 h-12 rounded-xl object-cover shadow-card"
                   />
                   <div>
-                    <h1 className="text-3xl font-bold text-foreground">Ñamy</h1>
+                    <h1 className="text-3xl font-bold text-foreground">Amy</h1>
                     <div className="flex items-center gap-1 text-muted-foreground text-sm mt-1">
                       <MapPin className="w-4 h-4" />
                       <span>Cancún, Quintana Roo</span>
@@ -308,8 +303,6 @@ export default function RestaurantListingPage(): React.JSX.Element {
         </div>
       </div>
 
-      <BottomNavigation />
-
       {/* Filter Modal (Simple) */}
       {showFilterModal ? (
         <div
@@ -366,6 +359,6 @@ export default function RestaurantListingPage(): React.JSX.Element {
           </div>
         </div>
       ) : null}
-    </div>
+    </BasicLayout>
   );
 }

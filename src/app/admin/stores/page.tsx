@@ -48,7 +48,7 @@ export default function AdminStoresPage() {
     active: null,
   });
   const { data: storesData, isLoading: storesLoading } = useStores(
-    { active: null },
+    {},
     { first: itemsPerPage, page: currentPage }
   );
   const deleteStore = useDeleteStore();

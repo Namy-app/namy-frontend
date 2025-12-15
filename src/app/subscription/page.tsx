@@ -4,8 +4,8 @@ import { Crown, Check, X, Zap, Gift, Wallet } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect, Suspense } from "react";
 
-import { BottomNavigation } from "@/app/explore/components/BottomNavigation";
 import { ExploreHeader } from "@/app/explore/components/ExploreHeader";
+import { BottomNavigation } from "@/components/BottomNavigation";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { useWallet, useWalletBalance } from "@/domains/payment/hooks";
 import {
@@ -430,7 +430,9 @@ function SubscriptionContent(): React.JSX.Element {
                     </button>
                     <button
                       onClick={() => setPaymentMethod("wallet")}
-                      disabled={!wallet || !hasEnoughBalance || hasActiveSubscription}
+                      disabled={
+                        !wallet || !hasEnoughBalance || hasActiveSubscription
+                      }
                       className={`flex-1 py-2 px-4 rounded-md font-medium text-sm transition-all ${
                         paymentMethod === "wallet"
                           ? "bg-white text-gray-900 shadow"

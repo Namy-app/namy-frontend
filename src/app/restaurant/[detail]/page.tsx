@@ -16,13 +16,13 @@ import Image from "next/image";
 import { useRouter, useParams } from "next/navigation";
 import { useState } from "react";
 
-import { BottomNavigation } from "@/app/explore/components/BottomNavigation";
 import { ExploreHeader } from "@/app/explore/components/ExploreHeader";
+import { BottomNavigation } from "@/components/BottomNavigation";
 import { CongratulationsModal } from "@/components/CongratulationsModal";
 import { DiscountSuccessModal } from "@/components/DiscountSuccessModal";
 import { RewardedVideoAd } from "@/components/RewardedVideoAd";
 import { UnlockDiscountModal } from "@/components/UnlockDiscountModal";
-import { useStores } from "@/domains/store/hooks";
+import { useStore, useStores } from "@/domains/store/hooks";
 import { useToast } from "@/hooks/use-toast";
 import { graphqlRequest } from "@/lib/graphql-client";
 import {
@@ -86,7 +86,10 @@ export default function RestaurantDetailPage(): React.JSX.Element {
   const [showSuccess, setShowSuccess] = useState(false);
 
   // Get restaurant ID from params
-  const restaurantId = (params?.detail as string) || "1";
+  const restaurantId = (params?.detail as string) || null;
+  const { data: storeData } = useStore(restaurantId);
+
+  console.log("storeData => ", storeData);
 
   // Find the specific store from the stores list
   const store = allStores.find((s) => s.id === restaurantId);
@@ -97,7 +100,7 @@ export default function RestaurantDetailPage(): React.JSX.Element {
         id: store.id,
         name: store.name,
         category: store.categoryId || store.subCategory || "Restaurant",
-        emoji: store.type === "PRODUCT" ? "🍽️" : "🔧",
+        emoji: store.type === "product" ? "🍽️" : "🔧",
         rating: store.averageRating ?? 4.5,
         reviewCount: store.reviewCounter ?? 0,
         isAdPartner: false,
@@ -409,7 +412,7 @@ export default function RestaurantDetailPage(): React.JSX.Element {
                   "https://placehold.co/800x520/fef2f2/f87171?text=Restaurant+Image";
               }}
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/10" />
+            <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-black/10" />
 
             <div className="absolute inset-0 flex items-start justify-between p-4">
               <div className="flex gap-3 items-center">
@@ -651,7 +654,8 @@ export default function RestaurantDetailPage(): React.JSX.Element {
             <aside className="space-y-6">
               <Card className="p-5 bg-white border border-[#f1e9e6] rounded-xl shadow-md">
                 <h3 className="font-semibold mb-3">📍 Location</h3>
-                <div className="aspect-video bg-[#fbf7f6] rounded-xl mb-3 flex items-center justify-center">
+                {/* Hide until we sort out the map */}
+                <div className="aspect-video hidden bg-[#fbf7f6] rounded-xl mb-3 flex items-center justify-center">
                   <span className="text-4xl">🗺️</span>
                 </div>
                 <Button className="w-full bg-rose-500 hover:bg-rose-600 text-white">
