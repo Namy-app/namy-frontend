@@ -22,6 +22,7 @@ import { CongratulationsModal } from "@/components/CongratulationsModal";
 import { DiscountSuccessModal } from "@/components/DiscountSuccessModal";
 import { RewardedVideoAd } from "@/components/RewardedVideoAd";
 import { UnlockDiscountModal } from "@/components/UnlockDiscountModal";
+import { useStoreDiscounts } from "@/domains/admin/hooks";
 import { useStores } from "@/domains/store/hooks";
 import { useToast } from "@/hooks/use-toast";
 import { graphqlRequest } from "@/lib/graphql-client";
@@ -74,7 +75,8 @@ export default function RestaurantDetailPage(): React.JSX.Element {
   const queryClient = useQueryClient();
 
   // Fetch all stores
-  const { data: allStores = [], isLoading } = useStores();
+  const { data: storesResult, isLoading } = useStores();
+  const allStores = storesResult?.data ?? [];
 
   const [currentImageIndex] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
@@ -90,6 +92,12 @@ export default function RestaurantDetailPage(): React.JSX.Element {
 
   // Find the specific store from the stores list
   const store = allStores.find((s) => s.id === restaurantId);
+
+  // Fetch discounts for this store
+  const { data: discountsData } = useStoreDiscounts(
+    { storeId: restaurantId },
+    { page: 1, first: 10 }
+  );
 
   // Convert store data to restaurant format for the UI
   const restaurant: Restaurant | null = store
@@ -210,7 +218,20 @@ export default function RestaurantDetailPage(): React.JSX.Element {
       return;
     }
 
-    const discountId = restaurant.discount?.id ?? restaurant.id;
+    // Get the first active discount for this store
+    const firstActiveDiscount = discountsData?.data?.find((d) => d.active);
+
+    if (!firstActiveDiscount) {
+      toast({
+        variant: "destructive",
+        title: "No discounts available",
+        description:
+          "This store doesn't have any active discounts at the moment.",
+      });
+      return;
+    }
+
+    const discountId = firstActiveDiscount.id;
 
     try {
       toast({ title: "Generating coupon...", description: "Please wait." });

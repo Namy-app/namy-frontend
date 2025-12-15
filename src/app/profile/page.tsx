@@ -34,7 +34,8 @@ export default function ProfilePage(): React.JSX.Element | null {
   const { user } = useAuthStore();
   const logoutMutation = useLogout();
   const [expandPoints, setExpandPoints] = React.useState(false);
-  const { data: allStores = [], isLoading: storesLoading } = useStores();
+  const { data: storesResult, isLoading: storesLoading } = useStores();
+  const allStores = storesResult?.data ?? [];
 
   if (!user) {
     return null;

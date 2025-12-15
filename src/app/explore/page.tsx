@@ -2,11 +2,12 @@
 
 import { useAuthStore } from "@/store/useAuthStore";
 
+import { BannerAd } from "./components/BannerAd";
 import { BottomNavigation } from "./components/BottomNavigation";
 import { CategoryCards } from "./components/CategoryCards";
 import { ExploreHeader } from "./components/ExploreHeader";
 import { FeaturedCarousel } from "./components/FeaturedCarousel";
-import { GamificationCard } from "./components/GamificationCard";
+// import { GamificationCard } from "./components/GamificationCard"; // Unused component
 // import { NearbyPlaces } from "./components/NearByPlaces"; // Unused component
 import { PageFooter } from "./components/PageFooter";
 
@@ -21,10 +22,11 @@ export default function ExplorePage(): React.JSX.Element {
         <CategoryCards />
         <FeaturedCarousel />
         {/* <NearbyPlaces /> */}
-        <GamificationCard />
+        {/* <GamificationCard /> */}
         <PageFooter />
       </div>
 
+      <BannerAd />
       <BottomNavigation />
     </div>
   );
