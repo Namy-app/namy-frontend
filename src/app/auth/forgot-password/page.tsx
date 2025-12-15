@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { useForgotPassword } from "@/domains/user/hooks";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/shared/components/Button";
 import { Card } from "@/shared/components/Card";
@@ -15,22 +16,33 @@ export default function ForgotPasswordPage(): React.JSX.Element {
   const [email, setEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
+  const forgotPasswordMutation = useForgotPassword();
 
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // TODO: Implement forgot password API call when backend is ready
-    // For now, simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    try {
+      await forgotPasswordMutation.mutateAsync({ email });
 
-    toast({
-      title: "Password reset email sent",
-      description: "Check your email for instructions to reset your password.",
-    });
+      toast({
+        title: "Password reset email sent",
+        description:
+          "Check your email for instructions to reset your password.",
+      });
 
-    setEmailSent(true);
-    setIsSubmitting(false);
+      setEmailSent(true);
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      toast({
+        variant: "destructive",
+        title: "Failed to send reset email",
+        description: errorMessage || "Please try again later",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -135,13 +147,6 @@ export default function ForgotPasswordPage(): React.JSX.Element {
             </Button>
           </div>
         )}
-
-        <div className="mt-6 pt-6 border-t border-border">
-          <p className="text-xs text-center text-muted-foreground">
-            <strong>Note:</strong> Password reset is coming soon! This feature
-            requires backend implementation.
-          </p>
-        </div>
       </Card>
     </div>
   );
