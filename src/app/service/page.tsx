@@ -105,7 +105,7 @@ export default function ServicesPage(): React.JSX.Element {
                       className="overflow-hidden cursor-pointer transition-all hover:shadow-card hover:scale-[1.02] bg-card border-border animate-slide-up"
                       style={{ animationDelay: `${index * 0.1}s` }}
                     >
-                      <Link href={`/restaurant/${service.id}`}>
+                      <Link href={`/restaurants/${service.id}`}>
                         {/* Image */}
                         <div className="relative">
                           <Image
