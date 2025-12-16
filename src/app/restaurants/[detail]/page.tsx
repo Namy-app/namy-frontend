@@ -655,7 +655,7 @@ export default function RestaurantDetailPage(): React.JSX.Element {
             <p className="text-muted-foreground text-lg mb-4">
               Restaurant not found
             </p>
-            <Button onClick={() => router.push("/restaurant")}>
+            <Button onClick={() => router.push("/restaurants")}>
               Back to Restaurants
             </Button>
           </div>

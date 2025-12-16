@@ -44,7 +44,7 @@ export function NearbyPlaces({
               <Card key={place.id} className="shadow-md group">
                 <Link
                   key={place.id}
-                  href={`/restaurant/${place.id}`}
+                  href={`/restaurants/${place.id}`}
                   className="flex items-center gap-4 p-3 cursor-pointer hover:shadow-glow transition-all border-0 "
                 >
                   <div className="relative w-20 h-20 rounded-lg overflow-hidden shrink-0">

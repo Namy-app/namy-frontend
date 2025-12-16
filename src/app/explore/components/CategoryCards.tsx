@@ -9,7 +9,7 @@ export function CategoryCards(): React.JSX.Element {
 
   return (
     <div className="px-6 py-8 flex flex-col-2 gap-3 justify-center align-middle">
-      <button onClick={() => router.push("/restaurant")} className="w-full">
+      <button onClick={() => router.push("/restaurants")} className="w-full">
         <Card className="p-6 bg-gradient-primary hover:shadow-glow transition-all group border-0 shadow-lg rounded-3xl">
           <div className="flex flex-col items-center text-center gap-3">
             <svg
