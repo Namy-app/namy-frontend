@@ -1,5 +1,6 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
   Store as StoreIcon,
@@ -20,7 +21,7 @@ import {
   Package,
 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 import {
   useStore,
@@ -35,6 +36,7 @@ import {
   type Catalog,
   type Coupon,
   type Discount,
+  type Store,
   DiscountType,
   PriceRange,
   UserRole,
@@ -303,7 +305,11 @@ export default function StoreDetailPage() {
             </div>
 
             {/* Image Upload & Preview */}
-            <StoreImageUpload storeId={storeId} storeName={store.name} />
+            <StoreImageUpload
+              storeId={storeId}
+              storeName={store.name}
+              currentImageUrl={store.imageUrl}
+            />
 
             {/* Opening Hours */}
             {store.openDays ? (
@@ -416,17 +422,30 @@ export default function StoreDetailPage() {
 
 // Store Image Upload Component
 function StoreImageUpload({
+  storeId,
   storeName,
+  currentImageUrl,
 }: {
   storeId: string;
   storeName: string;
+  currentImageUrl?: string | null;
 }) {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(
+    currentImageUrl || null
+  );
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+  // Sync preview with current image URL when it changes (after refetch)
+  useEffect(() => {
+    if (currentImageUrl && !selectedFile) {
+      setPreviewUrl(currentImageUrl);
+    }
+  }, [currentImageUrl, selectedFile]);
 
   const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -471,11 +490,21 @@ function StoreImageUpload({
       return;
     }
 
+    if (!storeId) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Store ID is missing. Please refresh the page.",
+      });
+      return;
+    }
+
     setIsUploading(true);
     try {
       // Create form data
       const formData = new FormData();
       formData.append("file", selectedFile);
+      formData.append("storeId", storeId);
 
       // Get auth token
       const authStore = useAuthStore.getState();
@@ -499,13 +528,35 @@ function StoreImageUpload({
 
       const data = await response.json();
 
+      // If we got the full store object back, use it to update the cache
+      if (data.store) {
+        queryClient.setQueryData(["store", storeId], data.store);
+      } else {
+        // Fallback: Update just the imageUrl
+        queryClient.setQueryData(
+          ["store", storeId],
+          (oldData: Store | undefined) => {
+            if (oldData) {
+              const updatedData = { ...oldData, imageUrl: data.url };
+              return updatedData;
+            }
+            return oldData;
+          }
+        );
+      }
+
+      // Update the preview immediately
+      setPreviewUrl(data.url);
+      setSelectedFile(null);
+      setSelectedImage(null);
+
       toast({
         title: "Image uploaded",
-        description: `Successfully uploaded image for ${storeName}`,
+        description: `Successfully uploaded image for ${storeName}. Old image deleted from S3.`,
       });
 
-      // TODO: Update store with the image URL (data.url)
-      console.warn("Uploaded image URL:", data.url);
+      // Refetch to ensure fresh data from server (optional now since we have the updated store)
+      await queryClient.refetchQueries({ queryKey: ["store", storeId] });
     } catch (_error) {
       toast({
         variant: "destructive",
@@ -1039,28 +1090,94 @@ function CreateCatalogModal({
   const { toast } = useToast();
   const createCatalog = useCreateCatalog();
   const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [images, setImages] = useState<{
+    image1?: string;
+    image2?: string;
+    image3?: string;
+    image4?: string;
+  }>({});
+  const [imagePreviews, setImagePreviews] = useState<{
+    preview1?: string;
+    preview2?: string;
+    preview3?: string;
+    preview4?: string;
+  }>({});
+
+  const handleImageSelect = (
+    slot: 1 | 2 | 3 | 4,
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      toast({
+        variant: "destructive",
+        title: "Invalid file type",
+        description: "Please select an image file (PNG, JPG, WebP)",
+      });
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        variant: "destructive",
+        title: "File too large",
+        description: "Please select an image smaller than 5MB",
+      });
+      return;
+    }
+
+    // Convert to base64
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64 = reader.result as string;
+      setImages((prev) => ({ ...prev, [`image${slot}`]: base64 }));
+      setImagePreviews((prev) => ({ ...prev, [`preview${slot}`]: base64 }));
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const removeImage = (slot: 1 | 2 | 3 | 4) => {
+    setImages((prev) => ({ ...prev, [`image${slot}`]: undefined }));
+    setImagePreviews((prev) => ({ ...prev, [`preview${slot}`]: undefined }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await createCatalog.mutateAsync({ storeId, name });
+      await createCatalog.mutateAsync({
+        storeId,
+        name,
+        description: description || undefined,
+        image1: images.image1,
+        image2: images.image2,
+        image3: images.image3,
+        image4: images.image4,
+      });
       toast({
         title: "Catalog created",
-        description: "The catalog has been created successfully.",
+        description:
+          "The catalog has been created successfully with images uploaded to S3.",
       });
       onClose();
     } catch (_error) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to create catalog.",
+        description: "Failed to create catalog. Please try again.",
       });
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-card rounded-lg shadow-card max-w-md w-full">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+      <div className="bg-card rounded-lg shadow-card max-w-3xl w-full my-8">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-border">
           <div className="flex items-center gap-3">
@@ -1072,7 +1189,7 @@ function CreateCatalogModal({
                 Create New Catalog
               </h3>
               <p className="text-sm text-muted-foreground">
-                Organize your products or services
+                Add up to 4 images for your catalog
               </p>
             </div>
           </div>
@@ -1085,7 +1202,8 @@ function CreateCatalogModal({
         </div>
 
         {/* Form */}
-        <form onSubmit={(e) => void handleSubmit(e)} className="p-6 space-y-4">
+        <form onSubmit={(e) => void handleSubmit(e)} className="p-6 space-y-6">
+          {/* Name */}
           <div>
             <label className="block text-sm font-medium text-foreground mb-2">
               Catalog Name <span className="text-destructive">*</span>
@@ -1094,10 +1212,79 @@ function CreateCatalogModal({
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
               placeholder="e.g., Menu Items, Products, Services"
               required
             />
+          </div>
+
+          {/* Description */}
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-2">
+              Description
+            </label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent resize-none bg-background text-foreground"
+              rows={3}
+              placeholder="Describe your catalog..."
+            />
+          </div>
+
+          {/* Images Grid */}
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-3">
+              Images (Up to 4)
+            </label>
+            <div className="grid grid-cols-2 gap-4">
+              {[1, 2, 3, 4].map((slot) => {
+                const slotKey = slot as 1 | 2 | 3 | 4;
+                const preview = imagePreviews[`preview${slotKey}`];
+                return (
+                  <div key={slot} className="space-y-2">
+                    <div className="relative aspect-video bg-muted rounded-lg border-2 border-dashed border-border overflow-hidden">
+                      {preview ? (
+                        <>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={preview}
+                            alt={`Preview ${slot}`}
+                            className="w-full h-full object-cover"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeImage(slotKey)}
+                            className="absolute top-2 right-2 p-1.5 bg-destructive text-destructive-foreground rounded-lg hover:opacity-90 transition-opacity"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </>
+                      ) : (
+                        <label className="flex flex-col items-center justify-center h-full cursor-pointer hover:bg-muted/80 transition-colors">
+                          <Image
+                            className="w-8 h-8 text-muted-foreground mb-2"
+                            aria-label={`Upload image ${slot}`}
+                          />
+                          <span className="text-xs text-muted-foreground">
+                            Image {slot}
+                          </span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => handleImageSelect(slotKey, e)}
+                            className="hidden"
+                          />
+                        </label>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <p className="text-xs text-muted-foreground mt-2">
+              Max 5MB per image • PNG, JPG, WebP • Images uploaded to AWS S3
+            </p>
           </div>
 
           {/* Actions */}
@@ -1118,7 +1305,7 @@ function CreateCatalogModal({
               {createCatalog.isPending ? (
                 <>
                   <Loader2 className="w-5 h-5 animate-spin" />
-                  Creating...
+                  Creating & Uploading...
                 </>
               ) : (
                 "Create Catalog"
