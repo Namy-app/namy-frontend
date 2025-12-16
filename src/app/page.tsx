@@ -13,7 +13,6 @@ export default function Home() {
   const [translateX, setTranslateX] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const { isAuthenticated } = useAuthStore();
-  console.log("isAuthenticated => ", isAuthenticated);
 
   const slides = [
     {
