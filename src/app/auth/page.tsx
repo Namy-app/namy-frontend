@@ -148,13 +148,15 @@ export default function AuthPage(): React.JSX.Element {
             className="mx-auto mb-4 rounded-2xl shadow-glow"
           />
           <h1 className="text-4xl font-bold text-primary mb-2">Ñamy</h1>
-          <p className="text-muted-foreground">Unlock delicious discounts</p>
+          <p className="text-muted-foreground">
+            Desbloquea descuentos deliciosos
+          </p>
         </div>
 
         <Tabs defaultValue="login" className="w-full">
           <TabsList className="grid w-full grid-cols-2 mb-6 rounded-[14px]">
-            <TabsTrigger value="login">Login</TabsTrigger>
-            <TabsTrigger value="signup">Sign Up</TabsTrigger>
+            <TabsTrigger value="login">Acceso</TabsTrigger>
+            <TabsTrigger value="signup">Registrarse</TabsTrigger>
           </TabsList>
 
           <TabsContent value="login">
@@ -166,7 +168,7 @@ export default function AuthPage(): React.JSX.Element {
             >
               <div>
                 <label className="text-sm font-medium text-foreground mb-2 block">
-                  Email
+                  Correo electrónico
                 </label>
                 <Input
                   type="text"
@@ -181,7 +183,7 @@ export default function AuthPage(): React.JSX.Element {
 
               <div>
                 <label className="text-sm font-medium text-foreground mb-2 block">
-                  Password
+                  Contraseña
                 </label>
                 <PasswordInput
                   placeholder="••••••••"
@@ -195,7 +197,7 @@ export default function AuthPage(): React.JSX.Element {
 
               <div className="flex items-center justify-between">
                 <Checkbox
-                  label="Remember me"
+                  label="Recuérdame"
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
                   disabled={loginMutation.isPending}
@@ -204,7 +206,7 @@ export default function AuthPage(): React.JSX.Element {
                   href="/auth/forgot-password"
                   className="text-sm text-primary hover:underline"
                 >
-                  Forgot password?
+                  ¿Olvidaste tu contraseña?
                 </Link>
               </div>
 
@@ -213,7 +215,9 @@ export default function AuthPage(): React.JSX.Element {
                 className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 rounded-full font-bold shadow-glow"
                 disabled={loginMutation.isPending}
               >
-                {loginMutation.isPending ? "Logging in..." : "Login"}
+                {loginMutation.isPending
+                  ? "Iniciando sesión..."
+                  : "Iniciar sesión"}
               </Button>
             </form>
           </TabsContent>
@@ -227,7 +231,7 @@ export default function AuthPage(): React.JSX.Element {
             >
               <div>
                 <label className="text-sm font-medium text-foreground mb-2 block">
-                  Display Name
+                  Nombre para mostrar
                 </label>
                 <Input
                   type="text"
@@ -241,7 +245,7 @@ export default function AuthPage(): React.JSX.Element {
 
               <div>
                 <label className="text-sm font-medium text-foreground mb-2 block">
-                  Email
+                  Correo electrónico
                 </label>
                 <Input
                   type="email"
@@ -256,7 +260,7 @@ export default function AuthPage(): React.JSX.Element {
 
               <div>
                 <label className="text-sm font-medium text-foreground mb-2 block">
-                  Password
+                  Contraseña
                 </label>
                 <PasswordInput
                   placeholder="••••••••"
@@ -268,13 +272,13 @@ export default function AuthPage(): React.JSX.Element {
                   showStrength
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  Use 8+ characters with mix of letters, numbers & symbols
+                  Usa 8+ caracteres con una mezcla de letras, números y símbolos
                 </p>
               </div>
 
               <div>
                 <label className="text-sm font-medium text-foreground mb-2 block">
-                  Confirm Password
+                  Confirmar contraseña
                 </label>
                 <PasswordInput
                   placeholder="••••••••"
@@ -289,13 +293,13 @@ export default function AuthPage(): React.JSX.Element {
               <Checkbox
                 label={
                   <span>
-                    I agree to the{" "}
+                    Acepto los{" "}
                     <Link
                       href="/terms"
                       className="text-primary hover:underline"
                       target="_blank"
                     >
-                      Terms & Conditions
+                      Términos y Condiciones
                     </Link>
                   </span>
                 }
@@ -309,7 +313,7 @@ export default function AuthPage(): React.JSX.Element {
                 className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 rounded-full font-bold shadow-glow"
                 disabled={signupMutation.isPending}
               >
-                {signupMutation.isPending ? "Creating account..." : "Sign Up"}
+                {signupMutation.isPending ? "Creando cuenta..." : "Registrarse"}
               </Button>
             </form>
           </TabsContent>

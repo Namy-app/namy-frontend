@@ -312,7 +312,7 @@ export default function ProfilePage(): React.JSX.Element | null {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => router.push("/restaurant")}
+                onClick={() => router.push("/restaurants")}
               >
                 View All
                 <ChevronRight className="w-4 h-4 ml-1" />
@@ -330,7 +330,7 @@ export default function ProfilePage(): React.JSX.Element | null {
                 {allStores.slice(0, 3).map((store) => (
                   <button
                     key={store.id}
-                    onClick={() => router.push(`/restaurant/${store.id}`)}
+                    onClick={() => router.push(`/restaurants/${store.id}`)}
                     className="w-full flex items-center gap-4 p-3 rounded-lg bg-gradient-hero hover:shadow-card transition-all"
                   >
                     <div className="w-12 h-12 rounded-full bg-gradient-primary flex items-center justify-center flex-shrink-0">
