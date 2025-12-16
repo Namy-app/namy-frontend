@@ -26,6 +26,9 @@ export const CREATE_STORE_MUTATION = gql`
         reviewCounter
         additionalInfo
         imageUrl
+        image1Url
+        image2Url
+        image3Url
         createdAt
         updatedAt
       }
@@ -58,6 +61,9 @@ export const UPDATE_STORE_MUTATION = gql`
         reviewCounter
         additionalInfo
         imageUrl
+        image1Url
+        image2Url
+        image3Url
         createdAt
         updatedAt
       }
@@ -114,6 +120,9 @@ export const GET_ALL_STORES = gql`
         name
         description
         imageUrl
+        image1Url
+        image2Url
+        image3Url
         categoryId
         subCategory
         type
@@ -152,6 +161,9 @@ export const GET_STORE_BY_ID = gql`
       name
       description
       imageUrl
+      image1Url
+      image2Url
+      image3Url
       categoryId
       subCategory
       type
@@ -311,6 +323,12 @@ export const GET_STORE_CATALOGS = gql`
         image2Url
         image3Url
         image4Url
+        image5Url
+        image6Url
+        image7Url
+        image8Url
+        image9Url
+        image10Url
         active
         createdAt
         updatedAt
@@ -333,7 +351,12 @@ export const CREATE_CATALOG = gql`
       image2Url
       image3Url
       image4Url
-      price
+      image5Url
+      image6Url
+      image7Url
+      image8Url
+      image9Url
+      image10Url
       active
       createdAt
       updatedAt
@@ -352,7 +375,12 @@ export const UPDATE_CATALOG = gql`
       image2Url
       image3Url
       image4Url
-      price
+      image5Url
+      image6Url
+      image7Url
+      image8Url
+      image9Url
+      image10Url
       active
       createdAt
       updatedAt

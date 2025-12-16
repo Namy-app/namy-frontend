@@ -89,17 +89,14 @@ export function calculateFinalPrice(
 
 /**
  * Format discount display
- * @param price - Original price
  * @param level - User level
  * @param isPremium - Whether user is premium
  * @returns Formatted string showing discount
  */
 export function formatDiscount(
-  price: number,
   level: UserLevel,
   isPremium: boolean = false
 ): string {
-  void price;
   const discountPercentage = getDiscountPercentage(level, isPremium);
   return `${discountPercentage}% off`;
 }

@@ -28,9 +28,8 @@ import {
   useStoreCatalogs,
   useStoreCoupons,
   useCreateCatalog,
-  useCreateCatalogItem,
+  useUpdateCatalog,
   useCreateDiscount,
-  useCatalogItems,
 } from "@/domains/admin/hooks";
 import {
   type Catalog,
@@ -54,7 +53,7 @@ export default function StoreDetailPage() {
 
   const [activeTab, setActiveTab] = useState<TabType>("info");
   const [showCreateCatalog, setShowCreateCatalog] = useState(false);
-  const [isHydrated] = useState(true);
+  const [isHydrated, setIsHydrated] = useState(false);
 
   // Data fetching
   const { data: store, isLoading: storeLoading } = useStore(storeId);
@@ -64,6 +63,12 @@ export default function StoreDetailPage() {
     { storeId },
     { page: 1, first: 20 }
   );
+
+  // Wait for client-side hydration
+  useEffect(() => {
+    // Using a microtask to avoid synchronous setState in effect
+    void Promise.resolve().then(() => setIsHydrated(true));
+  }, []);
 
   // Check if user is admin
   const isAdmin =
@@ -336,7 +341,7 @@ export default function StoreDetailPage() {
             ) : null}
 
             {/* Additional Information */}
-            {store.additionalInfo &&
+            {/* {store.additionalInfo &&
             Object.keys(store.additionalInfo).length > 0 ? (
               <div className="bg-card rounded-lg shadow p-6 lg:col-span-3">
                 <h2 className="text-xl font-semibold text-foreground mb-4">
@@ -346,7 +351,7 @@ export default function StoreDetailPage() {
                   {JSON.stringify(store.additionalInfo, null, 2)}
                 </pre>
               </div>
-            ) : null}
+            ) : null} */}
 
             {/* Metadata */}
             <div className="bg-card rounded-lg shadow p-6 lg:col-span-3">
@@ -690,9 +695,7 @@ function CatalogsTab({
   const [selectedCatalogId, setSelectedCatalogId] = useState<string | null>(
     null
   );
-  const [showCreateItem, setShowCreateItem] = useState(false);
-
-  const { data: catalogItems } = useCatalogItems(selectedCatalogId || "");
+  const [editingCatalog, setEditingCatalog] = useState<Catalog | null>(null);
 
   if (loading) {
     return (
@@ -729,86 +732,155 @@ function CatalogsTab({
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {catalogs.map((catalog) => (
-            <div
-              key={catalog.id}
-              className="bg-card rounded-lg shadow p-6 hover:shadow-lg transition-shadow cursor-pointer"
-              onClick={() => setSelectedCatalogId(catalog.id)}
-            >
-              <div className="flex items-center justify-between mb-4">
-                <BookOpen className="w-8 h-8 text-primary" />
-                <span className="text-sm text-muted-foreground">
-                  {catalog.id === selectedCatalogId ? "Selected" : ""}
-                </span>
+          {catalogs.map((catalog) => {
+            const backgroundImage =
+              catalog.image1Url ||
+              catalog.image2Url ||
+              catalog.image3Url ||
+              catalog.image4Url ||
+              catalog.image5Url ||
+              catalog.image6Url ||
+              catalog.image7Url ||
+              catalog.image8Url ||
+              catalog.image9Url ||
+              catalog.image10Url;
+            return (
+              <div
+                key={catalog.id}
+                className="relative rounded-lg shadow hover:shadow-lg transition-shadow cursor-pointer overflow-hidden group"
+                onClick={() => setSelectedCatalogId(catalog.id)}
+              >
+                {/* Background Image with Overlay */}
+                {backgroundImage ? (
+                  <>
+                    <div
+                      className="absolute inset-0 bg-cover bg-center"
+                      style={{ backgroundImage: `url(${backgroundImage})` }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/70 to-black/50 group-hover:from-black/95 group-hover:via-black/80 group-hover:to-black/60 transition-all" />
+                  </>
+                ) : (
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-primary/5" />
+                )}
+
+                {/* Content */}
+                <div className="relative p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <BookOpen
+                      className={`w-8 h-8 ${backgroundImage ? "text-white" : "text-primary"}`}
+                    />
+                    {catalog.id === selectedCatalogId && (
+                      <span
+                        className={`text-sm font-medium px-2 py-1 rounded ${backgroundImage ? "bg-white/20 text-white" : "bg-primary/20 text-primary"}`}
+                      >
+                        Selected
+                      </span>
+                    )}
+                  </div>
+                  <h3
+                    className={`text-lg font-semibold mb-2 ${backgroundImage ? "text-white" : "text-foreground"}`}
+                  >
+                    {catalog.name}
+                  </h3>
+                  {catalog.description ? (
+                    <p
+                      className={`text-sm mb-2 line-clamp-2 ${backgroundImage ? "text-white/80" : "text-muted-foreground"}`}
+                    >
+                      {catalog.description}
+                    </p>
+                  ) : null}
+                  <p
+                    className={`text-xs ${backgroundImage ? "text-white/60" : "text-muted-foreground"}`}
+                  >
+                    ID: {catalog.id.slice(0, 8)}...
+                  </p>
+                </div>
               </div>
-              <h3 className="text-lg font-semibold text-foreground mb-2">
-                {catalog.name}
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                Catalog ID: {catalog.id.slice(0, 8)}...
-              </p>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
-      {/* Catalog Items */}
+      {/* Catalog Details */}
       {selectedCatalogId ? (
         <div className="bg-card rounded-lg shadow p-6">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-xl font-semibold text-foreground">
-              Catalog Items
-            </h3>
-            <button
-              onClick={() => setShowCreateItem(true)}
-              className="flex items-center gap-2 px-3 py-2 bg-secondary/600 text-white rounded-lg hover:bg-secondary/700 transition-colors text-sm"
-            >
-              <Plus className="w-4 h-4" />
-              Add Item
-            </button>
-          </div>
+          {(() => {
+            const selectedCatalog = catalogs.find(
+              (c) => c.id === selectedCatalogId
+            );
+            if (!selectedCatalog) {
+              return null;
+            }
 
-          {catalogItems && catalogItems.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {catalogItems.map((item) => (
-                <div
-                  key={item.id}
-                  className="border rounded-lg p-4 hover:border-blue-500 transition-colors"
-                >
-                  <div className="flex items-start gap-3">
-                    <Image
-                      className="w-5 h-5 text-muted-foreground mt-1"
-                      aria-label="Image icon"
-                    />
-                    <div className="flex-1">
-                      <h4 className="font-medium text-foreground">
-                        {item.name}
-                      </h4>
-                      <a
-                        href={item.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm text-primary hover:underline break-all"
-                      >
-                        {item.url}
-                      </a>
+            const catalogImages = [
+              selectedCatalog.image1Url,
+              selectedCatalog.image2Url,
+              selectedCatalog.image3Url,
+              selectedCatalog.image4Url,
+              selectedCatalog.image5Url,
+              selectedCatalog.image6Url,
+              selectedCatalog.image7Url,
+              selectedCatalog.image8Url,
+              selectedCatalog.image9Url,
+              selectedCatalog.image10Url,
+            ].filter(Boolean);
+
+            return (
+              <>
+                {/* Catalog Info */}
+                <div className="mb-6 flex items-start justify-between">
+                  <div className="flex-1">
+                    <h3 className="text-2xl font-bold text-foreground mb-2">
+                      {selectedCatalog.name}
+                    </h3>
+                    {selectedCatalog.description ? (
+                      <p className="text-muted-foreground">
+                        {selectedCatalog.description}
+                      </p>
+                    ) : null}
+                  </div>
+                  <button
+                    onClick={() => setEditingCatalog(selectedCatalog)}
+                    className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-colors"
+                  >
+                    <Package className="w-4 h-4" />
+                    Edit Catalog
+                  </button>
+                </div>
+
+                {/* Catalog Images */}
+                {catalogImages.length > 0 && (
+                  <div className="mb-6">
+                    <h4 className="text-lg font-semibold text-foreground mb-4">
+                      Catalog Images
+                    </h4>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      {catalogImages.map((imageUrl, index) => (
+                        <div
+                          key={index}
+                          className="aspect-square rounded-lg overflow-hidden bg-muted border border-border"
+                        >
+                          <img
+                            src={imageUrl}
+                            alt={`${selectedCatalog.name} image ${index + 1}`}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      ))}
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-muted-foreground text-center py-8">
-              No items in this catalog yet
-            </p>
-          )}
+                )}
+              </>
+            );
+          })()}
         </div>
       ) : null}
 
-      {showCreateItem && selectedCatalogId ? (
-        <CreateCatalogItemModal
-          catalogId={selectedCatalogId}
-          onClose={() => setShowCreateItem(false)}
+      {/* Edit Catalog Modal */}
+      {editingCatalog ? (
+        <EditCatalogModal
+          catalog={editingCatalog}
+          onClose={() => setEditingCatalog(null)}
         />
       ) : null}
     </div>
@@ -1091,21 +1163,33 @@ function CreateCatalogModal({
   const createCatalog = useCreateCatalog();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [images, setImages] = useState<{
-    image1?: string;
-    image2?: string;
-    image3?: string;
-    image4?: string;
+  const [selectedFiles, setSelectedFiles] = useState<{
+    file1?: File;
+    file2?: File;
+    file3?: File;
+    file4?: File;
+    file5?: File;
+    file6?: File;
+    file7?: File;
+    file8?: File;
+    file9?: File;
+    file10?: File;
   }>({});
   const [imagePreviews, setImagePreviews] = useState<{
     preview1?: string;
     preview2?: string;
     preview3?: string;
     preview4?: string;
+    preview5?: string;
+    preview6?: string;
+    preview7?: string;
+    preview8?: string;
+    preview9?: string;
+    preview10?: string;
   }>({});
 
   const handleImageSelect = (
-    slot: 1 | 2 | 3 | 4,
+    slot: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10,
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     const file = event.target.files?.[0];
@@ -1133,33 +1217,132 @@ function CreateCatalogModal({
       return;
     }
 
-    // Convert to base64
+    // Store file and create preview
+    setSelectedFiles((prev: typeof selectedFiles) => ({
+      ...prev,
+      [`file${slot}`]: file,
+    }));
+
     const reader = new FileReader();
     reader.onloadend = () => {
-      const base64 = reader.result as string;
-      setImages((prev) => ({ ...prev, [`image${slot}`]: base64 }));
-      setImagePreviews((prev) => ({ ...prev, [`preview${slot}`]: base64 }));
+      setImagePreviews((prev: typeof imagePreviews) => ({
+        ...prev,
+        [`preview${slot}`]: reader.result as string,
+      }));
     };
     reader.readAsDataURL(file);
   };
 
-  const removeImage = (slot: 1 | 2 | 3 | 4) => {
-    setImages((prev) => ({ ...prev, [`image${slot}`]: undefined }));
-    setImagePreviews((prev) => ({ ...prev, [`preview${slot}`]: undefined }));
+  const removeImage = (slot: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10) => {
+    setSelectedFiles((prev: typeof selectedFiles) => ({
+      ...prev,
+      [`file${slot}`]: undefined,
+    }));
+    setImagePreviews((prev: typeof imagePreviews) => ({
+      ...prev,
+      [`preview${slot}`]: undefined,
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      // First, upload images to S3 if any
+      const imageUrls: {
+        image1Url?: string;
+        image2Url?: string;
+        image3Url?: string;
+        image4Url?: string;
+        image5Url?: string;
+        image6Url?: string;
+        image7Url?: string;
+        image8Url?: string;
+        image9Url?: string;
+        image10Url?: string;
+      } = {};
+
+      const filesToUpload = [
+        selectedFiles.file1,
+        selectedFiles.file2,
+        selectedFiles.file3,
+        selectedFiles.file4,
+        selectedFiles.file5,
+        selectedFiles.file6,
+        selectedFiles.file7,
+        selectedFiles.file8,
+        selectedFiles.file9,
+        selectedFiles.file10,
+      ].filter(Boolean) as File[];
+
+      if (filesToUpload.length > 0) {
+        const formData = new FormData();
+        filesToUpload.forEach((file) => {
+          formData.append("files", file);
+        });
+
+        const authStore = useAuthStore.getState();
+        const token = authStore.accessToken;
+
+        const baseUrl = (
+          process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"
+        ).replace("/graphql", "");
+
+        const uploadResponse = await fetch(`${baseUrl}/upload/catalog-images`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formData,
+        });
+
+        if (!uploadResponse.ok) {
+          throw new Error("Image upload failed");
+        }
+
+        const { urls } = await uploadResponse.json();
+
+        // Map URLs to the correct slots
+        let urlIndex = 0;
+        if (selectedFiles.file1) {
+          imageUrls.image1Url = urls[urlIndex++];
+        }
+        if (selectedFiles.file2) {
+          imageUrls.image2Url = urls[urlIndex++];
+        }
+        if (selectedFiles.file3) {
+          imageUrls.image3Url = urls[urlIndex++];
+        }
+        if (selectedFiles.file4) {
+          imageUrls.image4Url = urls[urlIndex++];
+        }
+        if (selectedFiles.file5) {
+          imageUrls.image5Url = urls[urlIndex++];
+        }
+        if (selectedFiles.file6) {
+          imageUrls.image6Url = urls[urlIndex++];
+        }
+        if (selectedFiles.file7) {
+          imageUrls.image7Url = urls[urlIndex++];
+        }
+        if (selectedFiles.file8) {
+          imageUrls.image8Url = urls[urlIndex++];
+        }
+        if (selectedFiles.file9) {
+          imageUrls.image9Url = urls[urlIndex++];
+        }
+        if (selectedFiles.file10) {
+          imageUrls.image10Url = urls[urlIndex++];
+        }
+      }
+
+      // Create catalog with image URLs
       await createCatalog.mutateAsync({
         storeId,
         name,
         description: description || undefined,
-        image1: images.image1,
-        image2: images.image2,
-        image3: images.image3,
-        image4: images.image4,
+        ...imageUrls,
       });
+
       toast({
         title: "Catalog created",
         description:
@@ -1177,7 +1360,7 @@ function CreateCatalogModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-      <div className="bg-card rounded-lg shadow-card max-w-3xl w-full my-8">
+      <div className="bg-card rounded-lg shadow-card max-w-3xl w-full my-8 max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-border">
           <div className="flex items-center gap-3">
@@ -1189,7 +1372,7 @@ function CreateCatalogModal({
                 Create New Catalog
               </h3>
               <p className="text-sm text-muted-foreground">
-                Add up to 4 images for your catalog
+                Add up to 10 images for your catalog
               </p>
             </div>
           </div>
@@ -1235,15 +1418,15 @@ function CreateCatalogModal({
           {/* Images Grid */}
           <div>
             <label className="block text-sm font-medium text-foreground mb-3">
-              Images (Up to 4)
+              Images (Up to 10)
             </label>
-            <div className="grid grid-cols-2 gap-4">
-              {[1, 2, 3, 4].map((slot) => {
-                const slotKey = slot as 1 | 2 | 3 | 4;
+            <div className="grid grid-cols-3 md:grid-cols-5 gap-3">
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((slot) => {
+                const slotKey = slot as 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
                 const preview = imagePreviews[`preview${slotKey}`];
                 return (
                   <div key={slot} className="space-y-2">
-                    <div className="relative aspect-video bg-muted rounded-lg border-2 border-dashed border-border overflow-hidden">
+                    <div className="relative aspect-square bg-muted rounded-lg border-2 border-dashed border-border overflow-hidden">
                       {preview ? (
                         <>
                           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -1255,19 +1438,16 @@ function CreateCatalogModal({
                           <button
                             type="button"
                             onClick={() => removeImage(slotKey)}
-                            className="absolute top-2 right-2 p-1.5 bg-destructive text-destructive-foreground rounded-lg hover:opacity-90 transition-opacity"
+                            className="absolute top-1 right-1 p-1 bg-destructive text-destructive-foreground rounded-lg hover:opacity-90 transition-opacity"
                           >
-                            <X className="w-4 h-4" />
+                            <X className="w-3 h-3" />
                           </button>
                         </>
                       ) : (
                         <label className="flex flex-col items-center justify-center h-full cursor-pointer hover:bg-muted/80 transition-colors">
-                          <Image
-                            className="w-8 h-8 text-muted-foreground mb-2"
-                            aria-label={`Upload image ${slot}`}
-                          />
-                          <span className="text-xs text-muted-foreground">
-                            Image {slot}
+                          <Plus className="w-6 h-6 text-muted-foreground mb-1" />
+                          <span className="text-[10px] text-muted-foreground">
+                            {slot}
                           </span>
                           <input
                             type="file"
@@ -1318,52 +1498,273 @@ function CreateCatalogModal({
   );
 }
 
-// Create Catalog Item Modal
-function CreateCatalogItemModal({
-  catalogId,
+// Edit Catalog Modal
+function EditCatalogModal({
+  catalog,
   onClose,
 }: {
-  catalogId: string;
+  catalog: Catalog;
   onClose: () => void;
 }) {
   const { toast } = useToast();
-  const createCatalogItem = useCreateCatalogItem();
-  const [name, setName] = useState("");
-  const [url, setUrl] = useState("");
+  const updateCatalog = useUpdateCatalog();
+  const [name, setName] = useState(catalog.name);
+  const [description, setDescription] = useState(catalog.description || "");
+  const [selectedFiles, setSelectedFiles] = useState<{
+    file1?: File;
+    file2?: File;
+    file3?: File;
+    file4?: File;
+    file5?: File;
+    file6?: File;
+    file7?: File;
+    file8?: File;
+    file9?: File;
+    file10?: File;
+  }>({});
+  const [imagePreviews, setImagePreviews] = useState<{
+    preview1?: string;
+    preview2?: string;
+    preview3?: string;
+    preview4?: string;
+    preview5?: string;
+    preview6?: string;
+    preview7?: string;
+    preview8?: string;
+    preview9?: string;
+    preview10?: string;
+  }>({
+    preview1: catalog.image1Url,
+    preview2: catalog.image2Url,
+    preview3: catalog.image3Url,
+    preview4: catalog.image4Url,
+    preview5: catalog.image5Url,
+    preview6: catalog.image6Url,
+    preview7: catalog.image7Url,
+    preview8: catalog.image8Url,
+    preview9: catalog.image9Url,
+    preview10: catalog.image10Url,
+  });
+
+  const handleImageSelect = (
+    slot: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10,
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      toast({
+        variant: "destructive",
+        title: "Invalid file type",
+        description: "Please select an image file (PNG, JPG, WebP)",
+      });
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        variant: "destructive",
+        title: "File too large",
+        description: "Please select an image smaller than 5MB",
+      });
+      return;
+    }
+
+    // Store file and create preview
+    setSelectedFiles((prev: typeof selectedFiles) => ({
+      ...prev,
+      [`file${slot}`]: file,
+    }));
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreviews((prev: typeof imagePreviews) => ({
+        ...prev,
+        [`preview${slot}`]: reader.result as string,
+      }));
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const removeImage = (slot: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10) => {
+    setSelectedFiles((prev: typeof selectedFiles) => ({
+      ...prev,
+      [`file${slot}`]: undefined,
+    }));
+    setImagePreviews((prev: typeof imagePreviews) => ({
+      ...prev,
+      [`preview${slot}`]: undefined,
+    }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await createCatalogItem.mutateAsync({ catalogId, name, url });
+      // Upload new images to S3 if any
+      const imageUrls: {
+        image1Url?: string;
+        image2Url?: string;
+        image3Url?: string;
+        image4Url?: string;
+        image5Url?: string;
+        image6Url?: string;
+        image7Url?: string;
+        image8Url?: string;
+        image9Url?: string;
+        image10Url?: string;
+      } = {
+        image1Url: catalog.image1Url,
+        image2Url: catalog.image2Url,
+        image3Url: catalog.image3Url,
+        image4Url: catalog.image4Url,
+        image5Url: catalog.image5Url,
+        image6Url: catalog.image6Url,
+        image7Url: catalog.image7Url,
+        image8Url: catalog.image8Url,
+        image9Url: catalog.image9Url,
+        image10Url: catalog.image10Url,
+      };
+
+      const filesToUpload = [
+        selectedFiles.file1,
+        selectedFiles.file2,
+        selectedFiles.file3,
+        selectedFiles.file4,
+        selectedFiles.file5,
+        selectedFiles.file6,
+        selectedFiles.file7,
+        selectedFiles.file8,
+        selectedFiles.file9,
+        selectedFiles.file10,
+      ].filter(Boolean) as File[];
+
+      if (filesToUpload.length > 0) {
+        const formData = new FormData();
+        filesToUpload.forEach((file) => {
+          formData.append("files", file);
+        });
+
+        const authStore = useAuthStore.getState();
+        const token = authStore.accessToken;
+
+        const baseUrl = (
+          process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"
+        ).replace("/graphql", "");
+
+        const uploadResponse = await fetch(`${baseUrl}/upload/catalog-images`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formData,
+        });
+
+        if (!uploadResponse.ok) {
+          throw new Error("Image upload failed");
+        }
+
+        const { urls } = await uploadResponse.json();
+
+        // Map URLs to the correct slots (only update slots with new files)
+        let urlIndex = 0;
+        if (selectedFiles.file1) {
+          imageUrls.image1Url = urls[urlIndex++];
+        }
+        if (selectedFiles.file2) {
+          imageUrls.image2Url = urls[urlIndex++];
+        }
+        if (selectedFiles.file3) {
+          imageUrls.image3Url = urls[urlIndex++];
+        }
+        if (selectedFiles.file4) {
+          imageUrls.image4Url = urls[urlIndex++];
+        }
+        if (selectedFiles.file5) {
+          imageUrls.image5Url = urls[urlIndex++];
+        }
+        if (selectedFiles.file6) {
+          imageUrls.image6Url = urls[urlIndex++];
+        }
+        if (selectedFiles.file7) {
+          imageUrls.image7Url = urls[urlIndex++];
+        }
+        if (selectedFiles.file8) {
+          imageUrls.image8Url = urls[urlIndex++];
+        }
+        if (selectedFiles.file9) {
+          imageUrls.image9Url = urls[urlIndex++];
+        }
+        if (selectedFiles.file10) {
+          imageUrls.image10Url = urls[urlIndex++];
+        }
+      }
+
+      // Handle removed images (set to undefined if preview was removed but no new file)
+      Object.keys(imagePreviews).forEach((key) => {
+        const slot = key.replace("preview", "") as
+          | "1"
+          | "2"
+          | "3"
+          | "4"
+          | "5"
+          | "6"
+          | "7"
+          | "8"
+          | "9"
+          | "10";
+        const imageKey = `image${slot}Url` as keyof typeof imageUrls;
+        const previewKey = key as keyof typeof imagePreviews;
+
+        if (
+          !imagePreviews[previewKey] &&
+          !selectedFiles[`file${slot}` as keyof typeof selectedFiles]
+        ) {
+          imageUrls[imageKey] = undefined;
+        }
+      });
+
+      // Update catalog
+      await updateCatalog.mutateAsync({
+        id: catalog.id,
+        name,
+        description: description || undefined,
+        ...imageUrls,
+      });
+
       toast({
-        title: "Item added",
-        description: "The catalog item has been added successfully.",
+        title: "Catalog updated",
+        description: "The catalog has been updated successfully.",
       });
       onClose();
     } catch (_error) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to add catalog item.",
+        description: "Failed to update catalog. Please try again.",
       });
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-card rounded-lg shadow-card max-w-md w-full">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+      <div className="bg-card rounded-lg shadow-card max-w-3xl w-full my-8 max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-border">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-secondary/20 rounded-lg">
-              <Plus className="w-5 h-5 text-secondary-foreground" />
+            <div className="p-2 bg-primary/10 rounded-lg">
+              <Package className="w-5 h-5 text-primary" />
             </div>
             <div>
               <h3 className="text-xl font-bold text-foreground">
-                Add Catalog Item
+                Edit Catalog
               </h3>
               <p className="text-sm text-muted-foreground">
-                Add a new item to your catalog
+                Update catalog details and images
               </p>
             </div>
           </div>
@@ -1376,33 +1777,87 @@ function CreateCatalogItemModal({
         </div>
 
         {/* Form */}
-        <form onSubmit={(e) => void handleSubmit(e)} className="p-6 space-y-4">
+        <form onSubmit={(e) => void handleSubmit(e)} className="p-6 space-y-6">
+          {/* Name */}
           <div>
             <label className="block text-sm font-medium text-foreground mb-2">
-              Item Name <span className="text-destructive">*</span>
+              Catalog Name <span className="text-destructive">*</span>
             </label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-              placeholder="e.g., Burger, Pizza, T-Shirt"
+              className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
+              placeholder="e.g., Menu Items, Products, Services"
               required
             />
           </div>
 
+          {/* Description */}
           <div>
             <label className="block text-sm font-medium text-foreground mb-2">
-              Image URL <span className="text-destructive">*</span>
+              Description
             </label>
-            <input
-              type="url"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-              placeholder="https://example.com/image.jpg"
-              required
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent resize-none bg-background text-foreground"
+              rows={3}
+              placeholder="Describe your catalog..."
             />
+          </div>
+
+          {/* Images Grid */}
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-3">
+              Images (Up to 10)
+            </label>
+            <div className="grid grid-cols-3 md:grid-cols-5 gap-3">
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((slot) => {
+                const slotKey = slot as 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
+                const preview = imagePreviews[`preview${slotKey}`];
+                return (
+                  <div key={slot} className="space-y-2">
+                    <div className="relative aspect-square bg-muted rounded-lg border-2 border-dashed border-border overflow-hidden">
+                      {preview ? (
+                        <>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={preview}
+                            alt={`Preview ${slot}`}
+                            className="w-full h-full object-cover"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeImage(slotKey)}
+                            className="absolute top-1 right-1 p-1 bg-destructive text-destructive-foreground rounded-lg hover:opacity-90 transition-opacity"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </>
+                      ) : (
+                        <label className="flex flex-col items-center justify-center h-full cursor-pointer hover:bg-muted/80 transition-colors">
+                          <Plus className="w-6 h-6 text-muted-foreground mb-1" />
+                          <span className="text-[10px] text-muted-foreground">
+                            {slot}
+                          </span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => handleImageSelect(slotKey, e)}
+                            className="hidden"
+                          />
+                        </label>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <p className="text-xs text-muted-foreground mt-2">
+              Max 5MB per image • PNG, JPG, WebP • Click X to remove, + to add
+              new
+            </p>
           </div>
 
           {/* Actions */}
@@ -1410,23 +1865,23 @@ function CreateCatalogItemModal({
             <button
               type="button"
               onClick={onClose}
-              disabled={createCatalogItem.isPending}
+              disabled={updateCatalog.isPending}
               className="flex-1 px-4 py-3 border border-border text-foreground font-semibold rounded-lg hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Cancel
             </button>
             <button
               type="submit"
-              disabled={createCatalogItem.isPending}
+              disabled={updateCatalog.isPending}
               className="flex-1 px-4 py-3 bg-primary text-primary-foreground font-semibold rounded-lg hover:opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
-              {createCatalogItem.isPending ? (
+              {updateCatalog.isPending ? (
                 <>
                   <Loader2 className="w-5 h-5 animate-spin" />
-                  Adding...
+                  Updating...
                 </>
               ) : (
-                "Add Item"
+                "Update Catalog"
               )}
             </button>
           </div>
