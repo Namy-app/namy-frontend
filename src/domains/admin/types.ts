@@ -279,6 +279,11 @@ export interface CatalogItem {
 export interface CreateCatalogInput {
   storeId: string;
   name: string;
+  description?: string;
+  image1?: string;
+  image2?: string;
+  image3?: string;
+  image4?: string;
 }
 
 export interface CreateCatalogItemInput {
