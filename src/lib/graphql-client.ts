@@ -111,8 +111,6 @@ export async function graphqlRequest<T>(
 
     // Check if this is an authentication error
     if (isAuthenticationError(parsedError)) {
-      console.error("Authentication error detected - triggering logout");
-
       // Check if current page is an auth page to avoid redirect loops
       const isAuthPage =
         typeof window !== "undefined" &&
@@ -120,6 +118,7 @@ export async function graphqlRequest<T>(
 
       // Call the registered callback to clear auth state only if not on auth pages
       if (authErrorCallback && !isAuthPage) {
+        console.error("Authentication error detected - triggering logout");
         authErrorCallback();
       }
 

@@ -1,7 +1,10 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
+
+import { useAuthStore } from "@/store/useAuthStore";
 
 export default function Home() {
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -9,6 +12,8 @@ export default function Home() {
   const [startX, setStartX] = useState(0);
   const [translateX, setTranslateX] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
+  const { isAuthenticated } = useAuthStore();
+  console.log("isAuthenticated => ", isAuthenticated);
 
   const slides = [
     {
@@ -158,21 +163,32 @@ export default function Home() {
 
         {/* CTA Buttons */}
         <div className="flex-1 flex flex-col items-center justify-center p-6  bg-background/50 backdrop-blur-sm">
-          <div className="w-full max-w-md ">
-            <a href="/auth">
-              <button className="inline-flex items-center justify-center gap-2 whitespace-nowrap ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 px-4 py-2 w-full h-14 bg-primary text-primary-foreground hover:bg-primary/90 rounded-full font-bold text-lg shadow-glow">
-                Sign Up / Log In
-              </button>
-            </a>
-            <a href="/explore" className="mt-3 block ">
-              <button className="inline-flex items-center justify-center gap-2 whitespace-nowrap ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-background hover:text-accent-foreground px-4 py-2 w-full h-14 border-2 border-border rounded-full font-semibold text-lg hover:bg-accent">
-                Continue as Guest
-              </button>
-            </a>
-            <p className="text-sm text-muted-foreground text-center mt-4">
-              🔓 You can sign up anytime to start saving
-            </p>
-          </div>
+          {isAuthenticated ? (
+            <div className="w-full max-w-md ">
+              <Link href="/explore" className="mt-3 block ">
+                <button className="inline-flex items-center justify-center gap-2 whitespace-nowrap ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-background hover:text-accent-foreground px-4 py-2 w-full h-14 border-2 border-border rounded-full font-semibold text-lg hover:bg-accent">
+                  Explorar Tiendas
+                </button>
+              </Link>
+            </div>
+          ) : (
+            <div className="w-full max-w-md ">
+              <Link href="/auth">
+                <button className="inline-flex items-center justify-center gap-2 whitespace-nowrap ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 px-4 py-2 w-full h-14 bg-primary text-primary-foreground hover:bg-primary/90 rounded-full font-bold text-lg shadow-glow">
+                  Registrarse / Iniciar sesión
+                </button>
+              </Link>
+              <Link href="/explore" className="mt-3 block ">
+                <button className="inline-flex items-center justify-center gap-2 whitespace-nowrap ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-background hover:text-accent-foreground px-4 py-2 w-full h-14 border-2 border-border rounded-full font-semibold text-lg hover:bg-accent">
+                  Continuar como invitado
+                </button>
+              </Link>
+              <p className="text-sm text-muted-foreground text-center mt-4">
+                🔓 Puedes registrarte en cualquier momento para empezar a
+                ahorrar
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </>
