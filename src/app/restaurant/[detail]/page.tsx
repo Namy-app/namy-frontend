@@ -107,7 +107,10 @@ export default function RestaurantDetailPage(): React.JSX.Element {
   // Get the first active discount for this store
   // const firstActiveDiscount = discountsData?.data?.find((d) => d.active);
 
-  console.log("Store data:", store);
+  if (!isLoading && !store) {
+    router.push("/explore");
+    return <></>;
+  }
 
   // Convert store data to restaurant format for the UI
   const parsedStore: Restaurant | null = store

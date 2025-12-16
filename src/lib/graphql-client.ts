@@ -67,7 +67,7 @@ function isAuthenticationError(graphqlError: GraphQLError | null): boolean {
 
     // Check for authentication-related error messages
     const authErrorMessages = [
-      "User not found",
+      // "User not found",
       "Unauthorized",
       "Unauthenticated",
       "Authentication required",
