@@ -333,7 +333,6 @@ export const CREATE_CATALOG = gql`
       image2Url
       image3Url
       image4Url
-      price
       active
       createdAt
       updatedAt
@@ -352,7 +351,6 @@ export const UPDATE_CATALOG = gql`
       image2Url
       image3Url
       image4Url
-      price
       active
       createdAt
       updatedAt
