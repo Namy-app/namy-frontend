@@ -114,6 +114,11 @@ export default function RestaurantDetailPage(): React.JSX.Element {
   // Get the first active discount for this store
   // const firstActiveDiscount = discountsData?.data?.find((d) => d.active);
 
+  if (!isLoading && !store) {
+    router.push("/explore");
+    return <></>;
+  }
+
   // Convert store data to restaurant format for the UI
   const parsedStore: Restaurant | null = store
     ? {
@@ -571,6 +576,63 @@ export default function RestaurantDetailPage(): React.JSX.Element {
     );
   };
 
+  const handleShareContact = (): void => {
+    if (!parsedStore) {
+      return;
+    }
+
+    const currentUrl =
+      typeof window !== "undefined" ? window.location.href : "";
+    const shareText = `🍽️ Check out ${parsedStore.name}!\n\n📍 ${parsedStore.location.address}, ${parsedStore.location.city}\n💰 Get ${parsedStore.discount.percentage}% off with Ñamy!\n📞 ${parsedStore.phone}\n\n${currentUrl}`;
+
+    const shareData = {
+      title: `${parsedStore.name} - ${parsedStore.discount.percentage}% off with Ñamy!`,
+      text: shareText,
+      url: currentUrl,
+    };
+
+    // Check if Web Share API is supported (mobile devices)
+    if (typeof navigator !== "undefined" && navigator.share) {
+      navigator.share(shareData).catch((error) => {
+        console.error("Error sharing:", error);
+        // Fallback to clipboard
+        handleClipboardShare(shareText);
+      });
+    } else {
+      // Desktop fallback - copy to clipboard
+      handleClipboardShare(shareText);
+    }
+  };
+
+  const handleClipboardShare = (text: string): void => {
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      navigator.clipboard
+        .writeText(text)
+        .then(() => {
+          toast({
+            title: "Copied to clipboard!",
+            description:
+              "Restaurant details have been copied. Share them with friends!",
+          });
+        })
+        .catch((error) => {
+          console.error("Error copying to clipboard:", error);
+          toast({
+            variant: "destructive",
+            title: "Copy failed",
+            description: "Unable to copy to clipboard. Please copy manually.",
+          });
+        });
+    } else {
+      // Fallback for browsers without clipboard API
+      toast({
+        variant: "destructive",
+        title: "Share not supported",
+        description: "Please copy the restaurant details manually.",
+      });
+    }
+  };
+
   if (isLoading) {
     return (
       <BasicLayout className="pb-20">
@@ -608,7 +670,7 @@ export default function RestaurantDetailPage(): React.JSX.Element {
             <p className="text-muted-foreground text-lg mb-4">
               Restaurant not found
             </p>
-            <Button onClick={() => router.push("/restaurant")}>
+            <Button onClick={() => router.push("/restaurants")}>
               Back to Restaurants
             </Button>
           </div>
@@ -797,28 +859,31 @@ export default function RestaurantDetailPage(): React.JSX.Element {
 
                   <div className="h-px bg-border" />
 
-                  <div className="flex items-center gap-3">
-                    <Phone className="w-5 h-5 text-rose-500 flex-shrink-0" />
-                    <div>
-                      <p className="font-semibold text-foreground">Phone</p>
-                      <a
-                        href={`tel:${parsedStore.phone}`}
-                        className="text-sm text-rose-600 hover:underline"
+                  {parsedStore.phone.length > 0 ? (
+                    <>
+                      <div className="flex items-center gap-3">
+                        <Phone className="w-5 h-5 text-rose-500 shrink-0" />
+                        <div>
+                          <p className="font-semibold text-foreground">Phone</p>
+                          <a
+                            href={`tel:${parsedStore.phone}`}
+                            className="text-sm text-rose-600 hover:underline"
+                          >
+                            {parsedStore.phone}
+                          </a>
+                        </div>
+                      </div>
+                      <div className="h-px bg-border" />
+
+                      <Button
+                        onClick={handleWhatsAppContact}
+                        className="w-full bg-green-500 hover:bg-green-600 text-white"
                       >
-                        {parsedStore.phone}
-                      </a>
-                    </div>
-                  </div>
-
-                  <div className="h-px bg-border" />
-
-                  <Button
-                    onClick={handleWhatsAppContact}
-                    className="w-full bg-green-500 hover:bg-green-600 text-white"
-                  >
-                    <MessageCircle className="w-4 h-4 mr-2" />
-                    Contact via WhatsApp
-                  </Button>
+                        <MessageCircle className="w-4 h-4 mr-2" />
+                        Contact via WhatsApp
+                      </Button>
+                    </>
+                  ) : null}
                 </Card>
 
                 {catalogs && catalogs.length > 0 ? (
@@ -1008,7 +1073,7 @@ export default function RestaurantDetailPage(): React.JSX.Element {
                 </Card>
 
                 <Card className="p-5 bg-white border border-[#f1e9e6] rounded-xl shadow-md">
-                  <h3 className="font-semibold mb-2">Contact</h3>
+                  {/* <h3 className="font-semibold mb-2">Contact</h3> */}
                   <a
                     href={`tel:${parsedStore.phone}`}
                     className="block text-rose-600 font-medium mb-3"
@@ -1016,10 +1081,10 @@ export default function RestaurantDetailPage(): React.JSX.Element {
                     {parsedStore.phone}
                   </a>
                   <Button
-                    onClick={handleWhatsAppContact}
-                    className="w-full bg-green-500 hover:bg-green-600 text-white"
+                    onClick={handleShareContact}
+                    className="w-full bg-white hover:bg-gray-200 text-gray-800 border border-gray-300"
                   >
-                    Contact via WhatsApp
+                    Compartir
                   </Button>
                 </Card>
               </aside>

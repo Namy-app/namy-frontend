@@ -54,7 +54,7 @@ export function ExploreHeader({
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 bg-card/95 backdrop-blur-sm shadow-sm z-20">
+    <header className="fixed top-0 left-0 right-0 bg-white/85 backdrop-blur-sm shadow-sm z-20">
       <div className="flex items-center justify-between h-14 max-w-5xl mx-auto px-4">
         <div className="flex-1">
           <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/70 backdrop-blur-md hover:bg-white transition-colors shadow-sm">

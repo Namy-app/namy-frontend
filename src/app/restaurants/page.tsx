@@ -16,6 +16,8 @@ import Link from "next/link";
 import { useState } from "react";
 
 import { useStores } from "@/domains/store/hooks";
+import { type StoreFilters } from "@/domains/store/type";
+import { useMyLevel } from "@/domains/user/hooks/query/useMyLevel";
 import { BasicLayout } from "@/layouts/BasicLayout";
 import { Button } from "@/shared/components/Button";
 import { Card } from "@/shared/components/Card";
@@ -48,59 +50,57 @@ const categories = [
   "Steakhouse",
 ];
 
+let timeout: NodeJS.Timeout;
+
 export default function RestaurantListingPage(): React.JSX.Element {
-  const { data: storesResult, isLoading } = useStores();
+  const [filters, setFilters] = useState<StoreFilters>({
+    categoryId: "restaurant",
+  });
+  const { data: storesResult, isLoading } = useStores(filters);
   const allStores = storesResult?.data ?? [];
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [selectedSubCategory, setSelectedSubCategory] = useState("All");
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [sortBy, setSortBy] = useState<"distance" | "rating" | "discount">(
     "distance"
   );
 
-  // Filter stores to only show restaurants (categoryId === "Food & Beverage")
-  const restaurants: Restaurant[] = allStores
-    .filter((store) => store.categoryId?.toLowerCase() === "food & beverage")
-    .map((store) => ({
-      id: store.id,
-      slug: store.id,
-      name: store.name,
-      category: store.subCategory || "Restaurant",
-      rating: store.averageRating ?? 4.5,
-      image:
-        store.imageUrl ||
-        "https://images.unsplash.com/photo-1565299507177-b0ac66763828?w=800&auto=format&fit=crop",
-      discount: 15, // Default discount
-      distance: "N/A", // Distance calculation would need geolocation
+  const { data: myLevel } = useMyLevel();
+
+  const restaurants: Restaurant[] = allStores.map((store) => ({
+    id: store.id,
+    slug: store.id,
+    name: store.name,
+    category: store.subCategory || "Restaurant",
+    rating: store.averageRating ?? 4.5,
+    image:
+      store.imageUrl ||
+      "https://images.unsplash.com/photo-1565299507177-b0ac66763828?w=800&auto=format&fit=crop",
+    discount: myLevel?.discountPercentage ?? 10, // Default discount
+    distance: "N/A", // Distance calculation would need geolocation
+  }));
+
+  const handleCategoryClick = (subCategory: string): void => {
+    setSelectedSubCategory(subCategory);
+    setFilters((prev) => ({
+      ...prev,
+      subCategory: subCategory === "All" ? undefined : subCategory,
     }));
+  };
 
-  // Filter and sort restaurants
-  const filteredRestaurants = restaurants
-    .filter((restaurant) => {
-      const matchesSearch =
-        searchQuery === "" ||
-        restaurant.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        restaurant.category.toLowerCase().includes(searchQuery.toLowerCase());
+  const handleSetSearchQuery = (query: string): void => {
+    if (timeout) {
+      clearTimeout(timeout);
+    }
 
-      const matchesCategory =
-        selectedCategory === "All" || restaurant.category === selectedCategory;
-
-      return matchesSearch && matchesCategory;
-    })
-    .sort((a, b) => {
-      if (sortBy === "distance") {
-        return parseFloat(a.distance) - parseFloat(b.distance);
-      } else if (sortBy === "rating") {
-        return b.rating - a.rating;
-      } else if (sortBy === "discount") {
-        return b.discount - a.discount;
-      }
-      return 0;
-    });
-
-  const handleCategoryClick = (category: string): void => {
-    setSelectedCategory(category);
+    setSearchQuery(query);
+    timeout = setTimeout(() => {
+      setFilters((prev) => ({
+        ...prev,
+        search: query || undefined,
+      }));
+    }, 300);
   };
 
   const handleMapView = (): void => {
@@ -110,7 +110,7 @@ export default function RestaurantListingPage(): React.JSX.Element {
 
   const clearFilters = (): void => {
     setSearchQuery("");
-    setSelectedCategory("All");
+    setSelectedSubCategory("All");
     setSortBy("distance");
   };
 
@@ -167,7 +167,7 @@ export default function RestaurantListingPage(): React.JSX.Element {
                   type="text"
                   placeholder="Search restaurants..."
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e) => handleSetSearchQuery(e.target.value)}
                   className="pl-10 h-12 bg-card border-border rounded-2xl"
                 />
               </div>
@@ -182,12 +182,12 @@ export default function RestaurantListingPage(): React.JSX.Element {
                   key={category}
                   onClick={() => handleCategoryClick(category)}
                   className={`rounded-full whitespace-nowrap ${
-                    selectedCategory === category
+                    selectedSubCategory === category
                       ? "bg-primary text-primary-foreground shadow-glow"
                       : "bg-card border-border hover:border-primary"
                   }`}
                   variant={
-                    selectedCategory === category ? "default" : "outline"
+                    selectedSubCategory === category ? "default" : "outline"
                   }
                 >
                   {category}
@@ -200,7 +200,7 @@ export default function RestaurantListingPage(): React.JSX.Element {
           <div className="px-6 mb-6 max-w-5xl mx-auto">
             <div className="flex items-center justify-between">
               <p className="text-sm text-muted-foreground">
-                {filteredRestaurants.length} restaurants found
+                {restaurants.length} restaurants found
               </p>
               <div className="flex items-center gap-2">
                 <SlidersHorizontal className="w-4 h-4 text-muted-foreground" />
@@ -233,7 +233,7 @@ export default function RestaurantListingPage(): React.JSX.Element {
             <>
               {/* Restaurant Grid */}
               <div className="px-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-5xl mx-auto">
-                {filteredRestaurants.length === 0 ? (
+                {restaurants.length === 0 ? (
                   <div className="col-span-full text-center py-12">
                     <p className="text-muted-foreground text-lg mb-4">
                       No restaurants found matching your criteria
@@ -243,12 +243,12 @@ export default function RestaurantListingPage(): React.JSX.Element {
                     </Button>
                   </div>
                 ) : (
-                  filteredRestaurants.map((restaurant, index) => (
+                  restaurants.map((restaurant, index) => (
                     <Link
                       key={restaurant.id}
                       className="animate-slide-up"
                       style={{ animationDelay: `${index * 0.1}s` }}
-                      href={`/restaurant/${restaurant.id}`}
+                      href={`/restaurants/${restaurant.id}`}
                     >
                       <Card className="overflow-hidden cursor-pointer transition-all hover:shadow-card hover:scale-[1.02] bg-card border-border">
                         {/* Restaurant Image */}

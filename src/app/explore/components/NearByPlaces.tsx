@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 
+import { InfoCard } from "@/components/InfoCard";
 import { PlaceHolderTypeEnum } from "@/data/constants";
 import { type Store } from "@/lib/api-types";
 import { getInitials } from "@/lib/user.lib";
@@ -17,25 +18,33 @@ export function NearbyPlaces({
   isLoading?: boolean;
   discountPercentage?: number;
 }): React.JSX.Element {
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-1 gap-4">
+        {[1, 2, 3].map((n) => (
+          <div key={n} className="h-24 bg-card rounded-lg animate-pulse" />
+        ))}
+      </div>
+    );
+  }
   return (
     <div className="mb-8">
       <div className="px-6">
         <h2 className="text-xl font-bold mb-4 text-foreground">
           📍 Cerca de ti
         </h2>
-        {isLoading ? (
-          <div className="grid grid-cols-1 gap-4">
-            {[1, 2, 3].map((n) => (
-              <div key={n} className="h-24 bg-card rounded-lg animate-pulse" />
-            ))}
-          </div>
+        {closestStores.length === 0 ? (
+          <InfoCard
+            title="No Stores Close By"
+            summary="Check back for available stores close to you"
+          />
         ) : (
           <div className="grid grid-cols-1 gap-4">
             {closestStores.map((place: Store) => (
               <Card key={place.id} className="shadow-md group">
                 <Link
                   key={place.id}
-                  href={`/restaurant/${place.id}`}
+                  href={`/restaurants/${place.id}`}
                   className="flex items-center gap-4 p-3 cursor-pointer hover:shadow-glow transition-all border-0 "
                 >
                   <div className="relative w-20 h-20 rounded-lg overflow-hidden shrink-0">
