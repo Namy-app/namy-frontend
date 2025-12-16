@@ -267,6 +267,14 @@ export interface Catalog {
   id: string;
   storeId: string;
   name: string;
+  description?: string;
+  image1Url?: string;
+  image2Url?: string;
+  image3Url?: string;
+  image4Url?: string;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface CatalogItem {
