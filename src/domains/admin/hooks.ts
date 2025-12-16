@@ -16,6 +16,7 @@ import {
   GET_STORE_DISCOUNTS,
   GET_USERS,
   GET_USER_DETAILS_WITH_ACTIVITY,
+  CREATE_CATALOG,
 } from "./graphql";
 import {
   type CreateStoreInput,
@@ -320,14 +321,12 @@ export function useCreateCatalog() {
   const queryClient = useQueryClient();
 
   return useMutation<Catalog, Error, CreateCatalogInput>({
-    mutationFn: async (_input: CreateCatalogInput) => {
-      // TODO: Catalog feature not implemented in backend yet
-      throw new Error("Catalog feature is not yet implemented in the backend");
-      // const data = await graphqlClient.request<{ createCatalog: Catalog }>(
-      //   CREATE_CATALOG,
-      //   { input }
-      // );
-      // return data.createCatalog;
+    mutationFn: async (input: CreateCatalogInput) => {
+      const data = await graphqlClient.request<{ createCatalog: Catalog }>(
+        CREATE_CATALOG,
+        { input }
+      );
+      return data.createCatalog;
     },
     onSuccess: (_, variables) => {
       void queryClient.invalidateQueries({

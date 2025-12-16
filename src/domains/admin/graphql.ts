@@ -297,11 +297,27 @@ export const GET_STORE_COUPONS = gql`
 
 // Note: We'll need to add these to the backend if they don't exist
 export const GET_STORE_CATALOGS = gql`
-  query GetStoreCatalogs($storeId: String!) {
-    storeCatalogs(storeId: $storeId) {
-      id
-      storeId
-      name
+  query GetStoreCatalogs(
+    $storeId: String!
+    $pagination: CatalogPaginationInput
+  ) {
+    storeCatalogs(storeId: $storeId, pagination: $pagination) {
+      data {
+        id
+        storeId
+        name
+        description
+        image1Url
+        image2Url
+        image3Url
+        image4Url
+        active
+        createdAt
+        updatedAt
+      }
+      total
+      page
+      totalPages
     }
   }
 `;
@@ -312,6 +328,34 @@ export const CREATE_CATALOG = gql`
       id
       storeId
       name
+      description
+      image1Url
+      image2Url
+      image3Url
+      image4Url
+      price
+      active
+      createdAt
+      updatedAt
+    }
+  }
+`;
+
+export const UPDATE_CATALOG = gql`
+  mutation UpdateCatalog($input: UpdateCatalogInput!) {
+    updateCatalog(input: $input) {
+      id
+      storeId
+      name
+      description
+      image1Url
+      image2Url
+      image3Url
+      image4Url
+      price
+      active
+      createdAt
+      updatedAt
     }
   }
 `;
