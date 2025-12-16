@@ -4,14 +4,21 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 
-import { useStores } from "@/domains/store/hooks";
+import { PlaceHolderTypeEnum } from "@/data/constants";
 import { type Store } from "@/lib/api-types";
 import { Button } from "@/shared/components/Button";
 import { Card } from "@/shared/components/Card";
 
-export function FeaturedCarousel(): React.JSX.Element {
-  const { data: storesResult, isLoading } = useStores();
-  const allStores = storesResult?.data ?? [];
+export function FeaturedCarousel({
+  discountPercentage = 10,
+  isLoading,
+  stores,
+}: {
+  discountPercentage?: number;
+  isLoading?: boolean;
+  stores?: Store[];
+}): React.JSX.Element {
+  const allStores = stores ?? [];
   const [currentSlide, setCurrentSlide] = useState(0);
 
   // Get first 6 stores for carousel
@@ -47,7 +54,7 @@ export function FeaturedCarousel(): React.JSX.Element {
         <div className="relative">
           <div className="overflow-hidden">
             <div
-              className="flex gap-4 transition-transform duration-300 ease-in-out"
+              className="flex gap-x-6 transition-transform duration-300 ease-in-out"
               style={{
                 transform: `translateX(-${currentSlide * (100 / itemsPerPage)}%)`,
               }}
@@ -56,9 +63,9 @@ export function FeaturedCarousel(): React.JSX.Element {
                 <Link
                   key={item.id}
                   href={`/restaurant/${item.id}`}
-                  className="flex-shrink-0 w-1/2 group"
+                  className="shrink-0 w-1/2 group"
                 >
-                  <Card className="relative h-96 overflow-hidden cursor-pointer group border-0 shadow-lg">
+                  <Card className="relative h-48 overflow-hidden cursor-pointer group border-0 shadow-lg rounded-3xl">
                     {item.imageUrl ? (
                       <Image
                         src={item.imageUrl}
@@ -67,13 +74,22 @@ export function FeaturedCarousel(): React.JSX.Element {
                         className="object-cover group-hover:scale-110 transition-transform duration-300"
                       />
                     ) : (
-                      <div className="w-full h-full bg-linear-to-br from-slate-400 via-slate-500 to-slate-600" />
+                      <Image
+                        src={
+                          item.categoryId?.toLowerCase() === "restaurant"
+                            ? PlaceHolderTypeEnum.RESTAURANT
+                            : PlaceHolderTypeEnum.SHOP
+                        }
+                        alt={item.name}
+                        fill
+                        className="object-cover group-hover:scale-110 transition-transform duration-300"
+                      />
                     )}
                     <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/40 to-transparent" />
                     <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
                       <h3 className="font-bold text-lg mb-1">{item.name}</h3>
                       <p className="text-sm text-white/90">
-                        {item.averageRating ?? 4.5}⭐ de descuento hoy
+                        {discountPercentage}% de descuento hoy
                       </p>
                     </div>
                   </Card>

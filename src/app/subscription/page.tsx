@@ -4,8 +4,6 @@ import { Crown, Check, X, Zap, Gift, Wallet } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect, Suspense } from "react";
 
-import { BottomNavigation } from "@/app/explore/components/BottomNavigation";
-import { ExploreHeader } from "@/app/explore/components/ExploreHeader";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { useWallet, useWalletBalance } from "@/domains/payment/hooks";
 import {
@@ -16,12 +14,13 @@ import {
   usePayPremiumWithWallet,
 } from "@/domains/subscription/hooks";
 import { useToast } from "@/hooks/use-toast";
+import { BasicLayout } from "@/layouts/BasicLayout";
 import { useAuthStore } from "@/store/useAuthStore";
 
 function SubscriptionContent(): React.JSX.Element {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { isAuthenticated, user, updateUser } = useAuthStore();
+  const { user, updateUser } = useAuthStore();
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<"stripe" | "wallet">(
@@ -225,10 +224,7 @@ function SubscriptionContent(): React.JSX.Element {
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-background pb-20">
-        {/* Top Navigation */}
-        <ExploreHeader isAuthenticated={isAuthenticated} />
-
+      <BasicLayout className="pb-20">
         {/* Main Content */}
         <div className="pt-14 pb-16 bg-gradient-hero p-6">
           <div className="max-w-4xl mx-auto">
@@ -430,7 +426,9 @@ function SubscriptionContent(): React.JSX.Element {
                     </button>
                     <button
                       onClick={() => setPaymentMethod("wallet")}
-                      disabled={!wallet || !hasEnoughBalance || hasActiveSubscription}
+                      disabled={
+                        !wallet || !hasEnoughBalance || hasActiveSubscription
+                      }
                       className={`flex-1 py-2 px-4 rounded-md font-medium text-sm transition-all ${
                         paymentMethod === "wallet"
                           ? "bg-white text-gray-900 shadow"
@@ -535,8 +533,7 @@ function SubscriptionContent(): React.JSX.Element {
         </div>
 
         {/* Bottom Navigation */}
-        <BottomNavigation />
-      </div>
+      </BasicLayout>
     </ProtectedRoute>
   );
 }

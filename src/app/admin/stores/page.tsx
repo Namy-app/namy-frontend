@@ -48,7 +48,7 @@ export default function AdminStoresPage() {
     active: null,
   });
   const { data: storesData, isLoading: storesLoading } = useStores(
-    { active: null },
+    {},
     { first: itemsPerPage, page: currentPage }
   );
   const deleteStore = useDeleteStore();
@@ -210,12 +210,18 @@ export default function AdminStoresPage() {
               </div>
             </div>
             <p className="text-3xl font-bold text-foreground">
-              {statsLoading ? "..." : stats?.total || 0}
+              {statsLoading ? (
+                <span className="inline-block animate-pulse w-16 h-8 bg-gray-300 rounded-md" />
+              ) : (
+                stats?.total || 0
+              )}
             </p>
             <p className="text-sm text-muted-foreground mt-2">
-              {statsLoading
-                ? "..."
-                : `${stats?.active || 0} active, ${stats?.inactive || 0} inactive`}
+              {statsLoading ? (
+                <span className="inline-block animate-pulse w-16 h-8 bg-gray-300 rounded-md" />
+              ) : (
+                `${stats?.active || 0} active, ${stats?.inactive || 0} inactive`
+              )}
             </p>
           </div>
 
@@ -230,7 +236,11 @@ export default function AdminStoresPage() {
               </div>
             </div>
             <p className="text-3xl font-bold text-foreground">
-              {statsLoading ? "..." : stats?.byType.product || 0}
+              {statsLoading ? (
+                <span className="inline-block animate-pulse w-16 h-8 bg-gray-300 rounded-md" />
+              ) : (
+                stats?.byType.product || 0
+              )}
             </p>
             <p className="text-sm text-muted-foreground mt-2">
               Product-based businesses

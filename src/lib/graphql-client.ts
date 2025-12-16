@@ -5,6 +5,15 @@ import { env } from "./env";
 // eslint-disable-next-line no-console
 console.log("API URL:", env.NEXT_PUBLIC_API_URL);
 
+type GraphQLError = {
+  response?: {
+    errors?: Array<{
+      message?: string;
+      extensions?: { code?: string };
+    }>;
+  };
+};
+
 // Create the GraphQL client instance
 export const graphqlClient = new GraphQLClient(env.NEXT_PUBLIC_API_URL, {
   credentials: "include",
@@ -32,9 +41,9 @@ export const setAuthToken = (token: string | null): void => {
 };
 
 // Check if an error is an authentication error
-function isAuthenticationError(error: unknown): boolean {
+function parseError(error: unknown): GraphQLError | null {
   if (error && typeof error === "object" && "response" in error) {
-    const graphqlError = error as {
+    return error as {
       response?: {
         errors?: Array<{
           message?: string;
@@ -42,6 +51,13 @@ function isAuthenticationError(error: unknown): boolean {
         }>;
       };
     };
+  }
+  return null;
+}
+
+// Check if an error is an authentication error
+function isAuthenticationError(graphqlError: GraphQLError | null): boolean {
+  if (graphqlError) {
     const errors = graphqlError.response?.errors;
     const firstError = errors?.[0];
 
@@ -91,23 +107,31 @@ export async function graphqlRequest<T>(
     return result;
   } catch (error) {
     console.error("GraphQL Error:", error);
+    const parsedError = parseError(error);
 
     // Check if this is an authentication error
-    if (isAuthenticationError(error)) {
+    if (isAuthenticationError(parsedError)) {
       console.error("Authentication error detected - triggering logout");
-      // Call the registered callback to clear auth state
-      if (authErrorCallback) {
+
+      // Check if current page is an auth page to avoid redirect loops
+      const isAuthPage =
+        typeof window !== "undefined" &&
+        window.location.pathname.includes("/auth");
+
+      // Call the registered callback to clear auth state only if not on auth pages
+      if (authErrorCallback && !isAuthPage) {
         authErrorCallback();
       }
-      throw new Error("Your session has expired. Please log in again.");
+
+      throw new Error(
+        parsedError?.response?.errors?.[0]?.message ??
+          "Your session has expired. Please log in again."
+      );
     }
 
     // Handle GraphQL errors
-    if (error && typeof error === "object" && "response" in error) {
-      const graphqlError = error as {
-        response?: { errors?: Array<{ message?: string }> };
-      };
-      const graphqlErrors = graphqlError.response?.errors;
+    if (parsedError) {
+      const graphqlErrors = parsedError.response?.errors;
       const errorMessage =
         graphqlErrors?.[0]?.message || "GraphQL request failed";
       console.error("GraphQL Error Message:", errorMessage);

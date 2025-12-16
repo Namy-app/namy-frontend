@@ -1,40 +1,14 @@
 import { useQuery, type UseQueryResult } from "@tanstack/react-query";
 
-import { type Store } from "@/lib/api-types";
 import { graphqlRequest } from "@/lib/graphql-client";
 import { GET_ALL_STORES_QUERY } from "@/lib/graphql-queries";
 
-interface StoresResponse {
-  stores: {
-    data: Store[];
-    paginationInfo: {
-      total: number;
-      page: number;
-      pageSize: number;
-      totalPages: number;
-      hasNextPage: boolean;
-      hasPreviousPage: boolean;
-    };
-  };
-}
-
-export interface StoreFilters {
-  search?: string;
-  categoryId?: string;
-  subCategory?: string;
-  city?: string;
-  active?: boolean;
-}
-
-export interface PaginationInput {
-  page?: number;
-  first?: number;
-}
-
-export interface UseStoresResult {
-  data: Store[];
-  paginationInfo: StoresResponse["stores"]["paginationInfo"];
-}
+import type {
+  PaginationInput,
+  StoreFilters,
+  StoresResponse,
+  UseStoresResult,
+} from "../../type";
 
 export function useStores(
   filters?: StoreFilters,
