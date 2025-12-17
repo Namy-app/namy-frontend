@@ -17,6 +17,8 @@ import {
   GET_USERS,
   GET_USER_DETAILS_WITH_ACTIVITY,
   CREATE_CATALOG,
+  UPDATE_CATALOG,
+  GET_STORE_CATALOGS,
 } from "./graphql";
 import {
   type CreateStoreInput,
@@ -38,6 +40,7 @@ import {
   type Catalog,
   type CatalogItem,
   type CreateCatalogInput,
+  type UpdateCatalogInput,
   type CreateCatalogItemInput,
   type UsersResponse,
   type UserDetailsWithActivity,
@@ -289,15 +292,12 @@ export function useStoreCatalogs(storeId: string) {
   return useQuery<Catalog[]>({
     queryKey: ["catalogs", storeId],
     queryFn: async () => {
-      // TODO: Catalog feature not implemented in backend yet
-      // const data = await graphqlClient.request<{ storeCatalogs: Catalog[] }>(
-      //   GET_STORE_CATALOGS,
-      //   { storeId }
-      // );
-      // return data.storeCatalogs;
-      return [];
+      const data = await graphqlClient.request<{
+        storeCatalogs: { data: Catalog[] };
+      }>(GET_STORE_CATALOGS, { storeId });
+      return data.storeCatalogs.data;
     },
-    enabled: false, // Disabled until backend implements catalog feature
+    enabled: !!storeId,
   });
 }
 
@@ -331,6 +331,25 @@ export function useCreateCatalog() {
     onSuccess: (_, variables) => {
       void queryClient.invalidateQueries({
         queryKey: ["catalogs", variables.storeId],
+      });
+    },
+  });
+}
+
+export function useUpdateCatalog() {
+  const queryClient = useQueryClient();
+
+  return useMutation<Catalog, Error, UpdateCatalogInput>({
+    mutationFn: async (input: UpdateCatalogInput) => {
+      const data = await graphqlClient.request<{ updateCatalog: Catalog }>(
+        UPDATE_CATALOG,
+        { input }
+      );
+      return data.updateCatalog;
+    },
+    onSuccess: (data) => {
+      void queryClient.invalidateQueries({
+        queryKey: ["catalogs", data.storeId],
       });
     },
   });

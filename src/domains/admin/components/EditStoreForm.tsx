@@ -3,10 +3,13 @@
 import { X, Store as StoreIcon, Loader2 } from "lucide-react";
 import { useState } from "react";
 
+import { useUpdateStore } from "@/domains/admin/hooks";
+import {
+  type Store,
+  type UpdateStoreInput,
+  StoreType,
+} from "@/domains/admin/types";
 import { useToast } from "@/hooks/use-toast";
-
-import { useUpdateStore } from "../hooks";
-import { type Store, type UpdateStoreInput, StoreType } from "../types";
 
 interface EditStoreFormProps {
   store: Store;

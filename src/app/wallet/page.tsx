@@ -8,6 +8,7 @@ import { useCreateWallet, useWallet } from "@/domains/payment/hooks";
 import { BasicLayout } from "@/layouts/BasicLayout";
 import { useAuthStore } from "@/store/useAuthStore";
 
+
 export default function PaymentPage(): React.JSX.Element {
   const { user } = useAuthStore();
   const [showDepositForm, setShowDepositForm] = useState(false);

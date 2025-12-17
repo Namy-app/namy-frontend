@@ -3,10 +3,13 @@
 import { X, Store as StoreIcon, Loader2, Copy, Check } from "lucide-react";
 import { useState } from "react";
 
+import { useCreateStore } from "@/domains/admin/hooks";
+import {
+  type CreateStoreInput,
+  StoreType,
+  PriceRange,
+} from "@/domains/admin/types";
 import { useToast } from "@/hooks/use-toast";
-
-import { useCreateStore } from "../hooks";
-import { type CreateStoreInput, StoreType, PriceRange } from "../types";
 
 interface CreateStoreFormProps {
   onClose: () => void;

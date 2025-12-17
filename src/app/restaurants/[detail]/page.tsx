@@ -11,6 +11,8 @@ import {
   Phone,
   Star,
   MessageCircle,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import Image from "next/image";
 import { useRouter, useParams } from "next/navigation";
@@ -22,7 +24,7 @@ import { RewardedVideoAd } from "@/components/RewardedVideoAd";
 import { UnlockDiscountModal } from "@/components/UnlockDiscountModal";
 import { PlaceHolderTypeEnum } from "@/data/constants";
 import { StoreType } from "@/domains/admin";
-import { useStoreDiscounts } from "@/domains/admin/hooks";
+import { useStoreDiscounts, useStoreCatalogs } from "@/domains/admin/hooks";
 import { useWallet } from "@/domains/payment/hooks";
 import { useStore } from "@/domains/store/hooks";
 import { useMyLevel } from "@/domains/user/hooks/query/useMyLevel";
@@ -82,7 +84,7 @@ export default function RestaurantDetailPage(): React.JSX.Element {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const [currentImageIndex] = useState(0);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
   const [showVideoAd, setShowVideoAd] = useState(false);
   const [adsWatched, setAdsWatched] = useState(0);
@@ -91,6 +93,9 @@ export default function RestaurantDetailPage(): React.JSX.Element {
   const [showCongratulations, setShowCongratulations] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [unlockToken, setUnlockToken] = useState<string | null>(null);
+  const [selectedCatalogImage, setSelectedCatalogImage] = useState<
+    string | null
+  >(null);
 
   const { data: userLevel } = useMyLevel();
   const { data: wallet } = useWallet({ userId: user?.id });
@@ -103,6 +108,9 @@ export default function RestaurantDetailPage(): React.JSX.Element {
     { storeId: storeId },
     { page: 1, first: 10 }
   );
+
+  // Fetch catalogs for this store
+  const { data: catalogs = [] } = useStoreCatalogs(storeId || "");
 
   // Get the first active discount for this store
   // const firstActiveDiscount = discountsData?.data?.find((d) => d.active);
@@ -159,14 +167,22 @@ export default function RestaurantDetailPage(): React.JSX.Element {
           lat: store.lat,
           lng: store.lng,
         },
-        phone: store.phoneNumber ?? "",
-        images: store.imageUrl
-          ? [store.imageUrl]
-          : [
-              store.categoryId?.toLowerCase() === "restaurant"
-                ? PlaceHolderTypeEnum.RESTAURANT
-                : PlaceHolderTypeEnum.SHOP,
-            ],
+        phone: store.phoneNumber || "Phone not available",
+        images: (() => {
+          const allImages = [
+            store.image1Url,
+            store.image2Url,
+            store.image3Url,
+            store.imageUrl, // Fallback to old imageUrl field
+          ].filter((url): url is string => !!url && url.trim() !== "");
+          return allImages.length > 0
+            ? allImages
+            : [
+                store.categoryId?.toLowerCase() === "restaurant"
+                  ? PlaceHolderTypeEnum.RESTAURANT
+                  : PlaceHolderTypeEnum.SHOP,
+              ];
+        })(),
         menuItems: [],
         reviews: [],
         amenities:
@@ -704,6 +720,51 @@ export default function RestaurantDetailPage(): React.JSX.Element {
                 </div>
               </div>
 
+              {/* Image Navigation Controls - Only show if multiple images */}
+              {parsedStore.images.length > 1 && (
+                <>
+                  <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-between w-full px-4 pointer-events-none">
+                    <Button
+                      onClick={() =>
+                        setCurrentImageIndex((prev: number) =>
+                          prev === 0 ? parsedStore.images.length - 1 : prev - 1
+                        )
+                      }
+                      size="icon"
+                      className="bg-white/90 backdrop-blur-sm rounded-full hover:bg-white shadow pointer-events-auto"
+                    >
+                      <ChevronLeft className="w-5 h-5 text-foreground" />
+                    </Button>
+                    <Button
+                      onClick={() =>
+                        setCurrentImageIndex((prev: number) =>
+                          prev === parsedStore.images.length - 1 ? 0 : prev + 1
+                        )
+                      }
+                      size="icon"
+                      className="bg-white/90 backdrop-blur-sm rounded-full hover:bg-white shadow pointer-events-auto"
+                    >
+                      <ChevronRight className="w-5 h-5 text-foreground" />
+                    </Button>
+                  </div>
+                  {/* Image indicators */}
+                  <div className="absolute bottom-20 left-1/2 -translate-x-1/2 flex gap-2">
+                    {parsedStore.images.map((_, index) => (
+                      <button
+                        key={index}
+                        onClick={() => setCurrentImageIndex(index)}
+                        className={`w-2 h-2 rounded-full transition-all ${
+                          index === currentImageIndex
+                            ? "bg-white w-8"
+                            : "bg-white/50 hover:bg-white/75"
+                        }`}
+                        aria-label={`Go to image ${index + 1}`}
+                      />
+                    ))}
+                  </div>
+                </>
+              )}
+
               <div className="absolute left-6 bottom-6 text-left text-white">
                 <h1 className="text-3xl md:text-4xl font-extrabold drop-shadow-lg">
                   {parsedStore.name}
@@ -825,6 +886,61 @@ export default function RestaurantDetailPage(): React.JSX.Element {
                     </>
                   ) : null}
                 </Card>
+
+                {catalogs && catalogs.length > 0 ? (
+                  <div>
+                    {catalogs.map((catalog) => {
+                      const catalogImages = [
+                        catalog.image1Url,
+                        catalog.image2Url,
+                        catalog.image3Url,
+                        catalog.image4Url,
+                        catalog.image5Url,
+                        catalog.image6Url,
+                        catalog.image7Url,
+                        catalog.image8Url,
+                        catalog.image9Url,
+                        catalog.image10Url,
+                      ].filter(
+                        (url): url is string => !!url && url.trim() !== ""
+                      );
+                      const sentenceCaseName =
+                        catalog.name.charAt(0).toUpperCase() +
+                        catalog.name.slice(1).toLowerCase();
+                      return (
+                        <div key={catalog.id} className="mb-8">
+                          <h2 className="text-2xl font-bold text-foreground mb-2">
+                            📚 {sentenceCaseName}
+                          </h2>
+                          {catalog.description ? (
+                            <p className="text-base text-muted-foreground mb-4">
+                              {catalog.description}
+                            </p>
+                          ) : null}
+                          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                            {catalogImages.map((imageUrl, index) => (
+                              <div
+                                key={index}
+                                className="relative aspect-square rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-shadow group cursor-pointer"
+                                onClick={() =>
+                                  setSelectedCatalogImage(imageUrl)
+                                }
+                              >
+                                <Image
+                                  src={imageUrl}
+                                  alt={`${catalog.name} - Image ${index + 1}`}
+                                  fill
+                                  className="object-cover group-hover:scale-105 transition-transform duration-300"
+                                  unoptimized
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : null}
 
                 {parsedStore.menuItems.length > 0 ? (
                   <div>
@@ -1009,6 +1125,47 @@ export default function RestaurantDetailPage(): React.JSX.Element {
         discountPercentage={parsedStore?.discount.percentage ?? 10}
         points={parsedStore?.discount.points ?? 0}
       />
+
+      {/* Catalog Image Modal */}
+      {selectedCatalogImage ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+          onClick={() => setSelectedCatalogImage(null)}
+        >
+          <div className="relative max-w-5xl max-h-[90vh] w-full h-full flex items-center justify-center">
+            <button
+              onClick={() => setSelectedCatalogImage(null)}
+              className="absolute top-4 right-4 z-10 p-2 rounded-full bg-black/50 hover:bg-black/70 text-white transition-colors"
+              aria-label="Close"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+            <div className="relative w-full h-full flex items-center justify-center">
+              <Image
+                src={selectedCatalogImage}
+                alt="Catalog image"
+                fill
+                className="object-contain"
+                unoptimized
+                onClick={(e: React.MouseEvent) => e.stopPropagation()}
+              />
+            </div>
+          </div>
+        </div>
+      ) : null}
     </BasicLayout>
   );
 }

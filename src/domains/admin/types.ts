@@ -36,6 +36,9 @@ export interface Store {
   name: string;
   description?: string;
   imageUrl?: string;
+  image1Url?: string;
+  image2Url?: string;
+  image3Url?: string;
   categoryId: string;
   subCategory?: string;
   type: StoreType;
@@ -267,6 +270,20 @@ export interface Catalog {
   id: string;
   storeId: string;
   name: string;
+  description?: string;
+  image1Url?: string;
+  image2Url?: string;
+  image3Url?: string;
+  image4Url?: string;
+  image5Url?: string;
+  image6Url?: string;
+  image7Url?: string;
+  image8Url?: string;
+  image9Url?: string;
+  image10Url?: string;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface CatalogItem {
@@ -280,10 +297,33 @@ export interface CreateCatalogInput {
   storeId: string;
   name: string;
   description?: string;
-  image1?: string;
-  image2?: string;
-  image3?: string;
-  image4?: string;
+  image1Url?: string;
+  image2Url?: string;
+  image3Url?: string;
+  image4Url?: string;
+  image5Url?: string;
+  image6Url?: string;
+  image7Url?: string;
+  image8Url?: string;
+  image9Url?: string;
+  image10Url?: string;
+}
+
+export interface UpdateCatalogInput {
+  id: string;
+  name?: string;
+  description?: string;
+  image1Url?: string;
+  image2Url?: string;
+  image3Url?: string;
+  image4Url?: string;
+  image5Url?: string;
+  image6Url?: string;
+  image7Url?: string;
+  image8Url?: string;
+  image9Url?: string;
+  image10Url?: string;
+  active?: boolean;
 }
 
 export interface CreateCatalogItemInput {
