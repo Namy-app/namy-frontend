@@ -66,6 +66,7 @@ export interface Store {
   subCategory?: string;
   averageRating?: number;
   reviewCounter?: number;
+  url?: string;
   city?: string;
   openDays?: Record<string, unknown>;
   additionalInfo?: Record<string, unknown>;

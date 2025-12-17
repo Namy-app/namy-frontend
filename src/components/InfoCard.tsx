@@ -22,7 +22,7 @@ const InfoCard = React.forwardRef<HTMLDivElement, InfoCardProps>(
             </div>
           ) : null}
           <div className="space-y-2">
-            <h3 className="text-xl font-bold leading-none tracking-tight">
+            <h3 className="text-xl font-bold leading-none tracking-tight text-gray-900">
               {title}
             </h3>
             {summary ? (

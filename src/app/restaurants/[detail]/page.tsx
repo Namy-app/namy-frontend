@@ -113,7 +113,7 @@ export default function RestaurantDetailPage(): React.JSX.Element {
   const { data: catalogs = [] } = useStoreCatalogs(storeId || "");
 
   // Get the first active discount for this store
-  // const firstActiveDiscount = discountsData?.data?.find((d) => d.active);
+  const firstActiveDiscount = discountsData?.data?.find((d) => d.active);
 
   if (!isLoading && !store) {
     router.push("/explore");
@@ -488,8 +488,6 @@ export default function RestaurantDetailPage(): React.JSX.Element {
       return;
     }
 
-    const discountId = parsedStore.discount.id;
-
     try {
       toast({
         title: "Processing payment...",
@@ -521,7 +519,7 @@ export default function RestaurantDetailPage(): React.JSX.Element {
           };
         };
       }>(QUICK_PAY_FOR_DISCOUNT_MUTATION, {
-        discountId,
+        discountId: firstActiveDiscount?.id,
       });
 
       if (data?.quickPayForDiscount) {
@@ -809,14 +807,20 @@ export default function RestaurantDetailPage(): React.JSX.Element {
                         this discount
                       </p> */}
                       <div className="mt-4">
-                        <Button
-                          onClick={handleUnlockDiscountClick}
-                          className="w-full bg-white text-rose-600 hover:bg-white/95 font-bold rounded-full shadow-lg py-4"
-                        >
-                          {user?.isPremium
-                            ? "Desbloquear descuento ahora"
-                            : "Desbloquear descuento"}
-                        </Button>
+                        {firstActiveDiscount ? (
+                          <Button
+                            onClick={handleUnlockDiscountClick}
+                            className="w-full bg-white text-rose-600 hover:bg-white/95 font-bold rounded-full shadow-lg py-4"
+                          >
+                            {user?.isPremium
+                              ? "Desbloquear descuento ahora"
+                              : "Desbloquear descuento"}
+                          </Button>
+                        ) : (
+                          <h6 className="text-center text-white bg-black/50 px-4 py-2 rounded-full">
+                            Descuento no disponible en este momento
+                          </h6>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -826,7 +830,7 @@ export default function RestaurantDetailPage(): React.JSX.Element {
                   {parsedStore.hours ? (
                     <>
                       <div className="flex items-start gap-3">
-                        <Clock className="w-5 h-5 text-rose-500 mt-0.5 flex-shrink-0" />
+                        <Clock className="w-5 h-5 text-rose-500 mt-0.5 shrink-0" />
                         <div>
                           <p className="font-semibold text-foreground">Hours</p>
                           <p className="text-sm text-muted-foreground">
@@ -840,7 +844,7 @@ export default function RestaurantDetailPage(): React.JSX.Element {
                   ) : null}
 
                   <div className="flex items-start gap-3">
-                    <MapPin className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                    <MapPin className="w-5 h-5 text-primary mt-0.5 shrink-0" />
                     <div className="flex-1">
                       <p className="font-semibold text-foreground">Location</p>
                       <p className="text-sm text-muted-foreground mb-2">
@@ -1074,13 +1078,6 @@ export default function RestaurantDetailPage(): React.JSX.Element {
                 </Card>
 
                 <Card className="p-5 bg-white border border-[#f1e9e6] rounded-xl shadow-md">
-                  {/* <h3 className="font-semibold mb-2">Contact</h3> */}
-                  <a
-                    href={`tel:${parsedStore.phone}`}
-                    className="block text-rose-600 font-medium mb-3"
-                  >
-                    {parsedStore.phone}
-                  </a>
                   <Button
                     onClick={handleShareContact}
                     className="w-full bg-white hover:bg-gray-200 text-gray-800 border border-gray-300"

@@ -527,7 +527,11 @@ export default function RedeemDetail({
                   : "Redeem coupon"
               }
             >
-              {redeeming ? "Redeeming..." : "Redeem"}
+              {redeeming ? (
+                <span className="h-5 w-5 block border-2 border-dashed border-white rounded-full animate-spin" />
+              ) : (
+                "Redeem"
+              )}
             </button>
           </div>
         </div>

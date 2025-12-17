@@ -50,6 +50,7 @@ export interface Store {
   price: PriceRange;
   active: boolean;
   url?: string;
+  pin?: string | null;
   openDays?: OpenDaysStructure;
   tags?: string;
   averageRating: number;
@@ -135,6 +136,7 @@ export interface UpdateStoreInput {
   phoneNumber?: string;
   price?: PriceRange;
   active?: boolean;
+  pin?: string;
   url?: string;
   openDays?: OpenDaysStructure;
   tags?: string;
@@ -211,6 +213,7 @@ export interface CreateDiscountInput {
   excludedHours?: number[];
   maxUsesPerUserPerMonth?: number;
   monthlyRedemptionCap?: number;
+  id?: string;
 }
 
 export interface UpdateDiscountInput {

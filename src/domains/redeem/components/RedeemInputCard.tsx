@@ -8,6 +8,7 @@ import RedeemScanOptions from "@/domains/redeem/components/RedeemScanOptions";
 
 type Props = {
   couponCode: string;
+  loading: boolean;
   setCouponCode: (v: string) => void;
   onSubmit: (e: React.FormEvent) => void;
   onStartCamera: () => void;
@@ -17,6 +18,7 @@ type Props = {
 
 export default function RedeemInputCard({
   couponCode,
+  loading,
   setCouponCode,
   onSubmit,
   onStartCamera,
@@ -54,6 +56,7 @@ export default function RedeemInputCard({
             />
 
             <CodeInput
+              loading={loading}
               couponCode={couponCode}
               setCouponCode={setCouponCode}
               onSubmit={onSubmit}

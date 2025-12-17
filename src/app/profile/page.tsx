@@ -418,9 +418,12 @@ export default function ProfilePage(): React.JSX.Element | null {
               <p className="text-secondary-foreground/90 mb-4">
                 Earn 2× points on every order!
               </p>
-              <Button className="w-full bg-white text-secondary hover:bg-white/90">
+              <Link
+                href="/subscription"
+                className="w-full bg-white text-secondary hover:bg-white/90 block font-semibold rounded-sm px-4 py-2"
+              >
                 Hazte Premium
-              </Button>
+              </Link>
             </Card>
           ) : (
             <Card className="p-6 bg-gradient-primary text-white border-0 shadow-glow text-center">
