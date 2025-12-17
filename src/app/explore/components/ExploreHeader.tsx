@@ -126,7 +126,7 @@ export function ExploreHeader({
                 <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center relative">
                   <User className="w-4 h-4 text-primary" />
                   {user?.isPremium ? (
-                    <div className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
+                    <div className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-linear-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
                       <Crown className="w-2 h-2 text-white" />
                     </div>
                   ) : null}
@@ -135,7 +135,7 @@ export function ExploreHeader({
                   {user?.displayName || "User"}
                 </span>
                 {user?.isPremium ? (
-                  <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-xs font-semibold rounded-full">
+                  <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 bg-linear-to-r from-yellow-400 to-orange-500 text-white text-xs font-semibold rounded-full">
                     <Crown className="w-3 h-3" />
                     Premium
                   </span>
@@ -157,7 +157,7 @@ export function ExploreHeader({
                         {user?.displayName || "User"}
                       </p>
                       {user?.isPremium ? (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-[10px] font-bold rounded-full">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-linear-to-r from-yellow-400 to-orange-500 text-white text-[10px] font-bold rounded-full">
                           <Crown className="w-2.5 h-2.5" />
                           PREMIUM
                         </span>
@@ -194,7 +194,7 @@ export function ExploreHeader({
                         router.push("/subscription");
                         setIsDropdownOpen(false);
                       }}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gradient-to-r hover:from-yellow-50 hover:to-orange-50 transition-colors text-left group"
+                      className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-linear-to-r hover:from-yellow-50 hover:to-orange-50 transition-colors text-left group"
                     >
                       <Crown className="w-4 h-4 text-yellow-500 group-hover:text-orange-500 transition-colors" />
                       <span className="text-sm font-medium text-foreground">
