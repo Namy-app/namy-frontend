@@ -55,6 +55,7 @@ export const UPDATE_STORE_MUTATION = gql`
         price
         active
         url
+        pin
         openDays
         tags
         averageRating
@@ -175,6 +176,7 @@ export const GET_STORE_BY_ID = gql`
       price
       active
       url
+      pin
       openDays
       tags
       averageRating
