@@ -23,6 +23,7 @@ import { DiscountSuccessModal } from "@/components/DiscountSuccessModal";
 import { RewardedVideoAd } from "@/components/RewardedVideoAd";
 import { UnlockDiscountModal } from "@/components/UnlockDiscountModal";
 import { PlaceHolderTypeEnum } from "@/data/constants";
+import { StoreType } from "@/domains/admin";
 import { useStoreDiscounts, useStoreCatalogs } from "@/domains/admin/hooks";
 import { useWallet } from "@/domains/payment/hooks";
 import { useStore } from "@/domains/store/hooks";
@@ -125,7 +126,7 @@ export default function RestaurantDetailPage(): React.JSX.Element {
         id: store.id,
         name: store.name,
         category: store.categoryId || store.subCategory || "Restaurant",
-        emoji: store.type === "PRODUCT" ? "🍽️" : "🔧",
+        emoji: store.type === StoreType.PRODUCT ? "🍽️" : "🔧",
         rating: store.averageRating ?? 4.5,
         reviewCount: store.reviewCounter ?? 0,
         isAdPartner: false,
