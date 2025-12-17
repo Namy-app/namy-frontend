@@ -1,20 +1,11 @@
 "use client";
 
-import { useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
   Store as StoreIcon,
-  MapPin,
-  Phone,
-  Globe,
-  Clock,
-  DollarSign,
-  Tag,
   Plus,
   Percent,
   Ticket,
-  BookOpen,
-  Image,
   AlertCircle,
   X,
   Loader2,
@@ -28,20 +19,20 @@ import {
   useStoreCatalogs,
   useStoreCoupons,
   useCreateCatalog,
-  useCreateCatalogItem,
-  useCreateDiscount,
-  useCatalogItems,
+  useStoreDiscounts,
+  useUpdateStore,
 } from "@/domains/admin/hooks";
 import {
-  type Catalog,
   type Coupon,
   type Discount,
-  type Store,
   DiscountType,
   PriceRange,
   UserRole,
 } from "@/domains/admin/types";
-import { useToast } from "@/hooks/use-toast";
+import { CatalogsTab } from "@/domains/store/components/CatalogsTab";
+import { StoreInfo } from "@/domains/store/components/StoreInfo";
+import { toast, useToast } from "@/hooks/use-toast";
+import { extractErrorMessage } from "@/lib/utils";
 import { useAuthStore } from "@/store/useAuthStore";
 
 type TabType = "info" | "catalogs" | "coupons";
@@ -54,16 +45,28 @@ export default function StoreDetailPage() {
 
   const [activeTab, setActiveTab] = useState<TabType>("info");
   const [showCreateCatalog, setShowCreateCatalog] = useState(false);
-  const [isHydrated] = useState(true);
+  const [isHydrated, setIsHydrated] = useState(false);
+  const [generatingPin, setGeneratingPin] = useState(false);
+  // const [genericDiscount, setGenericDiscount] = useState<Discount | null>(null);
 
   // Data fetching
+  const updateStore = useUpdateStore();
   const { data: store, isLoading: storeLoading } = useStore(storeId);
   const { data: catalogs, isLoading: catalogsLoading } =
     useStoreCatalogs(storeId);
+  const { data: discountsData, isLoading: discountsLoading } =
+    useStoreDiscounts({ storeId }, { page: 1, first: 1 });
   const { data: couponsData, isLoading: couponsLoading } = useStoreCoupons(
     { storeId },
     { page: 1, first: 20 }
   );
+  const discount = discountsData?.data[0] ?? null;
+
+  // Wait for client-side hydration
+  useEffect(() => {
+    // Using a microtask to avoid synchronous setState in effect
+    void Promise.resolve().then(() => setIsHydrated(true));
+  }, []);
 
   // Check if user is admin
   const isAdmin =
@@ -87,6 +90,52 @@ export default function StoreDetailPage() {
     router.push("/");
     return null;
   }
+
+  const handleOnGeneratePin = async () => {
+    try {
+      if (!store) {
+        return;
+      }
+
+      setGeneratingPin(true);
+      await updateStore.mutateAsync({
+        id: store.id,
+        input: {
+          name: store.name,
+          description: store.description,
+          categoryId: store.categoryId,
+          subCategory: store.subCategory,
+          type: store.type,
+          city: store.city,
+          address: store.address,
+          phoneNumber: store.phoneNumber,
+          price: store.price,
+          active: store.active,
+          url: store.url,
+          tags: store.tags,
+          lat: store.lat,
+          lng: store.lng,
+          regeneratePin: true,
+        },
+      });
+
+      toast({
+        title: "PIN Generated",
+        description: "PIN generated successfully.",
+        variant: "default",
+      });
+    } catch (err) {
+      const message = extractErrorMessage(err);
+      console.error("Error generating PIN:", message);
+      toast({
+        title: "Error",
+        description: message,
+        variant: "destructive",
+      });
+    } finally {
+      setGeneratingPin(false);
+    }
+  };
 
   if (storeLoading) {
     return (
@@ -219,175 +268,14 @@ export default function StoreDetailPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Store Info Tab */}
         {activeTab === "info" && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Basic Information */}
-            <div className="bg-card rounded-lg shadow p-6 lg:col-span-2">
-              <h2 className="text-xl font-semibold text-foreground mb-4">
-                Basic Information
-              </h2>
-              <div className="space-y-4">
-                {store.description ? (
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">
-                      Description
-                    </p>
-                    <p className="text-foreground mt-1">{store.description}</p>
-                  </div>
-                ) : null}
-                <div className="flex items-start gap-3">
-                  <MapPin className="w-5 h-5 text-muted-foreground mt-0.5" />
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">
-                      Address
-                    </p>
-                    <p className="text-foreground">
-                      {store.address}, {store.city}
-                    </p>
-                    {store.lat && store.lng ? (
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Lat: {store.lat}, Lng: {store.lng}
-                      </p>
-                    ) : null}
-                  </div>
-                </div>
-                {store.phoneNumber ? (
-                  <div className="flex items-center gap-3">
-                    <Phone className="w-5 h-5 text-muted-foreground" />
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">
-                        Phone
-                      </p>
-                      <p className="text-foreground">{store.phoneNumber}</p>
-                    </div>
-                  </div>
-                ) : null}
-                {store.url ? (
-                  <div className="flex items-center gap-3">
-                    <Globe className="w-5 h-5 text-muted-foreground" />
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">
-                        Website
-                      </p>
-                      <a
-                        href={store.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-primary hover:underline"
-                      >
-                        {store.url}
-                      </a>
-                    </div>
-                  </div>
-                ) : null}
-                <div className="flex items-center gap-3">
-                  <DollarSign className="w-5 h-5 text-muted-foreground" />
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">
-                      Price Range
-                    </p>
-                    <p className="text-foreground capitalize">
-                      {store.price} ({priceSymbols[store.price]})
-                    </p>
-                  </div>
-                </div>
-                {store.tags ? (
-                  <div className="flex items-start gap-3">
-                    <Tag className="w-5 h-5 text-muted-foreground mt-0.5" />
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">
-                        Tags
-                      </p>
-                      <p className="text-foreground">{store.tags}</p>
-                    </div>
-                  </div>
-                ) : null}
-              </div>
-            </div>
-
-            {/* Image Upload & Preview */}
-            <StoreImageUpload
-              storeId={storeId}
-              storeName={store.name}
-              currentImageUrl={store.imageUrl}
+          <div className="space-y-8">
+            <StoreInfo
+              discount={discount}
+              discountIsLoading={discountsLoading}
+              store={store}
+              onGeneratePin={() => void handleOnGeneratePin()}
+              generatingPin={generatingPin}
             />
-
-            {/* Opening Hours */}
-            {store.openDays ? (
-              <div className="bg-card rounded-lg shadow p-6 lg:col-span-3">
-                <h2 className="text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
-                  <Clock className="w-5 h-5 text-muted-foreground" />
-                  Opening Hours
-                </h2>
-                <div className="space-y-3">
-                  {store.openDays.availableDays.map((day, index) => (
-                    <div key={index} className="flex justify-between">
-                      <span className="font-medium text-foreground capitalize">
-                        {day.day}
-                      </span>
-                      <span className="text-muted-foreground">
-                        {day.closed
-                          ? "Closed"
-                          : `${day.startTime} - ${day.endTime}`}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : null}
-
-            {/* Additional Information */}
-            {store.additionalInfo &&
-            Object.keys(store.additionalInfo).length > 0 ? (
-              <div className="bg-card rounded-lg shadow p-6 lg:col-span-3">
-                <h2 className="text-xl font-semibold text-foreground mb-4">
-                  Additional Information
-                </h2>
-                <pre className="text-sm text-foreground bg-muted p-4 rounded overflow-auto">
-                  {JSON.stringify(store.additionalInfo, null, 2)}
-                </pre>
-              </div>
-            ) : null}
-
-            {/* Metadata */}
-            <div className="bg-card rounded-lg shadow p-6 lg:col-span-3">
-              <h2 className="text-xl font-semibold text-foreground mb-4">
-                Metadata
-              </h2>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">
-                    Store ID
-                  </p>
-                  <p className="text-foreground text-sm font-mono">
-                    {store.id}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">
-                    Category ID
-                  </p>
-                  <p className="text-foreground text-sm font-mono">
-                    {store.categoryId}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">
-                    Created At
-                  </p>
-                  <p className="text-foreground text-sm">
-                    {new Date(store.createdAt).toLocaleDateString()}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">
-                    Updated At
-                  </p>
-                  <p className="text-foreground text-sm">
-                    {new Date(store.updatedAt).toLocaleDateString()}
-                  </p>
-                </div>
-              </div>
-            </div>
           </div>
         )}
 
@@ -414,401 +302,6 @@ export default function StoreDetailPage() {
         <CreateCatalogModal
           storeId={storeId}
           onClose={() => setShowCreateCatalog(false)}
-        />
-      ) : null}
-    </div>
-  );
-}
-
-// Store Image Upload Component
-function StoreImageUpload({
-  storeId,
-  storeName,
-  currentImageUrl,
-}: {
-  storeId: string;
-  storeName: string;
-  currentImageUrl?: string | null;
-}) {
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(
-    currentImageUrl || null
-  );
-  const [isUploading, setIsUploading] = useState(false);
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-
-  // Sync preview with current image URL when it changes (after refetch)
-  useEffect(() => {
-    if (currentImageUrl && !selectedFile) {
-      setPreviewUrl(currentImageUrl);
-    }
-  }, [currentImageUrl, selectedFile]);
-
-  const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) {
-      return;
-    }
-
-    // Validate file type
-    if (!file.type.startsWith("image/")) {
-      toast({
-        variant: "destructive",
-        title: "Invalid file type",
-        description: "Please select an image file (PNG, JPG, WebP)",
-      });
-      return;
-    }
-
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      toast({
-        variant: "destructive",
-        title: "File too large",
-        description: "Please select an image smaller than 5MB",
-      });
-      return;
-    }
-
-    // Store the file for upload
-    setSelectedFile(file);
-
-    // Create preview URL
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setPreviewUrl(reader.result as string);
-    };
-    reader.readAsDataURL(file);
-    setSelectedImage(file.name);
-  };
-
-  const handleUpload = async () => {
-    if (!selectedFile || !previewUrl) {
-      return;
-    }
-
-    if (!storeId) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Store ID is missing. Please refresh the page.",
-      });
-      return;
-    }
-
-    setIsUploading(true);
-    try {
-      // Create form data
-      const formData = new FormData();
-      formData.append("file", selectedFile);
-      formData.append("storeId", storeId);
-
-      // Get auth token
-      const authStore = useAuthStore.getState();
-      const token = authStore.accessToken;
-
-      // Upload to backend (use base URL without /graphql)
-      const baseUrl = (
-        process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"
-      ).replace("/graphql", "");
-      const response = await fetch(`${baseUrl}/upload/store-image`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error("Upload failed");
-      }
-
-      const data = await response.json();
-
-      // If we got the full store object back, use it to update the cache
-      if (data.store) {
-        queryClient.setQueryData(["store", storeId], data.store);
-      } else {
-        // Fallback: Update just the imageUrl
-        queryClient.setQueryData(
-          ["store", storeId],
-          (oldData: Store | undefined) => {
-            if (oldData) {
-              const updatedData = { ...oldData, imageUrl: data.url };
-              return updatedData;
-            }
-            return oldData;
-          }
-        );
-      }
-
-      // Update the preview immediately
-      setPreviewUrl(data.url);
-      setSelectedFile(null);
-      setSelectedImage(null);
-
-      toast({
-        title: "Image uploaded",
-        description: `Successfully uploaded image for ${storeName}. Old image deleted from S3.`,
-      });
-
-      // Refetch to ensure fresh data from server (optional now since we have the updated store)
-      await queryClient.refetchQueries({ queryKey: ["store", storeId] });
-    } catch (_error) {
-      toast({
-        variant: "destructive",
-        title: "Upload failed",
-        description: "Failed to upload image. Please try again.",
-      });
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
-  const handleRemove = () => {
-    setPreviewUrl(null);
-    setSelectedImage(null);
-  };
-
-  return (
-    <div className="bg-card rounded-lg shadow p-6">
-      <h2 className="text-xl font-semibold text-foreground mb-4">
-        Store Image
-      </h2>
-
-      {/* Image Preview Area - 16:9 Aspect Ratio */}
-      <div className="mb-4">
-        <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
-          {previewUrl ? (
-            <div className="absolute inset-0 rounded-lg overflow-hidden bg-muted border-2 border-border">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={previewUrl}
-                alt={storeName}
-                className="w-full h-full object-cover"
-              />
-              <button
-                onClick={handleRemove}
-                className="absolute top-2 right-2 p-2 bg-destructive/90 hover:bg-destructive text-destructive-foreground rounded-lg transition-colors"
-                title="Remove image"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-          ) : (
-            <div className="absolute inset-0 rounded-lg border-2 border-dashed border-border bg-muted flex flex-col items-center justify-center text-center p-4">
-              <Image
-                className="w-12 h-12 text-muted-foreground mb-2"
-                aria-label="Upload placeholder"
-              />
-              <p className="text-sm font-medium text-foreground mb-1">
-                16:9 Aspect Ratio
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Recommended: 1920x1080px
-              </p>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Upload Controls */}
-      <div className="space-y-3">
-        <div>
-          <label
-            htmlFor="store-image-upload"
-            className="flex items-center justify-center gap-2 px-4 py-3 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity cursor-pointer"
-          >
-            <Image className="w-5 h-5" aria-label="Image icon" />
-            {previewUrl ? "Change Image" : "Select Image"}
-          </label>
-          <input
-            id="store-image-upload"
-            type="file"
-            accept="image/*"
-            onChange={handleImageSelect}
-            className="hidden"
-          />
-        </div>
-
-        {Boolean(previewUrl) && (
-          <button
-            onClick={() => void handleUpload()}
-            disabled={isUploading}
-            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-secondary text-secondary-foreground rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isUploading ? (
-              <>
-                <Loader2 className="w-5 h-5 animate-spin" />
-                Uploading...
-              </>
-            ) : (
-              <>
-                <Package className="w-5 h-5" />
-                Upload Image
-              </>
-            )}
-          </button>
-        )}
-
-        {Boolean(selectedImage) && (
-          <p className="text-xs text-muted-foreground text-center">
-            Selected: {selectedImage}
-          </p>
-        )}
-      </div>
-
-      {/* Image Guidelines */}
-      <div className="mt-4 p-3 bg-muted rounded-lg">
-        <p className="text-xs font-medium text-foreground mb-2">
-          Image Guidelines:
-        </p>
-        <ul className="text-xs text-muted-foreground space-y-1">
-          <li>• Aspect ratio: 16:9 (e.g., 1920x1080px)</li>
-          <li>• Max file size: 5MB</li>
-          <li>• Formats: PNG, JPG, JPEG, WebP</li>
-          <li>• High quality images recommended</li>
-        </ul>
-      </div>
-    </div>
-  );
-}
-
-// Catalogs Tab Component
-function CatalogsTab({
-  catalogs,
-  loading,
-  onCreateCatalog,
-}: {
-  catalogs: Catalog[];
-  loading: boolean;
-  onCreateCatalog: () => void;
-}) {
-  const [selectedCatalogId, setSelectedCatalogId] = useState<string | null>(
-    null
-  );
-  const [showCreateItem, setShowCreateItem] = useState(false);
-
-  const { data: catalogItems } = useCatalogItems(selectedCatalogId || "");
-
-  if (loading) {
-    return (
-      <div className="bg-card rounded-lg shadow p-8 text-center">
-        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
-        <p className="text-muted-foreground mt-2">Loading catalogs...</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-foreground">Store Catalogs</h2>
-        <button
-          onClick={onCreateCatalog}
-          className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-colors"
-        >
-          <Plus className="w-5 h-5" />
-          Create Catalog
-        </button>
-      </div>
-
-      {catalogs.length === 0 ? (
-        <div className="bg-card rounded-lg shadow p-8 text-center">
-          <BookOpen className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-          <p className="text-muted-foreground mb-4">No catalogs found</p>
-          <button
-            onClick={onCreateCatalog}
-            className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-colors"
-          >
-            Create First Catalog
-          </button>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {catalogs.map((catalog) => (
-            <div
-              key={catalog.id}
-              className="bg-card rounded-lg shadow p-6 hover:shadow-lg transition-shadow cursor-pointer"
-              onClick={() => setSelectedCatalogId(catalog.id)}
-            >
-              <div className="flex items-center justify-between mb-4">
-                <BookOpen className="w-8 h-8 text-primary" />
-                <span className="text-sm text-muted-foreground">
-                  {catalog.id === selectedCatalogId ? "Selected" : ""}
-                </span>
-              </div>
-              <h3 className="text-lg font-semibold text-foreground mb-2">
-                {catalog.name}
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                Catalog ID: {catalog.id.slice(0, 8)}...
-              </p>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Catalog Items */}
-      {selectedCatalogId ? (
-        <div className="bg-card rounded-lg shadow p-6">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-xl font-semibold text-foreground">
-              Catalog Items
-            </h3>
-            <button
-              onClick={() => setShowCreateItem(true)}
-              className="flex items-center gap-2 px-3 py-2 bg-secondary/600 text-white rounded-lg hover:bg-secondary/700 transition-colors text-sm"
-            >
-              <Plus className="w-4 h-4" />
-              Add Item
-            </button>
-          </div>
-
-          {catalogItems && catalogItems.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {catalogItems.map((item) => (
-                <div
-                  key={item.id}
-                  className="border rounded-lg p-4 hover:border-blue-500 transition-colors"
-                >
-                  <div className="flex items-start gap-3">
-                    <Image
-                      className="w-5 h-5 text-muted-foreground mt-1"
-                      aria-label="Image icon"
-                    />
-                    <div className="flex-1">
-                      <h4 className="font-medium text-foreground">
-                        {item.name}
-                      </h4>
-                      <a
-                        href={item.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm text-primary hover:underline break-all"
-                      >
-                        {item.url}
-                      </a>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-muted-foreground text-center py-8">
-              No items in this catalog yet
-            </p>
-          )}
-        </div>
-      ) : null}
-
-      {showCreateItem && selectedCatalogId ? (
-        <CreateCatalogItemModal
-          catalogId={selectedCatalogId}
-          onClose={() => setShowCreateItem(false)}
         />
       ) : null}
     </div>
@@ -1091,21 +584,33 @@ function CreateCatalogModal({
   const createCatalog = useCreateCatalog();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [images, setImages] = useState<{
-    image1?: string;
-    image2?: string;
-    image3?: string;
-    image4?: string;
+  const [selectedFiles, setSelectedFiles] = useState<{
+    file1?: File;
+    file2?: File;
+    file3?: File;
+    file4?: File;
+    file5?: File;
+    file6?: File;
+    file7?: File;
+    file8?: File;
+    file9?: File;
+    file10?: File;
   }>({});
   const [imagePreviews, setImagePreviews] = useState<{
     preview1?: string;
     preview2?: string;
     preview3?: string;
     preview4?: string;
+    preview5?: string;
+    preview6?: string;
+    preview7?: string;
+    preview8?: string;
+    preview9?: string;
+    preview10?: string;
   }>({});
 
   const handleImageSelect = (
-    slot: 1 | 2 | 3 | 4,
+    slot: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10,
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     const file = event.target.files?.[0];
@@ -1133,33 +638,132 @@ function CreateCatalogModal({
       return;
     }
 
-    // Convert to base64
+    // Store file and create preview
+    setSelectedFiles((prev: typeof selectedFiles) => ({
+      ...prev,
+      [`file${slot}`]: file,
+    }));
+
     const reader = new FileReader();
     reader.onloadend = () => {
-      const base64 = reader.result as string;
-      setImages((prev) => ({ ...prev, [`image${slot}`]: base64 }));
-      setImagePreviews((prev) => ({ ...prev, [`preview${slot}`]: base64 }));
+      setImagePreviews((prev: typeof imagePreviews) => ({
+        ...prev,
+        [`preview${slot}`]: reader.result as string,
+      }));
     };
     reader.readAsDataURL(file);
   };
 
-  const removeImage = (slot: 1 | 2 | 3 | 4) => {
-    setImages((prev) => ({ ...prev, [`image${slot}`]: undefined }));
-    setImagePreviews((prev) => ({ ...prev, [`preview${slot}`]: undefined }));
+  const removeImage = (slot: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10) => {
+    setSelectedFiles((prev: typeof selectedFiles) => ({
+      ...prev,
+      [`file${slot}`]: undefined,
+    }));
+    setImagePreviews((prev: typeof imagePreviews) => ({
+      ...prev,
+      [`preview${slot}`]: undefined,
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      // First, upload images to S3 if any
+      const imageUrls: {
+        image1Url?: string;
+        image2Url?: string;
+        image3Url?: string;
+        image4Url?: string;
+        image5Url?: string;
+        image6Url?: string;
+        image7Url?: string;
+        image8Url?: string;
+        image9Url?: string;
+        image10Url?: string;
+      } = {};
+
+      const filesToUpload = [
+        selectedFiles.file1,
+        selectedFiles.file2,
+        selectedFiles.file3,
+        selectedFiles.file4,
+        selectedFiles.file5,
+        selectedFiles.file6,
+        selectedFiles.file7,
+        selectedFiles.file8,
+        selectedFiles.file9,
+        selectedFiles.file10,
+      ].filter(Boolean) as File[];
+
+      if (filesToUpload.length > 0) {
+        const formData = new FormData();
+        filesToUpload.forEach((file) => {
+          formData.append("files", file);
+        });
+
+        const authStore = useAuthStore.getState();
+        const token = authStore.accessToken;
+
+        const baseUrl = (
+          process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"
+        ).replace("/graphql", "");
+
+        const uploadResponse = await fetch(`${baseUrl}/upload/catalog-images`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formData,
+        });
+
+        if (!uploadResponse.ok) {
+          throw new Error("Image upload failed");
+        }
+
+        const { urls } = await uploadResponse.json();
+
+        // Map URLs to the correct slots
+        let urlIndex = 0;
+        if (selectedFiles.file1) {
+          imageUrls.image1Url = urls[urlIndex++];
+        }
+        if (selectedFiles.file2) {
+          imageUrls.image2Url = urls[urlIndex++];
+        }
+        if (selectedFiles.file3) {
+          imageUrls.image3Url = urls[urlIndex++];
+        }
+        if (selectedFiles.file4) {
+          imageUrls.image4Url = urls[urlIndex++];
+        }
+        if (selectedFiles.file5) {
+          imageUrls.image5Url = urls[urlIndex++];
+        }
+        if (selectedFiles.file6) {
+          imageUrls.image6Url = urls[urlIndex++];
+        }
+        if (selectedFiles.file7) {
+          imageUrls.image7Url = urls[urlIndex++];
+        }
+        if (selectedFiles.file8) {
+          imageUrls.image8Url = urls[urlIndex++];
+        }
+        if (selectedFiles.file9) {
+          imageUrls.image9Url = urls[urlIndex++];
+        }
+        if (selectedFiles.file10) {
+          imageUrls.image10Url = urls[urlIndex++];
+        }
+      }
+
+      // Create catalog with image URLs
       await createCatalog.mutateAsync({
         storeId,
         name,
         description: description || undefined,
-        image1: images.image1,
-        image2: images.image2,
-        image3: images.image3,
-        image4: images.image4,
+        ...imageUrls,
       });
+
       toast({
         title: "Catalog created",
         description:
@@ -1170,14 +774,16 @@ function CreateCatalogModal({
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to create catalog. Please try again.",
+        description:
+          extractErrorMessage(_error) ??
+          "Failed to create catalog. Please try again.",
       });
     }
   };
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-      <div className="bg-card rounded-lg shadow-card max-w-3xl w-full my-8">
+      <div className="bg-card rounded-lg shadow-card max-w-3xl w-full my-8 max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-border">
           <div className="flex items-center gap-3">
@@ -1189,7 +795,7 @@ function CreateCatalogModal({
                 Create New Catalog
               </h3>
               <p className="text-sm text-muted-foreground">
-                Add up to 4 images for your catalog
+                Add up to 10 images for your catalog
               </p>
             </div>
           </div>
@@ -1235,15 +841,15 @@ function CreateCatalogModal({
           {/* Images Grid */}
           <div>
             <label className="block text-sm font-medium text-foreground mb-3">
-              Images (Up to 4)
+              Images (Up to 10)
             </label>
-            <div className="grid grid-cols-2 gap-4">
-              {[1, 2, 3, 4].map((slot) => {
-                const slotKey = slot as 1 | 2 | 3 | 4;
+            <div className="grid grid-cols-3 md:grid-cols-5 gap-3">
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((slot) => {
+                const slotKey = slot as 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
                 const preview = imagePreviews[`preview${slotKey}`];
                 return (
                   <div key={slot} className="space-y-2">
-                    <div className="relative aspect-video bg-muted rounded-lg border-2 border-dashed border-border overflow-hidden">
+                    <div className="relative aspect-square bg-muted rounded-lg border-2 border-dashed border-border overflow-hidden">
                       {preview ? (
                         <>
                           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -1255,19 +861,16 @@ function CreateCatalogModal({
                           <button
                             type="button"
                             onClick={() => removeImage(slotKey)}
-                            className="absolute top-2 right-2 p-1.5 bg-destructive text-destructive-foreground rounded-lg hover:opacity-90 transition-opacity"
+                            className="absolute top-1 right-1 p-1 bg-destructive text-destructive-foreground rounded-lg hover:opacity-90 transition-opacity"
                           >
-                            <X className="w-4 h-4" />
+                            <X className="w-3 h-3" />
                           </button>
                         </>
                       ) : (
                         <label className="flex flex-col items-center justify-center h-full cursor-pointer hover:bg-muted/80 transition-colors">
-                          <Image
-                            className="w-8 h-8 text-muted-foreground mb-2"
-                            aria-label={`Upload image ${slot}`}
-                          />
-                          <span className="text-xs text-muted-foreground">
-                            Image {slot}
+                          <Plus className="w-6 h-6 text-muted-foreground mb-1" />
+                          <span className="text-[10px] text-muted-foreground">
+                            {slot}
                           </span>
                           <input
                             type="file"
@@ -1309,466 +912,6 @@ function CreateCatalogModal({
                 </>
               ) : (
                 "Create Catalog"
-              )}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}
-
-// Create Catalog Item Modal
-function CreateCatalogItemModal({
-  catalogId,
-  onClose,
-}: {
-  catalogId: string;
-  onClose: () => void;
-}) {
-  const { toast } = useToast();
-  const createCatalogItem = useCreateCatalogItem();
-  const [name, setName] = useState("");
-  const [url, setUrl] = useState("");
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      await createCatalogItem.mutateAsync({ catalogId, name, url });
-      toast({
-        title: "Item added",
-        description: "The catalog item has been added successfully.",
-      });
-      onClose();
-    } catch (_error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to add catalog item.",
-      });
-    }
-  };
-
-  return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-card rounded-lg shadow-card max-w-md w-full">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-border">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-secondary/20 rounded-lg">
-              <Plus className="w-5 h-5 text-secondary-foreground" />
-            </div>
-            <div>
-              <h3 className="text-xl font-bold text-foreground">
-                Add Catalog Item
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                Add a new item to your catalog
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-muted rounded-lg transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        {/* Form */}
-        <form onSubmit={(e) => void handleSubmit(e)} className="p-6 space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2">
-              Item Name <span className="text-destructive">*</span>
-            </label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-              placeholder="e.g., Burger, Pizza, T-Shirt"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2">
-              Image URL <span className="text-destructive">*</span>
-            </label>
-            <input
-              type="url"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-              placeholder="https://example.com/image.jpg"
-              required
-            />
-          </div>
-
-          {/* Actions */}
-          <div className="flex gap-3 pt-4 border-t border-border">
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={createCatalogItem.isPending}
-              className="flex-1 px-4 py-3 border border-border text-foreground font-semibold rounded-lg hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={createCatalogItem.isPending}
-              className="flex-1 px-4 py-3 bg-primary text-primary-foreground font-semibold rounded-lg hover:opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            >
-              {createCatalogItem.isPending ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  Adding...
-                </>
-              ) : (
-                "Add Item"
-              )}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}
-
-// Create Discount Modal - Unused, can be removed
-export function CreateDiscountModal({
-  storeId,
-  onClose,
-}: {
-  storeId: string;
-  onClose: () => void;
-}) {
-  const { toast } = useToast();
-  const createDiscount = useCreateDiscount();
-  const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-    type: DiscountType.PERCENTAGE,
-    value: "",
-    code: "",
-    startDate: "",
-    endDate: "",
-    active: true,
-    maxUses: "",
-    minPurchaseAmount: "",
-    maxDiscountAmount: "",
-  });
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      await createDiscount.mutateAsync({
-        storeId,
-        title: formData.title,
-        description: formData.description || undefined,
-        type: formData.type,
-        value: parseFloat(formData.value),
-        code: formData.code || undefined,
-        startDate: formData.startDate,
-        endDate: formData.endDate,
-        active: formData.active,
-        maxUses: formData.maxUses ? parseInt(formData.maxUses) : undefined,
-        minPurchaseAmount: formData.minPurchaseAmount
-          ? parseFloat(formData.minPurchaseAmount)
-          : undefined,
-        maxDiscountAmount: formData.maxDiscountAmount
-          ? parseFloat(formData.maxDiscountAmount)
-          : undefined,
-      });
-      toast({
-        title: "Discount created",
-        description: "The discount has been created successfully.",
-      });
-      onClose();
-    } catch (_error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to create discount.",
-      });
-    }
-  };
-
-  return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-card rounded-lg shadow-card max-w-2xl w-full max-h-[90vh] flex flex-col">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-border shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-accent/20 rounded-lg">
-              <Percent className="w-5 h-5 text-accent-foreground" />
-            </div>
-            <div>
-              <h3 className="text-xl font-bold text-foreground">
-                Create New Discount
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                Set up a new discount or promotional offer
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={onClose}
-            disabled={createDiscount.isPending}
-            className="p-2 hover:bg-muted rounded-lg transition-colors disabled:opacity-50"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        {/* Form */}
-        <form
-          onSubmit={(e) => void handleSubmit(e)}
-          className="flex flex-col flex-1 min-h-0"
-        >
-          <div className="p-6 space-y-6 overflow-y-auto flex-1">
-            {/* Basic Information */}
-            <div className="space-y-4">
-              <h4 className="text-sm font-semibold text-foreground uppercase tracking-wide">
-                Basic Information
-              </h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    Title <span className="text-destructive">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.title}
-                    onChange={(e) =>
-                      setFormData({ ...formData, title: e.target.value })
-                    }
-                    className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                    placeholder="e.g., Summer Sale, Black Friday Deal"
-                    required
-                  />
-                </div>
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    Description
-                  </label>
-                  <textarea
-                    value={formData.description}
-                    onChange={(e) =>
-                      setFormData({ ...formData, description: e.target.value })
-                    }
-                    className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
-                    rows={3}
-                    placeholder="Describe the discount offer..."
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Discount Details */}
-            <div className="space-y-4">
-              <h4 className="text-sm font-semibold text-foreground uppercase tracking-wide">
-                Discount Details
-              </h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    Type <span className="text-destructive">*</span>
-                  </label>
-                  <select
-                    value={formData.type}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        type: e.target.value as DiscountType,
-                      })
-                    }
-                    className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  >
-                    <option value={DiscountType.PERCENTAGE}>
-                      Percentage (%)
-                    </option>
-                    <option value={DiscountType.FIXED_AMOUNT}>
-                      Fixed Amount ($)
-                    </option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    Value <span className="text-destructive">*</span>
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={formData.value}
-                    onChange={(e) =>
-                      setFormData({ ...formData, value: e.target.value })
-                    }
-                    className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                    placeholder={
-                      formData.type === DiscountType.PERCENTAGE
-                        ? "e.g., 20"
-                        : "e.g., 10.00"
-                    }
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    Discount Code
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.code}
-                    onChange={(e) =>
-                      setFormData({ ...formData, code: e.target.value })
-                    }
-                    className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                    placeholder="e.g., SAVE20"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    Max Uses
-                  </label>
-                  <input
-                    type="number"
-                    value={formData.maxUses}
-                    onChange={(e) =>
-                      setFormData({ ...formData, maxUses: e.target.value })
-                    }
-                    className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                    placeholder="e.g., 100"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Validity Period */}
-            <div className="space-y-4">
-              <h4 className="text-sm font-semibold text-foreground uppercase tracking-wide">
-                Validity Period
-              </h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    Start Date <span className="text-destructive">*</span>
-                  </label>
-                  <input
-                    type="date"
-                    value={formData.startDate}
-                    onChange={(e) =>
-                      setFormData({ ...formData, startDate: e.target.value })
-                    }
-                    className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    End Date <span className="text-destructive">*</span>
-                  </label>
-                  <input
-                    type="date"
-                    value={formData.endDate}
-                    onChange={(e) =>
-                      setFormData({ ...formData, endDate: e.target.value })
-                    }
-                    className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                    required
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Conditions */}
-            <div className="space-y-4">
-              <h4 className="text-sm font-semibold text-foreground uppercase tracking-wide">
-                Conditions
-              </h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    Min Purchase Amount
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={formData.minPurchaseAmount}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        minPurchaseAmount: e.target.value,
-                      })
-                    }
-                    className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                    placeholder="e.g., 50.00"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    Max Discount Amount
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={formData.maxDiscountAmount}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        maxDiscountAmount: e.target.value,
-                      })
-                    }
-                    className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                    placeholder="e.g., 100.00"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Status */}
-            <div className="flex items-center gap-3 p-4 bg-gradient-hero rounded-lg border border-border">
-              <input
-                type="checkbox"
-                id="discount-active"
-                checked={formData.active}
-                onChange={(e) =>
-                  setFormData({ ...formData, active: e.target.checked })
-                }
-                className="w-4 h-4 text-primary border-border rounded focus:ring-primary"
-              />
-              <label
-                htmlFor="discount-active"
-                className="text-sm font-medium text-foreground"
-              >
-                Discount is active and available to users
-              </label>
-            </div>
-          </div>
-
-          {/* Actions */}
-          <div className="flex gap-3 p-6 border-t border-border shrink-0">
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={createDiscount.isPending}
-              className="flex-1 px-4 py-3 border border-border text-foreground font-semibold rounded-lg hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={createDiscount.isPending}
-              className="flex-1 px-4 py-3 bg-primary text-primary-foreground font-semibold rounded-lg hover:opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            >
-              {createDiscount.isPending ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  Creating...
-                </>
-              ) : (
-                "Create Discount"
               )}
             </button>
           </div>

@@ -36,6 +36,9 @@ export interface Store {
   name: string;
   description?: string;
   imageUrl?: string;
+  image1Url?: string;
+  image2Url?: string;
+  image3Url?: string;
   categoryId: string;
   subCategory?: string;
   type: StoreType;
@@ -47,6 +50,7 @@ export interface Store {
   price: PriceRange;
   active: boolean;
   url?: string;
+  pin?: string | null;
   openDays?: OpenDaysStructure;
   tags?: string;
   averageRating: number;
@@ -132,6 +136,7 @@ export interface UpdateStoreInput {
   phoneNumber?: string;
   price?: PriceRange;
   active?: boolean;
+  pin?: string;
   url?: string;
   openDays?: OpenDaysStructure;
   tags?: string;
@@ -208,6 +213,7 @@ export interface CreateDiscountInput {
   excludedHours?: number[];
   maxUsesPerUserPerMonth?: number;
   monthlyRedemptionCap?: number;
+  id?: string;
 }
 
 export interface UpdateDiscountInput {
@@ -267,6 +273,20 @@ export interface Catalog {
   id: string;
   storeId: string;
   name: string;
+  description?: string;
+  image1Url?: string;
+  image2Url?: string;
+  image3Url?: string;
+  image4Url?: string;
+  image5Url?: string;
+  image6Url?: string;
+  image7Url?: string;
+  image8Url?: string;
+  image9Url?: string;
+  image10Url?: string;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface CatalogItem {
@@ -280,10 +300,33 @@ export interface CreateCatalogInput {
   storeId: string;
   name: string;
   description?: string;
-  image1?: string;
-  image2?: string;
-  image3?: string;
-  image4?: string;
+  image1Url?: string;
+  image2Url?: string;
+  image3Url?: string;
+  image4Url?: string;
+  image5Url?: string;
+  image6Url?: string;
+  image7Url?: string;
+  image8Url?: string;
+  image9Url?: string;
+  image10Url?: string;
+}
+
+export interface UpdateCatalogInput {
+  id: string;
+  name?: string;
+  description?: string;
+  image1Url?: string;
+  image2Url?: string;
+  image3Url?: string;
+  image4Url?: string;
+  image5Url?: string;
+  image6Url?: string;
+  image7Url?: string;
+  image8Url?: string;
+  image9Url?: string;
+  image10Url?: string;
+  active?: boolean;
 }
 
 export interface CreateCatalogItemInput {

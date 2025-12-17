@@ -9,7 +9,10 @@ type GraphQLError = {
   response?: {
     errors?: Array<{
       message?: string;
-      extensions?: { code?: string };
+      extensions?: {
+        code?: string;
+        validationErrors?: Array<string>;
+      };
     }>;
   };
 };
@@ -47,7 +50,10 @@ function parseError(error: unknown): GraphQLError | null {
       response?: {
         errors?: Array<{
           message?: string;
-          extensions?: { code?: string };
+          extensions?: {
+            code?: string;
+            validationErrors?: Array<string>;
+          };
         }>;
       };
     };
@@ -68,12 +74,12 @@ function isAuthenticationError(graphqlError: GraphQLError | null): boolean {
     // Check for authentication-related error messages
     const authErrorMessages = [
       // "User not found",
-      "Unauthorized",
+      // "Unauthorized",
       "Unauthenticated",
       "Authentication required",
       "Invalid token",
       "Token expired",
-      "Forbidden",
+      // "Forbidden",
     ];
 
     const messageMatch = authErrorMessages.some(
@@ -122,17 +128,20 @@ export async function graphqlRequest<T>(
         authErrorCallback();
       }
 
+      const errorMsg =
+        parsedError?.response?.errors?.[0]?.extensions?.validationErrors?.[0] ??
+        parsedError?.response?.errors?.[0]?.message;
       throw new Error(
-        parsedError?.response?.errors?.[0]?.message ??
-          "Your session has expired. Please log in again."
+        errorMsg ?? "Your session has expired. Please log in again."
       );
     }
 
     // Handle GraphQL errors
     if (parsedError) {
-      const graphqlErrors = parsedError.response?.errors;
-      const errorMessage =
-        graphqlErrors?.[0]?.message || "GraphQL request failed";
+      const errorMsg =
+        parsedError?.response?.errors?.[0]?.extensions?.validationErrors?.[0] ??
+        parsedError?.response?.errors?.[0]?.message;
+      const errorMessage = errorMsg || "GraphQL request failed";
       console.error("GraphQL Error Message:", errorMessage);
       throw new Error(errorMessage);
     }

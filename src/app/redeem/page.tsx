@@ -21,6 +21,7 @@ function StoreRedeemContent(): React.JSX.Element {
   const searchParams = useSearchParams();
 
   const [couponCode, setCouponCode] = useState("");
+  const [loading, setLoading] = useState(false);
   const [detailCoupon, setDetailCoupon] = useState<DecodedCouponData | null>(
     null
   );
@@ -144,6 +145,7 @@ function StoreRedeemContent(): React.JSX.Element {
 
   const handleCodeSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
+    setLoading(true);
     const code = couponCode.trim();
     if (!code) {
       return;
@@ -180,6 +182,8 @@ function StoreRedeemContent(): React.JSX.Element {
         description: err instanceof Error ? err.message : String(err),
         variant: "destructive",
       });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -206,6 +210,7 @@ function StoreRedeemContent(): React.JSX.Element {
   return (
     <>
       <RedeemInputCard
+        loading={loading}
         couponCode={couponCode}
         setCouponCode={setCouponCode}
         onSubmit={(e) => void handleCodeSubmit(e)}

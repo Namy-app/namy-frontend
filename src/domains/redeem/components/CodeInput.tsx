@@ -2,12 +2,14 @@
 
 type Props = {
   couponCode: string;
+  loading: boolean;
   setCouponCode: (v: string) => void;
   onSubmit: (e: React.FormEvent) => void;
 };
 
 export default function CodeInput({
   couponCode,
+  loading,
   setCouponCode,
   onSubmit,
 }: Props): React.JSX.Element {
@@ -43,10 +45,15 @@ export default function CodeInput({
       </div>
 
       <button
+        disabled={loading}
         type="submit"
         className="w-full py-4 bg-gradient-primary text-primary-foreground rounded-xl font-semibold hover:shadow-glow transition-all flex items-center justify-center gap-2"
       >
-        Continue
+        {loading ? (
+          <span className="h-5 w-5 block border-2 border-dashed border-white rounded-full animate-spin" />
+        ) : (
+          "Continue"
+        )}
       </button>
 
       <div className="bg-muted/50 p-4 rounded-xl">
