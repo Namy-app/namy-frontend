@@ -3,7 +3,11 @@ import { useState } from "react";
 
 import { useUpdateCatalog, type Catalog } from "@/domains/admin";
 import { useToast } from "@/hooks/use-toast";
-import { compressImage, formatFileSize, validateImageFile } from "@/lib/image-utils";
+import {
+  compressImage,
+  formatFileSize,
+  validateImageFile,
+} from "@/lib/image-utils";
 import { useAuthStore } from "@/store/useAuthStore";
 
 interface ImageUploadProgress {
@@ -62,7 +66,9 @@ export const EditCatalogModal = ({
     preview9: catalog.image9Url,
     preview10: catalog.image10Url,
   });
-  const [uploadProgress, setUploadProgress] = useState<ImageUploadProgress[]>([]);
+  const [uploadProgress, setUploadProgress] = useState<ImageUploadProgress[]>(
+    []
+  );
   const [isUploading, setIsUploading] = useState(false);
 
   const handleImageSelect = async (
@@ -101,7 +107,10 @@ export const EditCatalogModal = ({
       });
 
       // Show compression result
-      const compressionRatio = ((1 - compressedFile.size / file.size) * 100).toFixed(0);
+      const compressionRatio = (
+        (1 - compressedFile.size / file.size) *
+        100
+      ).toFixed(0);
       toast({
         title: "Image compressed",
         description: `Reduced by ${compressionRatio}% to ${formatFileSize(compressedFile.size)}`,
@@ -125,7 +134,8 @@ export const EditCatalogModal = ({
       toast({
         variant: "destructive",
         title: "Compression failed",
-        description: error instanceof Error ? error.message : "Failed to compress image",
+        description:
+          error instanceof Error ? error.message : "Failed to compress image",
       });
     }
   };
@@ -250,16 +260,36 @@ export const EditCatalogModal = ({
 
       // Prepare files to upload with their slot numbers
       const filesToUpload: Array<{ file: File; slot: number }> = [];
-      if (selectedFiles.file1) {filesToUpload.push({ file: selectedFiles.file1, slot: 1 });}
-      if (selectedFiles.file2) {filesToUpload.push({ file: selectedFiles.file2, slot: 2 });}
-      if (selectedFiles.file3) {filesToUpload.push({ file: selectedFiles.file3, slot: 3 });}
-      if (selectedFiles.file4) {filesToUpload.push({ file: selectedFiles.file4, slot: 4 });}
-      if (selectedFiles.file5) {filesToUpload.push({ file: selectedFiles.file5, slot: 5 });}
-      if (selectedFiles.file6) {filesToUpload.push({ file: selectedFiles.file6, slot: 6 });}
-      if (selectedFiles.file7) {filesToUpload.push({ file: selectedFiles.file7, slot: 7 });}
-      if (selectedFiles.file8) {filesToUpload.push({ file: selectedFiles.file8, slot: 8 });}
-      if (selectedFiles.file9) {filesToUpload.push({ file: selectedFiles.file9, slot: 9 });}
-      if (selectedFiles.file10) {filesToUpload.push({ file: selectedFiles.file10, slot: 10 });}
+      if (selectedFiles.file1) {
+        filesToUpload.push({ file: selectedFiles.file1, slot: 1 });
+      }
+      if (selectedFiles.file2) {
+        filesToUpload.push({ file: selectedFiles.file2, slot: 2 });
+      }
+      if (selectedFiles.file3) {
+        filesToUpload.push({ file: selectedFiles.file3, slot: 3 });
+      }
+      if (selectedFiles.file4) {
+        filesToUpload.push({ file: selectedFiles.file4, slot: 4 });
+      }
+      if (selectedFiles.file5) {
+        filesToUpload.push({ file: selectedFiles.file5, slot: 5 });
+      }
+      if (selectedFiles.file6) {
+        filesToUpload.push({ file: selectedFiles.file6, slot: 6 });
+      }
+      if (selectedFiles.file7) {
+        filesToUpload.push({ file: selectedFiles.file7, slot: 7 });
+      }
+      if (selectedFiles.file8) {
+        filesToUpload.push({ file: selectedFiles.file8, slot: 8 });
+      }
+      if (selectedFiles.file9) {
+        filesToUpload.push({ file: selectedFiles.file9, slot: 9 });
+      }
+      if (selectedFiles.file10) {
+        filesToUpload.push({ file: selectedFiles.file10, slot: 10 });
+      }
 
       if (filesToUpload.length > 0) {
         const authStore = useAuthStore.getState();
@@ -312,8 +342,12 @@ export const EditCatalogModal = ({
         // 1. The catalog originally had an image (catalogUrl exists)
         // 2. The preview is now undefined (user removed it)
         // 3. No new file is selected for this slot
-        if (catalogUrl && !imagePreviews[previewKey] && !selectedFiles[fileKey]) {
-          imageUrls[imageKey] = null;
+        if (
+          catalogUrl &&
+          !imagePreviews[previewKey] &&
+          !selectedFiles[fileKey]
+        ) {
+          imageUrls[imageKey] = undefined;
         }
       });
 
@@ -403,13 +437,19 @@ export const EditCatalogModal = ({
           {uploadProgress.length > 0 && (
             <div className="bg-muted/50 rounded-lg p-4 space-y-2">
               <h4 className="text-sm font-semibold text-foreground mb-2">
-                Upload Progress ({uploadProgress.filter((p) => p.status === "completed").length}/
+                Upload Progress (
+                {uploadProgress.filter((p) => p.status === "completed").length}/
                 {uploadProgress.length})
               </h4>
               <div className="space-y-1">
                 {uploadProgress.map((progress) => (
-                  <div key={progress.slot} className="flex items-center gap-2 text-xs">
-                    <span className="w-16 text-muted-foreground">Image {progress.slot}</span>
+                  <div
+                    key={progress.slot}
+                    className="flex items-center gap-2 text-xs"
+                  >
+                    <span className="w-16 text-muted-foreground">
+                      Image {progress.slot}
+                    </span>
                     <div className="flex-1 bg-muted rounded-full h-2 overflow-hidden">
                       <div
                         className={`h-full transition-all ${

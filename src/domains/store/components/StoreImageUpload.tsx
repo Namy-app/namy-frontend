@@ -1,5 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { Image, Loader2, X } from "lucide-react";
+import { Image as ImageIcon, Loader2, X } from "lucide-react";
 import { useState, useEffect } from "react";
 
 import { useToast } from "@/hooks/use-toast";
@@ -53,10 +53,26 @@ export const StoreImageUpload = ({
       }
 
       return [
-        { url: imageUrl || null, file: prev[0]?.file || null, isUploading: prev[0]?.isUploading || false },
-        { url: image1Url || null, file: prev[1]?.file || null, isUploading: prev[1]?.isUploading || false },
-        { url: image2Url || null, file: prev[2]?.file || null, isUploading: prev[2]?.isUploading || false },
-        { url: image3Url || null, file: prev[3]?.file || null, isUploading: prev[3]?.isUploading || false },
+        {
+          url: imageUrl || null,
+          file: prev[0]?.file || null,
+          isUploading: prev[0]?.isUploading || false,
+        },
+        {
+          url: image1Url || null,
+          file: prev[1]?.file || null,
+          isUploading: prev[1]?.isUploading || false,
+        },
+        {
+          url: image2Url || null,
+          file: prev[2]?.file || null,
+          isUploading: prev[2]?.isUploading || false,
+        },
+        {
+          url: image3Url || null,
+          file: prev[3]?.file || null,
+          isUploading: prev[3]?.isUploading || false,
+        },
       ];
     });
   }, [imageUrl, image1Url, image2Url, image3Url]);
@@ -75,7 +91,8 @@ export const StoreImageUpload = ({
       toast({
         variant: "destructive",
         title: "Tipo de archivo inválido",
-        description: "Por favor selecciona un archivo de imagen (PNG, JPG, WebP)",
+        description:
+          "Por favor selecciona un archivo de imagen (PNG, JPG, WebP)",
       });
       return;
     }
@@ -103,20 +120,17 @@ export const StoreImageUpload = ({
           file,
           isUploading: false,
         };
-        console.log("Updated slot state with preview:", newSlots[index]);
+
         return newSlots;
       });
 
       // Immediately start upload with the file we have
-      console.log("Starting upload for index:", index);
       void handleUploadWithFile(index, file);
     };
     reader.readAsDataURL(file);
   };
 
   const handleUploadWithFile = async (index: number, file: File) => {
-    console.log("handleUploadWithFile called for index:", index, "with file:", file.name);
-
     if (!storeId) {
       toast({
         variant: "destructive",
@@ -134,7 +148,7 @@ export const StoreImageUpload = ({
         newSlots[index] = {
           url: currentSlot.url,
           file: currentSlot.file,
-          isUploading: true
+          isUploading: true,
         };
       }
       return newSlots;
@@ -199,7 +213,7 @@ export const StoreImageUpload = ({
       // Refetch store to ensure we have the latest data
       await queryClient.refetchQueries({
         queryKey: ["store", storeId],
-        exact: true
+        exact: true,
       });
     } catch (error) {
       console.error("Upload error:", error);
@@ -217,7 +231,7 @@ export const StoreImageUpload = ({
           newSlots[index] = {
             url: currentSlot.url,
             file: currentSlot.file,
-            isUploading: false
+            isUploading: false,
           };
         }
         return newSlots;
@@ -271,7 +285,8 @@ export const StoreImageUpload = ({
       toast({
         variant: "destructive",
         title: "Error al eliminar",
-        description: "No se pudo eliminar la imagen. Por favor intenta de nuevo.",
+        description:
+          "No se pudo eliminar la imagen. Por favor intenta de nuevo.",
       });
     }
   };
@@ -322,7 +337,7 @@ export const StoreImageUpload = ({
                   {/* Hover overlay with change icon */}
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center">
                     <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-primary text-primary-foreground px-4 py-2 rounded-lg flex items-center gap-2">
-                      <Image className="w-4 h-4" />
+                      <ImageIcon className="w-4 h-4" />
                       <span className="text-sm font-medium">Cambiar</span>
                     </div>
                   </div>
@@ -332,9 +347,11 @@ export const StoreImageUpload = ({
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      slot.file
-                        ? handleCancelSelection(index)
-                        : void handleRemove(index);
+                      if (slot.file) {
+                        handleCancelSelection(index);
+                      } else {
+                        void handleRemove(index);
+                      }
                     }}
                     className="absolute top-2 right-2 p-2 bg-destructive/90 hover:bg-destructive text-destructive-foreground rounded-lg transition-colors z-10"
                     title={slot.file ? "Cancelar" : "Eliminar imagen"}
@@ -344,14 +361,18 @@ export const StoreImageUpload = ({
                   </button>
 
                   {/* Uploading overlay */}
-                  {slot.isUploading ? <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-20">
+                  {slot.isUploading ? (
+                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-20">
                       <Loader2 className="w-8 h-8 text-white animate-spin" />
-                    </div> : null}
+                    </div>
+                  ) : null}
                 </div>
               ) : (
                 <div className="absolute inset-0 rounded-lg border-2 border-dashed border-border bg-muted flex flex-col items-center justify-center gap-2 hover:border-primary hover:bg-muted/80 transition-colors">
-                  <Image className="w-8 h-8 text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground">Seleccionar imagen</span>
+                  <ImageIcon className="w-8 h-8 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">
+                    Seleccionar imagen
+                  </span>
                 </div>
               )}
             </label>

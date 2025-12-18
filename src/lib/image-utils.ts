@@ -113,7 +113,9 @@ export async function compressImage(
  * Format file size for display
  */
 export function formatFileSize(bytes: number): string {
-  if (bytes === 0) {return "0 B";}
+  if (bytes === 0) {
+    return "0 B";
+  }
   const k = 1024;
   const sizes = ["B", "KB", "MB", "GB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
@@ -127,12 +129,15 @@ export function validateImageFile(
   file: File,
   options: { maxSizeMB?: number; allowedTypes?: string[] } = {}
 ): { valid: boolean; error?: string } {
-  const { maxSizeMB = 5, allowedTypes = ["image/jpeg", "image/png", "image/webp"] } = options;
+  const {
+    maxSizeMB = 5,
+    allowedTypes = ["image/jpeg", "image/png", "image/webp"],
+  } = options;
 
   if (!allowedTypes.includes(file.type)) {
     return {
       valid: false,
-      error: `Invalid file type. Please use ${allowedTypes.map(t => t.split('/')[1].toUpperCase()).join(", ")}`,
+      error: `Invalid file type. Please use ${allowedTypes.map((t) => (t.split("/")[1] ?? t).toUpperCase()).join(", ")}`,
     };
   }
 
