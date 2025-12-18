@@ -74,7 +74,9 @@ export default function StoreDetailPage() {
 
   // Handle authentication redirect after hydration
   useEffect(() => {
-    if (!isHydrated) {return;}
+    if (!isHydrated) {
+      return;
+    }
 
     if (!isAuthenticated || !user) {
       router.push("/auth");

@@ -1451,9 +1451,11 @@ export default function RestaurantDetailPage(): React.JSX.Element {
                       }`}
                     >
                       {item.day}
-                      {isToday ? <span className="ml-2 text-xs font-semibold">
+                      {isToday ? (
+                        <span className="ml-2 text-xs font-semibold">
                           (Hoy)
-                        </span> : null}
+                        </span>
+                      ) : null}
                     </span>
                     <span
                       className={

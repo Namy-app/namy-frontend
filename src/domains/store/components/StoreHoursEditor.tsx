@@ -36,7 +36,9 @@ export const StoreHoursEditor = ({ value = [], onChange }: Props) => {
   const handleAddDay = () => {
     // Find first day not already added
     const existingDays = hours.map((h) => h.day.toLowerCase());
-    const availableDay = DAYS_OF_WEEK.find((day) => !existingDays.includes(day));
+    const availableDay = DAYS_OF_WEEK.find(
+      (day) => !existingDays.includes(day)
+    );
 
     if (availableDay) {
       const newHours = [
@@ -66,7 +68,7 @@ export const StoreHoursEditor = ({ value = [], onChange }: Props) => {
   ) => {
     const newHours = [...hours];
     const currentDay = newHours[index];
-    if (!currentDay) return;
+    if (!currentDay) {return;}
 
     newHours[index] = {
       day: currentDay.day,
@@ -112,7 +114,8 @@ export const StoreHoursEditor = ({ value = [], onChange }: Props) => {
         <div className="text-center py-8 text-muted-foreground">
           <Clock className="w-12 h-12 mx-auto mb-3 opacity-50" />
           <p className="text-sm">
-            No hay horarios configurados. Haz clic en &quot;Agregar Día&quot; para empezar.
+            No hay horarios configurados. Haz clic en &quot;Agregar Día&quot;
+            para empezar.
           </p>
         </div>
       ) : (
@@ -129,7 +132,9 @@ export const StoreHoursEditor = ({ value = [], onChange }: Props) => {
                 </label>
                 <select
                   value={dayHours.day.toLowerCase()}
-                  onChange={(e) => handleUpdateDay(index, "day", e.target.value)}
+                  onChange={(e) =>
+                    handleUpdateDay(index, "day", e.target.value)
+                  }
                   className="w-full px-3 py-2 bg-background border border-input rounded-md text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                 >
                   {getAvailableDays(dayHours.day).map((day) => (
@@ -208,7 +213,8 @@ export const StoreHoursEditor = ({ value = [], onChange }: Props) => {
       {hours.length > 0 ? (
         <div className="mt-4 text-xs text-muted-foreground">
           <p>
-            Consejo: Puedes marcar días como &quot;Cerrado&quot; si tu negocio no abre ese día.
+            Consejo: Puedes marcar días como &quot;Cerrado&quot; si tu negocio
+            no abre ese día.
           </p>
         </div>
       ) : null}

@@ -46,7 +46,9 @@ export function EditStoreForm({
 
   // Convert openDays to availableDays array format if needed
   const getInitialHours = (): OpenDay[] => {
-    if (!store.openDays) {return [];}
+    if (!store.openDays) {
+      return [];
+    }
 
     // Check if it's already in the new format
     if (store.openDays.availableDays) {

@@ -483,7 +483,9 @@ export default function ProfilePage(): React.JSX.Element | null {
                 <div className="flex items-center gap-3 text-red-500">
                   <LogOut className="w-5 h-5" />
                   <span>
-                    {logoutMutation.isPending ? "Cerrando sesión..." : "Cerrar Sesión"}
+                    {logoutMutation.isPending
+                      ? "Cerrando sesión..."
+                      : "Cerrar Sesión"}
                   </span>
                 </div>
                 <ChevronRight className="w-5 h-5" />

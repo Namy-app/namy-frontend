@@ -3,6 +3,7 @@ import { Calendar, DollarSign, Percent, Settings } from "lucide-react";
 import { useState } from "react";
 
 import { type Discount, DiscountType } from "@/domains/admin";
+import { displayExcludedHours } from "@/lib/discount-utils";
 
 import { CreateDiscountModal } from "./CreateDiscountModal";
 
@@ -226,7 +227,7 @@ export const DiscountSection = ({
               {discount.excludedHours.length > 0 && (
                 <p className="text-sm text-foreground">
                   <span className="font-medium">Horas Excluidas:</span>{" "}
-                  {discount.excludedHours.join(", ")}
+                  {displayExcludedHours(discount.excludedHours)}
                 </p>
               )}
             </div>
@@ -235,7 +236,9 @@ export const DiscountSection = ({
       ) : (
         <div className="text-center py-8">
           <Percent className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-          <p className="text-muted-foreground mb-2">No hay descuento configurado</p>
+          <p className="text-muted-foreground mb-2">
+            No hay descuento configurado
+          </p>
           <p className="text-sm text-muted-foreground mb-4">
             Configura un descuento para atraer más clientes a esta tienda
           </p>

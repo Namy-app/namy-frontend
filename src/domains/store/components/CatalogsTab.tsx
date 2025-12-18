@@ -50,7 +50,9 @@ export const CatalogsTab = ({
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-foreground">Catálogos de la Tienda</h2>
+        <h2 className="text-2xl font-bold text-foreground">
+          Catálogos de la Tienda
+        </h2>
         {catalogs.length === 0 ? (
           <button
             onClick={onCreateCatalog}
@@ -65,7 +67,9 @@ export const CatalogsTab = ({
       {catalogs.length === 0 ? (
         <div className="bg-card rounded-lg shadow p-8 text-center">
           <BookOpen className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-          <p className="text-muted-foreground mb-4">No se encontraron catálogos</p>
+          <p className="text-muted-foreground mb-4">
+            No se encontraron catálogos
+          </p>
           <button
             onClick={onCreateCatalog}
             className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-colors"
@@ -202,7 +206,9 @@ export const CatalogsTab = ({
                         <div
                           key={index}
                           className="aspect-square rounded-lg overflow-hidden bg-muted border border-border cursor-pointer hover:opacity-90 transition-opacity"
-                          onClick={() => setSelectedCatalogImage(imageUrl ?? "")}
+                          onClick={() =>
+                            setSelectedCatalogImage(imageUrl ?? "")
+                          }
                         >
                           <Image
                             src={imageUrl ?? ""}

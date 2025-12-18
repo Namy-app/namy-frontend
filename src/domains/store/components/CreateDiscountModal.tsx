@@ -11,6 +11,16 @@ import { useToast } from "@/hooks/use-toast";
 import { formatDateToYMDSafe } from "@/lib/date.lib";
 import { extractValidationErrors } from "@/lib/utils";
 
+const daysOfTheWeek = [
+  { label: "Lunes", index: 1 },
+  { label: "Martes", index: 2 },
+  { label: "Miércoles", index: 3 },
+  { label: "Jueves", index: 4 },
+  { label: "Viernes", index: 5 },
+  { label: "Sábado", index: 6 },
+  { label: "Domingo", index: 0 },
+];
+
 // Create Discount Modal - Unused, can be removed
 export const CreateDiscountModal = ({
   storeId,
@@ -35,17 +45,31 @@ export const CreateDiscountModal = ({
       : "",
     endDate: discount?.endDate ? formatDateToYMDSafe(discount.endDate) : "",
     active: discount?.active ?? true,
+    excludedDaysOfWeek: discount?.excludedDaysOfWeek || [],
+    excludedStartHour: discount?.excludedHours[0],
+    excludedEndHour: discount?.excludedHours[1],
     maxUses: discount?.maxUses?.toString() || "",
+    maxUsesPerUserPerMonth: discount?.maxUsesPerUserPerMonth?.toString() || "",
     minPurchaseAmount: discount?.minPurchaseAmount?.toString() || "",
     maxDiscountAmount: discount?.maxDiscountAmount?.toString() || "",
   });
 
   const today = new Date().toISOString().split("T")[0];
+  const minStartDate = discount?.id ? undefined : today;
   const loading = createDiscount.isPending || updateDiscount.isPending;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const parsedExcludedHours = [];
+
+      if (formData.excludedStartHour !== undefined) {
+        parsedExcludedHours.push(formData.excludedStartHour);
+      }
+      if (formData.excludedEndHour !== undefined) {
+        parsedExcludedHours.push(formData.excludedEndHour);
+      }
+
       if (discount?.id) {
         await updateDiscount.mutateAsync({
           id: discount.id,
@@ -58,7 +82,12 @@ export const CreateDiscountModal = ({
             startDate: formData.startDate,
             endDate: formData.endDate,
             active: formData.active,
+            excludedDaysOfWeek: formData.excludedDaysOfWeek,
+            excludedHours: parsedExcludedHours,
             maxUses: formData.maxUses ? parseInt(formData.maxUses) : undefined,
+            maxUsesPerUserPerMonth: formData.maxUsesPerUserPerMonth
+              ? parseInt(formData.maxUsesPerUserPerMonth)
+              : undefined,
             minPurchaseAmount: formData.minPurchaseAmount
               ? parseFloat(formData.minPurchaseAmount)
               : undefined,
@@ -78,7 +107,12 @@ export const CreateDiscountModal = ({
           startDate: formData.startDate,
           endDate: formData.endDate,
           active: formData.active,
+          excludedDaysOfWeek: formData.excludedDaysOfWeek,
+          excludedHours: parsedExcludedHours,
           maxUses: formData.maxUses ? parseInt(formData.maxUses) : undefined,
+          maxUsesPerUserPerMonth: formData.maxUsesPerUserPerMonth
+            ? parseInt(formData.maxUsesPerUserPerMonth)
+            : undefined,
           minPurchaseAmount: formData.minPurchaseAmount
             ? parseFloat(formData.minPurchaseAmount)
             : undefined,
@@ -98,7 +132,7 @@ export const CreateDiscountModal = ({
         title: "Error",
         description: _error
           ? extractValidationErrors(_error).join(", ")
-          : "Failed to create discount.",
+          : "No se pudo crear el descuento.",
       });
     }
   };
@@ -117,7 +151,7 @@ export const CreateDiscountModal = ({
                 {discount?.id ? "Update Discount" : "Create New Discount"}
               </h3>
               <p className="text-sm text-muted-foreground">
-                Set up a new discount or promotional offer
+                Configurar un nuevo descuento u oferta promocional
               </p>
             </div>
           </div>
@@ -139,12 +173,12 @@ export const CreateDiscountModal = ({
             {/* Basic Information */}
             <div className="space-y-4">
               <h4 className="text-sm font-semibold text-foreground uppercase tracking-wide">
-                Basic Information
+                Información Básica
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-foreground mb-2">
-                    Title <span className="text-destructive">*</span>
+                    Título <span className="text-destructive">*</span>
                   </label>
                   <input
                     type="text"
@@ -153,13 +187,13 @@ export const CreateDiscountModal = ({
                       setFormData({ ...formData, title: e.target.value })
                     }
                     className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                    placeholder="e.g., Summer Sale, Black Friday Deal"
+                    placeholder="ej. Venta de Verano, Oferta Black Friday"
                     required
                   />
                 </div>
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-foreground mb-2">
-                    Description
+                    Descripción
                   </label>
                   <textarea
                     value={formData.description}
@@ -168,7 +202,7 @@ export const CreateDiscountModal = ({
                     }
                     className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
                     rows={3}
-                    placeholder="Describe the discount offer..."
+                    placeholder="Describe la oferta de descuento..."
                   />
                 </div>
               </div>
@@ -177,12 +211,12 @@ export const CreateDiscountModal = ({
             {/* Discount Details */}
             <div className="space-y-4">
               <h4 className="text-sm font-semibold text-foreground uppercase tracking-wide">
-                Discount Details
+                Detalles del Descuento
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-2">
-                    Type <span className="text-destructive">*</span>
+                    Tipo <span className="text-destructive">*</span>
                   </label>
                   <select
                     value={formData.type}
@@ -196,16 +230,16 @@ export const CreateDiscountModal = ({
                     className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                   >
                     <option value={DiscountType.PERCENTAGE}>
-                      Percentage (%)
+                      Porcentaje (%)
                     </option>
                     <option value={DiscountType.FIXED_AMOUNT}>
-                      Fixed Amount ($)
+                      Cantidad Fija ($)
                     </option>
                   </select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-2">
-                    Value <span className="text-destructive">*</span>
+                    Valor <span className="text-destructive">*</span>
                   </label>
                   {/* For Now it would be read only */}
                   <input
@@ -218,14 +252,31 @@ export const CreateDiscountModal = ({
                     className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                     placeholder={
                       formData.type === DiscountType.PERCENTAGE
-                        ? "e.g., 20"
-                        : "e.g., 10.00"
+                        ? "ej. 20"
+                        : "ej. 10.00"
                     }
                     disabled
                     required
                   />
                 </div>
                 <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">
+                    Usos máximos por mes
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.maxUsesPerUserPerMonth}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        maxUsesPerUserPerMonth: e.target.value,
+                      })
+                    }
+                    className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                    placeholder="ej., 20"
+                  />
+                </div>
+                {/* <div>
                   <label className="block text-sm font-medium text-foreground mb-2">
                     Discount Code
                   </label>
@@ -238,10 +289,10 @@ export const CreateDiscountModal = ({
                     className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                     placeholder="e.g., SAVE20"
                   />
-                </div>
+                </div> */}
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-2">
-                    Max Uses
+                    Usos máximos en total
                   </label>
                   <input
                     type="number"
@@ -250,7 +301,7 @@ export const CreateDiscountModal = ({
                       setFormData({ ...formData, maxUses: e.target.value })
                     }
                     className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                    placeholder="e.g., 100"
+                    placeholder="ej., 100"
                   />
                 </div>
               </div>
@@ -259,18 +310,17 @@ export const CreateDiscountModal = ({
             {/* Validity Period */}
             <div className="space-y-4">
               <h4 className="text-sm font-semibold text-foreground uppercase tracking-wide">
-                Validity Period
+                Período de Validez
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-2">
-                    Start Date <span className="text-destructive">*</span>
+                    Fecha de Inicio <span className="text-destructive">*</span>
                   </label>
                   <input
                     type="date"
-                    defaultValue={formData.startDate}
                     value={formData.startDate}
-                    min={today}
+                    min={minStartDate}
                     onChange={(e) =>
                       setFormData({ ...formData, startDate: e.target.value })
                     }
@@ -280,11 +330,10 @@ export const CreateDiscountModal = ({
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-2">
-                    End Date <span className="text-destructive">*</span>
+                    Fecha de Fin <span className="text-destructive">*</span>
                   </label>
                   <input
                     type="date"
-                    defaultValue={formData.endDate}
                     value={formData.endDate}
                     min={today}
                     onChange={(e) =>
@@ -300,12 +349,109 @@ export const CreateDiscountModal = ({
             {/* Conditions */}
             <div className="space-y-4">
               <h4 className="text-sm font-semibold text-foreground uppercase tracking-wide">
-                Conditions
+                Condiciones
               </h4>
+
+              {/* Exclude Days */}
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-3">
+                  Excluir Días
+                </label>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {daysOfTheWeek.map((day) => (
+                    <label
+                      key={day.index}
+                      className="flex items-center gap-2 cursor-pointer"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={formData.excludedDaysOfWeek.includes(
+                          day.index
+                        )}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setFormData({
+                              ...formData,
+                              excludedDaysOfWeek: [
+                                ...formData.excludedDaysOfWeek,
+                                day.index,
+                              ],
+                            });
+                          } else {
+                            setFormData({
+                              ...formData,
+                              excludedDaysOfWeek:
+                                formData.excludedDaysOfWeek.filter(
+                                  (d) => d !== day.index
+                                ),
+                            });
+                          }
+                        }}
+                        className="w-4 h-4 text-primary border-border rounded focus:ring-primary"
+                      />
+                      <span className="text-sm text-foreground">
+                        {day.label}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Exclude Hours */}
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-3">
+                  Horas Excluidas
+                </label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-2">
+                      Hora de Inicio
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="23"
+                      value={formData.excludedStartHour ?? ""}
+                      onChange={(e) => {
+                        setFormData({
+                          ...formData,
+                          excludedStartHour: e.target.value
+                            ? parseInt(e.target.value)
+                            : undefined,
+                        });
+                      }}
+                      className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                      placeholder="ej. 22"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-2">
+                      Hora de Fin
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="23"
+                      value={formData.excludedEndHour ?? ""}
+                      onChange={(e) => {
+                        setFormData({
+                          ...formData,
+                          excludedEndHour: e.target.value
+                            ? parseInt(e.target.value)
+                            : undefined,
+                        });
+                      }}
+                      className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                      placeholder="ej. 6"
+                    />
+                  </div>
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-2">
-                    Min Purchase Amount
+                    Cantidad Mínima de Compra
                   </label>
                   <input
                     type="number"
@@ -318,12 +464,12 @@ export const CreateDiscountModal = ({
                       })
                     }
                     className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                    placeholder="e.g., 50.00"
+                    placeholder="ej. 50.00"
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-2">
-                    Max Discount Amount
+                    Cantidad Máxima de Descuento
                   </label>
                   <input
                     type="number"
@@ -336,7 +482,7 @@ export const CreateDiscountModal = ({
                       })
                     }
                     className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                    placeholder="e.g., 100.00"
+                    placeholder="ej. 100.00"
                   />
                 </div>
               </div>
@@ -357,7 +503,7 @@ export const CreateDiscountModal = ({
                 htmlFor="discount-active"
                 className="text-sm font-medium text-foreground"
               >
-                Discount is active and available to users
+                El descuento está activo y disponible para los usuarios
               </label>
             </div>
           </div>
@@ -370,7 +516,7 @@ export const CreateDiscountModal = ({
               disabled={loading}
               className="flex-1 px-4 py-3 border border-border text-foreground font-semibold rounded-lg hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Cancel
+              Cancelar
             </button>
             <button
               type="submit"
@@ -380,12 +526,12 @@ export const CreateDiscountModal = ({
               {loading ? (
                 <>
                   <Loader2 className="w-5 h-5 animate-spin" />
-                  Creating...
+                  Creando...
                 </>
               ) : discount?.id ? (
-                "Update Discount"
+                "Actualizar Descuento"
               ) : (
-                "Create Discount"
+                "Crear Descuento"
               )}
             </button>
           </div>
