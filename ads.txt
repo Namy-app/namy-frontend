@@ -1,0 +1,10 @@
+# Authorized Digital Sellers for namy-frontend
+# This file lists authorized ad networks and resellers
+# Format: domain, publisher_id, account_type, certificate_authority
+# Reference: https://iabtechlab.com/ads-txt/
+
+# Google AdSense
+google.com, pub-2180450084787407, DIRECT, f08c47fec0942fa0
+
+# Additional resellers should be added below with proper credentials
+# Note: Replace placeholder values (x's and y's) with your actual IDs
