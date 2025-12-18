@@ -132,7 +132,7 @@ export const CreateDiscountModal = ({
         title: "Error",
         description: _error
           ? extractValidationErrors(_error).join(", ")
-          : "Failed to create discount.",
+          : "No se pudo crear el descuento.",
       });
     }
   };
@@ -151,7 +151,7 @@ export const CreateDiscountModal = ({
                 {discount?.id ? "Update Discount" : "Create New Discount"}
               </h3>
               <p className="text-sm text-muted-foreground">
-                Set up a new discount or promotional offer
+                Configurar un nuevo descuento u oferta promocional
               </p>
             </div>
           </div>
@@ -173,12 +173,12 @@ export const CreateDiscountModal = ({
             {/* Basic Information */}
             <div className="space-y-4">
               <h4 className="text-sm font-semibold text-foreground uppercase tracking-wide">
-                Basic Information
+                Información Básica
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-foreground mb-2">
-                    Title <span className="text-destructive">*</span>
+                    Título <span className="text-destructive">*</span>
                   </label>
                   <input
                     type="text"
@@ -187,13 +187,13 @@ export const CreateDiscountModal = ({
                       setFormData({ ...formData, title: e.target.value })
                     }
                     className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                    placeholder="e.g., Summer Sale, Black Friday Deal"
+                    placeholder="ej. Venta de Verano, Oferta Black Friday"
                     required
                   />
                 </div>
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-foreground mb-2">
-                    Description
+                    Descripción
                   </label>
                   <textarea
                     value={formData.description}
@@ -202,7 +202,7 @@ export const CreateDiscountModal = ({
                     }
                     className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
                     rows={3}
-                    placeholder="Describe the discount offer..."
+                    placeholder="Describe la oferta de descuento..."
                   />
                 </div>
               </div>
@@ -211,12 +211,12 @@ export const CreateDiscountModal = ({
             {/* Discount Details */}
             <div className="space-y-4">
               <h4 className="text-sm font-semibold text-foreground uppercase tracking-wide">
-                Discount Details
+                Detalles del Descuento
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-2">
-                    Type <span className="text-destructive">*</span>
+                    Tipo <span className="text-destructive">*</span>
                   </label>
                   <select
                     value={formData.type}
@@ -230,16 +230,16 @@ export const CreateDiscountModal = ({
                     className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                   >
                     <option value={DiscountType.PERCENTAGE}>
-                      Percentage (%)
+                      Porcentaje (%)
                     </option>
                     <option value={DiscountType.FIXED_AMOUNT}>
-                      Fixed Amount ($)
+                      Cantidad Fija ($)
                     </option>
                   </select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-2">
-                    Value <span className="text-destructive">*</span>
+                    Valor <span className="text-destructive">*</span>
                   </label>
                   {/* For Now it would be read only */}
                   <input
@@ -252,8 +252,8 @@ export const CreateDiscountModal = ({
                     className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                     placeholder={
                       formData.type === DiscountType.PERCENTAGE
-                        ? "e.g., 20"
-                        : "e.g., 10.00"
+                        ? "ej. 20"
+                        : "ej. 10.00"
                     }
                     disabled
                     required
@@ -273,7 +273,7 @@ export const CreateDiscountModal = ({
                       })
                     }
                     className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                    placeholder="e.g., 20"
+                    placeholder="ej., 20"
                   />
                 </div>
                 {/* <div>
@@ -301,7 +301,7 @@ export const CreateDiscountModal = ({
                       setFormData({ ...formData, maxUses: e.target.value })
                     }
                     className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                    placeholder="e.g., 100"
+                    placeholder="ej., 100"
                   />
                 </div>
               </div>
@@ -310,12 +310,12 @@ export const CreateDiscountModal = ({
             {/* Validity Period */}
             <div className="space-y-4">
               <h4 className="text-sm font-semibold text-foreground uppercase tracking-wide">
-                Validity Period
+                Período de Validez
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-2">
-                    Start Date <span className="text-destructive">*</span>
+                    Fecha de Inicio <span className="text-destructive">*</span>
                   </label>
                   <input
                     type="date"
@@ -330,7 +330,7 @@ export const CreateDiscountModal = ({
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-2">
-                    End Date <span className="text-destructive">*</span>
+                    Fecha de Fin <span className="text-destructive">*</span>
                   </label>
                   <input
                     type="date"
@@ -349,13 +349,13 @@ export const CreateDiscountModal = ({
             {/* Conditions */}
             <div className="space-y-4">
               <h4 className="text-sm font-semibold text-foreground uppercase tracking-wide">
-                Conditions
+                Condiciones
               </h4>
 
               {/* Exclude Days */}
               <div>
                 <label className="block text-sm font-medium text-foreground mb-3">
-                  Exclude Days
+                  Excluir Días
                 </label>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   {daysOfTheWeek.map((day) => (
@@ -400,12 +400,12 @@ export const CreateDiscountModal = ({
               {/* Exclude Hours */}
               <div>
                 <label className="block text-sm font-medium text-foreground mb-3">
-                  Excluded Hours
+                  Horas Excluidas
                 </label>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-2">
-                      Start Hour
+                      Hora de Inicio
                     </label>
                     <input
                       type="number"
@@ -421,12 +421,12 @@ export const CreateDiscountModal = ({
                         });
                       }}
                       className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                      placeholder="e.g., 22"
+                      placeholder="ej. 22"
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-2">
-                      End Hour
+                      Hora de Fin
                     </label>
                     <input
                       type="number"
@@ -442,7 +442,7 @@ export const CreateDiscountModal = ({
                         });
                       }}
                       className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                      placeholder="e.g., 6"
+                      placeholder="ej. 6"
                     />
                   </div>
                 </div>
@@ -451,7 +451,7 @@ export const CreateDiscountModal = ({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-2">
-                    Min Purchase Amount
+                    Cantidad Mínima de Compra
                   </label>
                   <input
                     type="number"
@@ -464,12 +464,12 @@ export const CreateDiscountModal = ({
                       })
                     }
                     className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                    placeholder="e.g., 50.00"
+                    placeholder="ej. 50.00"
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-2">
-                    Max Discount Amount
+                    Cantidad Máxima de Descuento
                   </label>
                   <input
                     type="number"
@@ -482,7 +482,7 @@ export const CreateDiscountModal = ({
                       })
                     }
                     className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                    placeholder="e.g., 100.00"
+                    placeholder="ej. 100.00"
                   />
                 </div>
               </div>
@@ -503,7 +503,7 @@ export const CreateDiscountModal = ({
                 htmlFor="discount-active"
                 className="text-sm font-medium text-foreground"
               >
-                Discount is active and available to users
+                El descuento está activo y disponible para los usuarios
               </label>
             </div>
           </div>
@@ -516,7 +516,7 @@ export const CreateDiscountModal = ({
               disabled={loading}
               className="flex-1 px-4 py-3 border border-border text-foreground font-semibold rounded-lg hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Cancel
+              Cancelar
             </button>
             <button
               type="submit"
@@ -526,12 +526,12 @@ export const CreateDiscountModal = ({
               {loading ? (
                 <>
                   <Loader2 className="w-5 h-5 animate-spin" />
-                  Creating...
+                  Creando...
                 </>
               ) : discount?.id ? (
-                "Update Discount"
+                "Actualizar Descuento"
               ) : (
-                "Create Discount"
+                "Crear Descuento"
               )}
             </button>
           </div>

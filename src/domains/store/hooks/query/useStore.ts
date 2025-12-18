@@ -15,7 +15,6 @@ export function useStore(id?: string | null): UseQueryResult<Store, Error> {
       const data = await graphqlRequest<StoreResponse>(GET_STORE_BY_ID, {
         id,
       });
-      console.log("Fetched store data:", data);
       return data?.store ?? {};
     },
     staleTime: 5 * 60 * 1000, // 5 minutes

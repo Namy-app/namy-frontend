@@ -8,7 +8,7 @@ export function CategoryCards(): React.JSX.Element {
   const router = useRouter();
 
   return (
-    <div className="px-6 py-8 flex flex-col-2 gap-3 justify-center align-middle">
+    <div className="px-6 py-8 md:flex flex-col-2 gap-3 justify-center align-middle">
       <button onClick={() => router.push("/restaurants")} className="w-full">
         <Card className="p-6 bg-gradient-primary hover:shadow-glow transition-all group border-0 shadow-lg rounded-3xl">
           <div className="flex flex-col items-center text-center gap-3">
@@ -42,7 +42,7 @@ export function CategoryCards(): React.JSX.Element {
       </button>
 
       <button onClick={() => router.push("/service")} className="w-full">
-        <Card className="p-6 bg-linear-to-r from-[hsl(var(--services))] to-[hsl(82,70%,60%)] hover:shadow-glow transition-all group border-0 shadow-lg rounded-3xl">
+        <Card className="p-6 mt-5 md:mt-0 bg-linear-to-r from-[hsl(var(--services))] to-[hsl(82,70%,60%)] hover:shadow-glow transition-all group border-0 shadow-lg rounded-3xl">
           <div className="flex flex-col items-center text-center gap-3">
             <svg
               xmlns="http://www.w3.org/2000/svg"

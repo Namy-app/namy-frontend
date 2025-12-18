@@ -1,6 +1,6 @@
 import { BookOpen, Package, Plus } from "lucide-react";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 import type { Catalog } from "@/domains/admin";
 
@@ -20,13 +20,29 @@ export const CatalogsTab = ({
     null
   );
   const [editingCatalog, setEditingCatalog] = useState<Catalog | null>(null);
-  console.log("catalogs => ", catalogs);
+  const [selectedCatalogImage, setSelectedCatalogImage] = useState<
+    string | null
+  >(null);
+
+  // Prevent body scroll when modal is open
+  useEffect(() => {
+    if (selectedCatalogImage) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+
+    // Cleanup function to reset overflow when component unmounts
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [selectedCatalogImage]);
 
   if (loading) {
     return (
       <div className="bg-card rounded-lg shadow p-8 text-center">
         <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
-        <p className="text-muted-foreground mt-2">Loading catalogs...</p>
+        <p className="text-muted-foreground mt-2">Cargando catálogos...</p>
       </div>
     );
   }
@@ -34,14 +50,16 @@ export const CatalogsTab = ({
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-foreground">Store Catalogs</h2>
+        <h2 className="text-2xl font-bold text-foreground">
+          Catálogos de la Tienda
+        </h2>
         {catalogs.length === 0 ? (
           <button
             onClick={onCreateCatalog}
             className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-colors"
           >
             <Plus className="w-5 h-5" />
-            Create Catalog
+            Crear Primer Catálogo
           </button>
         ) : null}
       </div>
@@ -49,12 +67,14 @@ export const CatalogsTab = ({
       {catalogs.length === 0 ? (
         <div className="bg-card rounded-lg shadow p-8 text-center">
           <BookOpen className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-          <p className="text-muted-foreground mb-4">No catalogs found</p>
+          <p className="text-muted-foreground mb-4">
+            No se encontraron catálogos
+          </p>
           <button
             onClick={onCreateCatalog}
             className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-colors"
           >
-            Create First Catalog
+            Crear Primer Catálogo
           </button>
         </div>
       ) : (
@@ -100,7 +120,7 @@ export const CatalogsTab = ({
                       <span
                         className={`text-sm font-medium px-2 py-1 rounded ${backgroundImage ? "bg-white/20 text-white" : "bg-primary/20 text-primary"}`}
                       >
-                        Selected
+                        Seleccionado
                       </span>
                     )}
                   </div>
@@ -171,7 +191,7 @@ export const CatalogsTab = ({
                     className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-colors"
                   >
                     <Package className="w-4 h-4" />
-                    Edit Catalog
+                    Editar Catálogo
                   </button>
                 </div>
 
@@ -179,13 +199,16 @@ export const CatalogsTab = ({
                 {catalogImages.length > 0 && (
                   <div className="mb-6">
                     <h4 className="text-lg font-semibold text-foreground mb-4">
-                      Catalog Images
+                      Imágenes del Catálogo
                     </h4>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       {catalogImages.map((imageUrl, index) => (
                         <div
                           key={index}
-                          className="aspect-square rounded-lg overflow-hidden bg-muted border border-border"
+                          className="aspect-square rounded-lg overflow-hidden bg-muted border border-border cursor-pointer hover:opacity-90 transition-opacity"
+                          onClick={() =>
+                            setSelectedCatalogImage(imageUrl ?? "")
+                          }
                         >
                           <Image
                             src={imageUrl ?? ""}
@@ -211,6 +234,47 @@ export const CatalogsTab = ({
           catalog={editingCatalog}
           onClose={() => setEditingCatalog(null)}
         />
+      ) : null}
+
+      {/* Full-Size Image Modal */}
+      {selectedCatalogImage ? (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 overflow-y-auto"
+          onClick={() => setSelectedCatalogImage(null)}
+        >
+          <div className="min-h-screen flex items-center justify-center p-4">
+            <div className="relative max-w-5xl w-full">
+              <button
+                onClick={() => setSelectedCatalogImage(null)}
+                className="sticky top-4 left-full ml-4 z-10 p-2 rounded-full bg-black/50 hover:bg-black/70 text-white transition-colors"
+                aria-label="Close"
+              >
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+              <div className="relative w-full">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={selectedCatalogImage}
+                  alt="Catalog image"
+                  className="w-full h-auto"
+                  onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
       ) : null}
     </div>
   );

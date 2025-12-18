@@ -21,7 +21,17 @@ import { useAuthStore } from "@/store/useAuthStore";
 export default function AdminDashboardPage() {
   const router = useRouter();
   const { user } = useAuthStore();
-  const [isHydrated] = useState(true);
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  // Wait for client-side hydration
+  useEffect(() => {
+    // Mark as hydrated after Zustand rehydrates from localStorage
+    // Use a small delay to ensure Zustand has fully rehydrated
+    const timer = setTimeout(() => {
+      setIsHydrated(true);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Fetch real data
   const { data: storeStats, isLoading: storeStatsLoading } =
@@ -375,9 +385,9 @@ export default function AdminDashboardPage() {
                 </div>
                 <div>
                   <p className="font-semibold text-foreground">
-                    Platform Settings
+                    Configuración de Plataforma
                   </p>
-                  <p className="text-sm text-muted-foreground">Coming soon</p>
+                  <p className="text-sm text-muted-foreground">Próximamente</p>
                 </div>
               </div>
             </button>

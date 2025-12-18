@@ -35,8 +35,8 @@ export function NearbyPlaces({
         </h2>
         {closestStores.length === 0 ? (
           <InfoCard
-            title="No Stores Close By"
-            summary="Check back for available stores close to you"
+            title="No hay tiendas cercanas"
+            summary="Vuelve pronto para ver tiendas disponibles cerca de ti"
           />
         ) : (
           <div className="grid grid-cols-1 gap-4">

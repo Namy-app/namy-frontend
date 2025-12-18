@@ -163,8 +163,8 @@ export function FeaturedCarousel({
           </div>
         ) : (
           <InfoCard
-            title="No Featured Stores"
-            summary="Check back for available featured stores"
+            title="No hay tiendas destacadas"
+            summary="Vuelve pronto para ver tiendas destacadas disponibles"
           />
         )}
       </div>

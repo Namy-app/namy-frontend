@@ -54,8 +54,8 @@ export default function ProfilePage(): React.JSX.Element | null {
     try {
       await logoutMutation.mutateAsync();
       toast({
-        title: "Logged out",
-        description: "You have been logged out successfully.",
+        title: "Sesión cerrada",
+        description: "Has cerrado sesión exitosamente.",
       });
       router.push("/");
     } catch (error) {
@@ -63,8 +63,8 @@ export default function ProfilePage(): React.JSX.Element | null {
         error instanceof Error ? error.message : String(error);
       toast({
         variant: "destructive",
-        title: "Logout failed",
-        description: errorMessage || "Could not log out",
+        title: "Error al cerrar sesión",
+        description: errorMessage || "No se pudo cerrar sesión",
       });
     }
   };
@@ -84,7 +84,7 @@ export default function ProfilePage(): React.JSX.Element | null {
             {!user.isPremium ? (
               <div className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold transition-colors border-0 bg-gradient-primary text-white shadow-glow ml-2">
                 <Crown className="w-4 h-4 mr-1" />
-                Premium Member
+                Miembro Premium
               </div>
             ) : null}
             <p className="text-muted-foreground mb-4">
@@ -94,7 +94,7 @@ export default function ProfilePage(): React.JSX.Element | null {
             {/* Wallet Section */}
             <div className="inline-block mb-4">
               <p className="text-sm text-muted-foreground mb-1">
-                Available Balance
+                Saldo Disponible
               </p>
               <div className="flex items-center gap-2 px-4 py-3 rounded-lg bg-card border border-border">
                 <Wallet className="w-5 h-5 text-primary" />
@@ -185,7 +185,7 @@ export default function ProfilePage(): React.JSX.Element | null {
                 </h3>
                 <p className="text-white/90 text-sm">
                   <b className="text-base">{myLevel?.usesUntilNextLevel}</b>{" "}
-                  more uses to next level
+                  usos más para el siguiente nivel
                 </p>
               </div>
             </div>
@@ -277,8 +277,8 @@ export default function ProfilePage(): React.JSX.Element | null {
                       },
                       {
                         icon: "👑",
-                        label: "Premium Membership Bonus",
-                        points: "1.25x multiplier",
+                        label: "Bono de Membresía Premium",
+                        points: "Multiplicador 1.25x",
                       },
                     ]
                   : []),
@@ -307,14 +307,14 @@ export default function ProfilePage(): React.JSX.Element | null {
           <Card className="p-5 bg-card border-border">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-bold text-foreground">
-                🎁 Available Discounts
+                🎁 Descuentos Disponibles
               </h3>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => router.push("/restaurants")}
               >
-                View All
+                Ver Todos
                 <ChevronRight className="w-4 h-4 ml-1" />
               </Button>
             </div>
@@ -322,7 +322,7 @@ export default function ProfilePage(): React.JSX.Element | null {
               <div className="text-center py-8">
                 <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-3" />
                 <p className="text-sm text-muted-foreground">
-                  Loading discounts...
+                  Cargando descuentos...
                 </p>
               </div>
             ) : (
@@ -356,7 +356,7 @@ export default function ProfilePage(): React.JSX.Element | null {
                 {allStores.length === 0 && !storesLoading && (
                   <div className="text-center py-8">
                     <p className="text-muted-foreground">
-                      No discounts available
+                      No hay descuentos disponibles
                     </p>
                   </div>
                 )}
@@ -430,12 +430,12 @@ export default function ProfilePage(): React.JSX.Element | null {
               <Crown className="w-12 h-12 mx-auto mb-3 text-white" />
               <h3 className="text-xl font-bold mb-2">✨ Ñamy Premium Member</h3>
               <p className="text-white/90 mb-4">
-                You&apos;re earning 2× points on every order!
+                ¡Estás ganando 2× puntos en cada pedido!
               </p>
               <div className="space-y-2 text-sm text-white/80">
-                <p>✅ Bonus points multiplier active</p>
-                <p>✅ Priority customer support</p>
-                <p>✅ Exclusive restaurant access</p>
+                <p>✅ Multiplicador de puntos activo</p>
+                <p>✅ Soporte al cliente prioritario</p>
+                <p>✅ Acceso exclusivo a restaurantes</p>
               </div>
             </Card>
           )}
@@ -443,7 +443,7 @@ export default function ProfilePage(): React.JSX.Element | null {
           {/* Settings & Support */}
           <Card className="p-5 bg-card border-border">
             <h3 className="text-lg font-bold text-foreground mb-4">
-              Settings & Support
+              Configuración y Soporte
             </h3>
             <div className="space-y-1">
               {[
@@ -456,10 +456,10 @@ export default function ProfilePage(): React.JSX.Element | null {
                 // },
                 {
                   icon: HelpCircle,
-                  label: "Help & FAQ",
+                  label: "Ayuda & Preguntas",
                   action: () => router.push("/help"),
                 },
-                { icon: Phone, label: "Contact Support", action: undefined },
+                { icon: Phone, label: "Contactar Soporte", action: undefined },
               ].map((item) => (
                 <button
                   key={item.label}
@@ -483,7 +483,9 @@ export default function ProfilePage(): React.JSX.Element | null {
                 <div className="flex items-center gap-3 text-red-500">
                   <LogOut className="w-5 h-5" />
                   <span>
-                    {logoutMutation.isPending ? "Logging out..." : "Log Out"}
+                    {logoutMutation.isPending
+                      ? "Cerrando sesión..."
+                      : "Cerrar Sesión"}
                   </span>
                 </div>
                 <ChevronRight className="w-5 h-5" />

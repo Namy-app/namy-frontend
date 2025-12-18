@@ -33,13 +33,13 @@ export const DiscountSection = ({
             <Percent className="w-5 h-5 text-primary" />
           </div>
           <h3 className="text-lg font-semibold text-foreground">
-            Store Discount
+            Descuento de Tienda
           </h3>
         </div>
         <div className="flex items-center justify-center py-8">
           <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
           <span className="ml-3 text-muted-foreground">
-            Loading discount...
+            Cargando descuento...
           </span>
         </div>
       </div>
@@ -54,7 +54,7 @@ export const DiscountSection = ({
             <Percent className="w-5 h-5 text-primary" />
           </div>
           <h3 className="text-lg font-semibold text-foreground">
-            Store Discount
+            Descuento de Tienda
           </h3>
         </div>
         <button
@@ -62,7 +62,7 @@ export const DiscountSection = ({
           className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-colors"
         >
           <Settings className="w-4 h-4" />
-          {discount ? "Update Discount" : "Set Discount"}
+          {discount ? "Actualizar Descuento" : "Configurar Descuento"}
         </button>
       </div>
 
@@ -88,11 +88,11 @@ export const DiscountSection = ({
                     : "bg-red-100 text-red-800"
                 }`}
               >
-                {discount.active ? "Active" : "Inactive"}
+                {discount.active ? "Activo" : "Inactivo"}
               </span>
               {discount.id.startsWith("temp-") && (
                 <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full">
-                  Preview Only
+                  Solo Vista Previa
                 </span>
               )}
             </div>
@@ -104,7 +104,7 @@ export const DiscountSection = ({
               <div className="flex items-center gap-2">
                 <DollarSign className="w-5 h-5 text-primary" />
                 <span className="text-sm font-medium text-muted-foreground">
-                  Discount Value:
+                  Valor del Descuento:
                 </span>
                 <span className="text-2xl font-bold text-foreground">
                   {discount.type === DiscountType.PERCENTAGE
@@ -115,7 +115,7 @@ export const DiscountSection = ({
               {discount.code ? (
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-medium text-muted-foreground">
-                    Code:
+                    Código:
                   </span>
                   <code className="px-2 py-1 bg-muted rounded font-mono text-sm font-bold text-foreground">
                     {discount.code}
@@ -129,7 +129,7 @@ export const DiscountSection = ({
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="bg-muted/50 rounded-lg p-3">
               <p className="text-sm font-medium text-muted-foreground mb-1">
-                Type
+                Tipo
               </p>
               <p className="text-foreground font-semibold capitalize">
                 {discount.type.replace("_", " ")}
@@ -137,7 +137,7 @@ export const DiscountSection = ({
             </div>
             <div className="bg-muted/50 rounded-lg p-3">
               <p className="text-sm font-medium text-muted-foreground mb-1">
-                Used
+                Usado
               </p>
               <p className="text-foreground font-semibold">
                 {discount.usedCount}
@@ -146,22 +146,22 @@ export const DiscountSection = ({
             </div>
             <div className="bg-muted/50 rounded-lg p-3">
               <p className="text-sm font-medium text-muted-foreground mb-1">
-                Min Purchase
+                Compra Mínima
               </p>
               <p className="text-foreground font-semibold">
                 {discount.minPurchaseAmount
                   ? `$${discount.minPurchaseAmount}`
-                  : "No limit"}
+                  : "Sin límite"}
               </p>
             </div>
             <div className="bg-muted/50 rounded-lg p-3">
               <p className="text-sm font-medium text-muted-foreground mb-1">
-                Max Discount
+                Descuento Máximo
               </p>
               <p className="text-foreground font-semibold">
                 {discount.maxDiscountAmount
                   ? `$${discount.maxDiscountAmount}`
-                  : "No limit"}
+                  : "Sin límite"}
               </p>
             </div>
           </div>
@@ -171,14 +171,14 @@ export const DiscountSection = ({
             <div className="flex items-center gap-2 mb-2">
               <Calendar className="w-4 h-4 text-muted-foreground" />
               <span className="text-sm font-medium text-muted-foreground">
-                Validity Period
+                Período de Validez
               </span>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">From:</span>
+                <span className="text-sm text-muted-foreground">Desde:</span>
                 <span className="text-sm font-medium text-foreground">
-                  {new Date(discount.startDate).toLocaleDateString("en-US", {
+                  {new Date(discount.startDate).toLocaleDateString("es-MX", {
                     year: "numeric",
                     month: "short",
                     day: "numeric",
@@ -186,9 +186,9 @@ export const DiscountSection = ({
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">To:</span>
+                <span className="text-sm text-muted-foreground">Hasta:</span>
                 <span className="text-sm font-medium text-foreground">
-                  {new Date(discount.endDate).toLocaleDateString("en-US", {
+                  {new Date(discount.endDate).toLocaleDateString("es-MX", {
                     year: "numeric",
                     month: "short",
                     day: "numeric",
@@ -203,22 +203,22 @@ export const DiscountSection = ({
             discount.excludedHours.length > 0) && (
             <div className="border-t pt-4">
               <p className="text-sm font-medium text-muted-foreground mb-2">
-                Restrictions
+                Restricciones
               </p>
               {discount.excludedDaysOfWeek.length > 0 && (
                 <p className="text-sm text-foreground mb-1">
-                  <span className="font-medium">Excluded Days:</span>{" "}
+                  <span className="font-medium">Días Excluidos:</span>{" "}
                   {discount.excludedDaysOfWeek
                     .map(
                       (d: number) =>
                         [
-                          "Sunday",
-                          "Monday",
-                          "Tuesday",
-                          "Wednesday",
-                          "Thursday",
-                          "Friday",
-                          "Saturday",
+                          "Domingo",
+                          "Lunes",
+                          "Martes",
+                          "Miércoles",
+                          "Jueves",
+                          "Viernes",
+                          "Sábado",
                         ][d]
                     )
                     .join(", ")}
@@ -226,7 +226,7 @@ export const DiscountSection = ({
               )}
               {discount.excludedHours.length > 0 && (
                 <p className="text-sm text-foreground">
-                  <span className="font-medium">Excluded Hours:</span>{" "}
+                  <span className="font-medium">Horas Excluidas:</span>{" "}
                   {displayExcludedHours(discount.excludedHours)}
                 </p>
               )}
@@ -236,9 +236,11 @@ export const DiscountSection = ({
       ) : (
         <div className="text-center py-8">
           <Percent className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-          <p className="text-muted-foreground mb-2">No discount configured</p>
+          <p className="text-muted-foreground mb-2">
+            No hay descuento configurado
+          </p>
           <p className="text-sm text-muted-foreground mb-4">
-            Set up a discount to attract more customers to this store
+            Configura un descuento para atraer más clientes a esta tienda
           </p>
         </div>
       )}
