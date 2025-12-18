@@ -11,6 +11,16 @@ import { useToast } from "@/hooks/use-toast";
 import { formatDateToYMDSafe } from "@/lib/date.lib";
 import { extractValidationErrors } from "@/lib/utils";
 
+const daysOfTheWeek = [
+  { label: "Lunes", index: 1 },
+  { label: "Martes", index: 2 },
+  { label: "Miércoles", index: 3 },
+  { label: "Jueves", index: 4 },
+  { label: "Viernes", index: 5 },
+  { label: "Sábado", index: 6 },
+  { label: "Domingo", index: 0 },
+];
+
 // Create Discount Modal - Unused, can be removed
 export const CreateDiscountModal = ({
   storeId,
@@ -35,17 +45,31 @@ export const CreateDiscountModal = ({
       : "",
     endDate: discount?.endDate ? formatDateToYMDSafe(discount.endDate) : "",
     active: discount?.active ?? true,
+    excludedDaysOfWeek: discount?.excludedDaysOfWeek || [],
+    excludedStartHour: discount?.excludedHours[0],
+    excludedEndHour: discount?.excludedHours[1],
     maxUses: discount?.maxUses?.toString() || "",
+    maxUsesPerUserPerMonth: discount?.maxUsesPerUserPerMonth?.toString() || "",
     minPurchaseAmount: discount?.minPurchaseAmount?.toString() || "",
     maxDiscountAmount: discount?.maxDiscountAmount?.toString() || "",
   });
 
   const today = new Date().toISOString().split("T")[0];
+  const minStartDate = discount?.id ? undefined : today;
   const loading = createDiscount.isPending || updateDiscount.isPending;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const parsedExcludedHours = [];
+
+      if (formData.excludedStartHour !== undefined) {
+        parsedExcludedHours.push(formData.excludedStartHour);
+      }
+      if (formData.excludedEndHour !== undefined) {
+        parsedExcludedHours.push(formData.excludedEndHour);
+      }
+
       if (discount?.id) {
         await updateDiscount.mutateAsync({
           id: discount.id,
@@ -58,7 +82,12 @@ export const CreateDiscountModal = ({
             startDate: formData.startDate,
             endDate: formData.endDate,
             active: formData.active,
+            excludedDaysOfWeek: formData.excludedDaysOfWeek,
+            excludedHours: parsedExcludedHours,
             maxUses: formData.maxUses ? parseInt(formData.maxUses) : undefined,
+            maxUsesPerUserPerMonth: formData.maxUsesPerUserPerMonth
+              ? parseInt(formData.maxUsesPerUserPerMonth)
+              : undefined,
             minPurchaseAmount: formData.minPurchaseAmount
               ? parseFloat(formData.minPurchaseAmount)
               : undefined,
@@ -78,7 +107,12 @@ export const CreateDiscountModal = ({
           startDate: formData.startDate,
           endDate: formData.endDate,
           active: formData.active,
+          excludedDaysOfWeek: formData.excludedDaysOfWeek,
+          excludedHours: parsedExcludedHours,
           maxUses: formData.maxUses ? parseInt(formData.maxUses) : undefined,
+          maxUsesPerUserPerMonth: formData.maxUsesPerUserPerMonth
+            ? parseInt(formData.maxUsesPerUserPerMonth)
+            : undefined,
           minPurchaseAmount: formData.minPurchaseAmount
             ? parseFloat(formData.minPurchaseAmount)
             : undefined,
@@ -227,6 +261,23 @@ export const CreateDiscountModal = ({
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-2">
+                    Usos máximos por mes
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.maxUsesPerUserPerMonth}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        maxUsesPerUserPerMonth: e.target.value,
+                      })
+                    }
+                    className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                    placeholder="e.g., 20"
+                  />
+                </div>
+                {/* <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">
                     Discount Code
                   </label>
                   <input
@@ -238,10 +289,10 @@ export const CreateDiscountModal = ({
                     className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                     placeholder="e.g., SAVE20"
                   />
-                </div>
+                </div> */}
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-2">
-                    Max Uses
+                    Usos máximos en total
                   </label>
                   <input
                     type="number"
@@ -268,9 +319,8 @@ export const CreateDiscountModal = ({
                   </label>
                   <input
                     type="date"
-                    defaultValue={formData.startDate}
                     value={formData.startDate}
-                    min={today}
+                    min={minStartDate}
                     onChange={(e) =>
                       setFormData({ ...formData, startDate: e.target.value })
                     }
@@ -284,7 +334,6 @@ export const CreateDiscountModal = ({
                   </label>
                   <input
                     type="date"
-                    defaultValue={formData.endDate}
                     value={formData.endDate}
                     min={today}
                     onChange={(e) =>
@@ -302,6 +351,103 @@ export const CreateDiscountModal = ({
               <h4 className="text-sm font-semibold text-foreground uppercase tracking-wide">
                 Conditions
               </h4>
+
+              {/* Exclude Days */}
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-3">
+                  Exclude Days
+                </label>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {daysOfTheWeek.map((day) => (
+                    <label
+                      key={day.index}
+                      className="flex items-center gap-2 cursor-pointer"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={formData.excludedDaysOfWeek.includes(
+                          day.index
+                        )}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setFormData({
+                              ...formData,
+                              excludedDaysOfWeek: [
+                                ...formData.excludedDaysOfWeek,
+                                day.index,
+                              ],
+                            });
+                          } else {
+                            setFormData({
+                              ...formData,
+                              excludedDaysOfWeek:
+                                formData.excludedDaysOfWeek.filter(
+                                  (d) => d !== day.index
+                                ),
+                            });
+                          }
+                        }}
+                        className="w-4 h-4 text-primary border-border rounded focus:ring-primary"
+                      />
+                      <span className="text-sm text-foreground">
+                        {day.label}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Exclude Hours */}
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-3">
+                  Excluded Hours
+                </label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-2">
+                      Start Hour
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="23"
+                      value={formData.excludedStartHour ?? ""}
+                      onChange={(e) => {
+                        setFormData({
+                          ...formData,
+                          excludedStartHour: e.target.value
+                            ? parseInt(e.target.value)
+                            : undefined,
+                        });
+                      }}
+                      className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                      placeholder="e.g., 22"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-2">
+                      End Hour
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="23"
+                      value={formData.excludedEndHour ?? ""}
+                      onChange={(e) => {
+                        setFormData({
+                          ...formData,
+                          excludedEndHour: e.target.value
+                            ? parseInt(e.target.value)
+                            : undefined,
+                        });
+                      }}
+                      className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                      placeholder="e.g., 6"
+                    />
+                  </div>
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-2">

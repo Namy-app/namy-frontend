@@ -100,3 +100,36 @@ export function formatDiscount(
   const discountPercentage = getDiscountPercentage(level, isPremium);
   return `${discountPercentage}% off`;
 }
+
+const formatHour = (h: number): string => {
+  if (h === 0) {
+    return "12AM";
+  }
+  if (h === 12) {
+    return "12PM";
+  }
+  if (h < 12) {
+    return `${h}AM`;
+  }
+  return `${h - 12}PM`;
+};
+
+export function displayExcludedHours(excludedHours: number[]): string {
+  if (excludedHours.length === 0) {
+    return "No excluded hours";
+  }
+
+  if (excludedHours[0] && excludedHours[1]) {
+    return `Between ${formatHour(excludedHours[0])} and ${formatHour(excludedHours[1])}`;
+  }
+
+  if (excludedHours[0]) {
+    return `After ${formatHour(excludedHours[0])}`;
+  }
+
+  if (excludedHours[1]) {
+    return `Before ${formatHour(excludedHours[1])}`;
+  }
+
+  return "--";
+}
