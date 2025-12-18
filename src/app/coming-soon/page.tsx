@@ -10,7 +10,7 @@ import { BasicLayout } from "@/layouts/BasicLayout";
 function ComingSoonContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const feature = searchParams.get("feature") || "esta función";
+  const feature = searchParams?.get("feature") || "esta función";
 
   return (
     <div className="min-h-screen bg-gradient-hero flex flex-col">

@@ -120,7 +120,6 @@ export const StoreImageUpload = ({
           file,
           isUploading: false,
         };
-
         return newSlots;
       });
 
@@ -361,11 +360,11 @@ export const StoreImageUpload = ({
                   </button>
 
                   {/* Uploading overlay */}
-                  {slot.isUploading ? (
+                  {slot.isUploading === true && (
                     <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-20">
                       <Loader2 className="w-8 h-8 text-white animate-spin" />
                     </div>
-                  ) : null}
+                  )}
                 </div>
               ) : (
                 <div className="absolute inset-0 rounded-lg border-2 border-dashed border-border bg-muted flex flex-col items-center justify-center gap-2 hover:border-primary hover:bg-muted/80 transition-colors">

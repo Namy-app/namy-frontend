@@ -137,7 +137,7 @@ export function validateImageFile(
   if (!allowedTypes.includes(file.type)) {
     return {
       valid: false,
-      error: `Invalid file type. Please use ${allowedTypes.map((t) => (t.split("/")[1] ?? t).toUpperCase()).join(", ")}`,
+      error: `Invalid file type. Please use ${allowedTypes.map((t) => t.split("/")[1]?.toUpperCase() || t).join(", ")}`,
     };
   }
 

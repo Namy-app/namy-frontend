@@ -7,9 +7,11 @@ import { useUpdateStore } from "@/domains/admin/hooks";
 import {
   type Store,
   type UpdateStoreInput,
+  type OpenDay,
   StoreType,
 } from "@/domains/admin/types";
 import { useToast } from "@/hooks/use-toast";
+import { StoreHoursEditor } from "@/domains/store/components/StoreHoursEditor";
 
 interface EditStoreFormProps {
   store: Store;
@@ -41,6 +43,10 @@ export function EditStoreForm({
     lat: store.lat,
     lng: store.lng,
   });
+
+  const [openHours, setOpenHours] = useState<OpenDay[]>(
+    store.openDays?.availableDays ?? []
+  );
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -86,7 +92,11 @@ export function EditStoreForm({
     }
 
     try {
-      await updateStore.mutateAsync({ id: store.id, input: formData });
+      const updateInput: UpdateStoreInput = {
+        ...formData,
+        openDays: openHours.length > 0 ? { availableDays: openHours } : undefined,
+      };
+      await updateStore.mutateAsync({ id: store.id, input: updateInput });
 
       toast({
         title: "✅ Store Updated Successfully",
@@ -367,6 +377,9 @@ export function EditStoreForm({
                 </label>
               </div>
             </div>
+
+            {/* Store Hours */}
+            <StoreHoursEditor value={openHours} onChange={setOpenHours} />
           </div>
 
           {/* Actions */}
