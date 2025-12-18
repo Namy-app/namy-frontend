@@ -1,5 +1,7 @@
+"use client";
+
 import clsx from "clsx";
-import type { PropsWithChildren } from "react";
+import { type PropsWithChildren } from "react";
 
 import { ExploreHeader } from "@/app/explore/components/ExploreHeader";
 import { BottomNavigation } from "@/components/BottomNavigation";

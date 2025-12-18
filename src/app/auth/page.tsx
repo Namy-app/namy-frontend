@@ -7,6 +7,7 @@ import { useState, useEffect } from "react";
 
 import { useLogin, useSignup } from "@/domains/user/hooks";
 import { useToast } from "@/hooks/use-toast";
+import type { AuthResponse } from "@/lib/api-types";
 import { Button } from "@/shared/components/Button";
 import { Card } from "@/shared/components/Card";
 import { Checkbox } from "@/shared/components/Checkbox";
@@ -48,15 +49,30 @@ export default function AuthPage(): React.JSX.Element {
   const loginMutation = useLogin();
   const signupMutation = useSignup();
 
+  const updateCrisp = (user: AuthResponse["user"]): void => {
+    if (
+      isAuthenticated &&
+      typeof window !== "undefined" &&
+      window.$crisp &&
+      user
+    ) {
+      window.$crisp.push(["set", "user:email", [user.email]]);
+      window.$crisp.push(["set", "user:name", [user.displayName ?? ""]]);
+      window.$crisp.push(["set", "user:phone", [user.phone ?? ""]]);
+    }
+  };
+
   const handleLogin = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
 
     try {
-      await loginMutation.mutateAsync({
+      const response = await loginMutation.mutateAsync({
         email: loginEmail,
         password: loginPassword,
         rememberMe,
       });
+
+      updateCrisp(response.user);
 
       toast({
         title: "Welcome back!",
@@ -110,11 +126,12 @@ export default function AuthPage(): React.JSX.Element {
     }
 
     try {
-      await signupMutation.mutateAsync({
+      const response = await signupMutation.mutateAsync({
         email: signupEmail,
         password: signupPassword,
         displayName: signupDisplayName || undefined,
       });
+      updateCrisp(response.user);
 
       toast({
         title: "Registration Successful! 🎉",
