@@ -52,6 +52,17 @@ function convertTo12Hour(time24: string): string {
   return `${hours12}:${minutes.toString().padStart(2, "0")} ${period}`;
 }
 
+// Mapping for Spanish day labels
+const DAY_LABELS: Record<string, string> = {
+  monday: "Lunes",
+  tuesday: "Martes",
+  wednesday: "Miércoles",
+  thursday: "Jueves",
+  friday: "Viernes",
+  saturday: "Sábado",
+  sunday: "Domingo",
+};
+
 // Catalog Carousel Component
 const CatalogCarousel = ({
   images,
@@ -72,7 +83,9 @@ const CatalogCarousel = ({
     setCurrentIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
   };
 
-  if (images.length === 0) {return null;}
+  if (images.length === 0) {
+    return null;
+  }
 
   return (
     <div className="relative">
@@ -285,10 +298,13 @@ export default function RestaurantDetailPage(): React.JSX.Element {
                         closed?: boolean;
                         startTime?: string;
                         endTime?: string;
-                      }) =>
-                        day.closed
-                          ? `${day.day}: Closed`
-                          : `${day.day}: ${day.startTime} - ${day.endTime}`
+                      }) => {
+                        const dayLabel =
+                          DAY_LABELS[day.day.toLowerCase()] || day.day;
+                        return day.closed
+                          ? `${dayLabel}: Cerrado`
+                          : `${dayLabel}: ${day.startTime} - ${day.endTime}`;
+                      }
                     )
                     .join(", ");
                 }
@@ -311,9 +327,11 @@ export default function RestaurantDetailPage(): React.JSX.Element {
                   .filter((day) => day in openDaysObj && openDaysObj[day])
                   .map((day) => {
                     const hours = openDaysObj[day];
-                    const dayName = day.charAt(0).toUpperCase() + day.slice(1);
+                    const dayLabel =
+                      DAY_LABELS[day] ||
+                      day.charAt(0).toUpperCase() + day.slice(1);
                     if (hours && hours.open && hours.close) {
-                      return `${dayName}: ${hours.open} - ${hours.close}`;
+                      return `${dayLabel}: ${hours.open} - ${hours.close}`;
                     }
                     return null;
                   })
@@ -338,12 +356,16 @@ export default function RestaurantDetailPage(): React.JSX.Element {
                       closed?: boolean;
                       startTime?: string;
                       endTime?: string;
-                    }) => ({
-                      day: day.day,
-                      hours: day.closed
-                        ? "Closed"
-                        : `${convertTo12Hour(day.startTime || "")} - ${convertTo12Hour(day.endTime || "")}`,
-                    })
+                    }) => {
+                      const dayLabel =
+                        DAY_LABELS[day.day.toLowerCase()] || day.day;
+                      return {
+                        day: dayLabel,
+                        hours: day.closed
+                          ? "Cerrado"
+                          : `${convertTo12Hour(day.startTime || "")} - ${convertTo12Hour(day.endTime || "")}`,
+                      };
+                    }
                   );
                 }
 
@@ -365,10 +387,12 @@ export default function RestaurantDetailPage(): React.JSX.Element {
                   .filter((day) => day in openDaysObj && openDaysObj[day])
                   .map((day) => {
                     const hours = openDaysObj[day];
-                    const dayName = day.charAt(0).toUpperCase() + day.slice(1);
+                    const dayLabel =
+                      DAY_LABELS[day] ||
+                      day.charAt(0).toUpperCase() + day.slice(1);
                     if (hours && hours.open && hours.close) {
                       return {
-                        day: dayName,
+                        day: dayLabel,
                         hours: `${convertTo12Hour(hours.open)} - ${convertTo12Hour(hours.close)}`,
                       };
                     }
