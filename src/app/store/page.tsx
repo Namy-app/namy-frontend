@@ -34,7 +34,7 @@ export default function StorePage(): React.JSX.Element {
               }
               variant="outline"
             >
-              {isAuthenticated ? "My Account" : "Login"}
+              {isAuthenticated ? "Mi Cuenta" : "Iniciar Sesión"}
             </Button>
           </div>
 

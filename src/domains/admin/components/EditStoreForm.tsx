@@ -7,8 +7,10 @@ import { useUpdateStore } from "@/domains/admin/hooks";
 import {
   type Store,
   type UpdateStoreInput,
+  type OpenDay,
   StoreType,
 } from "@/domains/admin/types";
+import { StoreHoursEditor } from "@/domains/store/components/StoreHoursEditor";
 import { useToast } from "@/hooks/use-toast";
 
 interface EditStoreFormProps {
@@ -41,6 +43,45 @@ export function EditStoreForm({
     lat: store.lat,
     lng: store.lng,
   });
+
+  // Convert openDays to availableDays array format if needed
+  const getInitialHours = (): OpenDay[] => {
+    if (!store.openDays) {return [];}
+
+    // Check if it's already in the new format
+    if (store.openDays.availableDays) {
+      return store.openDays.availableDays;
+    }
+
+    // Convert from old format to new format
+    const daysOfWeek = [
+      "monday",
+      "tuesday",
+      "wednesday",
+      "thursday",
+      "friday",
+      "saturday",
+      "sunday",
+    ];
+    const oldFormatDays = store.openDays as unknown as Record<
+      string,
+      { open?: string; close?: string }
+    >;
+
+    return daysOfWeek
+      .filter((day) => day in oldFormatDays && oldFormatDays[day])
+      .map((day) => {
+        const hours = oldFormatDays[day];
+        return {
+          day: day,
+          startTime: hours?.open || "09:00",
+          endTime: hours?.close || "17:00",
+          closed: false,
+        };
+      });
+  };
+
+  const [openHours, setOpenHours] = useState<OpenDay[]>(getInitialHours());
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -86,7 +127,12 @@ export function EditStoreForm({
     }
 
     try {
-      await updateStore.mutateAsync({ id: store.id, input: formData });
+      const updateInput: UpdateStoreInput = {
+        ...formData,
+        openDays:
+          openHours.length > 0 ? { availableDays: openHours } : undefined,
+      };
+      await updateStore.mutateAsync({ id: store.id, input: updateInput });
 
       toast({
         title: "✅ Store Updated Successfully",
@@ -367,6 +413,9 @@ export function EditStoreForm({
                 </label>
               </div>
             </div>
+
+            {/* Store Hours */}
+            <StoreHoursEditor value={openHours} onChange={setOpenHours} />
           </div>
 
           {/* Actions */}

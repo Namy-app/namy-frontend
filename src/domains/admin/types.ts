@@ -39,6 +39,7 @@ export interface Store {
   image1Url?: string;
   image2Url?: string;
   image3Url?: string;
+  images?: string[]; // Dynamic array of image URLs
   categoryId: string;
   subCategory?: string;
   type: StoreType;

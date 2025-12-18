@@ -37,12 +37,25 @@ export default function AdminStoresPage() {
   const [storeToEdit, setStoreToEdit] = useState<Store | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  // Wait for client-side hydration
+  useEffect(() => {
+    // Mark as hydrated after Zustand rehydrates from localStorage
+    // Use a small delay to ensure Zustand has fully rehydrated
+    const timer = setTimeout(() => {
+      setIsHydrated(true);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
+    if (!isHydrated) {return;}
+
     if (!user) {
       router.replace("/auth");
     }
-  }, [router, user]);
+  }, [router, user, isHydrated]);
 
   const { data: stats, isLoading: statsLoading } = useStoreStatistics({
     active: null,
