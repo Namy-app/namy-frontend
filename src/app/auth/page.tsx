@@ -50,15 +50,13 @@ export default function AuthPage(): React.JSX.Element {
   const signupMutation = useSignup();
 
   const updateCrisp = (user: AuthResponse["user"]): void => {
-    if (
-      isAuthenticated &&
-      typeof window !== "undefined" &&
-      window.$crisp &&
-      user
-    ) {
-      window.$crisp.push(["set", "user:email", [user.email]]);
-      window.$crisp.push(["set", "user:name", [user.displayName ?? ""]]);
-      window.$crisp.push(["set", "user:phone", [user.phone ?? ""]]);
+    try {
+      if (typeof window !== "undefined" && window.$crisp && user) {
+        window.$crisp.push(["set", "user:email", user.email]);
+        window.$crisp.push(["set", "user:name", user.displayName ?? ""]);
+      }
+    } catch (error) {
+      console.error("Failed to update Crisp user info:", error);
     }
   };
 
