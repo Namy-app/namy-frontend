@@ -10,8 +10,8 @@ import {
   type OpenDay,
   StoreType,
 } from "@/domains/admin/types";
-import { useToast } from "@/hooks/use-toast";
 import { StoreHoursEditor } from "@/domains/store/components/StoreHoursEditor";
+import { useToast } from "@/hooks/use-toast";
 
 interface EditStoreFormProps {
   store: Store;
@@ -44,9 +44,44 @@ export function EditStoreForm({
     lng: store.lng,
   });
 
-  const [openHours, setOpenHours] = useState<OpenDay[]>(
-    store.openDays?.availableDays ?? []
-  );
+  // Convert openDays to availableDays array format if needed
+  const getInitialHours = (): OpenDay[] => {
+    if (!store.openDays) {return [];}
+
+    // Check if it's already in the new format
+    if (store.openDays.availableDays) {
+      return store.openDays.availableDays;
+    }
+
+    // Convert from old format to new format
+    const daysOfWeek = [
+      "monday",
+      "tuesday",
+      "wednesday",
+      "thursday",
+      "friday",
+      "saturday",
+      "sunday",
+    ];
+    const oldFormatDays = store.openDays as unknown as Record<
+      string,
+      { open?: string; close?: string }
+    >;
+
+    return daysOfWeek
+      .filter((day) => day in oldFormatDays && oldFormatDays[day])
+      .map((day) => {
+        const hours = oldFormatDays[day];
+        return {
+          day: day,
+          startTime: hours?.open || "09:00",
+          endTime: hours?.close || "17:00",
+          closed: false,
+        };
+      });
+  };
+
+  const [openHours, setOpenHours] = useState<OpenDay[]>(getInitialHours());
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -94,7 +129,8 @@ export function EditStoreForm({
     try {
       const updateInput: UpdateStoreInput = {
         ...formData,
-        openDays: openHours.length > 0 ? { availableDays: openHours } : undefined,
+        openDays:
+          openHours.length > 0 ? { availableDays: openHours } : undefined,
       };
       await updateStore.mutateAsync({ id: store.id, input: updateInput });
 
