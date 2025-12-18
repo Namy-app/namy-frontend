@@ -6,9 +6,11 @@ import { useState } from "react";
 import { useCreateStore } from "@/domains/admin/hooks";
 import {
   type CreateStoreInput,
+  type OpenDay,
   StoreType,
   PriceRange,
 } from "@/domains/admin/types";
+import { StoreHoursEditor } from "@/domains/store/components/StoreHoursEditor";
 import { useToast } from "@/hooks/use-toast";
 
 interface CreateStoreFormProps {
@@ -40,6 +42,8 @@ export function CreateStoreForm({ onClose, onSuccess }: CreateStoreFormProps) {
   const [categoryType, setCategoryType] = useState<"restaurant" | "others">(
     "restaurant"
   );
+
+  const [openHours, setOpenHours] = useState<OpenDay[]>([]);
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -109,10 +113,11 @@ export function CreateStoreForm({ onClose, onSuccess }: CreateStoreFormProps) {
     }
 
     // Set categoryId based on categoryType
-    const finalFormData = {
+    const finalFormData: CreateStoreInput = {
       ...formData,
       categoryId:
         categoryType === "restaurant" ? "restaurant" : formData.categoryId,
+      openDays: openHours.length > 0 ? { availableDays: openHours } : undefined,
     };
 
     try {
@@ -505,6 +510,9 @@ export function CreateStoreForm({ onClose, onSuccess }: CreateStoreFormProps) {
                 </label>
               </div>
             </div>
+
+            {/* Store Hours */}
+            <StoreHoursEditor value={openHours} onChange={setOpenHours} />
           </div>
 
           {/* Actions */}

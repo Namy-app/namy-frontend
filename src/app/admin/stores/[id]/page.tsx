@@ -40,7 +40,7 @@ type TabType = "info" | "catalogs" | "coupons";
 export default function StoreDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const { user } = useAuthStore();
+  const { user, isAuthenticated } = useAuthStore();
   const storeId = params?.id as string;
 
   const [activeTab, setActiveTab] = useState<TabType>("info");
@@ -64,26 +64,36 @@ export default function StoreDetailPage() {
 
   // Wait for client-side hydration
   useEffect(() => {
-    // Using a microtask to avoid synchronous setState in effect
-    void Promise.resolve().then(() => setIsHydrated(true));
+    // Mark as hydrated after Zustand rehydrates from localStorage
+    // Use a small delay to ensure Zustand has fully rehydrated
+    const timer = setTimeout(() => {
+      setIsHydrated(true);
+    }, 100);
+    return () => clearTimeout(timer);
   }, []);
+
+  // Handle authentication redirect after hydration
+  useEffect(() => {
+    if (!isHydrated) {
+      return;
+    }
+
+    if (!isAuthenticated || !user) {
+      router.push("/auth");
+    }
+  }, [isHydrated, isAuthenticated, user, router]);
 
   // Check if user is admin
   const isAdmin =
     user?.role === UserRole.ADMIN || user?.role === UserRole.SUPER_ADMIN;
 
-  // Show loading while hydrating
-  if (!isHydrated) {
+  // Show loading while hydrating or checking auth
+  if (!isHydrated || !isAuthenticated || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-hero">
         <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
       </div>
     );
-  }
-
-  if (!user) {
-    router.push("/auth");
-    return null;
   }
 
   if (!isAdmin) {
@@ -187,7 +197,7 @@ export default function StoreDetailPage() {
             className="flex items-center gap-2 text-muted-foreground hover:text-foreground mb-4 transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
-            Back to Stores
+            Volver a Tiendas
           </button>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -206,7 +216,7 @@ export default function StoreDetailPage() {
                         : "bg-destructive/20 text-destructive"
                     }`}
                   >
-                    {store.active ? "Active" : "Inactive"}
+                    {store.active ? "Activo" : "Inactivo"}
                   </span>
                   <span className="px-3 py-1 bg-muted text-foreground rounded-full text-sm font-medium capitalize">
                     {store.type}
@@ -217,7 +227,7 @@ export default function StoreDetailPage() {
                     </span>
                   ) : null}
                   <span className="text-primary text-sm">
-                    ⭐ {store.averageRating}/5 ({store.reviewCounter} reviews)
+                    ⭐ {store.averageRating}/5 ({store.reviewCounter} reseñas)
                   </span>
                 </div>
               </div>
@@ -238,7 +248,7 @@ export default function StoreDetailPage() {
                   : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
               }`}
             >
-              Store Info
+              Información
             </button>
             <button
               onClick={() => setActiveTab("catalogs")}
@@ -248,7 +258,7 @@ export default function StoreDetailPage() {
                   : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
               }`}
             >
-              Catalogs ({catalogs?.length || 0})
+              Catálogos
             </button>
             <button
               onClick={() => setActiveTab("coupons")}
@@ -258,7 +268,7 @@ export default function StoreDetailPage() {
                   : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
               }`}
             >
-              Coupons ({couponsData?.data.length || 0})
+              Cupones ({couponsData?.data.length || 0})
             </button>
           </div>
         </div>
@@ -476,7 +486,7 @@ function CouponsTab({
     return (
       <div className="bg-card rounded-lg shadow p-8 text-center">
         <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
-        <p className="text-muted-foreground mt-2">Loading coupons...</p>
+        <p className="text-muted-foreground mt-2">Cargando cupones...</p>
       </div>
     );
   }
@@ -485,19 +495,19 @@ function CouponsTab({
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-foreground">
-          Generated Coupons
+          Cupones Generados
         </h2>
         <p className="text-muted-foreground">
-          Total: {coupons.length} coupon{coupons.length !== 1 ? "s" : ""}
+          Total: {coupons.length} cupón{coupons.length !== 1 ? "es" : ""}
         </p>
       </div>
 
       {coupons.length === 0 ? (
         <div className="bg-card rounded-lg shadow p-8 text-center">
           <Ticket className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-          <p className="text-muted-foreground">No coupons generated yet</p>
+          <p className="text-muted-foreground">Aún no hay cupones generados</p>
           <p className="text-sm text-muted-foreground mt-2">
-            Coupons are generated when users claim discounts
+            Los cupones se generan cuando los usuarios reclaman descuentos
           </p>
         </div>
       ) : (
@@ -507,22 +517,22 @@ function CouponsTab({
               <thead className="bg-muted">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Code
+                    Código
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    User ID
+                    ID Usuario
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Status
+                    Estado
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Created
+                    Creado
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Expires
+                    Expira
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Used At
+                    Usado El
                   </th>
                 </tr>
               </thead>
@@ -547,7 +557,7 @@ function CouponsTab({
                             : "bg-secondary/100 text-secondary-foreground800"
                         }`}
                       >
-                        {coupon.used ? "Used" : "Active"}
+                        {coupon.used ? "Usado" : "Activo"}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">

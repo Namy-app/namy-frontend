@@ -1,39 +1,86 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { Image, Loader2, Package, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Image as ImageIcon, Loader2, X } from "lucide-react";
+import { useState, useEffect } from "react";
 
-import type { Store } from "@/domains/admin/types";
 import { useToast } from "@/hooks/use-toast";
 import { useAuthStore } from "@/store/useAuthStore";
 
-// Store Image Upload Component
+interface ImageSlot {
+  url: string | null;
+  file: File | null;
+  isUploading: boolean;
+}
+
+// Store Image Upload Component with 4 Fixed Slots
 export const StoreImageUpload = ({
   storeId,
   storeName,
-  currentImageUrl,
+  imageUrl,
+  image1Url,
+  image2Url,
+  image3Url,
 }: {
   storeId: string;
   storeName: string;
-  currentImageUrl?: string | null;
+  imageUrl?: string | null;
+  image1Url?: string | null;
+  image2Url?: string | null;
+  image3Url?: string | null;
 }) => {
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(
-    currentImageUrl || null
-  );
-  const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  // Initialize 4 fixed image slots
+  const [imageSlots, setImageSlots] = useState<ImageSlot[]>([
+    { url: imageUrl || null, file: null, isUploading: false },
+    { url: image1Url || null, file: null, isUploading: false },
+    { url: image2Url || null, file: null, isUploading: false },
+    { url: image3Url || null, file: null, isUploading: false },
+  ]);
 
-  // Sync preview with current image URL when it changes (after refetch)
+  // Sync state when props change (after refetch from server)
   useEffect(() => {
-    if (currentImageUrl && !selectedFile) {
-      setPreviewUrl(currentImageUrl);
-    }
-  }, [currentImageUrl, selectedFile]);
+    setImageSlots((prev) => {
+      // Only update if there's an actual change in URLs and no pending file operations
+      const shouldUpdate =
+        (imageUrl !== prev[0]?.url && !prev[0]?.file) ||
+        (image1Url !== prev[1]?.url && !prev[1]?.file) ||
+        (image2Url !== prev[2]?.url && !prev[2]?.file) ||
+        (image3Url !== prev[3]?.url && !prev[3]?.file);
 
-  const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+      if (!shouldUpdate) {
+        return prev;
+      }
+
+      return [
+        {
+          url: imageUrl || null,
+          file: prev[0]?.file || null,
+          isUploading: prev[0]?.isUploading || false,
+        },
+        {
+          url: image1Url || null,
+          file: prev[1]?.file || null,
+          isUploading: prev[1]?.isUploading || false,
+        },
+        {
+          url: image2Url || null,
+          file: prev[2]?.file || null,
+          isUploading: prev[2]?.isUploading || false,
+        },
+        {
+          url: image3Url || null,
+          file: prev[3]?.file || null,
+          isUploading: prev[3]?.isUploading || false,
+        },
+      ];
+    });
+  }, [imageUrl, image1Url, image2Url, image3Url]);
+
+  const handleImageSelect = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+    index: number
+  ) => {
     const file = event.target.files?.[0];
     if (!file) {
       return;
@@ -43,8 +90,9 @@ export const StoreImageUpload = ({
     if (!file.type.startsWith("image/")) {
       toast({
         variant: "destructive",
-        title: "Invalid file type",
-        description: "Please select an image file (PNG, JPG, WebP)",
+        title: "Tipo de archivo inválido",
+        description:
+          "Por favor selecciona un archivo de imagen (PNG, JPG, WebP)",
       });
       return;
     }
@@ -53,53 +101,74 @@ export const StoreImageUpload = ({
     if (file.size > 5 * 1024 * 1024) {
       toast({
         variant: "destructive",
-        title: "File too large",
-        description: "Please select an image smaller than 5MB",
+        title: "Archivo muy grande",
+        description: "Por favor selecciona una imagen menor a 5MB",
       });
       return;
     }
 
-    // Store the file for upload
-    setSelectedFile(file);
-
-    // Create preview URL
+    // Create preview URL and immediately upload
     const reader = new FileReader();
     reader.onloadend = () => {
-      setPreviewUrl(reader.result as string);
+      const previewUrl = reader.result as string;
+
+      // Set preview state
+      setImageSlots((prev) => {
+        const newSlots = [...prev];
+        newSlots[index] = {
+          url: previewUrl,
+          file,
+          isUploading: false,
+        };
+        return newSlots;
+      });
+
+      // Immediately start upload with the file we have
+      void handleUploadWithFile(index, file);
     };
     reader.readAsDataURL(file);
-    setSelectedImage(file.name);
   };
 
-  const handleUpload = async () => {
-    if (!selectedFile || !previewUrl) {
-      return;
-    }
-
+  const handleUploadWithFile = async (index: number, file: File) => {
     if (!storeId) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Store ID is missing. Please refresh the page.",
+        description: "Falta el ID de la tienda. Por favor recarga la página.",
       });
       return;
     }
 
-    setIsUploading(true);
+    // Set uploading state
+    setImageSlots((prev) => {
+      const newSlots = [...prev];
+      const currentSlot = newSlots[index];
+      if (currentSlot) {
+        newSlots[index] = {
+          url: currentSlot.url,
+          file: currentSlot.file,
+          isUploading: true,
+        };
+      }
+      return newSlots;
+    });
+
     try {
       // Create form data
       const formData = new FormData();
-      formData.append("file", selectedFile);
+      formData.append("file", file);
       formData.append("storeId", storeId);
+      formData.append("imageIndex", index.toString());
 
       // Get auth token
       const authStore = useAuthStore.getState();
       const token = authStore.accessToken;
 
-      // Upload to backend (use base URL without /graphql)
+      // Upload to backend
       const baseUrl = (
         process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"
       ).replace("/graphql", "");
+
       const response = await fetch(`${baseUrl}/upload/store-image`, {
         method: "POST",
         headers: {
@@ -109,154 +178,230 @@ export const StoreImageUpload = ({
       });
 
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Upload failed:", errorText);
         throw new Error("Upload failed");
       }
 
       const data = await response.json();
 
-      // If we got the full store object back, use it to update the cache
-      if (data.store) {
-        queryClient.setQueryData(["store", storeId], data.store);
-      } else {
-        // Fallback: Update just the imageUrl
-        queryClient.setQueryData(
-          ["store", storeId],
-          (oldData: Store | undefined) => {
-            if (oldData) {
-              const updatedData = { ...oldData, imageUrl: data.url };
-              return updatedData;
-            }
-            return oldData;
-          }
-        );
-      }
-
-      // Update the preview immediately
-      setPreviewUrl(data.url);
-      setSelectedFile(null);
-      setSelectedImage(null);
-
-      toast({
-        title: "Image uploaded",
-        description: `Successfully uploaded image for ${storeName}. Old image deleted from S3.`,
+      // Update the local state with the S3 URL immediately
+      setImageSlots((prev) => {
+        const newSlots = [...prev];
+        const currentSlot = newSlots[index];
+        if (currentSlot) {
+          newSlots[index] = {
+            url: data.url || currentSlot.url,
+            file: null,
+            isUploading: false,
+          };
+        }
+        return newSlots;
       });
 
-      // Refetch to ensure fresh data from server (optional now since we have the updated store)
+      // Update cache with new store data from backend
+      if (data.store) {
+        queryClient.setQueryData(["store", storeId], data.store);
+      }
+
+      toast({
+        title: "Imagen subida",
+        description: `Imagen ${index + 1} subida exitosamente para ${storeName}.`,
+      });
+
+      // Refetch store to ensure we have the latest data
+      await queryClient.refetchQueries({
+        queryKey: ["store", storeId],
+        exact: true,
+      });
+    } catch (error) {
+      console.error("Upload error:", error);
+      toast({
+        variant: "destructive",
+        title: "Error al subir",
+        description: "No se pudo subir la imagen. Por favor intenta de nuevo.",
+      });
+
+      // Reset uploading state on error
+      setImageSlots((prev) => {
+        const newSlots = [...prev];
+        const currentSlot = newSlots[index];
+        if (currentSlot) {
+          newSlots[index] = {
+            url: currentSlot.url,
+            file: currentSlot.file,
+            isUploading: false,
+          };
+        }
+        return newSlots;
+      });
+    }
+  };
+
+  const handleRemove = async (index: number) => {
+    if (!storeId) {
+      return;
+    }
+
+    try {
+      // Get auth token
+      const authStore = useAuthStore.getState();
+      const token = authStore.accessToken;
+
+      // Delete from backend
+      const baseUrl = (
+        process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"
+      ).replace("/graphql", "");
+      const response = await fetch(
+        `${baseUrl}/upload/store-image?storeId=${storeId}&imageIndex=${index}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Delete failed");
+      }
+
+      // Clear the slot
+      setImageSlots((prev) => {
+        const newSlots = [...prev];
+        newSlots[index] = { url: null, file: null, isUploading: false };
+        return newSlots;
+      });
+
+      toast({
+        title: "Imagen eliminada",
+        description: "Imagen eliminada exitosamente.",
+      });
+
+      // Refetch to ensure fresh data
       await queryClient.refetchQueries({ queryKey: ["store", storeId] });
     } catch (_error) {
       toast({
         variant: "destructive",
-        title: "Upload failed",
-        description: "Failed to upload image. Please try again.",
+        title: "Error al eliminar",
+        description:
+          "No se pudo eliminar la imagen. Por favor intenta de nuevo.",
       });
-    } finally {
-      setIsUploading(false);
     }
   };
 
-  const handleRemove = () => {
-    setPreviewUrl(null);
-    setSelectedImage(null);
+  const handleCancelSelection = (index: number) => {
+    setImageSlots((prev) => {
+      const newSlots = [...prev];
+      // Reset to original URL or null
+      const originalUrls = [imageUrl, image1Url, image2Url, image3Url];
+      newSlots[index] = {
+        url: originalUrls[index] || null,
+        file: null,
+        isUploading: false,
+      };
+      return newSlots;
+    });
   };
 
   return (
-    <div className="bg-card rounded-lg shadow p-6">
-      <h2 className="text-xl font-semibold text-foreground mb-4">
-        Store Image
-      </h2>
-
-      {/* Image Preview Area - 16:9 Aspect Ratio */}
-      <div className="mb-4">
-        <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
-          {previewUrl ? (
-            <div className="absolute inset-0 rounded-lg overflow-hidden bg-muted border-2 border-border">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={previewUrl}
-                alt={storeName}
-                className="w-full h-full object-cover"
-              />
-              <button
-                onClick={handleRemove}
-                className="absolute top-2 right-2 p-2 bg-destructive/90 hover:bg-destructive text-destructive-foreground rounded-lg transition-colors"
-                title="Remove image"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-          ) : (
-            <div className="absolute inset-0 rounded-lg border-2 border-dashed border-border bg-muted flex flex-col items-center justify-center text-center p-4">
-              <Image
-                className="w-12 h-12 text-muted-foreground mb-2"
-                aria-label="Upload placeholder"
-              />
-              <p className="text-sm font-medium text-foreground mb-1">
-                16:9 Aspect Ratio
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Recommended: 1920x1080px
-              </p>
-            </div>
-          )}
-        </div>
+    <div className="bg-card rounded-lg shadow p-6 lg:col-span-2">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-xl font-semibold text-foreground">
+          Imágenes de Tienda
+        </h2>
+        <span className="text-sm text-muted-foreground">
+          {imageSlots.filter((slot) => slot.url).length} / 4 imágenes
+        </span>
       </div>
 
-      {/* Upload Controls */}
-      <div className="space-y-3">
-        <div>
-          <label
-            htmlFor="store-image-upload"
-            className="flex items-center justify-center gap-2 px-4 py-3 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity cursor-pointer"
-          >
-            <Image className="w-5 h-5" aria-label="Image icon" />
-            {previewUrl ? "Change Image" : "Select Image"}
-          </label>
-          <input
-            id="store-image-upload"
-            type="file"
-            accept="image/*"
-            onChange={handleImageSelect}
-            className="hidden"
-          />
-        </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {imageSlots.map((slot, index) => (
+          <div key={index} className="space-y-2">
+            {/* Image Preview - Clickable */}
+            <label
+              htmlFor={`store-image-upload-${index}`}
+              className="relative w-full block cursor-pointer"
+              style={{ paddingBottom: "56.25%" }}
+            >
+              {slot.url ? (
+                <div className="absolute inset-0 rounded-lg overflow-hidden bg-muted border-2 border-border group hover:border-primary transition-colors">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={slot.url}
+                    alt={`${storeName} - Imagen ${index + 1}`}
+                    className="w-full h-full object-cover"
+                  />
 
-        {Boolean(previewUrl) && (
-          <button
-            onClick={() => void handleUpload()}
-            disabled={isUploading}
-            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-secondary text-secondary-foreground rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isUploading ? (
-              <>
-                <Loader2 className="w-5 h-5 animate-spin" />
-                Uploading...
-              </>
-            ) : (
-              <>
-                <Package className="w-5 h-5" />
-                Upload Image
-              </>
-            )}
-          </button>
-        )}
+                  {/* Hover overlay with change icon */}
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center">
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-primary text-primary-foreground px-4 py-2 rounded-lg flex items-center gap-2">
+                      <ImageIcon className="w-4 h-4" />
+                      <span className="text-sm font-medium">Cambiar</span>
+                    </div>
+                  </div>
 
-        {Boolean(selectedImage) && (
-          <p className="text-xs text-muted-foreground text-center">
-            Selected: {selectedImage}
-          </p>
-        )}
+                  {/* Delete or Cancel button */}
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      if (slot.file) {
+                        handleCancelSelection(index);
+                      } else {
+                        void handleRemove(index);
+                      }
+                    }}
+                    className="absolute top-2 right-2 p-2 bg-destructive/90 hover:bg-destructive text-destructive-foreground rounded-lg transition-colors z-10"
+                    title={slot.file ? "Cancelar" : "Eliminar imagen"}
+                    disabled={slot.isUploading}
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+
+                  {/* Uploading overlay */}
+                  {slot.isUploading === true && (
+                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-20">
+                      <Loader2 className="w-8 h-8 text-white animate-spin" />
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="absolute inset-0 rounded-lg border-2 border-dashed border-border bg-muted flex flex-col items-center justify-center gap-2 hover:border-primary hover:bg-muted/80 transition-colors">
+                  <ImageIcon className="w-8 h-8 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">
+                    Seleccionar imagen
+                  </span>
+                </div>
+              )}
+            </label>
+
+            {/* Hidden file input */}
+            <input
+              id={`store-image-upload-${index}`}
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                void handleImageSelect(e, index);
+              }}
+              className="hidden"
+              disabled={slot.isUploading}
+            />
+          </div>
+        ))}
       </div>
 
       {/* Image Guidelines */}
-      <div className="mt-4 p-3 bg-muted rounded-lg">
+      <div className="mt-6 p-3 bg-muted rounded-lg">
         <p className="text-xs font-medium text-foreground mb-2">
-          Image Guidelines:
+          Pautas de Imagen:
         </p>
         <ul className="text-xs text-muted-foreground space-y-1">
-          <li>• Aspect ratio: 16:9 (e.g., 1920x1080px)</li>
-          <li>• Max file size: 5MB</li>
-          <li>• Formats: PNG, JPG, JPEG, WebP</li>
-          <li>• High quality images recommended</li>
+          <li>• Proporción de aspecto: 16:9 (ej., 1920x1080px)</li>
+          <li>• Tamaño máximo por imagen: 5MB</li>
+          <li>• Formatos: PNG, JPG, JPEG, WebP</li>
+          <li>• Se recomiendan imágenes de alta calidad</li>
+          <li>• La primera imagen se mostrará en las listas de búsqueda</li>
         </ul>
       </div>
     </div>

@@ -15,6 +15,27 @@ import { type Discount, type Store } from "@/domains/admin/types";
 import { DiscountSection } from "./DiscountSection";
 import { StoreImageUpload } from "./StoreImageUpload";
 
+// Mapping for Spanish day labels
+const DAY_LABELS: Record<string, string> = {
+  monday: "Lunes",
+  tuesday: "Martes",
+  wednesday: "Miércoles",
+  thursday: "Jueves",
+  friday: "Viernes",
+  saturday: "Sábado",
+  sunday: "Domingo",
+};
+
+// Utility function to convert 24-hour time to 12-hour AM/PM format
+function convertTo12Hour(time24: string): string {
+  const parts = time24.split(":");
+  const hours = parseInt(parts[0] || "0", 10);
+  const minutes = parseInt(parts[1] || "0", 10);
+  const period = hours >= 12 ? "PM" : "AM";
+  const hours12 = hours % 12 || 12;
+  return `${hours12}:${minutes.toString().padStart(2, "0")} ${period}`;
+}
+
 interface Props {
   store: Store;
   discount?: Discount | null;
@@ -35,15 +56,15 @@ export const StoreInfo = ({
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* Basic Information */}
-      <div className="bg-card rounded-lg shadow p-6 lg:col-span-2">
+      <div className="bg-card rounded-lg shadow p-6">
         <h2 className="text-xl font-semibold text-foreground mb-4">
-          Basic Information
+          Información Básica
         </h2>
         <div className="space-y-4">
           {store.description ? (
             <div>
               <p className="text-sm font-medium text-muted-foreground">
-                Description
+                Descripción
               </p>
               <p className="text-foreground mt-1">{store.description}</p>
             </div>
@@ -52,7 +73,7 @@ export const StoreInfo = ({
             <MapPin className="w-5 h-5 text-muted-foreground mt-0.5" />
             <div>
               <p className="text-sm font-medium text-muted-foreground">
-                Address
+                Dirección
               </p>
               <p className="text-foreground">
                 {store.address}, {store.city}
@@ -69,7 +90,7 @@ export const StoreInfo = ({
               <Phone className="w-5 h-5 text-muted-foreground" />
               <div>
                 <p className="text-sm font-medium text-muted-foreground">
-                  Phone
+                  Teléfono
                 </p>
                 <p className="text-foreground">{store.phoneNumber}</p>
               </div>
@@ -80,7 +101,7 @@ export const StoreInfo = ({
               <Globe className="w-5 h-5 text-muted-foreground" />
               <div>
                 <p className="text-sm font-medium text-muted-foreground">
-                  Website
+                  Sitio Web
                 </p>
                 <a
                   href={store.url}
@@ -97,7 +118,7 @@ export const StoreInfo = ({
             <DollarSign className="w-5 h-5 text-muted-foreground" />
             <div>
               <p className="text-sm font-medium text-muted-foreground">
-                Price Range
+                Rango de Precio
               </p>
               <p className="text-foreground capitalize">
                 {store.price} ({PRICE_SYMBOLS[store.price]})
@@ -109,7 +130,7 @@ export const StoreInfo = ({
               <Tag className="w-5 h-5 text-muted-foreground mt-0.5" />
               <div>
                 <p className="text-sm font-medium text-muted-foreground">
-                  Tags
+                  Etiquetas
                 </p>
                 <p className="text-foreground">{store.tags}</p>
               </div>
@@ -119,16 +140,16 @@ export const StoreInfo = ({
             <MapPin className="w-5 h-5 text-muted-foreground" />
             <div>
               <p className="text-sm font-medium text-muted-foreground">
-                Store PIN
+                PIN de Tienda
               </p>
               {store.pin ? (
                 <p className="text-foreground">
                   {showPin ? store.pin : "••••"}
                   <button
-                    onClick={() => setShowPin((prev) => !prev)}
+                    onClick={() => setShowPin((prev: boolean) => !prev)}
                     className="ml-3 text-sm text-primary hover:underline"
                   >
-                    {showPin ? "Hide" : "Show"}
+                    {showPin ? "Ocultar" : "Mostrar"}
                   </button>
                 </p>
               ) : (
@@ -142,7 +163,7 @@ export const StoreInfo = ({
                         onClick={() => onGeneratePin()}
                         className="text-sm text-primary hover:underline"
                       >
-                        Generate PIN
+                        Generar PIN
                       </button>
                     </>
                   )}
@@ -157,27 +178,37 @@ export const StoreInfo = ({
       <StoreImageUpload
         storeId={store.id}
         storeName={store.name}
-        currentImageUrl={store.imageUrl}
+        imageUrl={store.imageUrl}
+        image1Url={store.image1Url}
+        image2Url={store.image2Url}
+        image3Url={store.image3Url}
       />
 
       {/* Opening Hours */}
-      {store.openDays ? (
+      {store.openDays &&
+      store.openDays.availableDays &&
+      store.openDays.availableDays.length > 0 ? (
         <div className="bg-card rounded-lg shadow p-6 lg:col-span-3">
           <h2 className="text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
             <Clock className="w-5 h-5 text-muted-foreground" />
-            Opening Hours
+            Horario de Apertura
           </h2>
           <div className="space-y-3">
-            {store.openDays.availableDays.map((day, index) => (
-              <div key={index} className="flex justify-between">
-                <span className="font-medium text-foreground capitalize">
-                  {day.day}
-                </span>
-                <span className="text-muted-foreground">
-                  {day.closed ? "Closed" : `${day.startTime} - ${day.endTime}`}
-                </span>
-              </div>
-            ))}
+            {store.openDays.availableDays.map((day, index) => {
+              const dayLabel = DAY_LABELS[day.day.toLowerCase()] || day.day;
+              return (
+                <div key={index} className="flex justify-between">
+                  <span className="font-medium text-foreground">
+                    {dayLabel}
+                  </span>
+                  <span className="text-muted-foreground">
+                    {day.closed
+                      ? "Cerrado"
+                      : `${convertTo12Hour(day.startTime)} - ${convertTo12Hour(day.endTime)}`}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         </div>
       ) : null}
@@ -204,17 +235,19 @@ export const StoreInfo = ({
 
       {/* Metadata */}
       <div className="bg-card rounded-lg shadow p-6 lg:col-span-3">
-        <h2 className="text-xl font-semibold text-foreground mb-4">Metadata</h2>
+        <h2 className="text-xl font-semibold text-foreground mb-4">
+          Metadatos
+        </h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div>
             <p className="text-sm font-medium text-muted-foreground">
-              Store ID
+              ID de Tienda
             </p>
             <p className="text-foreground text-sm font-mono">{store.id}</p>
           </div>
           <div>
             <p className="text-sm font-medium text-muted-foreground">
-              Category ID
+              ID de Categoría
             </p>
             <p className="text-foreground text-sm font-mono">
               {store.categoryId}
@@ -222,7 +255,7 @@ export const StoreInfo = ({
           </div>
           <div>
             <p className="text-sm font-medium text-muted-foreground">
-              Created At
+              Creado el
             </p>
             <p className="text-foreground text-sm">
               {new Date(store.createdAt).toLocaleDateString()}
@@ -230,7 +263,7 @@ export const StoreInfo = ({
           </div>
           <div>
             <p className="text-sm font-medium text-muted-foreground">
-              Updated At
+              Actualizado el
             </p>
             <p className="text-foreground text-sm">
               {new Date(store.updatedAt).toLocaleDateString()}
