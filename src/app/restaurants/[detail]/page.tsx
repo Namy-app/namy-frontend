@@ -13,6 +13,7 @@ import {
   MessageCircle,
   ChevronLeft,
   ChevronRight,
+  X,
 } from "lucide-react";
 import Image from "next/image";
 import { useRouter, useParams } from "next/navigation";
@@ -62,6 +63,21 @@ const DAY_LABELS: Record<string, string> = {
   saturday: "Sábado",
   sunday: "Domingo",
 };
+
+// Get current day of the week in lowercase English
+function getCurrentDayOfWeek(): string {
+  const days = [
+    "sunday",
+    "monday",
+    "tuesday",
+    "wednesday",
+    "thursday",
+    "friday",
+    "saturday",
+  ];
+  const today = new Date();
+  return days[today.getDay()] || "";
+}
 
 // Catalog Carousel Component
 const CatalogCarousel = ({
@@ -200,6 +216,7 @@ export default function RestaurantDetailPage(): React.JSX.Element {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
   const [showVideoAd, setShowVideoAd] = useState(false);
+  const [showAllHours, setShowAllHours] = useState(false);
   const [adsWatched, setAdsWatched] = useState(0);
   const [totalAdsRequired] = useState(2);
   const [showUnlockModal, setShowUnlockModal] = useState(false);
@@ -1077,23 +1094,40 @@ export default function RestaurantDetailPage(): React.JSX.Element {
                         <Clock className="w-5 h-5 text-rose-500 mt-0.5 shrink-0" />
                         <div className="flex-1">
                           <p className="font-semibold text-foreground mb-3">
-                            Hours
+                            Horario de Hoy
                           </p>
                           <div className="space-y-2">
-                            {parsedStore.hoursStructured.map((item, index) => (
-                              <div
-                                key={index}
-                                className="flex justify-between text-sm"
-                              >
-                                <span className="font-medium text-foreground capitalize">
-                                  {item.day}
-                                </span>
-                                <span className="text-muted-foreground">
-                                  {item.hours}
-                                </span>
-                              </div>
-                            ))}
+                            {(() => {
+                              const currentDay = getCurrentDayOfWeek();
+                              const todayHours =
+                                parsedStore.hoursStructured.find(
+                                  (item) =>
+                                    item.day.toLowerCase() ===
+                                    DAY_LABELS[currentDay]?.toLowerCase()
+                                );
+
+                              return todayHours ? (
+                                <div className="flex justify-between text-sm">
+                                  <span className="font-medium text-foreground">
+                                    {todayHours.day}
+                                  </span>
+                                  <span className="text-muted-foreground">
+                                    {todayHours.hours}
+                                  </span>
+                                </div>
+                              ) : (
+                                <p className="text-sm text-muted-foreground">
+                                  No hay horario para hoy
+                                </p>
+                              );
+                            })()}
                           </div>
+                          <button
+                            onClick={() => setShowAllHours(true)}
+                            className="mt-3 text-sm text-primary hover:text-primary/80 transition-colors underline"
+                          >
+                            Ver todos los horarios
+                          </button>
                         </div>
                       </div>
 
@@ -1367,6 +1401,86 @@ export default function RestaurantDetailPage(): React.JSX.Element {
         discountPercentage={parsedStore?.discount.percentage ?? 10}
         points={parsedStore?.discount.points ?? 0}
       />
+
+      {/* All Hours Modal */}
+      {showAllHours && parsedStore?.hoursStructured ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          onClick={() => setShowAllHours(false)}
+        >
+          <div
+            className="bg-card rounded-lg shadow-xl max-w-md w-full"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between p-6 border-b border-border">
+              <div className="flex items-center gap-3">
+                <Clock className="w-6 h-6 text-primary" />
+                <h2 className="text-xl font-bold text-foreground">
+                  Horario de Apertura
+                </h2>
+              </div>
+              <button
+                onClick={() => setShowAllHours(false)}
+                className="p-2 hover:bg-muted rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Hours List */}
+            <div className="p-6 space-y-3 max-h-[60vh] overflow-y-auto">
+              {parsedStore.hoursStructured.map((item, index) => {
+                const currentDay = getCurrentDayOfWeek();
+                const isToday =
+                  item.day.toLowerCase() ===
+                  DAY_LABELS[currentDay]?.toLowerCase();
+
+                return (
+                  <div
+                    key={index}
+                    className={`flex justify-between p-3 rounded-lg transition-colors ${
+                      isToday
+                        ? "bg-primary/10 border-2 border-primary"
+                        : "bg-muted/50"
+                    }`}
+                  >
+                    <span
+                      className={`font-medium ${
+                        isToday ? "text-primary" : "text-foreground"
+                      }`}
+                    >
+                      {item.day}
+                      {isToday ? <span className="ml-2 text-xs font-semibold">
+                          (Hoy)
+                        </span> : null}
+                    </span>
+                    <span
+                      className={
+                        isToday
+                          ? "text-primary font-medium"
+                          : "text-muted-foreground"
+                      }
+                    >
+                      {item.hours}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Footer */}
+            <div className="p-6 border-t border-border">
+              <button
+                onClick={() => setShowAllHours(false)}
+                className="w-full px-4 py-3 bg-primary text-primary-foreground font-semibold rounded-lg hover:opacity-90 transition-colors"
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {/* Catalog Image Modal */}
       {selectedCatalogImage ? (
