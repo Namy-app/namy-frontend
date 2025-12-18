@@ -30,10 +30,13 @@ export function BottomNavigation(): React.JSX.Element {
             <path d="m16.24 7.76-1.804 5.411a2 2 0 0 1-1.265 1.265L7.76 16.24l1.804-5.411a2 2 0 0 1 1.265-1.265z" />
             <circle cx="12" cy="12" r="10" />
           </svg>
-          <span className="text-xs font-medium">Explore</span>
+          <span className="text-xs font-medium">Explorar</span>
         </button>
 
-        <button className="flex flex-col items-center justify-center gap-1 px-6 py-2 transition-all rounded-lg text-muted-foreground hover:text-foreground hover:scale-105">
+        <button
+          onClick={() => router.push("/coming-soon?feature=Top Ñamy")}
+          className="flex flex-col items-center justify-center gap-1 px-6 py-2 transition-all rounded-lg text-muted-foreground hover:text-foreground hover:scale-105"
+        >
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="24"
@@ -56,7 +59,10 @@ export function BottomNavigation(): React.JSX.Element {
           <span className="text-xs font-medium">Top Ñamy</span>
         </button>
 
-        <button className="flex flex-col items-center justify-center gap-1 px-6 py-2 transition-all rounded-lg text-muted-foreground hover:text-foreground hover:scale-105">
+        <button
+          onClick={() => router.push("/coming-soon?feature=Mural")}
+          className="flex flex-col items-center justify-center gap-1 px-6 py-2 transition-all rounded-lg text-muted-foreground hover:text-foreground hover:scale-105"
+        >
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="24"
@@ -95,7 +101,7 @@ export function BottomNavigation(): React.JSX.Element {
             <path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1" />
             <path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4" />
           </svg>
-          <span className="text-xs font-medium">Wallet</span>
+          <span className="text-xs font-medium">Billetera</span>
         </button>
       </div>
     </nav>

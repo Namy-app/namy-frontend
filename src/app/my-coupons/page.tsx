@@ -125,8 +125,8 @@ export default function MyCouponsPage(): React.JSX.Element {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: "My Coupon",
-          text: `Redeem this coupon: ${coupon.code}`,
+          title: "Mi Cupón",
+          text: `Canjea este cupón: ${coupon.code}`,
           url: coupon.url,
         });
       } catch (err) {
@@ -269,12 +269,12 @@ export default function MyCouponsPage(): React.JSX.Element {
             <div className="pt-16 pb-4 max-w-2xl mx-auto px-4">
               <div className="flex items-center justify-between">
                 <h1 className="text-2xl font-bold text-foreground">
-                  My Coupons
+                  Mis Cupones
                 </h1>
                 <div className="bg-primary/10 px-3 py-1 rounded-full">
                   <span className="text-sm font-semibold text-primary">
                     {filteredCoupons.length}{" "}
-                    {filteredCoupons.length === 1 ? "Coupon" : "Coupons"}
+                    {filteredCoupons.length === 1 ? "Cupón" : "Cupones"}
                   </span>
                 </div>
               </div>

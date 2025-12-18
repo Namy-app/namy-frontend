@@ -95,7 +95,7 @@ export default function Home() {
           />
 
           {/* Carousel */}
-          <div className="relative w-full max-w-2xl">
+          <div className="relative w-full max-w-2xl pb-12">
             <div
               ref={containerRef}
               className="overflow-hidden cursor-grab active:cursor-grabbing"
@@ -145,7 +145,7 @@ export default function Home() {
             </div>
 
             {/* Carousel Indicators */}
-            <div className="flex gap-2 mt-8 justify-center">
+            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 flex gap-2 justify-center">
               {slides.map((_, index) => (
                 <button
                   key={index}

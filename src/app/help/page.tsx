@@ -81,29 +81,29 @@ const faqCategories: FAQCategory[] = [
       },
     ],
   },
-  {
-    id: "gamification",
-    title: "Puntos y Gamificación",
-    icon: <Gift className="h-6 w-6" />,
-    color: "text-accent",
-    items: [
-      {
-        question: "¿Cómo gano puntos Ñamy?",
-        answer:
-          "Ganas puntos por usar los descuentos, completar tu racha diaria, y realizar compras en restaurantes asociados. Los puntos se acumulan y te ayudan a subir de nivel.",
-      },
-      {
-        question: "¿Qué es la racha diaria?",
-        answer:
-          "La racha diaria es un sistema de gamificación que te recompensa por usar la app diariamente. Cada día que uses un descuento, sumas un día a tu racha y ganas puntos bonus.",
-      },
-      {
-        question: "¿Qué es el sistema de niveles y suscripciones premium?",
-        answer:
-          "Conforme acumulas puntos, subes de nivel desbloqueando nuevos beneficios. La suscripción premium te otorga descuentos más altos (hasta 15%) y acceso a promociones exclusivas.",
-      },
-    ],
-  },
+  // {
+  //   id: "gamification",
+  //   title: "Puntos y Gamificación",
+  //   icon: <Gift className="h-6 w-6" />,
+  //   color: "text-accent",
+  //   items: [
+  //     {
+  //       question: "¿Cómo gano puntos Ñamy?",
+  //       answer:
+  //         "Ganas puntos por usar los descuentos, completar tu racha diaria, y realizar compras en restaurantes asociados. Los puntos se acumulan y te ayudan a subir de nivel.",
+  //     },
+  //     {
+  //       question: "¿Qué es la racha diaria?",
+  //       answer:
+  //         "La racha diaria es un sistema de gamificación que te recompensa por usar la app diariamente. Cada día que uses un descuento, sumas un día a tu racha y ganas puntos bonus.",
+  //     },
+  //     {
+  //       question: "¿Qué es el sistema de niveles y suscripciones premium?",
+  //       answer:
+  //         "Conforme acumulas puntos, subes de nivel desbloqueando nuevos beneficios. La suscripción premium te otorga descuentos más altos (hasta 15%) y acceso a promociones exclusivas.",
+  //     },
+  //   ],
+  // },
   {
     id: "discounts",
     title: "Descuentos y Restricciones",
@@ -240,7 +240,7 @@ export default function HelpPage(): React.JSX.Element {
         )}
 
         {/* Support Section */}
-        {filteredCategories.length === faqCategories.length &&
+        {/* {filteredCategories.length === faqCategories.length &&
           searchQuery === "" && (
             <div className="mt-8 px-6 max-w-5xl mx-auto">
               <Card className="p-6 bg-card rounded-2xl shadow-md border-border">
@@ -266,7 +266,7 @@ export default function HelpPage(): React.JSX.Element {
                 </div>
               </Card>
             </div>
-          )}
+          )} */}
       </div>
     </BasicLayout>
   );

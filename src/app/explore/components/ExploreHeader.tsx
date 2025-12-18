@@ -94,7 +94,7 @@ export function ExploreHeader({
         </button>
 
         <div className="flex-1 flex justify-end gap-3">
-          <button
+          {/* <button
             className="p-2 hover:bg-accent rounded-full transition-colors"
             aria-label="Notificaciones"
           >
@@ -113,7 +113,7 @@ export function ExploreHeader({
               <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
               <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
             </svg>
-          </button>
+          </button> */}
 
           {/* User Dropdown */}
           {isAuthenticated ? (
@@ -168,7 +168,7 @@ export function ExploreHeader({
                     </p>
                     {user?.isPremium && user?.premiumEndDate ? (
                       <p className="text-[10px] text-yellow-600 mt-1">
-                        Premium until{" "}
+                        Premium hasta{" "}
                         {new Date(user.premiumEndDate).toLocaleDateString()}
                       </p>
                     ) : null}
@@ -185,7 +185,7 @@ export function ExploreHeader({
                     >
                       <Ticket className="w-4 h-4 text-primary" />
                       <span className="text-sm font-medium text-foreground">
-                        My Coupons
+                        Mis Cupones
                       </span>
                     </button>
 
@@ -198,7 +198,7 @@ export function ExploreHeader({
                     >
                       <Crown className="w-4 h-4 text-yellow-500 group-hover:text-orange-500 transition-colors" />
                       <span className="text-sm font-medium text-foreground">
-                        Premium Membership
+                        Membresía Premium
                       </span>
                     </button>
 
@@ -211,7 +211,7 @@ export function ExploreHeader({
                     >
                       <Settings className="w-4 h-4 text-muted-foreground" />
                       <span className="text-sm font-medium text-foreground">
-                        Settings
+                        Configuración
                       </span>
                     </button>
 
@@ -239,7 +239,7 @@ export function ExploreHeader({
                           <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
                         </svg>
                         <span className="text-sm font-medium text-primary">
-                          Admin Dashboard
+                          Panel de Administración
                         </span>
                       </button>
                     )}
@@ -252,7 +252,7 @@ export function ExploreHeader({
                     >
                       <LogOut className="w-4 h-4 text-destructive" />
                       <span className="text-sm font-medium text-destructive">
-                        Logout
+                        Cerrar Sesión
                       </span>
                     </button>
                   </div>
@@ -264,7 +264,7 @@ export function ExploreHeader({
               onClick={() => router.push("/auth")}
               className="px-4 py-1.5 bg-primary text-primary-foreground rounded-full text-sm font-semibold hover:opacity-90 transition-opacity"
             >
-              Sign In
+              Iniciar Sesión
             </button>
           )}
         </div>

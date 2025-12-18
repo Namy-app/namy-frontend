@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { useRouter, useParams } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 import { CongratulationsModal } from "@/components/CongratulationsModal";
 import { DiscountSuccessModal } from "@/components/DiscountSuccessModal";
@@ -42,6 +42,105 @@ import { Button } from "@/shared/components/Button";
 import { Card } from "@/shared/components/Card";
 import { useAuthStore } from "@/store/useAuthStore";
 
+// Utility function to convert 24-hour time to 12-hour AM/PM format
+function convertTo12Hour(time24: string): string {
+  const parts = time24.split(":");
+  const hours = parseInt(parts[0] || "0", 10);
+  const minutes = parseInt(parts[1] || "0", 10);
+  const period = hours >= 12 ? "PM" : "AM";
+  const hours12 = hours % 12 || 12;
+  return `${hours12}:${minutes.toString().padStart(2, "0")} ${period}`;
+}
+
+// Catalog Carousel Component
+const CatalogCarousel = ({
+  images,
+  catalogName,
+  onImageClick,
+}: {
+  images: string[];
+  catalogName: string;
+  onImageClick: (url: string) => void;
+}) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  const goToPrevious = () => {
+    setCurrentIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+  };
+
+  const goToNext = () => {
+    setCurrentIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+  };
+
+  if (images.length === 0) return null;
+
+  return (
+    <div className="relative">
+      {/* Main Image */}
+      <div className="relative aspect-[16/9] rounded-xl overflow-hidden shadow-lg bg-muted">
+        <Image
+          src={images[currentIndex] || ""}
+          alt={`${catalogName} - Image ${currentIndex + 1}`}
+          fill
+          className="object-cover cursor-pointer"
+          unoptimized
+          onClick={() => onImageClick(images[currentIndex] || "")}
+        />
+
+        {/* Navigation Arrows */}
+        {images.length > 1 && (
+          <>
+            <button
+              onClick={goToPrevious}
+              className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors z-10"
+              aria-label="Previous image"
+            >
+              <ChevronLeft className="w-6 h-6" />
+            </button>
+            <button
+              onClick={goToNext}
+              className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors z-10"
+              aria-label="Next image"
+            >
+              <ChevronRight className="w-6 h-6" />
+            </button>
+          </>
+        )}
+
+        {/* Image Counter */}
+        <div className="absolute bottom-4 right-4 bg-black/50 text-white px-3 py-1 rounded-full text-sm font-medium">
+          {currentIndex + 1} / {images.length}
+        </div>
+      </div>
+
+      {/* Thumbnail Strip */}
+      {images.length > 1 && (
+        <div className="mt-4 flex gap-2 overflow-x-auto pb-2">
+          {images.map((image, index) => (
+            <button
+              key={index}
+              onClick={() => setCurrentIndex(index)}
+              className={`relative flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all ${
+                index === currentIndex
+                  ? "border-primary scale-105"
+                  : "border-transparent opacity-60 hover:opacity-100"
+              }`}
+            >
+              <Image
+                src={image}
+                alt={`Thumbnail ${index + 1}`}
+                fill
+                className="object-cover"
+                unoptimized
+              />
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 // Restaurant type definition
 interface Restaurant {
   id: string;
@@ -58,6 +157,7 @@ interface Restaurant {
     restrictions: string[];
   };
   hours: string;
+  hoursStructured?: Array<{ day: string; hours: string }>;
   location: {
     address: string;
     city: string;
@@ -96,6 +196,20 @@ export default function RestaurantDetailPage(): React.JSX.Element {
   const [selectedCatalogImage, setSelectedCatalogImage] = useState<
     string | null
   >(null);
+
+  // Prevent body scroll when modal is open
+  useEffect(() => {
+    if (selectedCatalogImage) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+
+    // Cleanup function to reset overflow when component unmounts
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [selectedCatalogImage]);
 
   const { data: userLevel } = useMyLevel();
   const { data: wallet } = useWallet({ userId: user?.id });
@@ -157,10 +271,115 @@ export default function RestaurantDetailPage(): React.JSX.Element {
         },
         hours:
           store.openDays && typeof store.openDays === "object"
-            ? Object.entries(store.openDays as Record<string, unknown>)
-                .map(([day, hours]) => `${day}: ${String(hours)}`)
-                .join(", ") || "Hours not available"
+            ? (() => {
+                // Check if it's the availableDays array format
+                if (
+                  "availableDays" in store.openDays &&
+                  Array.isArray(store.openDays.availableDays) &&
+                  store.openDays.availableDays.length > 0
+                ) {
+                  return store.openDays.availableDays
+                    .map(
+                      (day: {
+                        day: string;
+                        closed?: boolean;
+                        startTime?: string;
+                        endTime?: string;
+                      }) =>
+                        day.closed
+                          ? `${day.day}: Closed`
+                          : `${day.day}: ${day.startTime} - ${day.endTime}`
+                    )
+                    .join(", ");
+                }
+
+                // Otherwise, it's the old format with day keys directly
+                const daysOfWeek = [
+                  "monday",
+                  "tuesday",
+                  "wednesday",
+                  "thursday",
+                  "friday",
+                  "saturday",
+                  "sunday",
+                ];
+                const openDaysObj = store.openDays as Record<
+                  string,
+                  { open?: string; close?: string }
+                >;
+                const formattedHours = daysOfWeek
+                  .filter((day) => day in openDaysObj && openDaysObj[day])
+                  .map((day) => {
+                    const hours = openDaysObj[day];
+                    const dayName = day.charAt(0).toUpperCase() + day.slice(1);
+                    if (hours && hours.open && hours.close) {
+                      return `${dayName}: ${hours.open} - ${hours.close}`;
+                    }
+                    return null;
+                  })
+                  .filter(Boolean)
+                  .join(", ");
+
+                return formattedHours || "Hours not available";
+              })()
             : "Hours not available",
+        hoursStructured:
+          store.openDays && typeof store.openDays === "object"
+            ? (() => {
+                // Check if it's the availableDays array format
+                if (
+                  "availableDays" in store.openDays &&
+                  Array.isArray(store.openDays.availableDays) &&
+                  store.openDays.availableDays.length > 0
+                ) {
+                  return store.openDays.availableDays.map(
+                    (day: {
+                      day: string;
+                      closed?: boolean;
+                      startTime?: string;
+                      endTime?: string;
+                    }) => ({
+                      day: day.day,
+                      hours: day.closed
+                        ? "Closed"
+                        : `${convertTo12Hour(day.startTime || "")} - ${convertTo12Hour(day.endTime || "")}`,
+                    })
+                  );
+                }
+
+                // Otherwise, it's the old format with day keys directly
+                const daysOfWeek = [
+                  "monday",
+                  "tuesday",
+                  "wednesday",
+                  "thursday",
+                  "friday",
+                  "saturday",
+                  "sunday",
+                ];
+                const openDaysObj = store.openDays as Record<
+                  string,
+                  { open?: string; close?: string }
+                >;
+                return daysOfWeek
+                  .filter((day) => day in openDaysObj && openDaysObj[day])
+                  .map((day) => {
+                    const hours = openDaysObj[day];
+                    const dayName = day.charAt(0).toUpperCase() + day.slice(1);
+                    if (hours && hours.open && hours.close) {
+                      return {
+                        day: dayName,
+                        hours: `${convertTo12Hour(hours.open)} - ${convertTo12Hour(hours.close)}`,
+                      };
+                    }
+                    return null;
+                  })
+                  .filter(
+                    (item): item is { day: string; hours: string } =>
+                      item !== null
+                  );
+              })()
+            : undefined,
         location: {
           address: store.address || "Address not available",
           city: store.city || "City not available",
@@ -170,10 +389,10 @@ export default function RestaurantDetailPage(): React.JSX.Element {
         phone: store.phoneNumber || "Phone not available",
         images: (() => {
           const allImages = [
+            store.imageUrl, // Main image first
             store.image1Url,
             store.image2Url,
             store.image3Url,
-            store.imageUrl, // Fallback to old imageUrl field
           ].filter((url): url is string => !!url && url.trim() !== "");
           return allImages.length > 0
             ? allImages
@@ -420,8 +639,8 @@ export default function RestaurantDetailPage(): React.JSX.Element {
 
       if (data?.generateCoupon) {
         toast({
-          title: "Coupon created",
-          description: "Coupon added to My Coupons.",
+          title: "Cupón creado",
+          description: "Cupón agregado a Mis Cupones.",
         });
         // Ensure coupons cache is refreshed so UI shows the new coupon
         try {
@@ -524,8 +743,8 @@ export default function RestaurantDetailPage(): React.JSX.Element {
 
       if (data?.quickPayForDiscount) {
         toast({
-          title: "Payment successful!",
-          description: "Coupon added to My Coupons.",
+          title: "¡Pago exitoso!",
+          description: "Cupón agregado a Mis Cupones.",
         });
         try {
           void queryClient.invalidateQueries({ queryKey: ["coupons"] });
@@ -676,8 +895,8 @@ export default function RestaurantDetailPage(): React.JSX.Element {
         </div>
       ) : (
         <div className="pt-8 pb-16">
-          <div className="mx-auto max-w-6xl px-4">
-            <div className="relative h-96 md:h-[520px] rounded-2xl overflow-hidden shadow-2xl">
+          <div className="mx-auto max-w-6xl px-4 pt-6">
+            <div className="relative h-96 md:h-130 rounded-2xl overflow-hidden shadow-2xl">
               <Image
                 src={parsedStore.images[currentImageIndex] ?? ""}
                 alt={parsedStore.name}
@@ -827,15 +1046,30 @@ export default function RestaurantDetailPage(): React.JSX.Element {
                 </div>
 
                 <Card className="p-6 space-y-4 bg-white border border-[#f1e9e6] rounded-xl shadow-md">
-                  {parsedStore.hours ? (
+                  {parsedStore.hoursStructured &&
+                  parsedStore.hoursStructured.length > 0 ? (
                     <>
                       <div className="flex items-start gap-3">
                         <Clock className="w-5 h-5 text-rose-500 mt-0.5 shrink-0" />
-                        <div>
-                          <p className="font-semibold text-foreground">Hours</p>
-                          <p className="text-sm text-muted-foreground">
-                            {parsedStore.hours}
+                        <div className="flex-1">
+                          <p className="font-semibold text-foreground mb-3">
+                            Hours
                           </p>
+                          <div className="space-y-2">
+                            {parsedStore.hoursStructured.map((item, index) => (
+                              <div
+                                key={index}
+                                className="flex justify-between text-sm"
+                              >
+                                <span className="font-medium text-foreground capitalize">
+                                  {item.day}
+                                </span>
+                                <span className="text-muted-foreground">
+                                  {item.hours}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       </div>
 
@@ -891,9 +1125,10 @@ export default function RestaurantDetailPage(): React.JSX.Element {
                   ) : null}
                 </Card>
 
-                {catalogs && catalogs.length > 0 ? (
+                {catalogs && catalogs.length > 0 && catalogs[0] ? (
                   <div>
-                    {catalogs.map((catalog) => {
+                    {(() => {
+                      const catalog = catalogs[0]; // Only one catalog per store
                       const catalogImages = [
                         catalog.image1Url,
                         catalog.image2Url,
@@ -912,7 +1147,7 @@ export default function RestaurantDetailPage(): React.JSX.Element {
                         catalog.name.charAt(0).toUpperCase() +
                         catalog.name.slice(1).toLowerCase();
                       return (
-                        <div key={catalog.id} className="mb-8">
+                        <div className="mb-8">
                           <h2 className="text-2xl font-bold text-foreground mb-2">
                             📚 {sentenceCaseName}
                           </h2>
@@ -921,28 +1156,14 @@ export default function RestaurantDetailPage(): React.JSX.Element {
                               {catalog.description}
                             </p>
                           ) : null}
-                          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                            {catalogImages.map((imageUrl, index) => (
-                              <div
-                                key={index}
-                                className="relative aspect-square rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-shadow group cursor-pointer"
-                                onClick={() =>
-                                  setSelectedCatalogImage(imageUrl)
-                                }
-                              >
-                                <Image
-                                  src={imageUrl}
-                                  alt={`${catalog.name} - Image ${index + 1}`}
-                                  fill
-                                  className="object-cover group-hover:scale-105 transition-transform duration-300"
-                                  unoptimized
-                                />
-                              </div>
-                            ))}
-                          </div>
+                          <CatalogCarousel
+                            images={catalogImages}
+                            catalogName={catalog.name}
+                            onImageClick={setSelectedCatalogImage}
+                          />
                         </div>
                       );
-                    })}
+                    })()}
                   </div>
                 ) : null}
 
@@ -1126,39 +1347,39 @@ export default function RestaurantDetailPage(): React.JSX.Element {
       {/* Catalog Image Modal */}
       {selectedCatalogImage ? (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+          className="fixed inset-0 z-50 bg-black/80 overflow-y-auto"
           onClick={() => setSelectedCatalogImage(null)}
         >
-          <div className="relative max-w-5xl max-h-[90vh] w-full h-full flex items-center justify-center">
-            <button
-              onClick={() => setSelectedCatalogImage(null)}
-              className="absolute top-4 right-4 z-10 p-2 rounded-full bg-black/50 hover:bg-black/70 text-white transition-colors"
-              aria-label="Close"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
+          <div className="min-h-screen flex items-center justify-center p-4">
+            <div className="relative max-w-5xl w-full">
+              <button
+                onClick={() => setSelectedCatalogImage(null)}
+                className="sticky top-4 left-full ml-4 z-10 p-2 rounded-full bg-black/50 hover:bg-black/70 text-white transition-colors"
+                aria-label="Close"
               >
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
-            </button>
-            <div className="relative w-full h-full flex items-center justify-center">
-              <Image
-                src={selectedCatalogImage}
-                alt="Catalog image"
-                fill
-                className="object-contain"
-                unoptimized
-                onClick={(e: React.MouseEvent) => e.stopPropagation()}
-              />
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+              <div className="relative w-full">
+                <img
+                  src={selectedCatalogImage}
+                  alt="Catalog image"
+                  className="w-full h-auto"
+                  onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                />
+              </div>
             </div>
           </div>
         </div>

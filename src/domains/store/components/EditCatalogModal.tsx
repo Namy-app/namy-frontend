@@ -4,6 +4,16 @@ import { useState } from "react";
 import { useUpdateCatalog, type Catalog } from "@/domains/admin";
 import { useToast } from "@/hooks/use-toast";
 import { useAuthStore } from "@/store/useAuthStore";
+import { compressImage, formatFileSize, validateImageFile } from "@/lib/image-utils";
+
+interface ImageUploadProgress {
+  slot: number;
+  status: "pending" | "compressing" | "uploading" | "completed" | "error";
+  progress: number;
+  originalSize?: number;
+  compressedSize?: number;
+  error?: string;
+}
 
 // Edit Catalog Modal
 export const EditCatalogModal = ({
@@ -52,8 +62,10 @@ export const EditCatalogModal = ({
     preview9: catalog.image9Url,
     preview10: catalog.image10Url,
   });
+  const [uploadProgress, setUploadProgress] = useState<ImageUploadProgress[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
 
-  const handleImageSelect = (
+  const handleImageSelect = async (
     slot: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10,
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
@@ -62,40 +74,60 @@ export const EditCatalogModal = ({
       return;
     }
 
-    // Validate file type
-    if (!file.type.startsWith("image/")) {
+    // Validate file using utility function
+    const validation = validateImageFile(file, { maxSizeMB: 5 });
+    if (!validation.valid) {
       toast({
         variant: "destructive",
-        title: "Invalid file type",
-        description: "Please select an image file (PNG, JPG, WebP)",
+        title: "Invalid file",
+        description: validation.error,
       });
       return;
     }
 
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
+    try {
+      // Show compression status
       toast({
-        variant: "destructive",
-        title: "File too large",
-        description: "Please select an image smaller than 5MB",
+        title: "Compressing image...",
+        description: `Original size: ${formatFileSize(file.size)}`,
       });
-      return;
-    }
 
-    // Store file and create preview
-    setSelectedFiles((prev: typeof selectedFiles) => ({
-      ...prev,
-      [`file${slot}`]: file,
-    }));
+      // Compress image before storing
+      const compressedFile = await compressImage(file, {
+        maxWidth: 1920,
+        maxHeight: 1920,
+        quality: 0.85,
+        maxSizeMB: 1,
+      });
 
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setImagePreviews((prev: typeof imagePreviews) => ({
+      // Show compression result
+      const compressionRatio = ((1 - compressedFile.size / file.size) * 100).toFixed(0);
+      toast({
+        title: "Image compressed",
+        description: `Reduced by ${compressionRatio}% to ${formatFileSize(compressedFile.size)}`,
+      });
+
+      // Store compressed file and create preview
+      setSelectedFiles((prev: typeof selectedFiles) => ({
         ...prev,
-        [`preview${slot}`]: reader.result as string,
+        [`file${slot}`]: compressedFile,
       }));
-    };
-    reader.readAsDataURL(file);
+
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreviews((prev: typeof imagePreviews) => ({
+          ...prev,
+          [`preview${slot}`]: reader.result as string,
+        }));
+      };
+      reader.readAsDataURL(compressedFile);
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Compression failed",
+        description: error instanceof Error ? error.message : "Failed to compress image",
+      });
+    }
   };
 
   const removeImage = (slot: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10) => {
@@ -109,8 +141,87 @@ export const EditCatalogModal = ({
     }));
   };
 
+  // Upload individual image with progress tracking
+  const uploadSingleImage = async (
+    file: File,
+    slot: number,
+    token: string,
+    baseUrl: string
+  ): Promise<string> => {
+    setUploadProgress((prev) => [
+      ...prev.filter((p) => p.slot !== slot),
+      { slot, status: "uploading", progress: 0 },
+    ]);
+
+    const formData = new FormData();
+    formData.append("files", file);
+
+    const response = await fetch(`${baseUrl}/upload/catalog-images`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      setUploadProgress((prev) =>
+        prev.map((p) =>
+          p.slot === slot
+            ? { ...p, status: "error", error: "Upload failed" }
+            : p
+        )
+      );
+      throw new Error(`Failed to upload image ${slot}`);
+    }
+
+    const { urls } = await response.json();
+    const url = urls[0];
+
+    setUploadProgress((prev) =>
+      prev.map((p) =>
+        p.slot === slot ? { ...p, status: "completed", progress: 100 } : p
+      )
+    );
+
+    return url;
+  };
+
+  // Upload images in batches with concurrency control
+  const uploadImagesInBatches = async (
+    filesToUpload: Array<{ file: File; slot: number }>,
+    token: string,
+    baseUrl: string,
+    concurrency: number = 3
+  ): Promise<Array<{ slot: number; url: string }>> => {
+    const results: Array<{ slot: number; url: string }> = [];
+    const queue = [...filesToUpload];
+
+    // Process images in batches
+    while (queue.length > 0) {
+      const batch = queue.splice(0, concurrency);
+      const batchResults = await Promise.all(
+        batch.map(async ({ file, slot }) => {
+          try {
+            const url = await uploadSingleImage(file, slot, token, baseUrl);
+            return { slot, url };
+          } catch (error) {
+            console.error(`Failed to upload image ${slot}:`, error);
+            throw error;
+          }
+        })
+      );
+      results.push(...batchResults);
+    }
+
+    return results;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsUploading(true);
+    setUploadProgress([]);
+
     try {
       // Upload new images to S3 if any
       const imageUrls: {
@@ -137,101 +248,72 @@ export const EditCatalogModal = ({
         image10Url: catalog.image10Url,
       };
 
-      const filesToUpload = [
-        selectedFiles.file1,
-        selectedFiles.file2,
-        selectedFiles.file3,
-        selectedFiles.file4,
-        selectedFiles.file5,
-        selectedFiles.file6,
-        selectedFiles.file7,
-        selectedFiles.file8,
-        selectedFiles.file9,
-        selectedFiles.file10,
-      ].filter(Boolean) as File[];
+      // Prepare files to upload with their slot numbers
+      const filesToUpload: Array<{ file: File; slot: number }> = [];
+      if (selectedFiles.file1) filesToUpload.push({ file: selectedFiles.file1, slot: 1 });
+      if (selectedFiles.file2) filesToUpload.push({ file: selectedFiles.file2, slot: 2 });
+      if (selectedFiles.file3) filesToUpload.push({ file: selectedFiles.file3, slot: 3 });
+      if (selectedFiles.file4) filesToUpload.push({ file: selectedFiles.file4, slot: 4 });
+      if (selectedFiles.file5) filesToUpload.push({ file: selectedFiles.file5, slot: 5 });
+      if (selectedFiles.file6) filesToUpload.push({ file: selectedFiles.file6, slot: 6 });
+      if (selectedFiles.file7) filesToUpload.push({ file: selectedFiles.file7, slot: 7 });
+      if (selectedFiles.file8) filesToUpload.push({ file: selectedFiles.file8, slot: 8 });
+      if (selectedFiles.file9) filesToUpload.push({ file: selectedFiles.file9, slot: 9 });
+      if (selectedFiles.file10) filesToUpload.push({ file: selectedFiles.file10, slot: 10 });
 
       if (filesToUpload.length > 0) {
-        const formData = new FormData();
-        filesToUpload.forEach((file) => {
-          formData.append("files", file);
-        });
-
         const authStore = useAuthStore.getState();
         const token = authStore.accessToken;
+
+        if (!token) {
+          throw new Error("No authentication token found");
+        }
 
         const baseUrl = (
           process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"
         ).replace("/graphql", "");
 
-        const uploadResponse = await fetch(`${baseUrl}/upload/catalog-images`, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          body: formData,
+        // Upload images in batches with progress tracking
+        const uploadResults = await uploadImagesInBatches(
+          filesToUpload,
+          token,
+          baseUrl,
+          3 // Upload 3 images concurrently
+        );
+
+        // Map uploaded URLs to their slots
+        uploadResults.forEach(({ slot, url }) => {
+          const imageKey = `image${slot}Url` as keyof typeof imageUrls;
+          imageUrls[imageKey] = url;
         });
-
-        if (!uploadResponse.ok) {
-          throw new Error("Image upload failed");
-        }
-
-        const { urls } = await uploadResponse.json();
-
-        // Map URLs to the correct slots (only update slots with new files)
-        let urlIndex = 0;
-        if (selectedFiles.file1) {
-          imageUrls.image1Url = urls[urlIndex++];
-        }
-        if (selectedFiles.file2) {
-          imageUrls.image2Url = urls[urlIndex++];
-        }
-        if (selectedFiles.file3) {
-          imageUrls.image3Url = urls[urlIndex++];
-        }
-        if (selectedFiles.file4) {
-          imageUrls.image4Url = urls[urlIndex++];
-        }
-        if (selectedFiles.file5) {
-          imageUrls.image5Url = urls[urlIndex++];
-        }
-        if (selectedFiles.file6) {
-          imageUrls.image6Url = urls[urlIndex++];
-        }
-        if (selectedFiles.file7) {
-          imageUrls.image7Url = urls[urlIndex++];
-        }
-        if (selectedFiles.file8) {
-          imageUrls.image8Url = urls[urlIndex++];
-        }
-        if (selectedFiles.file9) {
-          imageUrls.image9Url = urls[urlIndex++];
-        }
-        if (selectedFiles.file10) {
-          imageUrls.image10Url = urls[urlIndex++];
-        }
       }
 
-      // Handle removed images (set to undefined if preview was removed but no new file)
-      Object.keys(imagePreviews).forEach((key) => {
-        const slot = key.replace("preview", "") as
-          | "1"
-          | "2"
-          | "3"
-          | "4"
-          | "5"
-          | "6"
-          | "7"
-          | "8"
-          | "9"
-          | "10";
-        const imageKey = `image${slot}Url` as keyof typeof imageUrls;
-        const previewKey = key as keyof typeof imagePreviews;
+      // Handle removed images (set to null only if user explicitly removed an existing image)
+      // Check each slot to see if an image was removed
+      const catalogImageKeys = [
+        { slot: 1, catalogUrl: catalog.image1Url },
+        { slot: 2, catalogUrl: catalog.image2Url },
+        { slot: 3, catalogUrl: catalog.image3Url },
+        { slot: 4, catalogUrl: catalog.image4Url },
+        { slot: 5, catalogUrl: catalog.image5Url },
+        { slot: 6, catalogUrl: catalog.image6Url },
+        { slot: 7, catalogUrl: catalog.image7Url },
+        { slot: 8, catalogUrl: catalog.image8Url },
+        { slot: 9, catalogUrl: catalog.image9Url },
+        { slot: 10, catalogUrl: catalog.image10Url },
+      ];
 
-        if (
-          !imagePreviews[previewKey] &&
-          !selectedFiles[`file${slot}` as keyof typeof selectedFiles]
-        ) {
-          imageUrls[imageKey] = undefined;
+      catalogImageKeys.forEach(({ slot, catalogUrl }) => {
+        const previewKey = `preview${slot}` as keyof typeof imagePreviews;
+        const imageKey = `image${slot}Url` as keyof typeof imageUrls;
+        const fileKey = `file${slot}` as keyof typeof selectedFiles;
+
+        // Only mark as removed if:
+        // 1. The catalog originally had an image (catalogUrl exists)
+        // 2. The preview is now undefined (user removed it)
+        // 3. No new file is selected for this slot
+        if (catalogUrl && !imagePreviews[previewKey] && !selectedFiles[fileKey]) {
+          imageUrls[imageKey] = null;
         }
       });
 
@@ -254,6 +336,9 @@ export const EditCatalogModal = ({
         title: "Error",
         description: "Failed to update catalog. Please try again.",
       });
+    } finally {
+      setIsUploading(false);
+      setUploadProgress([]);
     }
   };
 
@@ -314,6 +399,50 @@ export const EditCatalogModal = ({
             />
           </div>
 
+          {/* Upload Progress */}
+          {uploadProgress.length > 0 && (
+            <div className="bg-muted/50 rounded-lg p-4 space-y-2">
+              <h4 className="text-sm font-semibold text-foreground mb-2">
+                Upload Progress ({uploadProgress.filter((p) => p.status === "completed").length}/
+                {uploadProgress.length})
+              </h4>
+              <div className="space-y-1">
+                {uploadProgress.map((progress) => (
+                  <div key={progress.slot} className="flex items-center gap-2 text-xs">
+                    <span className="w-16 text-muted-foreground">Image {progress.slot}</span>
+                    <div className="flex-1 bg-muted rounded-full h-2 overflow-hidden">
+                      <div
+                        className={`h-full transition-all ${
+                          progress.status === "completed"
+                            ? "bg-green-500"
+                            : progress.status === "error"
+                              ? "bg-red-500"
+                              : "bg-primary animate-pulse"
+                        }`}
+                        style={{ width: `${progress.progress}%` }}
+                      />
+                    </div>
+                    <span
+                      className={`w-20 ${
+                        progress.status === "completed"
+                          ? "text-green-600"
+                          : progress.status === "error"
+                            ? "text-red-600"
+                            : "text-primary"
+                      }`}
+                    >
+                      {progress.status === "completed"
+                        ? "✓ Done"
+                        : progress.status === "error"
+                          ? "✗ Failed"
+                          : "Uploading..."}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Images Grid */}
           <div>
             <label className="block text-sm font-medium text-foreground mb-3">
@@ -372,20 +501,25 @@ export const EditCatalogModal = ({
             <button
               type="button"
               onClick={onClose}
-              disabled={updateCatalog.isPending}
+              disabled={updateCatalog.isPending || isUploading}
               className="flex-1 px-4 py-3 border border-border text-foreground font-semibold rounded-lg hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Cancel
             </button>
             <button
               type="submit"
-              disabled={updateCatalog.isPending}
+              disabled={updateCatalog.isPending || isUploading}
               className="flex-1 px-4 py-3 bg-primary text-primary-foreground font-semibold rounded-lg hover:opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
-              {updateCatalog.isPending ? (
+              {isUploading ? (
                 <>
                   <Loader2 className="w-5 h-5 animate-spin" />
-                  Updating...
+                  Uploading Images...
+                </>
+              ) : updateCatalog.isPending ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Updating Catalog...
                 </>
               ) : (
                 "Update Catalog"
