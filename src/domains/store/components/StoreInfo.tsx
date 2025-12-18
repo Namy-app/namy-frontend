@@ -15,6 +15,27 @@ import { type Discount, type Store } from "@/domains/admin/types";
 import { DiscountSection } from "./DiscountSection";
 import { StoreImageUpload } from "./StoreImageUpload";
 
+// Mapping for Spanish day labels
+const DAY_LABELS: Record<string, string> = {
+  monday: "Lunes",
+  tuesday: "Martes",
+  wednesday: "Miércoles",
+  thursday: "Jueves",
+  friday: "Viernes",
+  saturday: "Sábado",
+  sunday: "Domingo",
+};
+
+// Utility function to convert 24-hour time to 12-hour AM/PM format
+function convertTo12Hour(time24: string): string {
+  const parts = time24.split(":");
+  const hours = parseInt(parts[0] || "0", 10);
+  const minutes = parseInt(parts[1] || "0", 10);
+  const period = hours >= 12 ? "PM" : "AM";
+  const hours12 = hours % 12 || 12;
+  return `${hours12}:${minutes.toString().padStart(2, "0")} ${period}`;
+}
+
 interface Props {
   store: Store;
   discount?: Discount | null;
@@ -164,23 +185,30 @@ export const StoreInfo = ({
       />
 
       {/* Opening Hours */}
-      {store.openDays && store.openDays.availableDays && store.openDays.availableDays.length > 0 ? (
+      {store.openDays &&
+      store.openDays.availableDays &&
+      store.openDays.availableDays.length > 0 ? (
         <div className="bg-card rounded-lg shadow p-6 lg:col-span-3">
           <h2 className="text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
             <Clock className="w-5 h-5 text-muted-foreground" />
             Horario de Apertura
           </h2>
           <div className="space-y-3">
-            {store.openDays.availableDays.map((day, index) => (
-              <div key={index} className="flex justify-between">
-                <span className="font-medium text-foreground capitalize">
-                  {day.day}
-                </span>
-                <span className="text-muted-foreground">
-                  {day.closed ? "Cerrado" : `${day.startTime} - ${day.endTime}`}
-                </span>
-              </div>
-            ))}
+            {store.openDays.availableDays.map((day, index) => {
+              const dayLabel = DAY_LABELS[day.day.toLowerCase()] || day.day;
+              return (
+                <div key={index} className="flex justify-between">
+                  <span className="font-medium text-foreground">
+                    {dayLabel}
+                  </span>
+                  <span className="text-muted-foreground">
+                    {day.closed
+                      ? "Cerrado"
+                      : `${convertTo12Hour(day.startTime)} - ${convertTo12Hour(day.endTime)}`}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         </div>
       ) : null}
@@ -207,7 +235,9 @@ export const StoreInfo = ({
 
       {/* Metadata */}
       <div className="bg-card rounded-lg shadow p-6 lg:col-span-3">
-        <h2 className="text-xl font-semibold text-foreground mb-4">Metadatos</h2>
+        <h2 className="text-xl font-semibold text-foreground mb-4">
+          Metadatos
+        </h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div>
             <p className="text-sm font-medium text-muted-foreground">
