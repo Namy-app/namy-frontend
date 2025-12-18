@@ -90,12 +90,9 @@ export const StoreImageUpload = ({
       return;
     }
 
-    console.log("File selected for index:", index, file.name);
-
     // Create preview URL and immediately upload
     const reader = new FileReader();
     reader.onloadend = () => {
-      console.log("File preview ready for index:", index);
       const previewUrl = reader.result as string;
 
       // Set preview state
@@ -159,11 +156,6 @@ export const StoreImageUpload = ({
         process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"
       ).replace("/graphql", "");
 
-      console.log("Uploading image to:", `${baseUrl}/upload/store-image`);
-      console.log("StoreId:", storeId);
-      console.log("ImageIndex:", index);
-      console.log("File:", file.name, file.type, file.size);
-
       const response = await fetch(`${baseUrl}/upload/store-image`, {
         method: "POST",
         headers: {
@@ -172,8 +164,6 @@ export const StoreImageUpload = ({
         body: formData,
       });
 
-      console.log("Response status:", response.status);
-
       if (!response.ok) {
         const errorText = await response.text();
         console.error("Upload failed:", errorText);
@@ -181,7 +171,6 @@ export const StoreImageUpload = ({
       }
 
       const data = await response.json();
-      console.log("Upload response data:", data);
 
       // Update the local state with the S3 URL immediately
       setImageSlots((prev) => {
@@ -199,7 +188,6 @@ export const StoreImageUpload = ({
 
       // Update cache with new store data from backend
       if (data.store) {
-        console.log("Updating query cache with store data:", data.store);
         queryClient.setQueryData(["store", storeId], data.store);
       }
 
@@ -209,12 +197,10 @@ export const StoreImageUpload = ({
       });
 
       // Refetch store to ensure we have the latest data
-      console.log("Refetching store data...");
-      const refetchResult = await queryClient.refetchQueries({
+      await queryClient.refetchQueries({
         queryKey: ["store", storeId],
         exact: true
       });
-      console.log("Refetch result:", refetchResult);
     } catch (error) {
       console.error("Upload error:", error);
       toast({
@@ -358,11 +344,9 @@ export const StoreImageUpload = ({
                   </button>
 
                   {/* Uploading overlay */}
-                  {slot.isUploading && (
-                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-20">
+                  {slot.isUploading ? <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-20">
                       <Loader2 className="w-8 h-8 text-white animate-spin" />
-                    </div>
-                  )}
+                    </div> : null}
                 </div>
               ) : (
                 <div className="absolute inset-0 rounded-lg border-2 border-dashed border-border bg-muted flex flex-col items-center justify-center gap-2 hover:border-primary hover:bg-muted/80 transition-colors">
@@ -377,7 +361,9 @@ export const StoreImageUpload = ({
               id={`store-image-upload-${index}`}
               type="file"
               accept="image/*"
-              onChange={(e) => handleImageSelect(e, index)}
+              onChange={(e) => {
+                void handleImageSelect(e, index);
+              }}
               className="hidden"
               disabled={slot.isUploading}
             />

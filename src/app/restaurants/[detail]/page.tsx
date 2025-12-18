@@ -72,7 +72,7 @@ const CatalogCarousel = ({
     setCurrentIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
   };
 
-  if (images.length === 0) return null;
+  if (images.length === 0) {return null;}
 
   return (
     <div className="relative">
@@ -853,7 +853,7 @@ export default function RestaurantDetailPage(): React.JSX.Element {
 
   if (isLoading) {
     return (
-      <BasicLayout className="pb-20">
+      <BasicLayout className="bg-gradient-hero pb-20">
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-center">
             <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
@@ -881,7 +881,7 @@ export default function RestaurantDetailPage(): React.JSX.Element {
   };
 
   return (
-    <BasicLayout className="pb-20">
+    <BasicLayout className="bg-gradient-hero pb-20">
       {!parsedStore ? (
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-center">
@@ -894,8 +894,8 @@ export default function RestaurantDetailPage(): React.JSX.Element {
           </div>
         </div>
       ) : (
-        <div className="pt-8 pb-16">
-          <div className="mx-auto max-w-6xl px-4 pt-6">
+        <div className="pt-14 pb-16">
+          <div className="mx-auto max-w-5xl px-4">
             <div className="relative h-96 md:h-130 rounded-2xl overflow-hidden shadow-2xl">
               <Image
                 src={parsedStore.images[currentImageIndex] ?? ""}
@@ -1373,6 +1373,7 @@ export default function RestaurantDetailPage(): React.JSX.Element {
                 </svg>
               </button>
               <div className="relative w-full">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={selectedCatalogImage}
                   alt="Catalog image"

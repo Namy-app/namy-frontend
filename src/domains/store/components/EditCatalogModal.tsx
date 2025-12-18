@@ -3,8 +3,8 @@ import { useState } from "react";
 
 import { useUpdateCatalog, type Catalog } from "@/domains/admin";
 import { useToast } from "@/hooks/use-toast";
-import { useAuthStore } from "@/store/useAuthStore";
 import { compressImage, formatFileSize, validateImageFile } from "@/lib/image-utils";
+import { useAuthStore } from "@/store/useAuthStore";
 
 interface ImageUploadProgress {
   slot: number;
@@ -250,16 +250,16 @@ export const EditCatalogModal = ({
 
       // Prepare files to upload with their slot numbers
       const filesToUpload: Array<{ file: File; slot: number }> = [];
-      if (selectedFiles.file1) filesToUpload.push({ file: selectedFiles.file1, slot: 1 });
-      if (selectedFiles.file2) filesToUpload.push({ file: selectedFiles.file2, slot: 2 });
-      if (selectedFiles.file3) filesToUpload.push({ file: selectedFiles.file3, slot: 3 });
-      if (selectedFiles.file4) filesToUpload.push({ file: selectedFiles.file4, slot: 4 });
-      if (selectedFiles.file5) filesToUpload.push({ file: selectedFiles.file5, slot: 5 });
-      if (selectedFiles.file6) filesToUpload.push({ file: selectedFiles.file6, slot: 6 });
-      if (selectedFiles.file7) filesToUpload.push({ file: selectedFiles.file7, slot: 7 });
-      if (selectedFiles.file8) filesToUpload.push({ file: selectedFiles.file8, slot: 8 });
-      if (selectedFiles.file9) filesToUpload.push({ file: selectedFiles.file9, slot: 9 });
-      if (selectedFiles.file10) filesToUpload.push({ file: selectedFiles.file10, slot: 10 });
+      if (selectedFiles.file1) {filesToUpload.push({ file: selectedFiles.file1, slot: 1 });}
+      if (selectedFiles.file2) {filesToUpload.push({ file: selectedFiles.file2, slot: 2 });}
+      if (selectedFiles.file3) {filesToUpload.push({ file: selectedFiles.file3, slot: 3 });}
+      if (selectedFiles.file4) {filesToUpload.push({ file: selectedFiles.file4, slot: 4 });}
+      if (selectedFiles.file5) {filesToUpload.push({ file: selectedFiles.file5, slot: 5 });}
+      if (selectedFiles.file6) {filesToUpload.push({ file: selectedFiles.file6, slot: 6 });}
+      if (selectedFiles.file7) {filesToUpload.push({ file: selectedFiles.file7, slot: 7 });}
+      if (selectedFiles.file8) {filesToUpload.push({ file: selectedFiles.file8, slot: 8 });}
+      if (selectedFiles.file9) {filesToUpload.push({ file: selectedFiles.file9, slot: 9 });}
+      if (selectedFiles.file10) {filesToUpload.push({ file: selectedFiles.file10, slot: 10 });}
 
       if (filesToUpload.length > 0) {
         const authStore = useAuthStore.getState();
@@ -480,7 +480,9 @@ export const EditCatalogModal = ({
                           <input
                             type="file"
                             accept="image/*"
-                            onChange={(e) => handleImageSelect(slotKey, e)}
+                            onChange={(e) => {
+                              void handleImageSelect(slotKey, e);
+                            }}
                             className="hidden"
                           />
                         </label>

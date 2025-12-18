@@ -23,7 +23,6 @@ export const CatalogsTab = ({
   const [selectedCatalogImage, setSelectedCatalogImage] = useState<
     string | null
   >(null);
-  console.log("catalogs => ", catalogs);
 
   // Prevent body scroll when modal is open
   useEffect(() => {

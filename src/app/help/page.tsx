@@ -3,11 +3,8 @@
 import {
   HelpCircle,
   Wallet,
-  Gift,
   ShoppingBag,
   MessageCircle,
-  Mail,
-  MessageCircleIcon,
   Search,
 } from "lucide-react";
 import { useState } from "react";
@@ -19,7 +16,6 @@ import {
   AccordionTrigger,
   AccordionContent,
 } from "@/shared/components/Accordion";
-import { Button } from "@/shared/components/Button";
 import { Card } from "@/shared/components/Card";
 import { Input } from "@/shared/components/Input";
 

@@ -1,10 +1,11 @@
 "use client";
 
-import { BasicLayout } from "@/layouts/BasicLayout";
 import { ArrowLeft, Sparkles } from "lucide-react";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
+
+import { BasicLayout } from "@/layouts/BasicLayout";
 
 function ComingSoonContent() {
   const router = useRouter();

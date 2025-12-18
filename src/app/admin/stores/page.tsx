@@ -50,7 +50,7 @@ export default function AdminStoresPage() {
   }, []);
 
   useEffect(() => {
-    if (!isHydrated) return;
+    if (!isHydrated) {return;}
 
     if (!user) {
       router.replace("/auth");
