@@ -11,7 +11,7 @@ import { Card } from "@/shared/components/Card";
 
 export function NearbyPlaces({
   closestStores = [],
-  isLoading,
+  isLoading = true,
   discountPercentage = 10,
 }: {
   closestStores?: Store[];
@@ -43,7 +43,6 @@ export function NearbyPlaces({
             {closestStores.map((place: Store) => (
               <Card key={place.id} className="shadow-md group">
                 <Link
-                  key={place.id}
                   href={`/restaurants/${place.id}`}
                   className="flex items-center gap-4 p-3 cursor-pointer hover:shadow-glow transition-all border-0 "
                 >
