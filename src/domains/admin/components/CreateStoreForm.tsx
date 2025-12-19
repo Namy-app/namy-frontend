@@ -37,6 +37,7 @@ export function CreateStoreForm({ onClose, onSuccess }: CreateStoreFormProps) {
     active: true,
     url: "",
     tags: "",
+    restrictions: "",
   });
 
   const [categoryType, setCategoryType] = useState<"restaurant" | "others">(
@@ -508,6 +509,31 @@ export function CreateStoreForm({ onClose, onSuccess }: CreateStoreFormProps) {
                 >
                   Store is active
                 </label>
+              </div>
+            </div>
+
+            {/* Custom Restrictions */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-foreground">
+                Custom Restrictions
+              </h3>
+
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Restrictions
+                </label>
+                <textarea
+                  name="restrictions"
+                  value={formData.restrictions || ""}
+                  onChange={handleChange}
+                  rows={4}
+                  className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
+                  placeholder="Enter any restrictions or special conditions for this store (e.g., age requirements, dress code, booking required, etc.)"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Optional: Add any restrictions or requirements customers
+                  should know about
+                </p>
               </div>
             </div>
 

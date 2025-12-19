@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import CouponCard from "@/domains/coupons/CouponCard";
+import { RestrictionModal } from "@/domains/coupons/RestrictionModal";
 import { BasicLayout } from "@/layouts/BasicLayout";
 import { CouponDecoder, type DecodedCouponData } from "@/lib/coupon-decoder";
 import { graphqlRequest, setAuthToken } from "@/lib/graphql-client";
@@ -26,8 +27,25 @@ interface Coupon {
   storeId: string;
   discountId: string;
   // populated client-side
-  store?: Record<string, unknown> | null;
-  discount?: Record<string, unknown> | null;
+  store?: {
+    id?: string;
+    name?: string;
+    address?: string;
+    city?: string;
+    restrictions?: string | null;
+  } | null;
+  discount?: {
+    id?: string;
+    title?: string;
+    description?: string;
+    type?: string;
+    value?: number;
+    excludedDaysOfWeek?: number[] | null;
+    excludedHours?: number[] | null;
+    restrictions?: string | null;
+    minPurchaseAmount?: number | null;
+    maxDiscountAmount?: number | null;
+  } | null;
 }
 
 type CouponStatus = "active" | "redeemed" | "expired";
@@ -46,6 +64,10 @@ export default function MyCouponsPage(): React.JSX.Element {
   );
   const [hydrated, setHydrated] = useState(false);
   const [activeFilter, setActiveFilter] = useState<FilterTab>("all");
+  const [restrictionModalOpen, setRestrictionModalOpen] = useState(false);
+  const [restrictionCoupon, setRestrictionCoupon] = useState<Coupon | null>(
+    null
+  );
 
   // Helper function to get coupon status
   const getCouponStatus = (coupon: Coupon): CouponStatus => {
@@ -168,6 +190,12 @@ export default function MyCouponsPage(): React.JSX.Element {
       console.error("Failed to decode coupon:", err);
       setDecodedData(null);
     }
+  };
+
+  // Handle view restrictions
+  const handleViewRestrictions = (coupon: Coupon): void => {
+    setRestrictionCoupon(coupon);
+    setRestrictionModalOpen(true);
   };
 
   // Count coupons by status
@@ -381,6 +409,7 @@ export default function MyCouponsPage(): React.JSX.Element {
                       onViewQr={() => void handleViewQR(coupon)}
                       onShare={() => void handleShare(coupon)}
                       onDelete={() => void handleDelete(coupon)}
+                      onViewRestrictions={() => handleViewRestrictions(coupon)}
                     />
                   </div>
                 ))}
@@ -468,6 +497,28 @@ export default function MyCouponsPage(): React.JSX.Element {
               </div>
             </div>
           </div>
+        ) : null}
+
+        {/* Restriction Modal */}
+        {restrictionCoupon ? (
+          <RestrictionModal
+            isOpen={restrictionModalOpen}
+            onClose={() => {
+              setRestrictionModalOpen(false);
+              setRestrictionCoupon(null);
+            }}
+            storeName={restrictionCoupon.store?.name ?? "Store"}
+            discountTitle={restrictionCoupon.discount?.title ?? "Discount"}
+            restrictions={{
+              storeRestrictions: restrictionCoupon.store?.restrictions,
+              discountRestrictions: restrictionCoupon.discount?.restrictions,
+              minPurchaseAmount: restrictionCoupon.discount?.minPurchaseAmount,
+              maxDiscountAmount: restrictionCoupon.discount?.maxDiscountAmount,
+              excludedDaysOfWeek:
+                restrictionCoupon.discount?.excludedDaysOfWeek,
+              excludedHours: restrictionCoupon.discount?.excludedHours,
+            }}
+          />
         ) : null}
       </div>
     </BasicLayout>

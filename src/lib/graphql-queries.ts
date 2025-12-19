@@ -553,6 +553,7 @@ export const COUPONS_QUERY = `
         name
         address
         city
+          restrictions
       }
     }
   }
