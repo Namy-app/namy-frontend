@@ -1,6 +1,6 @@
 "use client";
 
-import { Share2, Trash2, QrCode, Copy } from "lucide-react";
+import { Share2, Trash2, QrCode, Copy, Info } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { useToast } from "@/hooks/use-toast";
@@ -10,8 +10,20 @@ type Coupon = {
   used?: boolean;
   expiresAt: string;
   usedAt?: string;
-  store?: { name?: string } | null;
-  discount?: { title?: string; type?: string; value?: number } | null;
+  store?: {
+    name?: string;
+    restrictions?: string | null;
+  } | null;
+  discount?: {
+    title?: string;
+    type?: string;
+    value?: number;
+    restrictions?: string | null;
+    minPurchaseAmount?: number | null;
+    maxDiscountAmount?: number | null;
+    excludedDaysOfWeek?: number[] | null;
+    excludedHours?: number[] | null;
+  } | null;
 };
 
 type Props = {
@@ -19,6 +31,7 @@ type Props = {
   onViewQr: (c: Coupon) => void;
   onShare: (c: Coupon) => void;
   onDelete: (c: Coupon) => void;
+  onViewRestrictions?: (c: Coupon) => void;
 };
 
 function formatDiscount(
@@ -57,6 +70,7 @@ export default function CouponCard({
   onViewQr,
   onShare,
   onDelete,
+  onViewRestrictions,
 }: Props): React.JSX.Element {
   const { toast } = useToast();
   const [countdown, setCountdown] = useState<string | null>(null);
@@ -69,6 +83,20 @@ export default function CouponCard({
       return "expired";
     }
     return "active";
+  }, [coupon]);
+
+  // Check if any restrictions exist
+  const hasRestrictions = useMemo(() => {
+    return !!(
+      coupon.store?.restrictions ||
+      coupon.discount?.restrictions ||
+      coupon.discount?.minPurchaseAmount ||
+      coupon.discount?.maxDiscountAmount ||
+      (coupon.discount?.excludedDaysOfWeek &&
+        coupon.discount.excludedDaysOfWeek.length > 0) ||
+      (coupon.discount?.excludedHours &&
+        coupon.discount.excludedHours.length > 0)
+    );
   }, [coupon]);
 
   useEffect(() => {
@@ -185,12 +213,20 @@ export default function CouponCard({
       </div>
 
       {/* Description / Actions */}
-      <div className="flex items-center justify-between mt-4 gap-3">
-        {/* <div className="text-sm text-muted-foreground truncate">
-          {coupon.discount?.description ?? ""}
-        </div> */}
+      <div className="mt-4">
+        {/* Restrictions Link */}
+        {hasRestrictions && onViewRestrictions ? (
+          <button
+            onClick={() => void onViewRestrictions(coupon)}
+            className="text-sm text-amber-600 hover:text-amber-700 font-medium flex items-center gap-1 transition-colors mb-3"
+          >
+            <Info className="w-4 h-4" />
+            View Restrictions
+          </button>
+        ) : null}
 
-        <div className="flex items-center gap-3">
+        {/* Action Buttons */}
+        <div className="flex items-center justify-between gap-3">
           <button
             onClick={() => void onViewQr(coupon)}
             className="px-8 py-3 bg-gradient-primary text-primary-foreground rounded-full font-semibold flex items-center gap-2"

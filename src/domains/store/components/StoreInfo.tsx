@@ -10,6 +10,7 @@ import {
 import { useState } from "react";
 
 import { PRICE_SYMBOLS } from "@/data/constants";
+import { useStorePin } from "@/domains/admin/hooks";
 import { type Discount, type Store } from "@/domains/admin/types";
 
 import { DiscountSection } from "./DiscountSection";
@@ -52,6 +53,10 @@ export const StoreInfo = ({
   onGeneratePin,
 }: Props) => {
   const [showPin, setShowPin] = useState(false);
+  const { data: decryptedPin, isLoading: isPinLoading } = useStorePin(
+    store.id,
+    showPin
+  );
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -140,35 +145,57 @@ export const StoreInfo = ({
             <MapPin className="w-5 h-5 text-muted-foreground" />
             <div>
               <p className="text-sm font-medium text-muted-foreground">
-                PIN de Tienda
+                PIN de Tienda (4 dígitos)
               </p>
-              {store.pin ? (
-                <p className="text-foreground">
-                  {showPin ? store.pin : "••••"}
-                  <button
-                    onClick={() => setShowPin((prev: boolean) => !prev)}
-                    className="ml-3 text-sm text-primary hover:underline"
-                  >
-                    {showPin ? "Ocultar" : "Mostrar"}
-                  </button>
-                </p>
-              ) : (
-                <p className="text-foreground">
-                  {generatingPin ? (
-                    <Loader2 className="w-4 h-4 text-primary animate-spin ml-2" />
-                  ) : (
-                    <>
-                      --{" "}
-                      <button
-                        onClick={() => onGeneratePin()}
-                        className="text-sm text-primary hover:underline"
-                      >
-                        Generar PIN
-                      </button>
-                    </>
-                  )}
-                </p>
-              )}
+              <p className="text-foreground">
+                {store.pin ? (
+                  <>
+                    {showPin ? (
+                      isPinLoading ? (
+                        <Loader2 className="w-4 h-4 text-primary animate-spin inline" />
+                      ) : (
+                        decryptedPin || "••••"
+                      )
+                    ) : (
+                      "••••"
+                    )}
+                    <button
+                      onClick={() => setShowPin((prev: boolean) => !prev)}
+                      className="ml-3 text-sm text-primary hover:underline"
+                    >
+                      {showPin ? "Ocultar" : "Ver PIN"}
+                    </button>
+                    <span className="mx-2 text-muted-foreground">|</span>
+                    <button
+                      onClick={() => onGeneratePin()}
+                      disabled={generatingPin}
+                      className="text-sm text-primary hover:underline disabled:opacity-50"
+                    >
+                      {generatingPin ? (
+                        <Loader2 className="w-4 h-4 text-primary animate-spin inline" />
+                      ) : (
+                        "Regenerar"
+                      )}
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    {generatingPin ? (
+                      <Loader2 className="w-4 h-4 text-primary animate-spin ml-2" />
+                    ) : (
+                      <>
+                        --{" "}
+                        <button
+                          onClick={() => onGeneratePin()}
+                          className="text-sm text-primary hover:underline"
+                        >
+                          Generar PIN
+                        </button>
+                      </>
+                    )}
+                  </>
+                )}
+              </p>
             </div>
           </div>
         </div>

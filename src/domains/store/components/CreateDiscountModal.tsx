@@ -1,5 +1,5 @@
 import { Loader2, Percent, X } from "lucide-react";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 
 import {
   type Discount,
@@ -10,6 +10,8 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { formatDateToYMDSafe } from "@/lib/date.lib";
 import { extractValidationErrors } from "@/lib/utils";
+
+import { TimeRestrictionsEditor } from "./TimeRestrictionsEditor";
 
 const daysOfTheWeek = [
   { label: "Lunes", index: 1 },
@@ -52,11 +54,19 @@ export const CreateDiscountModal = ({
     maxUsesPerUserPerMonth: discount?.maxUsesPerUserPerMonth?.toString() || "",
     minPurchaseAmount: discount?.minPurchaseAmount?.toString() || "",
     maxDiscountAmount: discount?.maxDiscountAmount?.toString() || "",
+    excludedDaysAndTime: discount?.excludedDaysAndTime || { availableDays: [] },
   });
 
   const today = new Date().toISOString().split("T")[0];
   const minStartDate = discount?.id ? undefined : today;
   const loading = createDiscount.isPending || updateDiscount.isPending;
+
+  const handleExcludedDaysAndTimeChange = useCallback(
+    (restrictions: typeof formData.excludedDaysAndTime) => {
+      setFormData((prev) => ({ ...prev, excludedDaysAndTime: restrictions }));
+    },
+    []
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -94,6 +104,10 @@ export const CreateDiscountModal = ({
             maxDiscountAmount: formData.maxDiscountAmount
               ? parseFloat(formData.maxDiscountAmount)
               : undefined,
+            excludedDaysAndTime:
+              formData.excludedDaysAndTime.availableDays.length > 0
+                ? formData.excludedDaysAndTime
+                : undefined,
           },
         });
       } else {
@@ -119,6 +133,10 @@ export const CreateDiscountModal = ({
           maxDiscountAmount: formData.maxDiscountAmount
             ? parseFloat(formData.maxDiscountAmount)
             : undefined,
+          excludedDaysAndTime:
+            formData.excludedDaysAndTime.availableDays.length > 0
+              ? formData.excludedDaysAndTime
+              : undefined,
         });
       }
       toast({
@@ -486,6 +504,14 @@ export const CreateDiscountModal = ({
                   />
                 </div>
               </div>
+            </div>
+
+            {/* Time Restrictions Editor */}
+            <div className="space-y-4">
+              <TimeRestrictionsEditor
+                value={formData.excludedDaysAndTime}
+                onChange={handleExcludedDaysAndTimeChange}
+              />
             </div>
 
             {/* Status */}
