@@ -45,6 +45,7 @@ interface Coupon {
     excludedDaysOfWeek?: number[] | null;
     excludedHours?: number[] | null;
     restrictions?: string | null;
+    additionalRestrictions?: string[] | null;
     minPurchaseAmount?: number | null;
     maxDiscountAmount?: number | null;
   } | null;
@@ -518,14 +519,11 @@ export default function MyCouponsPage(): React.JSX.Element {
               maxDiscountAmount: restrictionCoupon.discount?.maxDiscountAmount,
               excludedDaysAndTime:
                 restrictionCoupon.discount?.excludedDaysAndTime ?? undefined,
-              // excludedDaysAndTime: restrictionCoupon.discount
-              //   ?.excludedDaysAndTime
-              //   ? (restrictionCoupon.discount
-              //       ?.excludedDaysAndTime as unknown as ExcludedDaysAndTime)
-              //   : undefined,
               excludedDaysOfWeek:
                 restrictionCoupon.discount?.excludedDaysOfWeek,
               excludedHours: restrictionCoupon.discount?.excludedHours,
+              additionalRestrictions:
+                restrictionCoupon.discount?.additionalRestrictions ?? [],
             }}
           />
         ) : null}

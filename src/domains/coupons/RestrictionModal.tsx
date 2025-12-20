@@ -18,6 +18,7 @@ interface RestrictionModalProps {
     maxDiscountAmount?: number | null;
     excludedDaysOfWeek?: number[] | null;
     excludedHours?: number[] | null;
+    additionalRestrictions?: string[] | null;
     excludedDaysAndTime?: ExcludedDaysAndTime | null;
   };
 }
@@ -41,6 +42,7 @@ export function RestrictionModal({
     excludedDaysAndTime,
     excludedDaysOfWeek,
     excludedHours,
+    additionalRestrictions,
   } = restrictions;
 
   const hasAnyRestrictions =
@@ -203,6 +205,25 @@ export function RestrictionModal({
                       <p className="text-sm text-muted-foreground">
                         Up to ${maxDiscountAmount.toFixed(2)} discount limit
                       </p>
+                    </div>
+                  </div>
+                ) : null}
+
+                {/* Additional Restrictions */}
+                {additionalRestrictions && additionalRestrictions.length > 0 ? (
+                  <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
+                    <div className="flex items-start gap-3">
+                      <Info className="w-5 h-5 text-gray-600 shrink-0 mt-0.5" />
+                      <div>
+                        <h3 className="text-sm font-semibold text-gray-900 mb-2">
+                          Additional Restrictions
+                        </h3>
+                        {additionalRestrictions.map((restriction, index) => (
+                          <p key={index} className="text-sm text-gray-700">
+                            &bull; {restriction}
+                          </p>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 ) : null}

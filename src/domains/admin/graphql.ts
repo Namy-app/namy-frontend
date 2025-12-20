@@ -224,6 +224,7 @@ export const GET_STORE_DISCOUNTS = gql`
         excludedDaysAndTime
         excludedDaysOfWeek
         excludedHours
+        additionalRestrictions
         maxUsesPerUserPerMonth
         monthlyRedemptionCap
         createdAt

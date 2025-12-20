@@ -56,7 +56,10 @@ export const CreateDiscountModal = ({
     minPurchaseAmount: discount?.minPurchaseAmount?.toString() || "",
     maxDiscountAmount: discount?.maxDiscountAmount?.toString() || "",
     excludedDaysAndTime: discount?.excludedDaysAndTime || { availableDays: [] },
+    additionalRestrictions: discount?.additionalRestrictions || [],
   });
+
+  const [newRestriction, setNewRestriction] = useState("");
 
   const today = new Date().toISOString().split("T")[0];
   const minStartDate = discount?.id ? undefined : today;
@@ -68,6 +71,28 @@ export const CreateDiscountModal = ({
     },
     []
   );
+
+  const handleAddRestriction = () => {
+    if (newRestriction.trim()) {
+      setFormData((prev) => ({
+        ...prev,
+        additionalRestrictions: [
+          ...prev.additionalRestrictions,
+          newRestriction.trim(),
+        ],
+      }));
+      setNewRestriction("");
+    }
+  };
+
+  const handleRemoveRestriction = (index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      additionalRestrictions: prev.additionalRestrictions.filter(
+        (_: string, i: number) => i !== index
+      ),
+    }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -109,6 +134,10 @@ export const CreateDiscountModal = ({
               formData.excludedDaysAndTime.availableDays.length > 0
                 ? formData.excludedDaysAndTime
                 : undefined,
+            additionalRestrictions:
+              formData.additionalRestrictions.length > 0
+                ? formData.additionalRestrictions
+                : undefined,
           },
         });
       } else {
@@ -137,6 +166,10 @@ export const CreateDiscountModal = ({
           excludedDaysAndTime:
             formData.excludedDaysAndTime.availableDays.length > 0
               ? formData.excludedDaysAndTime
+              : undefined,
+          additionalRestrictions:
+            formData.additionalRestrictions.length > 0
+              ? formData.additionalRestrictions
               : undefined,
         });
       }
@@ -515,6 +548,59 @@ export const CreateDiscountModal = ({
                   />
                 </div>
               </div>
+            </div>
+
+            {/* Additional Restrictions */}
+            <div className="space-y-4">
+              <h4 className="text-sm font-semibold text-foreground uppercase tracking-wide">
+                Restricciones Adicionales
+              </h4>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={newRestriction}
+                  onChange={(e) => setNewRestriction(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleAddRestriction();
+                    }
+                  }}
+                  className="flex-1 px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  placeholder="Agregar restricción adicional..."
+                />
+                <button
+                  type="button"
+                  onClick={handleAddRestriction}
+                  className="px-4 py-2 bg-primary text-primary-foreground font-medium rounded-lg hover:opacity-90 transition-colors"
+                >
+                  Agregar
+                </button>
+              </div>
+              {formData.additionalRestrictions.length > 0 && (
+                <div className="space-y-2">
+                  {formData.additionalRestrictions.map(
+                    (restriction: string, index: number) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between p-3 bg-muted/50 rounded-lg border border-border"
+                      >
+                        <span className="text-sm text-foreground">
+                          {restriction}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveRestriction(index)}
+                          className="p-1 text-destructive hover:bg-destructive/10 rounded transition-colors"
+                          title="Eliminar restricción"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Status */}

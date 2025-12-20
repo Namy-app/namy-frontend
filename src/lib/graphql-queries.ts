@@ -552,6 +552,7 @@ export const COUPONS_QUERY = `
         excludedDaysOfWeek
         excludedDaysAndTime
         excludedHours
+        additionalRestrictions
         restrictions
       }
       store {

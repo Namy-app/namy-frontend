@@ -237,6 +237,22 @@ export const DiscountSection = ({
               ) : null}
             </div>
           )}
+
+          {/* Additional Restrictions */}
+          {discount.additionalRestrictions ? (
+            <div className="border-t pt-4">
+              <p className="text-sm font-medium text-muted-foreground mb-2">
+                Restricciones Adicionales
+              </p>
+              <p className="text-sm text-foreground">
+                {discount.additionalRestrictions.map((restriction, index) => (
+                  <span key={index} className="block">
+                    &bull; {restriction}
+                  </span>
+                ))}
+              </p>
+            </div>
+          ) : null}
         </div>
       ) : (
         <div className="text-center py-8">

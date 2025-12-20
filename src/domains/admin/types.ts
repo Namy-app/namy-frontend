@@ -203,6 +203,7 @@ export interface Discount {
   maxDiscountAmount?: number;
   excludedDaysOfWeek: number[];
   excludedHours: number[];
+  additionalRestrictions: string[];
   excludedDaysAndTime?: ExcludedDaysAndTime;
   maxUsesPerUserPerMonth?: number;
   monthlyRedemptionCap?: number;
@@ -229,6 +230,7 @@ export interface CreateDiscountInput {
   minPurchaseAmount?: number;
   maxDiscountAmount?: number;
   excludedDaysOfWeek?: number[];
+  additionalRestrictions?: string[];
   excludedHours?: number[];
   excludedDaysAndTime?: ExcludedDaysAndTime;
   maxUsesPerUserPerMonth?: number;
@@ -250,6 +252,7 @@ export interface UpdateDiscountInput {
   maxDiscountAmount?: number;
   excludedDaysOfWeek?: number[];
   excludedHours?: number[];
+  additionalRestrictions?: string[];
   excludedDaysAndTime?: ExcludedDaysAndTime;
   maxUsesPerUserPerMonth?: number;
   monthlyRedemptionCap?: number;
