@@ -178,7 +178,7 @@ export interface TimeRange {
 }
 
 export interface AvailableDay {
-  day: string;
+  dayIndex: number;
   timeRanges: TimeRange[];
 }
 

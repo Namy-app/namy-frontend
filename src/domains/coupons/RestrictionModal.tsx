@@ -1,13 +1,10 @@
 "use client";
 
-import {
-  X,
-  Clock,
-  DollarSign,
-  Calendar,
-  AlertCircle,
-  Info,
-} from "lucide-react";
+import { X, DollarSign, AlertCircle, Info } from "lucide-react";
+
+import { DAYS_OF_WEEK_BY_INDEX } from "@/data/constants";
+
+import type { AvailableDay, ExcludedDaysAndTime } from "../admin";
 
 interface RestrictionModalProps {
   isOpen: boolean;
@@ -21,18 +18,9 @@ interface RestrictionModalProps {
     maxDiscountAmount?: number | null;
     excludedDaysOfWeek?: number[] | null;
     excludedHours?: number[] | null;
+    excludedDaysAndTime?: ExcludedDaysAndTime | null;
   };
 }
-
-const DAY_NAMES = [
-  "Sunday",
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-];
 
 export function RestrictionModal({
   isOpen,
@@ -50,83 +38,10 @@ export function RestrictionModal({
     discountRestrictions,
     minPurchaseAmount,
     maxDiscountAmount,
+    excludedDaysAndTime,
     excludedDaysOfWeek,
     excludedHours,
   } = restrictions;
-
-  // Format excluded days
-  const formatExcludedDays = () => {
-    if (!excludedDaysOfWeek || excludedDaysOfWeek.length === 0) {
-      return null;
-    }
-
-    const availableDays = [0, 1, 2, 3, 4, 5, 6].filter(
-      (day) => !excludedDaysOfWeek.includes(day)
-    );
-
-    if (availableDays.length === 0) {
-      return "Not valid on any day";
-    }
-
-    // Check if consecutive
-    const isConsecutive = availableDays.every((day, i) => {
-      if (i === 0) {
-        return true;
-      }
-      const prevDay = availableDays[i - 1];
-      return prevDay !== undefined && day === prevDay + 1;
-    });
-
-    const firstDay = availableDays[0];
-    const lastDay = availableDays[availableDays.length - 1];
-
-    if (
-      isConsecutive &&
-      availableDays.length > 1 &&
-      typeof firstDay === "number" &&
-      typeof lastDay === "number"
-    ) {
-      return `Valid ${DAY_NAMES[firstDay]} to ${DAY_NAMES[lastDay]}`;
-    } else if (availableDays.length === 1 && typeof firstDay === "number") {
-      return `Valid on ${DAY_NAMES[firstDay]} only`;
-    } else {
-      return `Valid on ${availableDays.map((d) => DAY_NAMES[d]).join(", ")}`;
-    }
-  };
-
-  // Format excluded hours
-  const formatExcludedHours = () => {
-    if (!excludedHours || excludedHours.length === 0) {
-      return null;
-    }
-
-    const availableHours = Array.from({ length: 24 }, (_, i) => i).filter(
-      (hour) => !excludedHours.includes(hour)
-    );
-
-    if (availableHours.length === 0) {
-      return "Not valid at any time";
-    }
-
-    const minHour = Math.min(...availableHours);
-    const maxHour = Math.max(...availableHours);
-
-    const formatHour = (hour: number) => {
-      const period = hour >= 12 ? "PM" : "AM";
-      const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
-      return `${displayHour} ${period}`;
-    };
-
-    if (minHour === 0 && maxHour === 23) {
-      return "Valid all day";
-    } else if (maxHour === 23) {
-      return `Valid after ${formatHour(minHour)}`;
-    } else if (minHour === 0) {
-      return `Valid before ${formatHour(maxHour + 1)}`;
-    } else {
-      return `Valid ${formatHour(minHour)} to ${formatHour(maxHour + 1)}`;
-    }
-  };
 
   const hasAnyRestrictions =
     storeRestrictions ||
@@ -135,6 +50,23 @@ export function RestrictionModal({
     maxDiscountAmount ||
     (excludedDaysOfWeek && excludedDaysOfWeek.length > 0) ||
     (excludedHours && excludedHours.length > 0);
+
+  const daysOfTheWeekIndex = [0, 1, 2, 3, 4, 5, 6];
+
+  const getTimesOfDay = (dayIndex: number) => {
+    if (!excludedDaysAndTime) {
+      return "--";
+    }
+
+    const dayInfo = excludedDaysAndTime.availableDays.find(
+      (d) => d.dayIndex === dayIndex
+    );
+    return dayInfo
+      ? dayInfo.timeRanges
+          .map(({ start, end }) => `${start} - ${end}`)
+          .join(", ")
+      : "--";
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -195,6 +127,37 @@ export function RestrictionModal({
                 </div>
               ) : null}
 
+              {excludedDaysAndTime
+                ? daysOfTheWeekIndex.map((dayIndex) => {
+                    const isExcluded =
+                      excludedDaysAndTime.availableDays?.some(
+                        (dayAndTime: AvailableDay) =>
+                          dayAndTime.dayIndex === dayIndex
+                      ) ?? false;
+                    if (isExcluded) {
+                      return (
+                        <div
+                          key={dayIndex}
+                          className="bg-amber-50 border border-amber-200 rounded-xl p-4"
+                        >
+                          <div className="flex items-start gap-3">
+                            <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                            <div>
+                              <h3 className="text-sm font-semibold text-amber-900 mb-2">
+                                Not Valid on {DAYS_OF_WEEK_BY_INDEX[dayIndex]}
+                              </h3>
+                              <p className="text-sm text-amber-700">
+                                At {getTimesOfDay(dayIndex) || "--"}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }
+                    return null;
+                  })
+                : null}
+
               {/* Store-level custom restrictions */}
               {storeRestrictions ? (
                 <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
@@ -243,36 +206,6 @@ export function RestrictionModal({
                     </div>
                   </div>
                 ) : null}
-
-                {/* Valid Days */}
-                {formatExcludedDays() && (
-                  <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
-                    <Calendar className="w-5 h-5 text-gray-600 shrink-0 mt-0.5" />
-                    <div>
-                      <p className="text-sm font-medium text-foreground">
-                        Valid Days
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {formatExcludedDays()}
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {/* Valid Hours */}
-                {formatExcludedHours() && (
-                  <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
-                    <Clock className="w-5 h-5 text-gray-600 shrink-0 mt-0.5" />
-                    <div>
-                      <p className="text-sm font-medium text-foreground">
-                        Valid Hours
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {formatExcludedHours()}
-                      </p>
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
           )}

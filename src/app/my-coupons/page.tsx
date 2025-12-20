@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
+import type { ExcludedDaysAndTime } from "@/domains/admin";
 import CouponCard from "@/domains/coupons/CouponCard";
 import { RestrictionModal } from "@/domains/coupons/RestrictionModal";
 import { BasicLayout } from "@/layouts/BasicLayout";
@@ -40,6 +41,7 @@ interface Coupon {
     description?: string;
     type?: string;
     value?: number;
+    excludedDaysAndTime?: ExcludedDaysAndTime | null;
     excludedDaysOfWeek?: number[] | null;
     excludedHours?: number[] | null;
     restrictions?: string | null;
@@ -514,6 +516,13 @@ export default function MyCouponsPage(): React.JSX.Element {
               discountRestrictions: restrictionCoupon.discount?.restrictions,
               minPurchaseAmount: restrictionCoupon.discount?.minPurchaseAmount,
               maxDiscountAmount: restrictionCoupon.discount?.maxDiscountAmount,
+              excludedDaysAndTime:
+                restrictionCoupon.discount?.excludedDaysAndTime ?? undefined,
+              // excludedDaysAndTime: restrictionCoupon.discount
+              //   ?.excludedDaysAndTime
+              //   ? (restrictionCoupon.discount
+              //       ?.excludedDaysAndTime as unknown as ExcludedDaysAndTime)
+              //   : undefined,
               excludedDaysOfWeek:
                 restrictionCoupon.discount?.excludedDaysOfWeek,
               excludedHours: restrictionCoupon.discount?.excludedHours,

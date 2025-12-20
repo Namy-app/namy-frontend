@@ -9,7 +9,7 @@ interface TimeRange {
 }
 
 interface AvailableDay {
-  day: string;
+  dayIndex: number;
   timeRanges: TimeRange[];
 }
 
@@ -22,24 +22,14 @@ interface Props {
   onChange: (restrictions: ExcludedDaysAndTime) => void;
 }
 
-const DAYS_OF_WEEK = [
-  "monday",
-  "tuesday",
-  "wednesday",
-  "thursday",
-  "friday",
-  "saturday",
-  "sunday",
-];
-
-const DAY_LABELS: Record<string, string> = {
-  monday: "Lunes",
-  tuesday: "Martes",
-  wednesday: "Miércoles",
-  thursday: "Jueves",
-  friday: "Viernes",
-  saturday: "Sábado",
-  sunday: "Domingo",
+const DAY_LABELS: Record<number, string> = {
+  0: "Lunes",
+  1: "Martes",
+  2: "Miércoles",
+  3: "Jueves",
+  4: "Viernes",
+  5: "Sábado",
+  6: "Domingo",
 };
 
 export const TimeRestrictionsEditor = ({ value, onChange }: Props) => {
@@ -52,16 +42,16 @@ export const TimeRestrictionsEditor = ({ value, onChange }: Props) => {
   }, [availableDays, onChange]);
 
   const handleAddDay = () => {
-    const existingDays = availableDays.map((d) => d.day.toLowerCase());
-    const availableDay = DAYS_OF_WEEK.find(
-      (day) => !existingDays.includes(day)
+    const existingDayIndices = availableDays.map((d) => d.dayIndex);
+    const availableDayIndex = [0, 1, 2, 3, 4, 5, 6].find(
+      (dayIndex) => !existingDayIndices.includes(dayIndex)
     );
 
-    if (availableDay) {
+    if (availableDayIndex !== undefined) {
       const newDays = [
         ...availableDays,
         {
-          day: availableDay,
+          dayIndex: availableDayIndex,
           timeRanges: [{ start: "09:00", end: "17:00" }],
         },
       ];
@@ -74,7 +64,7 @@ export const TimeRestrictionsEditor = ({ value, onChange }: Props) => {
     setAvailableDays(newDays);
   };
 
-  const handleUpdateDay = (dayIndex: number, newDay: string) => {
+  const handleUpdateDay = (dayIndex: number, newDayIndex: number) => {
     const newDays = [...availableDays];
     const currentDay = newDays[dayIndex];
     if (!currentDay) {
@@ -83,7 +73,7 @@ export const TimeRestrictionsEditor = ({ value, onChange }: Props) => {
 
     newDays[dayIndex] = {
       ...currentDay,
-      day: newDay,
+      dayIndex: newDayIndex,
     };
     setAvailableDays(newDays);
   };
@@ -146,10 +136,11 @@ export const TimeRestrictionsEditor = ({ value, onChange }: Props) => {
     setAvailableDays(newDays);
   };
 
-  const getAvailableDays = (currentDay: string) => {
-    const existingDays = availableDays.map((d) => d.day.toLowerCase());
-    return DAYS_OF_WEEK.filter(
-      (day) => day === currentDay.toLowerCase() || !existingDays.includes(day)
+  const getAvailableDayIndices = (currentDayIndex: number) => {
+    const existingDayIndices = availableDays.map((d) => d.dayIndex);
+    return [0, 1, 2, 3, 4, 5, 6].filter(
+      (dayIndex) =>
+        dayIndex === currentDayIndex || !existingDayIndices.includes(dayIndex)
     );
   };
 
@@ -203,13 +194,15 @@ export const TimeRestrictionsEditor = ({ value, onChange }: Props) => {
                     Día
                   </label>
                   <select
-                    value={dayData.day.toLowerCase()}
-                    onChange={(e) => handleUpdateDay(dayIndex, e.target.value)}
+                    value={dayData.dayIndex}
+                    onChange={(e) =>
+                      handleUpdateDay(dayIndex, Number(e.target.value))
+                    }
                     className="w-full px-3 py-2 bg-background border border-input rounded-md text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                   >
-                    {getAvailableDays(dayData.day).map((day) => (
-                      <option key={day} value={day}>
-                        {DAY_LABELS[day]}
+                    {getAvailableDayIndices(dayData.dayIndex).map((dayIdx) => (
+                      <option key={dayIdx} value={dayIdx}>
+                        {DAY_LABELS[dayIdx]}
                       </option>
                     ))}
                   </select>

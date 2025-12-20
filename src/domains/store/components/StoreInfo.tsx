@@ -220,18 +220,18 @@ export const StoreInfo = ({
             <Clock className="w-5 h-5 text-muted-foreground" />
             Horario de Apertura
           </h2>
-          <div className="space-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-y-4">
             {store.openDays.availableDays.map((day, index) => {
               const dayLabel = DAY_LABELS[day.day.toLowerCase()] || day.day;
               return (
-                <div key={index} className="flex justify-between">
-                  <span className="font-medium text-foreground">
+                <div key={index} className="flex flex-col">
+                  <span className="font-medium text-foreground block">
                     {dayLabel}
                   </span>
                   <span className="text-muted-foreground">
                     {day.closed
                       ? "Cerrado"
-                      : `${convertTo12Hour(day.startTime)} - ${convertTo12Hour(day.endTime)}`}
+                      : `(${convertTo12Hour(day.startTime)} - ${convertTo12Hour(day.endTime)})`}
                   </span>
                 </div>
               );

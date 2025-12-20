@@ -221,6 +221,7 @@ export const GET_STORE_DISCOUNTS = gql`
         usedCount
         minPurchaseAmount
         maxDiscountAmount
+        excludedDaysAndTime
         excludedDaysOfWeek
         excludedHours
         maxUsesPerUserPerMonth

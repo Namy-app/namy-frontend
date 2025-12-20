@@ -4,6 +4,7 @@ import { useState, useCallback } from "react";
 import {
   type Discount,
   DiscountType,
+  type ExcludedDaysAndTime,
   useCreateDiscount,
   useUpdateDiscount,
 } from "@/domains/admin";
@@ -62,7 +63,7 @@ export const CreateDiscountModal = ({
   const loading = createDiscount.isPending || updateDiscount.isPending;
 
   const handleExcludedDaysAndTimeChange = useCallback(
-    (restrictions: typeof formData.excludedDaysAndTime) => {
+    (restrictions: ExcludedDaysAndTime) => {
       setFormData((prev) => ({ ...prev, excludedDaysAndTime: restrictions }));
     },
     []
@@ -371,7 +372,8 @@ export const CreateDiscountModal = ({
               </h4>
 
               {/* Exclude Days */}
-              <div>
+              {/* TODO: Remove once confirmed that new configuratin is working */}
+              <div className="hidden">
                 <label className="block text-sm font-medium text-foreground mb-3">
                   Excluir Días
                 </label>
@@ -416,7 +418,8 @@ export const CreateDiscountModal = ({
               </div>
 
               {/* Exclude Hours */}
-              <div>
+              {/* TODO: Remove once confirmed that new configuratin is working */}
+              <div className="hidden">
                 <label className="block text-sm font-medium text-foreground mb-3">
                   Horas Excluidas
                 </label>
@@ -466,6 +469,14 @@ export const CreateDiscountModal = ({
                 </div>
               </div>
 
+              {/* Time Restrictions Editor */}
+              <div className="space-y-4">
+                <TimeRestrictionsEditor
+                  value={formData.excludedDaysAndTime}
+                  onChange={handleExcludedDaysAndTimeChange}
+                />
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-2">
@@ -504,14 +515,6 @@ export const CreateDiscountModal = ({
                   />
                 </div>
               </div>
-            </div>
-
-            {/* Time Restrictions Editor */}
-            <div className="space-y-4">
-              <TimeRestrictionsEditor
-                value={formData.excludedDaysAndTime}
-                onChange={handleExcludedDaysAndTimeChange}
-              />
             </div>
 
             {/* Status */}
