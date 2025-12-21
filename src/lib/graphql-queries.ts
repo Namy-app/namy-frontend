@@ -407,6 +407,7 @@ export const GET_COUPON_REDEEM_DETAILS_QUERY = `
         excludedDaysAndTime
         excludedDaysOfWeek
         excludedHours
+        additionalRestrictions
         restrictions
       }
     }

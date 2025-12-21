@@ -8,7 +8,6 @@ import { useCreateWallet, useWallet } from "@/domains/payment/hooks";
 import { BasicLayout } from "@/layouts/BasicLayout";
 import { useAuthStore } from "@/store/useAuthStore";
 
-
 export default function PaymentPage(): React.JSX.Element {
   const { user } = useAuthStore();
   const [showDepositForm, setShowDepositForm] = useState(false);
@@ -81,9 +80,9 @@ export default function PaymentPage(): React.JSX.Element {
                 <button
                   onClick={() => void handleCreateWallet()}
                   disabled={createWallet.isPending}
-                  className="px-6 py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors shadow-md hover:shadow-lg"
+                  className="px-6 py-3 bg-lime-600 text-white font-medium rounded-lg hover:bg-lime-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors shadow-md hover:shadow-lg"
                 >
-                  {createWallet.isPending ? "Creating..." : "Create Wallet"}
+                  {createWallet.isPending ? "Creando..." : "Crear Billetera"}
                 </button>
               </div>
             ) : (
@@ -102,9 +101,9 @@ export default function PaymentPage(): React.JSX.Element {
                     <div className="flex justify-end">
                       <button
                         onClick={() => setShowDepositForm(true)}
-                        className="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-md hover:shadow-lg"
+                        className="px-6 py-3 bg-black/80 text-white font-medium rounded-lg hover:bg-black/90 transition-colors shadow-md hover:shadow-lg"
                       >
-                        Add Funds
+                        Añadir Fondos
                       </button>
                     </div>
 

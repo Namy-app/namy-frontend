@@ -1,3 +1,5 @@
+import type { ExcludedDaysAndTime } from "@/domains/admin";
+
 /**
  * Decoded coupon data structure matching backend payload
  * Contains display data + storeId (securely encrypted)
@@ -6,7 +8,8 @@ export interface DecodedCouponData {
   code: string;
   expiresAt: string;
   createdAt: string;
-  storeId: string; // Added for staff redemption
+  storeId: string;
+  // discountId: string;
   store: {
     name: string;
     description?: string;
@@ -23,6 +26,8 @@ export interface DecodedCouponData {
     value: number;
     minPurchaseAmount?: number;
     maxDiscountAmount?: number;
+    excludedDaysAndTime?: ExcludedDaysAndTime | null;
+    additionalRestrictions?: string[] | null;
     restrictions?: string; // Formatted restriction text from backend
   };
 }
@@ -230,28 +235,11 @@ export class CouponDecoder {
     }
 
     const obj = data as Record<string, unknown>;
-    const required = [
-      "code",
-      "expiresAt",
-      "createdAt",
-      "storeId",
-      "store",
-      "discount",
-    ];
+    const required = ["code", "expiresAt", "createdAt"];
     for (const field of required) {
       if (!(field in obj)) {
         throw new Error(`Missing required field: ${field}`);
       }
-    }
-
-    const store = (obj.store ?? {}) as Record<string, unknown>;
-    if (!store?.name) {
-      throw new Error("Invalid store data");
-    }
-
-    const discount = (obj.discount ?? {}) as Record<string, unknown>;
-    if (!discount?.title || !discount?.type || discount?.value === undefined) {
-      throw new Error("Invalid discount data");
     }
   }
 

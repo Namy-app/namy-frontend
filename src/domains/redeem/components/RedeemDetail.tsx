@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 
+import { DAYS_OF_WEEK_BY_INDEX } from "@/data/constants";
 import { useToast } from "@/hooks/use-toast";
 import { CouponDecoder, type DecodedCouponData } from "@/lib/coupon-decoder";
 import { graphqlRequest } from "@/lib/graphql-client";
@@ -35,11 +36,10 @@ type RedemptionResult = {
 };
 
 export default function RedeemDetail({
-  couponData: initial,
+  couponData,
   onClose,
 }: Props): React.JSX.Element {
   const { toast } = useToast();
-  const [couponData, _] = useState<DecodedCouponData | null>(initial);
   const [error, setError] = useState<string | null>(null);
   const [timeRemaining, setTimeRemaining] = useState<string>("");
   const [storePin, setStorePin] = useState("");
@@ -51,6 +51,7 @@ export default function RedeemDetail({
   const [isActive, setIsActive] = useState(false);
   const [blockReason, setBlockReason] = useState<string | null>(null);
   const storePinRef = useRef<HTMLInputElement | null>(null);
+  const fetchedCodeRef = useRef<string | null>(null);
 
   const deviceId = (() => {
     if (typeof window === "undefined") {
@@ -86,9 +87,12 @@ export default function RedeemDetail({
 
   useEffect(() => {
     const init = async (): Promise<void> => {
-      if (!couponData) {
+      if (!couponData || fetchedCodeRef.current === couponData.code) {
         return;
       }
+
+      fetchedCodeRef.current = couponData.code;
+
       try {
         // fetch server-side redeem details to check valid/used
         const detailsRes = await fetch(process.env.NEXT_PUBLIC_API_URL!, {
@@ -127,7 +131,7 @@ export default function RedeemDetail({
       }
     };
     void init();
-  }, [couponData]);
+  }, [couponData?.code]);
 
   useEffect(() => {
     if (!couponData) {
@@ -137,16 +141,20 @@ export default function RedeemDetail({
       const formatted = CouponDecoder.formatExpirationTime(
         couponData.expiresAt
       );
-      setTimeRemaining(formatted);
+      setTimeRemaining((prev) => (prev !== formatted ? formatted : prev));
       if (formatted === "Expired") {
-        setError("This coupon has expired");
-        setBlockReason("Coupon expired");
+        setError((prev) =>
+          prev !== "This coupon has expired" ? "This coupon has expired" : prev
+        );
+        setBlockReason((prev) =>
+          prev !== "Coupon expired" ? "Coupon expired" : prev
+        );
       }
     };
     updateTimer();
     const interval = setInterval(updateTimer, 1000);
     return () => clearInterval(interval);
-  }, [couponData]);
+  }, [couponData?.expiresAt]);
 
   const handleRedeem = async (): Promise<void> => {
     if (!couponData) {
@@ -400,7 +408,41 @@ export default function RedeemDetail({
               </span>
             </div>
           ) : null}
-          {couponData.discount.restrictions ? (
+          {couponData.discount.excludedDaysAndTime
+            ? couponData.discount.excludedDaysAndTime.availableDays.length >
+                0 && (
+                <div className="mt-3 p-3 bg-primary/5 border border-primary/20 rounded-lg">
+                  <div className="flex items-start gap-2">
+                    <Clock className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                    <div>
+                      <p className="text-xs font-semibold text-primary mb-1">
+                        Excluded Days/Times
+                      </p>
+                      <ul className="text-sm text-foreground gap-x-4">
+                        {couponData.discount.excludedDaysAndTime.availableDays.map(
+                          ({ dayIndex, timeRanges }, index) => (
+                            <li key={index} className="flex gap-x-2">
+                              <span>
+                                &bull; {DAYS_OF_WEEK_BY_INDEX[dayIndex]}
+                              </span>
+                              <span>
+                                {`(${timeRanges
+                                  .map(
+                                    (timeRange) =>
+                                      `${timeRange.start} - ${timeRange.end}`
+                                  )
+                                  .join(", ")})`}
+                              </span>
+                            </li>
+                          )
+                        )}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              )
+            : null}
+          {couponData.discount.additionalRestrictions ? (
             <div className="mt-3 p-3 bg-primary/5 border border-primary/20 rounded-lg">
               <div className="flex items-start gap-2">
                 <Clock className="w-4 h-4 text-primary mt-0.5 shrink-0" />
@@ -408,9 +450,13 @@ export default function RedeemDetail({
                   <p className="text-xs font-semibold text-primary mb-1">
                     Usage Restrictions
                   </p>
-                  <p className="text-sm text-foreground">
-                    {couponData.discount.restrictions}
-                  </p>
+                  <ul className="text-sm text-foreground">
+                    {couponData.discount.additionalRestrictions?.map(
+                      (restriction, index) => (
+                        <li key={index}>&bull; {restriction}</li>
+                      )
+                    )}
+                  </ul>
                 </div>
               </div>
             </div>

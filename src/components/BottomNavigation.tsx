@@ -35,7 +35,8 @@ export function BottomNavigation(): React.JSX.Element {
 
         <button
           onClick={() => router.push("/coming-soon?feature=Top Ñamy")}
-          className="flex flex-col items-center justify-center gap-1 px-6 py-2 transition-all rounded-lg text-muted-foreground hover:text-foreground hover:scale-105"
+          // className="flex flex-col items-center justify-center gap-1 px-6 py-2 transition-all rounded-lg text-muted-foreground hover:text-foreground hover:scale-105"
+          className="hidden flex-col items-center justify-center gap-1 px-6 py-2 transition-all rounded-lg text-muted-foreground hover:text-foreground hover:scale-105"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -60,8 +61,55 @@ export function BottomNavigation(): React.JSX.Element {
         </button>
 
         <button
+          onClick={() => router.push("/my-coupons")}
+          className={`flex flex-col items-center justify-center gap-1 px-6 py-2 transition-all rounded-lg ${isActive("/my-coupons") ? "text-primary scale-105" : "text-muted-foreground hover:text-foreground hover:scale-105"}`}
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="w-6 h-6"
+          >
+            <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z" />
+            <path d="M13 5v2" />
+            <path d="M13 17v2" />
+            <path d="M13 11v2" />
+          </svg>
+          <span className="text-xs font-medium">Cupones</span>
+        </button>
+
+        <button
+          onClick={() => router.push("/profile")}
+          className={`flex flex-col items-center justify-center gap-1 px-6 py-2 transition-all rounded-lg ${isActive("/profile") ? "text-primary scale-105" : "text-muted-foreground hover:text-foreground hover:scale-105"}`}
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="w-6 h-6"
+          >
+            <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+            <circle cx="12" cy="7" r="4" />
+          </svg>
+          <span className="text-xs font-medium">Perfil</span>
+        </button>
+
+        <button
           onClick={() => router.push("/coming-soon?feature=Mural")}
-          className="flex flex-col items-center justify-center gap-1 px-6 py-2 transition-all rounded-lg text-muted-foreground hover:text-foreground hover:scale-105"
+          className="hidden flex-col items-center justify-center gap-1 px-6 py-2 transition-all rounded-lg text-muted-foreground hover:text-foreground hover:scale-105"
+          // className="flex flex-col items-center justify-center gap-1 px-6 py-2 transition-all rounded-lg text-muted-foreground hover:text-foreground hover:scale-105"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"

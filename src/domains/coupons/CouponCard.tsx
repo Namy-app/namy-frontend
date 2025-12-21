@@ -3,35 +3,15 @@
 import { Share2, Trash2, QrCode, Copy, Info } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
+import type { CouponItem } from "@/domains/coupon/type";
 import { useToast } from "@/hooks/use-toast";
 
-type Coupon = {
-  code: string;
-  used?: boolean;
-  expiresAt: string;
-  usedAt?: string;
-  store?: {
-    name?: string;
-    restrictions?: string | null;
-  } | null;
-  discount?: {
-    title?: string;
-    type?: string;
-    value?: number;
-    restrictions?: string | null;
-    minPurchaseAmount?: number | null;
-    maxDiscountAmount?: number | null;
-    excludedDaysOfWeek?: number[] | null;
-    excludedHours?: number[] | null;
-  } | null;
-};
-
 type Props = {
-  coupon: Coupon;
-  onViewQr: (c: Coupon) => void;
-  onShare: (c: Coupon) => void;
-  onDelete: (c: Coupon) => void;
-  onViewRestrictions?: (c: Coupon) => void;
+  coupon: CouponItem;
+  onViewQr: (c: CouponItem) => void;
+  onShare: (c: CouponItem) => void;
+  onDelete: (c: CouponItem) => void;
+  onViewRestrictions?: (c: CouponItem) => void;
 };
 
 function formatDiscount(
@@ -92,6 +72,10 @@ export default function CouponCard({
       coupon.discount?.restrictions ||
       coupon.discount?.minPurchaseAmount ||
       coupon.discount?.maxDiscountAmount ||
+      (coupon.discount?.additionalRestrictions &&
+        coupon.discount.additionalRestrictions.length > 0) ||
+      (coupon.discount?.excludedDaysAndTime &&
+        coupon.discount.excludedDaysAndTime.availableDays.length > 0) ||
       (coupon.discount?.excludedDaysOfWeek &&
         coupon.discount.excludedDaysOfWeek.length > 0) ||
       (coupon.discount?.excludedHours &&

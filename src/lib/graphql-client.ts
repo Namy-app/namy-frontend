@@ -2,9 +2,6 @@ import { GraphQLClient } from "graphql-request";
 
 import { env } from "./env";
 
-// eslint-disable-next-line no-console
-console.log("API URL:", env.NEXT_PUBLIC_API_URL);
-
 type GraphQLError = {
   response?: {
     errors?: Array<{
@@ -105,11 +102,7 @@ export async function graphqlRequest<T>(
   variables?: any
 ): Promise<T> {
   try {
-    // eslint-disable-next-line no-console
-    console.log("GraphQL Request:", { query, variables });
     const result = await graphqlClient.request<T>(query, variables);
-    // eslint-disable-next-line no-console
-    console.log("GraphQL Response:", result);
     return result;
   } catch (error) {
     console.error("GraphQL Error:", error);
