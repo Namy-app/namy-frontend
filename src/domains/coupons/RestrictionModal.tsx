@@ -83,7 +83,7 @@ export function RestrictionModal({
         {/* Header */}
         <div className="sticky top-0 bg-gradient-primary text-white p-6 flex items-start justify-between">
           <div className="flex-1">
-            <h2 className="text-2xl font-bold mb-1">Coupon Restrictions</h2>
+            <h2 className="text-2xl font-bold mb-1">Restricciones del Cupón</h2>
             <p className="text-sm opacity-90">{storeName}</p>
             <p className="text-xs opacity-75 mt-1">{discountTitle}</p>
           </div>
@@ -104,10 +104,11 @@ export function RestrictionModal({
                 <Info className="w-8 h-8 text-green-600" />
               </div>
               <h3 className="text-lg font-semibold text-foreground mb-2">
-                No Restrictions
+                Sin Restricciones
               </h3>
               <p className="text-sm text-muted-foreground">
-                This coupon can be used anytime without special conditions.
+                Este cupón se puede usar en cualquier momento sin condiciones
+                especiales.
               </p>
             </div>
           ) : (
@@ -119,7 +120,7 @@ export function RestrictionModal({
                     <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
                     <div>
                       <h3 className="text-sm font-semibold text-amber-900 mb-2">
-                        Usage Restrictions
+                        Restricciones de Uso
                       </h3>
                       <p className="text-sm text-amber-700">
                         {discountRestrictions}
@@ -146,10 +147,10 @@ export function RestrictionModal({
                             <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
                             <div>
                               <h3 className="text-sm font-semibold text-amber-900 mb-2">
-                                Not Valid on {DAYS_OF_WEEK_BY_INDEX[dayIndex]}
+                                No válido los {DAYS_OF_WEEK_BY_INDEX[dayIndex]}
                               </h3>
                               <p className="text-sm text-amber-700">
-                                At {getTimesOfDay(dayIndex) || "--"}
+                                A las {getTimesOfDay(dayIndex) || "--"}
                               </p>
                             </div>
                           </div>
@@ -167,7 +168,7 @@ export function RestrictionModal({
                     <Info className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
                     <div>
                       <h3 className="text-sm font-semibold text-blue-900 mb-2">
-                        Store Requirements
+                        Requisitos de la Tienda
                       </h3>
                       <p className="text-sm text-blue-700 whitespace-pre-wrap">
                         {storeRestrictions}
@@ -185,10 +186,11 @@ export function RestrictionModal({
                     <DollarSign className="w-5 h-5 text-gray-600 shrink-0 mt-0.5" />
                     <div>
                       <p className="text-sm font-medium text-foreground">
-                        Minimum Purchase
+                        Compra Mínima
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        ${minPurchaseAmount.toFixed(2)} minimum spend required
+                        Se requiere un gasto mínimo de $
+                        {minPurchaseAmount.toFixed(2)}
                       </p>
                     </div>
                   </div>
@@ -200,10 +202,11 @@ export function RestrictionModal({
                     <DollarSign className="w-5 h-5 text-gray-600 shrink-0 mt-0.5" />
                     <div>
                       <p className="text-sm font-medium text-foreground">
-                        Maximum Discount
+                        Descuento Máximo
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        Up to ${maxDiscountAmount.toFixed(2)} discount limit
+                        Hasta ${maxDiscountAmount.toFixed(2)} de límite de
+                        descuento
                       </p>
                     </div>
                   </div>
@@ -216,7 +219,7 @@ export function RestrictionModal({
                       <Info className="w-5 h-5 text-gray-600 shrink-0 mt-0.5" />
                       <div>
                         <h3 className="text-sm font-semibold text-gray-900 mb-2">
-                          Additional Restrictions
+                          Restricciones Adicionales
                         </h3>
                         {additionalRestrictions.map((restriction, index) => (
                           <p key={index} className="text-sm text-gray-700">
@@ -238,7 +241,7 @@ export function RestrictionModal({
             onClick={onClose}
             className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-semibold hover:shadow-glow transition-all"
           >
-            Got It
+            Entendido
           </button>
         </div>
       </div>

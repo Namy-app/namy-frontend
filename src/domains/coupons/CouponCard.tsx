@@ -133,11 +133,11 @@ export default function CouponCard({
     try {
       await navigator.clipboard.writeText(coupon.code);
       toast({
-        title: "Copied",
-        description: "Coupon code copied to clipboard.",
+        title: "Copiado",
+        description: "Código del cupón copiado al portapapeles.",
       });
     } catch (_e) {
-      toast({ title: "Error", description: "Unable to copy." });
+      toast({ title: "Error", description: "No se pudo copiar." });
     }
   };
 
@@ -147,7 +147,7 @@ export default function CouponCard({
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <p className="text-sm text-muted-foreground">Coupon Code</p>
+              <p className="text-sm text-muted-foreground">Código del Cupón</p>
               <p className="text-2xl font-bold font-mono tracking-wider text-foreground truncate">
                 {coupon.code}
               </p>
@@ -155,10 +155,10 @@ export default function CouponCard({
               {/* store name and discount title */}
               <div className="mt-2">
                 <p className="text-sm text-muted-foreground truncate">
-                  {coupon.store?.name ?? "Store"}
+                  {coupon.store?.name ?? "Tienda"}
                 </p>
                 <p className="text-sm font-medium text-foreground truncate">
-                  {coupon.discount?.title ?? "Discount"}
+                  {coupon.discount?.title ?? "Descuento"}
                 </p>
               </div>
             </div>
@@ -174,10 +174,10 @@ export default function CouponCard({
                 }`}
               >
                 {status === "active"
-                  ? "Active"
+                  ? "Activo"
                   : status === "redeemed"
-                    ? "Redeemed"
-                    : "Expired"}
+                    ? "Canjeado"
+                    : "Expirado"}
               </div>
             </div>
           </div>
@@ -187,11 +187,11 @@ export default function CouponCard({
               <span className="inline-flex items-center gap-2">
                 ⏰{" "}
                 {status === "active"
-                  ? `Expires on ${new Date(coupon.expiresAt).toLocaleDateString()}`
+                  ? `Expira el ${new Date(coupon.expiresAt).toLocaleDateString()}`
                   : status === "expired"
-                    ? `Expired on ${new Date(coupon.expiresAt).toLocaleDateString()}`
+                    ? `Expiró el ${new Date(coupon.expiresAt).toLocaleDateString()}`
                     : coupon.usedAt
-                      ? `Redeemed on ${new Date(coupon.usedAt).toLocaleDateString()}`
+                      ? `Canjeado el ${new Date(coupon.usedAt).toLocaleDateString()}`
                       : ""}
               </span>
               {countdown ? (
@@ -221,7 +221,7 @@ export default function CouponCard({
             className="text-sm text-amber-600 hover:text-amber-700 font-medium flex items-center gap-1 transition-colors mb-3"
           >
             <Info className="w-4 h-4" />
-            View Restrictions
+            Ver Restricciones
           </button>
         ) : null}
 
@@ -231,7 +231,7 @@ export default function CouponCard({
             onClick={() => void onViewQr(coupon)}
             className="px-8 py-3 bg-gradient-primary text-primary-foreground rounded-full font-semibold flex items-center gap-2"
           >
-            <QrCode className="w-5 h-5" /> View QR
+            <QrCode className="w-5 h-5" /> Ver QR
           </button>
 
           <button
