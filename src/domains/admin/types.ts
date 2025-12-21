@@ -51,9 +51,10 @@ export interface Store {
   price: PriceRange;
   active: boolean;
   url?: string;
-  pin?: string | null;
+  pin: boolean; // Indicates whether a PIN has been set
   openDays?: OpenDaysStructure;
   tags?: string;
+  restrictions?: string;
   averageRating: number;
   reviewCounter: number;
   additionalInfo?: Record<string, unknown>;
@@ -69,7 +70,7 @@ export interface StoreCreationResponse {
 
 export interface StoreUpdateResponse {
   store: Store;
-  plainPin?: string;
+  newPin?: string;
   message: string;
 }
 
@@ -121,6 +122,7 @@ export interface CreateStoreInput {
   url?: string;
   openDays?: OpenDaysStructure;
   tags?: string;
+  restrictions?: string;
   additionalInfo?: Record<string, unknown>;
 }
 
@@ -141,6 +143,7 @@ export interface UpdateStoreInput {
   url?: string;
   openDays?: OpenDaysStructure;
   tags?: string;
+  restrictions?: string;
   additionalInfo?: Record<string, unknown>;
   regeneratePin?: boolean;
 }
@@ -169,6 +172,20 @@ export enum DiscountType {
   FIXED_AMOUNT = "FIXED_AMOUNT",
 }
 
+export interface TimeRange {
+  start: string;
+  end: string;
+}
+
+export interface AvailableDay {
+  dayIndex: number;
+  timeRanges: TimeRange[];
+}
+
+export interface ExcludedDaysAndTime {
+  availableDays: AvailableDay[];
+}
+
 export interface Discount {
   id: string;
   storeId: string;
@@ -186,6 +203,8 @@ export interface Discount {
   maxDiscountAmount?: number;
   excludedDaysOfWeek: number[];
   excludedHours: number[];
+  additionalRestrictions: string[];
+  excludedDaysAndTime?: ExcludedDaysAndTime;
   maxUsesPerUserPerMonth?: number;
   monthlyRedemptionCap?: number;
   createdAt: string;
@@ -211,7 +230,9 @@ export interface CreateDiscountInput {
   minPurchaseAmount?: number;
   maxDiscountAmount?: number;
   excludedDaysOfWeek?: number[];
+  additionalRestrictions?: string[];
   excludedHours?: number[];
+  excludedDaysAndTime?: ExcludedDaysAndTime;
   maxUsesPerUserPerMonth?: number;
   monthlyRedemptionCap?: number;
   id?: string;
@@ -231,6 +252,8 @@ export interface UpdateDiscountInput {
   maxDiscountAmount?: number;
   excludedDaysOfWeek?: number[];
   excludedHours?: number[];
+  additionalRestrictions?: string[];
+  excludedDaysAndTime?: ExcludedDaysAndTime;
   maxUsesPerUserPerMonth?: number;
   monthlyRedemptionCap?: number;
 }

@@ -1,15 +1,18 @@
 import { Loader2, Percent, X } from "lucide-react";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 
 import {
   type Discount,
   DiscountType,
+  type ExcludedDaysAndTime,
   useCreateDiscount,
   useUpdateDiscount,
 } from "@/domains/admin";
 import { useToast } from "@/hooks/use-toast";
 import { formatDateToYMDSafe } from "@/lib/date.lib";
 import { extractValidationErrors } from "@/lib/utils";
+
+import { TimeRestrictionsEditor } from "./TimeRestrictionsEditor";
 
 const daysOfTheWeek = [
   { label: "Lunes", index: 1 },
@@ -52,11 +55,44 @@ export const CreateDiscountModal = ({
     maxUsesPerUserPerMonth: discount?.maxUsesPerUserPerMonth?.toString() || "",
     minPurchaseAmount: discount?.minPurchaseAmount?.toString() || "",
     maxDiscountAmount: discount?.maxDiscountAmount?.toString() || "",
+    excludedDaysAndTime: discount?.excludedDaysAndTime || { availableDays: [] },
+    additionalRestrictions: discount?.additionalRestrictions || [],
   });
+
+  const [newRestriction, setNewRestriction] = useState("");
 
   const today = new Date().toISOString().split("T")[0];
   const minStartDate = discount?.id ? undefined : today;
   const loading = createDiscount.isPending || updateDiscount.isPending;
+
+  const handleExcludedDaysAndTimeChange = useCallback(
+    (restrictions: ExcludedDaysAndTime) => {
+      setFormData((prev) => ({ ...prev, excludedDaysAndTime: restrictions }));
+    },
+    []
+  );
+
+  const handleAddRestriction = () => {
+    if (newRestriction.trim()) {
+      setFormData((prev) => ({
+        ...prev,
+        additionalRestrictions: [
+          ...prev.additionalRestrictions,
+          newRestriction.trim(),
+        ],
+      }));
+      setNewRestriction("");
+    }
+  };
+
+  const handleRemoveRestriction = (index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      additionalRestrictions: prev.additionalRestrictions.filter(
+        (_: string, i: number) => i !== index
+      ),
+    }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -94,6 +130,14 @@ export const CreateDiscountModal = ({
             maxDiscountAmount: formData.maxDiscountAmount
               ? parseFloat(formData.maxDiscountAmount)
               : undefined,
+            excludedDaysAndTime:
+              formData.excludedDaysAndTime.availableDays.length > 0
+                ? formData.excludedDaysAndTime
+                : undefined,
+            additionalRestrictions:
+              formData.additionalRestrictions.length > 0
+                ? formData.additionalRestrictions
+                : undefined,
           },
         });
       } else {
@@ -119,6 +163,14 @@ export const CreateDiscountModal = ({
           maxDiscountAmount: formData.maxDiscountAmount
             ? parseFloat(formData.maxDiscountAmount)
             : undefined,
+          excludedDaysAndTime:
+            formData.excludedDaysAndTime.availableDays.length > 0
+              ? formData.excludedDaysAndTime
+              : undefined,
+          additionalRestrictions:
+            formData.additionalRestrictions.length > 0
+              ? formData.additionalRestrictions
+              : undefined,
         });
       }
       toast({
@@ -353,7 +405,8 @@ export const CreateDiscountModal = ({
               </h4>
 
               {/* Exclude Days */}
-              <div>
+              {/* TODO: Remove once confirmed that new configuratin is working */}
+              <div className="hidden">
                 <label className="block text-sm font-medium text-foreground mb-3">
                   Excluir Días
                 </label>
@@ -398,7 +451,8 @@ export const CreateDiscountModal = ({
               </div>
 
               {/* Exclude Hours */}
-              <div>
+              {/* TODO: Remove once confirmed that new configuratin is working */}
+              <div className="hidden">
                 <label className="block text-sm font-medium text-foreground mb-3">
                   Horas Excluidas
                 </label>
@@ -448,6 +502,14 @@ export const CreateDiscountModal = ({
                 </div>
               </div>
 
+              {/* Time Restrictions Editor */}
+              <div className="space-y-4">
+                <TimeRestrictionsEditor
+                  value={formData.excludedDaysAndTime}
+                  onChange={handleExcludedDaysAndTimeChange}
+                />
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-2">
@@ -486,6 +548,59 @@ export const CreateDiscountModal = ({
                   />
                 </div>
               </div>
+            </div>
+
+            {/* Additional Restrictions */}
+            <div className="space-y-4">
+              <h4 className="text-sm font-semibold text-foreground uppercase tracking-wide">
+                Restricciones Adicionales
+              </h4>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={newRestriction}
+                  onChange={(e) => setNewRestriction(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleAddRestriction();
+                    }
+                  }}
+                  className="flex-1 px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  placeholder="Agregar restricción adicional..."
+                />
+                <button
+                  type="button"
+                  onClick={handleAddRestriction}
+                  className="px-4 py-2 bg-primary text-primary-foreground font-medium rounded-lg hover:opacity-90 transition-colors"
+                >
+                  Agregar
+                </button>
+              </div>
+              {formData.additionalRestrictions.length > 0 && (
+                <div className="space-y-2">
+                  {formData.additionalRestrictions.map(
+                    (restriction: string, index: number) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between p-3 bg-muted/50 rounded-lg border border-border"
+                      >
+                        <span className="text-sm text-foreground">
+                          {restriction}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveRestriction(index)}
+                          className="p-1 text-destructive hover:bg-destructive/10 rounded transition-colors"
+                          title="Eliminar restricción"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Status */}

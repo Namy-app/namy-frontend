@@ -3,9 +3,18 @@ import { Calendar, DollarSign, Percent, Settings } from "lucide-react";
 import { useState } from "react";
 
 import { type Discount, DiscountType } from "@/domains/admin";
-import { displayExcludedHours } from "@/lib/discount-utils";
 
 import { CreateDiscountModal } from "./CreateDiscountModal";
+
+const daysOfTheWeek = [
+  "Domingo",
+  "Lunes",
+  "Martes",
+  "Miércoles",
+  "Jueves",
+  "Viernes",
+  "Sábado",
+];
 
 // Discount Card Component
 export const DiscountSection = ({
@@ -205,33 +214,45 @@ export const DiscountSection = ({
               <p className="text-sm font-medium text-muted-foreground mb-2">
                 Restricciones
               </p>
-              {discount.excludedDaysOfWeek.length > 0 && (
-                <p className="text-sm text-foreground mb-1">
-                  <span className="font-medium">Días Excluidos:</span>{" "}
-                  {discount.excludedDaysOfWeek
-                    .map(
-                      (d: number) =>
-                        [
-                          "Domingo",
-                          "Lunes",
-                          "Martes",
-                          "Miércoles",
-                          "Jueves",
-                          "Viernes",
-                          "Sábado",
-                        ][d]
-                    )
-                    .join(", ")}
-                </p>
-              )}
-              {discount.excludedHours.length > 0 && (
-                <p className="text-sm text-foreground">
-                  <span className="font-medium">Horas Excluidas:</span>{" "}
-                  {displayExcludedHours(discount.excludedHours)}
-                </p>
-              )}
+              {discount.excludedDaysAndTime &&
+              discount.excludedDaysAndTime.availableDays.length > 0 ? (
+                <div className="mb-2">
+                  <p className="text-sm text-foreground mb-1 font-medium">
+                    Días y Horarios Disponibles:
+                  </p>
+                  {discount.excludedDaysAndTime.availableDays.map((day) => (
+                    <p
+                      key={day.dayIndex}
+                      className="text-sm text-foreground mb-1"
+                    >
+                      <span className="font-medium">
+                        {daysOfTheWeek[day.dayIndex]}:
+                      </span>{" "}
+                      {day.timeRanges
+                        .map((tr) => `${tr.start} - ${tr.end}`)
+                        .join(", ")}
+                    </p>
+                  ))}
+                </div>
+              ) : null}
             </div>
           )}
+
+          {/* Additional Restrictions */}
+          {discount.additionalRestrictions ? (
+            <div className="border-t pt-4">
+              <p className="text-sm font-medium text-muted-foreground mb-2">
+                Restricciones Adicionales
+              </p>
+              <p className="text-sm text-foreground">
+                {discount.additionalRestrictions.map((restriction, index) => (
+                  <span key={index} className="block">
+                    &bull; {restriction}
+                  </span>
+                ))}
+              </p>
+            </div>
+          ) : null}
         </div>
       ) : (
         <div className="text-center py-8">

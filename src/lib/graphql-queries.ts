@@ -304,6 +304,7 @@ export const GET_ALL_DISCOUNTS_QUERY = `
         discountValue
         minOrderValue
         maxDiscountAmount
+        excludedDaysAndTime
         validFrom
         validTo
         isActive
@@ -336,6 +337,7 @@ export const GET_DISCOUNT_BY_CODE_QUERY = `
         discountValue
         minOrderValue
         maxDiscountAmount
+        excludedDaysAndTime
         validFrom
         validTo
         isActive
@@ -402,6 +404,7 @@ export const GET_COUPON_REDEEM_DETAILS_QUERY = `
         value
         minPurchaseAmount
         maxDiscountAmount
+        excludedDaysAndTime
         excludedDaysOfWeek
         excludedHours
         restrictions
@@ -432,6 +435,7 @@ export const GENERATE_COUPON_MUTATION = `
         minPurchaseAmount
         maxDiscountAmount
         excludedDaysOfWeek
+        excludedDaysAndTime
         excludedHours
         restrictions
       }
@@ -463,6 +467,7 @@ export const QUICK_PAY_FOR_DISCOUNT_MUTATION = `
         minPurchaseAmount
         maxDiscountAmount
         excludedDaysOfWeek
+        excludedDaysAndTime
         excludedHours
         restrictions
       }
@@ -545,7 +550,9 @@ export const COUPONS_QUERY = `
         type
         value
         excludedDaysOfWeek
+        excludedDaysAndTime
         excludedHours
+        additionalRestrictions
         restrictions
       }
       store {
@@ -553,6 +560,7 @@ export const COUPONS_QUERY = `
         name
         address
         city
+          restrictions
       }
     }
   }

@@ -10,6 +10,8 @@ import {
   X,
   Loader2,
   Package,
+  Copy,
+  Check,
 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
@@ -47,6 +49,7 @@ export default function StoreDetailPage() {
   const [showCreateCatalog, setShowCreateCatalog] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
   const [generatingPin, setGeneratingPin] = useState(false);
+  const [generatedPin, setGeneratedPin] = useState<string | null>(null);
   // const [genericDiscount, setGenericDiscount] = useState<Discount | null>(null);
 
   // Data fetching
@@ -108,7 +111,7 @@ export default function StoreDetailPage() {
       }
 
       setGeneratingPin(true);
-      await updateStore.mutateAsync({
+      const result = await updateStore.mutateAsync({
         id: store.id,
         input: {
           name: store.name,
@@ -129,9 +132,14 @@ export default function StoreDetailPage() {
         },
       });
 
+      // Show the generated PIN
+      if (result.newPin) {
+        setGeneratedPin(result.newPin);
+      }
+
       toast({
         title: "PIN Generated",
-        description: "PIN generated successfully.",
+        description: "New PIN generated successfully.",
         variant: "default",
       });
     } catch (err) {
@@ -312,6 +320,15 @@ export default function StoreDetailPage() {
         <CreateCatalogModal
           storeId={storeId}
           onClose={() => setShowCreateCatalog(false)}
+        />
+      ) : null}
+
+      {/* Generated PIN Modal */}
+      {generatedPin ? (
+        <GeneratedPinModal
+          pin={generatedPin}
+          storeName={store?.name || ""}
+          onClose={() => setGeneratedPin(null)}
         />
       ) : null}
     </div>
@@ -926,6 +943,81 @@ function CreateCatalogModal({
             </button>
           </div>
         </form>
+      </div>
+    </div>
+  );
+}
+
+// Generated PIN Modal Component
+function GeneratedPinModal({
+  pin,
+  storeName,
+  onClose,
+}: {
+  pin: string;
+  storeName: string;
+  onClose: () => void;
+}) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyPin = async () => {
+    await navigator.clipboard.writeText(pin);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+
+    toast({
+      title: "PIN Copiado!",
+      description: "PIN de tienda copiado al portapapeles",
+    });
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div className="bg-card rounded-lg shadow-xl max-w-md w-full p-6">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-bold text-foreground">¡PIN Generado!</h2>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-muted rounded-lg transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="bg-secondary/10 border-2 border-secondary rounded-lg p-6 mb-6">
+          <p className="text-sm text-secondary-foreground mb-4 font-medium">
+            ⚠️ IMPORTANTE: Guarde este PIN inmediatamente! Puede verlo más tarde
+            haciendo clic en &quot;Mostrar&quot; en los detalles de la tienda.
+          </p>
+          <div className="bg-card rounded-lg p-4 border-2 border-secondary">
+            <p className="text-xs text-muted-foreground mb-2">
+              PIN de {storeName}:
+            </p>
+            <div className="flex items-center justify-between">
+              <p className="text-3xl font-mono font-bold text-foreground">
+                {pin}
+              </p>
+              <button
+                onClick={() => void handleCopyPin()}
+                className="p-2 hover:bg-muted rounded-lg transition-colors"
+                title="Copiar PIN"
+              >
+                {copied ? (
+                  <Check className="w-5 h-5 text-secondary-foreground" />
+                ) : (
+                  <Copy className="w-5 h-5 text-muted-foreground" />
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <button
+          onClick={onClose}
+          className="w-full px-4 py-3 bg-primary text-primary-foreground font-semibold rounded-lg hover:opacity-90 transition-colors"
+        >
+          Entendido
+        </button>
       </div>
     </div>
   );

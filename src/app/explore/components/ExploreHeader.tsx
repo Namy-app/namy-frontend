@@ -132,7 +132,7 @@ export function ExploreHeader({
                   ) : null}
                 </div>
                 <span className="text-sm font-medium text-foreground hidden sm:block">
-                  {user?.displayName || "User"}
+                  {user?.displayName || "Usuario"}
                 </span>
                 {user?.isPremium ? (
                   <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 bg-linear-to-r from-yellow-400 to-orange-500 text-white text-xs font-semibold rounded-full">

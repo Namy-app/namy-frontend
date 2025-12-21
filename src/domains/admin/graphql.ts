@@ -22,6 +22,7 @@ export const CREATE_STORE_MUTATION = gql`
         url
         openDays
         tags
+        restrictions
         averageRating
         reviewCounter
         additionalInfo
@@ -55,9 +56,9 @@ export const UPDATE_STORE_MUTATION = gql`
         price
         active
         url
-        pin
         openDays
         tags
+        restrictions
         averageRating
         reviewCounter
         additionalInfo
@@ -68,6 +69,7 @@ export const UPDATE_STORE_MUTATION = gql`
         createdAt
         updatedAt
       }
+      newPin
     }
   }
 `;
@@ -137,6 +139,7 @@ export const GET_ALL_STORES = gql`
         url
         openDays
         tags
+        restrictions
         averageRating
         reviewCounter
         additionalInfo
@@ -176,15 +179,22 @@ export const GET_STORE_BY_ID = gql`
       price
       active
       url
-      pin
       openDays
       tags
+      restrictions
+      pin
       averageRating
       reviewCounter
       additionalInfo
       createdAt
       updatedAt
     }
+  }
+`;
+
+export const GET_STORE_PIN = gql`
+  query GetStorePin($id: String!) {
+    storePin(id: $id)
   }
 `;
 
@@ -211,8 +221,10 @@ export const GET_STORE_DISCOUNTS = gql`
         usedCount
         minPurchaseAmount
         maxDiscountAmount
+        excludedDaysAndTime
         excludedDaysOfWeek
         excludedHours
+        additionalRestrictions
         maxUsesPerUserPerMonth
         monthlyRedemptionCap
         createdAt

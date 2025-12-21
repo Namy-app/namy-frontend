@@ -6,7 +6,9 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
+import type { ExcludedDaysAndTime } from "@/domains/admin";
 import CouponCard from "@/domains/coupons/CouponCard";
+import { RestrictionModal } from "@/domains/coupons/RestrictionModal";
 import { BasicLayout } from "@/layouts/BasicLayout";
 import { CouponDecoder, type DecodedCouponData } from "@/lib/coupon-decoder";
 import { graphqlRequest, setAuthToken } from "@/lib/graphql-client";
@@ -26,8 +28,27 @@ interface Coupon {
   storeId: string;
   discountId: string;
   // populated client-side
-  store?: Record<string, unknown> | null;
-  discount?: Record<string, unknown> | null;
+  store?: {
+    id?: string;
+    name?: string;
+    address?: string;
+    city?: string;
+    restrictions?: string | null;
+  } | null;
+  discount?: {
+    id?: string;
+    title?: string;
+    description?: string;
+    type?: string;
+    value?: number;
+    excludedDaysAndTime?: ExcludedDaysAndTime | null;
+    excludedDaysOfWeek?: number[] | null;
+    excludedHours?: number[] | null;
+    restrictions?: string | null;
+    additionalRestrictions?: string[] | null;
+    minPurchaseAmount?: number | null;
+    maxDiscountAmount?: number | null;
+  } | null;
 }
 
 type CouponStatus = "active" | "redeemed" | "expired";
@@ -46,6 +67,10 @@ export default function MyCouponsPage(): React.JSX.Element {
   );
   const [hydrated, setHydrated] = useState(false);
   const [activeFilter, setActiveFilter] = useState<FilterTab>("all");
+  const [restrictionModalOpen, setRestrictionModalOpen] = useState(false);
+  const [restrictionCoupon, setRestrictionCoupon] = useState<Coupon | null>(
+    null
+  );
 
   // Helper function to get coupon status
   const getCouponStatus = (coupon: Coupon): CouponStatus => {
@@ -135,21 +160,21 @@ export default function MyCouponsPage(): React.JSX.Element {
     } else {
       // Fallback: copy to clipboard
       void navigator.clipboard.writeText(coupon.url);
-      alert("Coupon URL copied to clipboard!");
+      alert("¡URL del cupón copiada al portapapeles!");
     }
   };
 
   // Handle delete
   const handleDelete = async (coupon: Coupon): Promise<void> => {
     const confirmDelete = confirm(
-      `Are you sure you want to delete coupon ${coupon.code}?`
+      `¿Estás seguro de que deseas eliminar el cupón ${coupon.code}?`
     );
     if (!confirmDelete) {
       return;
     }
 
     // TODO: Implement delete mutation
-    alert("Delete functionality coming soon!");
+    alert("¡La funcionalidad de eliminación estará disponible próximamente!");
   };
 
   // Handle view QR code
@@ -168,6 +193,12 @@ export default function MyCouponsPage(): React.JSX.Element {
       console.error("Failed to decode coupon:", err);
       setDecodedData(null);
     }
+  };
+
+  // Handle view restrictions
+  const handleViewRestrictions = (coupon: Coupon): void => {
+    setRestrictionCoupon(coupon);
+    setRestrictionModalOpen(true);
   };
 
   // Count coupons by status
@@ -221,7 +252,7 @@ export default function MyCouponsPage(): React.JSX.Element {
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-center">
             <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-            <p className="text-muted-foreground">Loading your coupons...</p>
+            <p className="text-muted-foreground">Cargando tus cupones...</p>
           </div>
         </div>
       </BasicLayout>
@@ -234,10 +265,10 @@ export default function MyCouponsPage(): React.JSX.Element {
         {error ? (
           <StatusCard
             variant="error"
-            title="Oops! Something went wrong"
+            title="¡Ups! Algo salió mal"
             message={error}
             primaryAction={{
-              label: "Browse Discounts",
+              label: "Explorar Descuentos",
               onClick: () => router.push("/explore"),
             }}
           />
@@ -250,16 +281,16 @@ export default function MyCouponsPage(): React.JSX.Element {
                 <Ticket className="w-12 h-12 text-muted-foreground" />
               </div>
               <h2 className="text-2xl font-bold text-foreground mb-2">
-                No Coupons Yet
+                Aún no tienes cupones
               </h2>
               <p className="text-muted-foreground mb-6">
-                Explore discounts and generate your first coupon!
+                ¡Explora descuentos y genera tu primer cupón!
               </p>
               <button
                 onClick={() => router.push("/explore")}
                 className="px-6 py-3 bg-primary text-primary-foreground rounded-xl font-semibold hover:shadow-glow transition-all"
               >
-                Browse Discounts
+                Explorar Descuentos
               </button>
             </div>
           </div>
@@ -291,7 +322,7 @@ export default function MyCouponsPage(): React.JSX.Element {
                       : "bg-white text-muted-foreground hover:bg-muted"
                   }`}
                 >
-                  All ({statusCounts.all})
+                  Todos ({statusCounts.all})
                 </button>
                 <button
                   onClick={() => setActiveFilter("active")}
@@ -301,7 +332,7 @@ export default function MyCouponsPage(): React.JSX.Element {
                       : "bg-white text-muted-foreground hover:bg-muted"
                   }`}
                 >
-                  Active ({statusCounts.active})
+                  Activos ({statusCounts.active})
                 </button>
                 <button
                   onClick={() => setActiveFilter("redeemed")}
@@ -311,7 +342,7 @@ export default function MyCouponsPage(): React.JSX.Element {
                       : "bg-white text-muted-foreground hover:bg-muted"
                   }`}
                 >
-                  Redeemed ({statusCounts.redeemed})
+                  Canjeados ({statusCounts.redeemed})
                 </button>
                 <button
                   onClick={() => setActiveFilter("expired")}
@@ -321,7 +352,7 @@ export default function MyCouponsPage(): React.JSX.Element {
                       : "bg-white text-muted-foreground hover:bg-muted"
                   }`}
                 >
-                  Expired ({statusCounts.expired})
+                  Expirados ({statusCounts.expired})
                 </button>
               </div>
             </div>
@@ -345,23 +376,23 @@ export default function MyCouponsPage(): React.JSX.Element {
                     )}
                   </div>
                   <h3 className="text-xl font-bold text-foreground mb-2">
-                    {activeFilter === "active" && "No Active Coupons"}
-                    {activeFilter === "redeemed" && "No Redeemed Coupons"}
-                    {activeFilter === "expired" && "No Expired Coupons"}
+                    {activeFilter === "active" && "No hay cupones activos"}
+                    {activeFilter === "redeemed" && "No hay cupones canjeados"}
+                    {activeFilter === "expired" && "No hay cupones expirados"}
                   </h3>
                   <p className="text-muted-foreground mb-6">
                     {activeFilter === "active" &&
-                      "You do not have any active coupons at the moment. Generate new coupons from available discounts!"}
+                      "No tienes cupones activos en este momento. ¡Genera nuevos cupones desde los descuentos disponibles!"}
                     {activeFilter === "redeemed" &&
-                      "You have not redeemed any coupons yet. Visit stores and start saving!"}
+                      "Aún no has canjeado ningún cupón. ¡Visita las tiendas y comienza a ahorrar!"}
                     {activeFilter === "expired" &&
-                      "No expired coupons found. Your active coupons are still valid!"}
+                      "No se encontraron cupones expirados. ¡Tus cupones activos siguen siendo válidos!"}
                   </p>
                   <button
                     onClick={() => setActiveFilter("all")}
                     className="px-6 py-3 bg-primary text-primary-foreground rounded-xl font-semibold hover:shadow-glow transition-all"
                   >
-                    View All Coupons
+                    Ver todos los cupones
                   </button>
                 </div>
               </div>
@@ -381,6 +412,7 @@ export default function MyCouponsPage(): React.JSX.Element {
                       onViewQr={() => void handleViewQR(coupon)}
                       onShare={() => void handleShare(coupon)}
                       onDelete={() => void handleDelete(coupon)}
+                      onViewRestrictions={() => handleViewRestrictions(coupon)}
                     />
                   </div>
                 ))}
@@ -400,7 +432,7 @@ export default function MyCouponsPage(): React.JSX.Element {
             <div className="relative z-10 bg-white rounded-2xl shadow-card p-8 w-full max-w-md animate-slide-up">
               <div className="flex flex-col items-center gap-6">
                 <h2 className="text-2xl font-bold text-foreground">
-                  Your QR Code
+                  Tu Código QR
                 </h2>
 
                 {/* QR Code */}
@@ -417,7 +449,7 @@ export default function MyCouponsPage(): React.JSX.Element {
                 {/* Coupon Code */}
                 <div className="text-center">
                   <p className="text-sm text-muted-foreground mb-1">
-                    Coupon Code
+                    Código del cupón
                   </p>
                   <p className="text-3xl font-bold font-mono tracking-wider text-foreground">
                     {selectedCoupon.code}
@@ -426,7 +458,7 @@ export default function MyCouponsPage(): React.JSX.Element {
 
                 {/* Help Text */}
                 <p className="text-sm text-muted-foreground text-center">
-                  Show this QR code at the store to redeem your discount
+                  Muestra este código QR en la tienda para canjear tu descuento
                 </p>
 
                 {/* Restrictions Display */}
@@ -436,7 +468,7 @@ export default function MyCouponsPage(): React.JSX.Element {
                       <Info className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
                       <div>
                         <p className="text-sm font-semibold text-amber-900 mb-1">
-                          Restrictions
+                          Restricciones
                         </p>
                         <p className="text-sm text-amber-700">
                           {decodedData.discount.restrictions}
@@ -453,7 +485,7 @@ export default function MyCouponsPage(): React.JSX.Element {
                     className="flex-1 py-3 px-4 bg-secondary text-secondary-foreground rounded-xl font-semibold hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
                   >
                     <Share2 className="w-5 h-5" />
-                    Share
+                    Compartir
                   </button>
                   <button
                     onClick={() => {
@@ -462,12 +494,38 @@ export default function MyCouponsPage(): React.JSX.Element {
                     }}
                     className="flex-1 py-3 px-4 bg-primary text-primary-foreground rounded-xl font-semibold hover:opacity-90 transition-opacity"
                   >
-                    Close
+                    Cerrar
                   </button>
                 </div>
               </div>
             </div>
           </div>
+        ) : null}
+
+        {/* Restriction Modal */}
+        {restrictionCoupon ? (
+          <RestrictionModal
+            isOpen={restrictionModalOpen}
+            onClose={() => {
+              setRestrictionModalOpen(false);
+              setRestrictionCoupon(null);
+            }}
+            storeName={restrictionCoupon.store?.name ?? "Tienda"}
+            discountTitle={restrictionCoupon.discount?.title ?? "Descuento"}
+            restrictions={{
+              storeRestrictions: restrictionCoupon.store?.restrictions,
+              discountRestrictions: restrictionCoupon.discount?.restrictions,
+              minPurchaseAmount: restrictionCoupon.discount?.minPurchaseAmount,
+              maxDiscountAmount: restrictionCoupon.discount?.maxDiscountAmount,
+              excludedDaysAndTime:
+                restrictionCoupon.discount?.excludedDaysAndTime ?? undefined,
+              excludedDaysOfWeek:
+                restrictionCoupon.discount?.excludedDaysOfWeek,
+              excludedHours: restrictionCoupon.discount?.excludedHours,
+              additionalRestrictions:
+                restrictionCoupon.discount?.additionalRestrictions ?? [],
+            }}
+          />
         ) : null}
       </div>
     </BasicLayout>

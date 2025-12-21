@@ -10,6 +10,7 @@ import {
   GET_STORE_STATISTICS,
   GET_ALL_STORES,
   GET_STORE_BY_ID,
+  GET_STORE_PIN,
   CREATE_DISCOUNT,
   UPDATE_DISCOUNT,
   DELETE_DISCOUNT,
@@ -179,6 +180,20 @@ export function useStore(id: string) {
       return data.store;
     },
     enabled: !!id,
+  });
+}
+
+export function useStorePin(id: string, enabled = false) {
+  return useQuery<string>({
+    queryKey: ["store-pin", id],
+    queryFn: async () => {
+      const data = await graphqlClient.request<{ storePin: string }>(
+        GET_STORE_PIN,
+        { id }
+      );
+      return data.storePin;
+    },
+    enabled: enabled && !!id,
   });
 }
 
