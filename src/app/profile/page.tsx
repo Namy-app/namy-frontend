@@ -50,6 +50,15 @@ export default function ProfilePage(): React.JSX.Element | null {
     return null;
   }
 
+  const getTotalForLevel = (level: number | undefined): number => {
+    // Define total usage counts required for each level
+    if (level === 3 || level === 2) {
+      return 10;
+    } else {
+      return 5;
+    }
+  };
+
   const handleLogout = async (): Promise<void> => {
     try {
       await logoutMutation.mutateAsync();
@@ -185,14 +194,18 @@ export default function ProfilePage(): React.JSX.Element | null {
                 </h3>
                 <p className="text-white/90 text-sm">
                   <b className="text-base">{myLevel?.usesUntilNextLevel}</b>{" "}
-                  usos más para el siguiente nivel
+                  {(myLevel?.level ?? 1) < 3
+                    ? "usos más para el siguiente nivel"
+                    : "Para mantener su estatus de nivel 3"}
                 </p>
               </div>
             </div>
             <div className="h-2 bg-white/20 rounded-full overflow-hidden mb-4">
               <div
                 className="h-full bg-white rounded-full transition-all"
-                style={{ width: "71.4286%" }}
+                style={{
+                  width: `${((myLevel?.monthlyUsageCount ?? 0) / getTotalForLevel(myLevel?.level)) * 100}%`,
+                }}
               />
             </div>
             {/* TODO: Hide until leadership is implemented */}

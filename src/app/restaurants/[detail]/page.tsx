@@ -805,13 +805,13 @@ export default function RestaurantDetailPage(): React.JSX.Element {
           variant: "destructive",
           title: "Insufficient funds",
           description:
-            "You don't have enough balance. Add funds to your wallet.",
+            "No tienes saldo suficiente. Agrega fondos a tu billetera.",
           action: (
             <button
               onClick={() => router.push("/wallet")}
-              className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700"
+              className="bg-lime-600 text-white px-4 py-2 rounded-md text-sm hover:bg-lime-700"
             >
-              Add Funds
+              Añadir
             </button>
           ),
         });

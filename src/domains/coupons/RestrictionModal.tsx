@@ -50,6 +50,8 @@ export function RestrictionModal({
     discountRestrictions ||
     minPurchaseAmount ||
     maxDiscountAmount ||
+    (additionalRestrictions && additionalRestrictions.length > 0) ||
+    (excludedDaysAndTime && excludedDaysAndTime.availableDays.length > 0) ||
     (excludedDaysOfWeek && excludedDaysOfWeek.length > 0) ||
     (excludedHours && excludedHours.length > 0);
 

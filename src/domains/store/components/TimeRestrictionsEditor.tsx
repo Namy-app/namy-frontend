@@ -152,10 +152,10 @@ export const TimeRestrictionsEditor = ({ value, onChange }: Props) => {
         <div>
           <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
             <Clock className="w-5 h-5 text-muted-foreground" />
-            Discount Availability Schedule
+            Días y horas excluidos
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
-            Configure the days and times when the discount is excluded
+            Configurar los días y horas en los que el descuento está excluido
           </p>
         </div>
         {canAddMore ? (
@@ -165,7 +165,7 @@ export const TimeRestrictionsEditor = ({ value, onChange }: Props) => {
             className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-primary bg-primary/10 hover:bg-primary/20 rounded-md transition-colors"
           >
             <Plus className="w-4 h-4" />
-            Add Day
+            Añadir Día
           </button>
         ) : null}
       </div>
@@ -173,11 +173,10 @@ export const TimeRestrictionsEditor = ({ value, onChange }: Props) => {
       {availableDays.length === 0 ? (
         <div className="text-center py-8 text-muted-foreground">
           <Clock className="w-12 h-12 mx-auto mb-3 opacity-50" />
-          <p className="text-sm">
-            There are no days and times that are excluded.
-          </p>
+          <p className="text-sm">No hay días ni horas excluidos.</p>
           <p className="text-xs mt-1">
-            Click on &quot;Add Day&quot; to exclude specific times.
+            Haz clic en &quot;Añadir Día&quot; para excluir horarios
+            específicos.
           </p>
         </div>
       ) : (

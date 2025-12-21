@@ -200,7 +200,9 @@ export const CreateDiscountModal = ({
             </div>
             <div>
               <h3 className="text-xl font-bold text-foreground">
-                {discount?.id ? "Update Discount" : "Create New Discount"}
+                {discount?.id
+                  ? "Descuento de actualización"
+                  : "Crear nuevo descuento"}
               </h3>
               <p className="text-sm text-muted-foreground">
                 Configurar un nuevo descuento u oferta promocional

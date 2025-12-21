@@ -123,14 +123,12 @@ export function DepositForm({ onSuccess, onCancel }: DepositFormProps) {
     return (
       <div className="space-y-4">
         <div className="flex items-center justify-between pb-4 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">
-            Complete Payment
-          </h3>
+          <h3 className="text-lg font-semibold text-gray-900">Pago completo</h3>
           <button
             onClick={() => setShowPaymentForm(false)}
             className="text-sm text-gray-600 hover:text-gray-900"
           >
-            Back
+            Atrás
           </button>
         </div>
 
@@ -141,9 +139,9 @@ export function DepositForm({ onSuccess, onCancel }: DepositFormProps) {
           </p>
           {bonusAmount > 0 && (
             <p className="text-sm text-green-800 mt-2">
-              <span className="font-semibold">You Get:</span>{" "}
+              <span className="font-semibold">Bono:</span>{" "}
               {formatAmount(currentCredit)} (+{formatAmount(bonusAmount)}
-              bonus)
+              bono)
             </p>
           )}
         </div>
@@ -234,7 +232,7 @@ export function DepositForm({ onSuccess, onCancel }: DepositFormProps) {
       </div>
 
       {/* Summary Card */}
-      <div className="bg-gradient-to-br from-green-50 to-blue-50 rounded-lg p-6 border-2 border-green-200">
+      <div className="bg-linear-to-br from-green-50 to-blue-50 rounded-lg p-6 border-2 border-green-200">
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-gray-700">You Pay</span>
@@ -255,7 +253,7 @@ export function DepositForm({ onSuccess, onCancel }: DepositFormProps) {
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
                 <div
-                  className="bg-gradient-to-r from-green-500 to-green-400 h-2 rounded-full"
+                  className="bg-linear-to-r from-green-500 to-green-400 h-2 rounded-full"
                   style={{
                     width: `${((bonusAmount / currentCredit) * 100).toFixed(0)}%`,
                   }}
@@ -266,8 +264,8 @@ export function DepositForm({ onSuccess, onCancel }: DepositFormProps) {
 
           <div className="border-t border-green-200 pt-3">
             <div className="flex items-center justify-between">
-              <span className="font-semibold text-gray-900">Total Credit</span>
-              <span className="text-3xl font-bold bg-gradient-to-r from-green-600 to-green-500 bg-clip-text text-transparent">
+              <span className="font-semibold text-gray-900">Crédito Total</span>
+              <span className="text-3xl font-bold bg-linear-to-r from-green-600 to-green-500 bg-clip-text text-transparent">
                 {formatAmount(currentCredit)}
               </span>
             </div>
@@ -281,7 +279,7 @@ export function DepositForm({ onSuccess, onCancel }: DepositFormProps) {
             onClick={onCancel}
             className="flex-1 px-4 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors cursor-pointer"
           >
-            Cancel
+            Cancelar
           </button>
         ) : null}
         <button
@@ -289,7 +287,7 @@ export function DepositForm({ onSuccess, onCancel }: DepositFormProps) {
           disabled={currentAmount < 5000}
           className="flex-1 px-4 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors cursor-pointer"
         >
-          Continue to Payment
+          Continuar al Pago
         </button>
       </div>
     </div>

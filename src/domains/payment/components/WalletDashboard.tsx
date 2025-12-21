@@ -114,17 +114,17 @@ export function WalletDashboard({ userId }: WalletDashboardProps) {
   return (
     <div className="space-y-6">
       {/* Balance Card */}
-      <div className="bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg p-6 text-white shadow-lg">
+      <div className="bg-gradient-primary rounded-lg p-6 text-white shadow-lg">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold opacity-90">Wallet Balance</h2>
           <div
             className={`px-3 py-1 rounded-full text-xs font-medium ${
               wallet.isActive
-                ? "bg-green-500 bg-opacity-30"
-                : "bg-red-500 bg-opacity-30"
+                ? "bg-black/70 bg-opacity-30"
+                : "bg-red-800 bg-opacity-30"
             }`}
           >
-            {wallet.isActive ? "Active" : "Inactive"}
+            {wallet.isActive ? "Activo" : "Inactivo"}
           </div>
         </div>
 

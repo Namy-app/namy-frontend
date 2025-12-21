@@ -6,7 +6,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import type { ExcludedDaysAndTime } from "@/domains/admin";
+import type { Coupon } from "@/domains/coupon/type";
 import CouponCard from "@/domains/coupons/CouponCard";
 import { RestrictionModal } from "@/domains/coupons/RestrictionModal";
 import { BasicLayout } from "@/layouts/BasicLayout";
@@ -15,41 +15,6 @@ import { graphqlRequest, setAuthToken } from "@/lib/graphql-client";
 import { COUPONS_QUERY } from "@/lib/graphql-queries";
 import StatusCard from "@/shared/components/StatusCard/StatusCard";
 import { useAuthStore } from "@/store/useAuthStore";
-
-interface Coupon {
-  id: string;
-  code: string;
-  qrCode: string;
-  url: string;
-  used: boolean;
-  usedAt?: string;
-  expiresAt: string;
-  createdAt: string;
-  storeId: string;
-  discountId: string;
-  // populated client-side
-  store?: {
-    id?: string;
-    name?: string;
-    address?: string;
-    city?: string;
-    restrictions?: string | null;
-  } | null;
-  discount?: {
-    id?: string;
-    title?: string;
-    description?: string;
-    type?: string;
-    value?: number;
-    excludedDaysAndTime?: ExcludedDaysAndTime | null;
-    excludedDaysOfWeek?: number[] | null;
-    excludedHours?: number[] | null;
-    restrictions?: string | null;
-    additionalRestrictions?: string[] | null;
-    minPurchaseAmount?: number | null;
-    maxDiscountAmount?: number | null;
-  } | null;
-}
 
 type CouponStatus = "active" | "redeemed" | "expired";
 
@@ -136,14 +101,22 @@ export default function MyCouponsPage(): React.JSX.Element {
   }, [queryLoading]);
 
   useEffect(() => {
-    // Map nested payloads directly
-    const enriched = (rawCoupons || []).map((c) => ({
-      ...c,
-      store: c.store ?? null,
-      discount: c.discount ?? null,
-    }));
-    setCoupons(enriched);
-  }, [rawCoupons]);
+    if (rawCoupons && rawCoupons.length > 0) {
+      const enriched = (rawCoupons || []).map((c) => ({
+        ...c,
+        store: c.store ?? null,
+        discount: c.discount ?? null,
+      }));
+
+      // Only update if the length or content actually changed
+      if (
+        enriched.length !== coupons.length ||
+        enriched.some((c, i) => c.id !== coupons[i]?.id)
+      ) {
+        setCoupons(enriched);
+      }
+    }
+  }, [rawCoupons, coupons]);
 
   // Handle share
   const handleShare = async (coupon: Coupon): Promise<void> => {
