@@ -27,7 +27,7 @@ interface Service {
 type ViewMode = "grid" | "map";
 
 export default function ServicesPage(): React.JSX.Element {
-  const { data: storesResult, isLoading } = useStores();
+  const { data: storesResult, isLoading } = useStores({ noRestaurants: true });
   const allStores = storesResult?.data ?? [];
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
 

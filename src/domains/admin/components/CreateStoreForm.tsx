@@ -277,7 +277,10 @@ export function CreateStoreForm({ onClose, onSuccess }: CreateStoreFormProps) {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
+                <label
+                  className="block text-sm font-medium text-foreground mb-2"
+                  htmlFor="description"
+                >
                   Description
                 </label>
                 <textarea
@@ -291,7 +294,10 @@ export function CreateStoreForm({ onClose, onSuccess }: CreateStoreFormProps) {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
+                <label
+                  className="block text-sm font-medium text-foreground mb-2"
+                  htmlFor="type"
+                >
                   Type <span className="text-destructive">*</span>
                 </label>
                 <select
@@ -314,7 +320,10 @@ export function CreateStoreForm({ onClose, onSuccess }: CreateStoreFormProps) {
               </h3>
 
               <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
+                <label
+                  className="block text-sm font-medium text-foreground mb-2"
+                  htmlFor="categoryType"
+                >
                   Store Category <span className="text-destructive">*</span>
                 </label>
                 <select
@@ -330,7 +339,10 @@ export function CreateStoreForm({ onClose, onSuccess }: CreateStoreFormProps) {
 
               {categoryType === "restaurant" ? (
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
+                  <label
+                    className="block text-sm font-medium text-foreground mb-2"
+                    htmlFor="subCategory"
+                  >
                     Sub Category <span className="text-destructive">*</span>
                   </label>
                   <input

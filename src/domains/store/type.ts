@@ -20,6 +20,7 @@ export interface StoreFilters {
   subCategory?: string;
   city?: string;
   active?: boolean;
+  noRestaurants?: boolean;
   lat?: number;
   lng?: number;
 }

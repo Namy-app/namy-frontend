@@ -1,5 +1,10 @@
 // ==================== Enums ====================
 
+export enum CategoryType {
+  RESTAURANT = "restaurant",
+  OTHER = "other",
+}
+
 export enum StoreType {
   PRODUCT = "PRODUCT",
   SERVICE = "SERVICE",
