@@ -1,4 +1,4 @@
-import type { ExcludedDaysAndTime } from "@/domains/admin";
+import type { AvailableDaysAndTimes } from "@/domains/admin";
 
 /**
  * Decoded coupon data structure matching backend payload
@@ -26,7 +26,7 @@ export interface DecodedCouponData {
     value: number;
     minPurchaseAmount?: number;
     maxDiscountAmount?: number;
-    excludedDaysAndTime?: ExcludedDaysAndTime | null;
+    availableDaysAndTimes?: AvailableDaysAndTimes | null;
     additionalRestrictions?: string[] | null;
     restrictions?: string; // Formatted restriction text from backend
   };

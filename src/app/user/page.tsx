@@ -45,16 +45,16 @@ export default function UserPage(): React.JSX.Element | null {
         <div className="max-w-4xl mx-auto space-y-6">
           <Card className="p-6 shadow-glow">
             <h1 className="text-3xl font-bold text-foreground mb-2">
-              Welcome back, {user.displayName || user.email}!
+              Bienvenido de nuevo, {user.displayName || user.email}!
             </h1>
             <p className="text-muted-foreground mb-6">
-              Manage your account and explore delicious discounts
+              Administra tu cuenta y explora descuentos deliciosos
             </p>
 
             <div className="space-y-4">
               <div>
                 <h2 className="text-sm font-medium text-muted-foreground">
-                  Email
+                  Correo electrónico
                 </h2>
                 <p className="text-foreground">{user.email}</p>
               </div>
@@ -62,7 +62,7 @@ export default function UserPage(): React.JSX.Element | null {
               {user.displayName ? (
                 <div>
                   <h2 className="text-sm font-medium text-muted-foreground">
-                    Display Name
+                    Nombre para mostrar
                   </h2>
                   <p className="text-foreground">{user.displayName}</p>
                 </div>
@@ -71,7 +71,7 @@ export default function UserPage(): React.JSX.Element | null {
               {user.phone ? (
                 <div>
                   <h2 className="text-sm font-medium text-muted-foreground">
-                    Phone
+                    Teléfono
                   </h2>
                   <p className="text-foreground">{user.phone}</p>
                 </div>
@@ -83,7 +83,7 @@ export default function UserPage(): React.JSX.Element | null {
                 onClick={() => router.push("/store")}
                 className="bg-primary text-primary-foreground hover:bg-primary/90"
               >
-                Browse Stores
+                Explorar Tiendas
               </Button>
               <Button
                 onClick={() => {

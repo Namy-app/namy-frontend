@@ -408,18 +408,18 @@ export default function RedeemDetail({
               </span>
             </div>
           ) : null}
-          {couponData.discount.excludedDaysAndTime
-            ? couponData.discount.excludedDaysAndTime.availableDays.length >
+          {couponData.discount.availableDaysAndTimes
+            ? couponData.discount.availableDaysAndTimes.availableDays.length >
                 0 && (
                 <div className="mt-3 p-3 bg-primary/5 border border-primary/20 rounded-lg">
                   <div className="flex items-start gap-2">
                     <Clock className="w-4 h-4 text-primary mt-0.5 shrink-0" />
                     <div>
                       <p className="text-xs font-semibold text-primary mb-1">
-                        Excluded Days/Times
+                        Días/horarios disponibles
                       </p>
                       <ul className="text-sm text-foreground gap-x-4">
-                        {couponData.discount.excludedDaysAndTime.availableDays.map(
+                        {couponData.discount.availableDaysAndTimes.availableDays.map(
                           ({ dayIndex, timeRanges }, index) => (
                             <li key={index} className="flex gap-x-2">
                               <span>

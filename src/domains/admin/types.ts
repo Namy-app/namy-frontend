@@ -187,7 +187,7 @@ export interface AvailableDay {
   timeRanges: TimeRange[];
 }
 
-export interface ExcludedDaysAndTime {
+export interface AvailableDaysAndTimes {
   availableDays: AvailableDay[];
 }
 
@@ -209,7 +209,7 @@ export interface Discount {
   excludedDaysOfWeek: number[];
   excludedHours: number[];
   additionalRestrictions: string[];
-  excludedDaysAndTime?: ExcludedDaysAndTime;
+  availableDaysAndTimes?: AvailableDaysAndTimes;
   maxUsesPerUserPerMonth?: number;
   monthlyRedemptionCap?: number;
   createdAt: string;
@@ -237,7 +237,7 @@ export interface CreateDiscountInput {
   excludedDaysOfWeek?: number[];
   additionalRestrictions?: string[];
   excludedHours?: number[];
-  excludedDaysAndTime?: ExcludedDaysAndTime;
+  availableDaysAndTimes?: AvailableDaysAndTimes;
   maxUsesPerUserPerMonth?: number;
   monthlyRedemptionCap?: number;
   id?: string;
@@ -258,7 +258,7 @@ export interface UpdateDiscountInput {
   excludedDaysOfWeek?: number[];
   excludedHours?: number[];
   additionalRestrictions?: string[];
-  excludedDaysAndTime?: ExcludedDaysAndTime;
+  availableDaysAndTimes?: AvailableDaysAndTimes;
   maxUsesPerUserPerMonth?: number;
   monthlyRedemptionCap?: number;
 }
