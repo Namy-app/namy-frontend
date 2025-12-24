@@ -3,6 +3,7 @@ import {
   DollarSign,
   Globe,
   Loader2,
+  Mail,
   MapPin,
   Phone,
   Tag,
@@ -10,8 +11,9 @@ import {
 import { useState } from "react";
 
 import { PRICE_SYMBOLS } from "@/data/constants";
-import { useStorePin } from "@/domains/admin/hooks";
+import { useStorePin, useResendStorePinEmail } from "@/domains/admin/hooks";
 import { type Discount, type Store } from "@/domains/admin/types";
+import { useToast } from "@/hooks/use-toast";
 
 import { DiscountSection } from "./DiscountSection";
 import { StoreImageUpload } from "./StoreImageUpload";
@@ -53,10 +55,45 @@ export const StoreInfo = ({
   onGeneratePin,
 }: Props) => {
   const [showPin, setShowPin] = useState(false);
+  const { toast } = useToast();
   const { data: decryptedPin, isLoading: isPinLoading } = useStorePin(
     store.id,
     showPin
   );
+  const resendPinEmail = useResendStorePinEmail();
+
+  const handleResendPin = () => {
+    if (!store.email) {
+      toast({
+        title: "Error",
+        description: "Esta tienda no tiene un email configurado",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    resendPinEmail.mutate(
+      {
+        id: store.id,
+        email: store.email,
+      },
+      {
+        onSuccess: () => {
+          toast({
+            title: "Email enviado",
+            description: `Se ha enviado el PIN a ${store.email}`,
+          });
+        },
+        onError: () => {
+          toast({
+            title: "Error",
+            description: "No se pudo enviar el email. Intenta de nuevo.",
+            variant: "destructive",
+          });
+        },
+      }
+    );
+  };
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -98,6 +135,17 @@ export const StoreInfo = ({
                   Teléfono
                 </p>
                 <p className="text-foreground">{store.phoneNumber}</p>
+              </div>
+            </div>
+          ) : null}
+          {store.email ? (
+            <div className="flex items-center gap-3">
+              <Mail className="w-5 h-5 text-muted-foreground" />
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Email
+                </p>
+                <p className="text-foreground">{store.email}</p>
               </div>
             </div>
           ) : null}
@@ -175,6 +223,23 @@ export const StoreInfo = ({
                         <Loader2 className="w-4 h-4 text-primary animate-spin inline" />
                       ) : (
                         "Regenerar"
+                      )}
+                    </button>
+                    <span className="mx-2 text-muted-foreground">|</span>
+                    <button
+                      onClick={handleResendPin}
+                      disabled={resendPinEmail.isPending || !store.email}
+                      className="text-sm text-primary hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
+                      title={
+                        !store.email
+                          ? "No hay email configurado"
+                          : "Reenviar PIN por email"
+                      }
+                    >
+                      {resendPinEmail.isPending ? (
+                        <Loader2 className="w-4 h-4 text-primary animate-spin inline" />
+                      ) : (
+                        "Reenviar"
                       )}
                     </button>
                   </>

@@ -131,6 +131,7 @@ export default function RedeemDetail({
       }
     };
     void init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [couponData?.code]);
 
   useEffect(() => {
@@ -154,6 +155,7 @@ export default function RedeemDetail({
     updateTimer();
     const interval = setInterval(updateTimer, 1000);
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [couponData?.expiresAt]);
 
   const handleRedeem = async (): Promise<void> => {

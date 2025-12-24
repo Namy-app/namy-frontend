@@ -652,3 +652,9 @@ export const PAY_PREMIUM_WITH_WALLET_MUTATION = `
     }
   }
 `;
+
+export const RESEND_STORE_PIN_EMAIL_MUTATION = `
+  mutation ResendStorePinEmail($id: String!, $email: String!) {
+    resendStorePinEmail(id: $id, email: $email)
+  }
+`;
