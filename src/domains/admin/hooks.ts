@@ -11,6 +11,7 @@ import {
   GET_ALL_STORES,
   GET_STORE_BY_ID,
   GET_STORE_PIN,
+  RESEND_STORE_PIN_EMAIL,
   CREATE_DISCOUNT,
   UPDATE_DISCOUNT,
   DELETE_DISCOUNT,
@@ -93,6 +94,9 @@ export function useUpdateStore() {
       // Invalidate store queries
       void queryClient.invalidateQueries({ queryKey: ["stores"] });
       void queryClient.invalidateQueries({ queryKey: ["store", variables.id] });
+      void queryClient.invalidateQueries({
+        queryKey: ["store-pin", variables.id],
+      });
       void queryClient.invalidateQueries({ queryKey: ["store-statistics"] });
     },
   });
@@ -421,5 +425,20 @@ export function useUserDetailsWithActivity(userId: string) {
       return data.userDetailsWithActivity;
     },
     enabled: !!userId,
+  });
+}
+
+export function useResendStorePinEmail() {
+  return useMutation<
+    { resendStorePinEmail: boolean },
+    Error,
+    { id: string; email: string }
+  >({
+    mutationFn: async (variables) => {
+      return graphqlClient.request<{ resendStorePinEmail: boolean }>(
+        RESEND_STORE_PIN_EMAIL,
+        variables
+      );
+    },
   });
 }
