@@ -44,6 +44,7 @@ export default function AuthPage(): React.JSX.Element {
   const [signupPassword, setSignupPassword] = useState("");
   const [signupConfirmPassword, setSignupConfirmPassword] = useState("");
   const [signupDisplayName, setSignupDisplayName] = useState("");
+  const [referralCode, setReferralCode] = useState("");
   const [agreeToTerms, setAgreeToTerms] = useState(false);
 
   const loginMutation = useLogin();
@@ -128,11 +129,14 @@ export default function AuthPage(): React.JSX.Element {
         email: signupEmail,
         password: signupPassword,
         displayName: signupDisplayName || undefined,
+        referralCode: referralCode || undefined,
       });
       updateCrisp(response.user);
 
       toast({
-        title: "Registration Successful! 🎉",
+        title: response.user.isPremium
+          ? "Registration Successful and Premium membership activated!🎉"
+          : "Registration Successful! 🎉",
         description: `A verification code has been sent to ${signupEmail}. Please check your email and verify your account.`,
       });
 
@@ -301,6 +305,20 @@ export default function AuthPage(): React.JSX.Element {
                   required
                   value={signupConfirmPassword}
                   onChange={(e) => setSignupConfirmPassword(e.target.value)}
+                  disabled={signupMutation.isPending}
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-foreground mb-2 block">
+                  Código de referido (opcional)
+                </label>
+                <Input
+                  type="text"
+                  placeholder="Ingresa el código de referido"
+                  className="h-12 rounded-xl"
+                  value={referralCode}
+                  onChange={(e) => setReferralCode(e.target.value)}
                   disabled={signupMutation.isPending}
                 />
               </div>

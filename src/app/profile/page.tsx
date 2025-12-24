@@ -14,6 +14,8 @@ import {
   ChevronRight,
   Crown,
   Percent,
+  Copy,
+  CheckCircle,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -38,6 +40,7 @@ export default function ProfilePage(): React.JSX.Element | null {
   const { data: myLevel } = useMyLevel();
   const logoutMutation = useLogout();
   const [expandPoints, setExpandPoints] = useState(false);
+  const [copiedCode, setCopiedCode] = useState(false);
 
   const { data: storesResult, isLoading: storesLoading } = useStores();
   const { data: wallet } = useWallet({ userId: user?.id });
@@ -56,6 +59,20 @@ export default function ProfilePage(): React.JSX.Element | null {
       return 10;
     } else {
       return 5;
+    }
+  };
+
+  const handleCopyReferralCode = async () => {
+    if (user.referralCode) {
+      const copyText = `Use my referral code "${user.referralCode}" to win 1 month free subscription!`;
+      await navigator.clipboard.writeText(copyText);
+      setCopiedCode(true);
+      setTimeout(() => setCopiedCode(false), 2000);
+
+      toast({
+        title: "Referral Code Copied!",
+        description: "Referral code copied to clipboard",
+      });
     }
   };
 
@@ -90,7 +107,7 @@ export default function ProfilePage(): React.JSX.Element | null {
             <h1 className="text-2xl font-bold text-foreground mb-1">
               {user.displayName || user.email}
             </h1>
-            {!user.isPremium ? (
+            {user.isPremium ? (
               <div className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold transition-colors border-0 bg-gradient-primary text-white shadow-glow ml-2">
                 <Crown className="w-4 h-4 mr-1" />
                 Miembro Premium
@@ -105,7 +122,10 @@ export default function ProfilePage(): React.JSX.Element | null {
               <p className="text-sm text-muted-foreground mb-1">
                 Saldo Disponible
               </p>
-              <div className="flex items-center gap-2 px-4 py-3 rounded-lg bg-card border border-border">
+              <div
+                id="wallet-display"
+                className="flex justify-center items-center gap-2 px-4 py-3 rounded-lg bg-card border border-border"
+              >
                 <Wallet className="w-5 h-5 text-primary" />
                 {walletLoading ? (
                   <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
@@ -116,15 +136,30 @@ export default function ProfilePage(): React.JSX.Element | null {
                   </span>
                 )}
               </div>
-            </div>
 
-            {/* Tier Badge */}
-            {/* {user.isPremium ? (
-              <div className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold transition-colors border-0 bg-gradient-primary text-white shadow-glow ml-2">
-                <Crown className="w-4 h-4 mr-1" />
-                Premium Member
-              </div>
-            ) : null} */}
+              {/* Referral Code */}
+              {user.referralCode ? (
+                <div className="mt-2">
+                  <button
+                    onClick={() => void handleCopyReferralCode()}
+                    className="flex items-center w-full justify-center gap-1.5 px-3 py-1.5 rounded-md bg-card/50 border border-border/50 hover:bg-muted transition-colors text-xs"
+                  >
+                    <span className="text-muted-foreground">Código:</span>
+                    <span className="font-mono font-semibold text-foreground">
+                      {user.referralCode}
+                    </span>
+                    {copiedCode ? (
+                      <CheckCircle className="w-3 h-3 text-lime-700 ml-0.5" />
+                    ) : (
+                      <Copy className="w-3 h-3 text-primary ml-0.5" />
+                    )}
+                  </button>
+                  <p className="text-[10px] text-muted-foreground text-center mt-1">
+                    🎁 Gana 1 mes Premium gratis cuando alguien use tu código
+                  </p>
+                </div>
+              ) : null}
+            </div>
 
             {/* Points Card */}
             {/* TODO: Hide until points is implemented */}
