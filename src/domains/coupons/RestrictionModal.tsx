@@ -4,7 +4,7 @@ import { X, DollarSign, AlertCircle, Info } from "lucide-react";
 
 import { DAYS_OF_WEEK_BY_INDEX } from "@/data/constants";
 
-import type { AvailableDay, ExcludedDaysAndTime } from "../admin";
+import type { AvailableDay, AvailableDaysAndTimes } from "../admin";
 
 interface RestrictionModalProps {
   isOpen: boolean;
@@ -19,7 +19,7 @@ interface RestrictionModalProps {
     excludedDaysOfWeek?: number[] | null;
     excludedHours?: number[] | null;
     additionalRestrictions?: string[] | null;
-    excludedDaysAndTime?: ExcludedDaysAndTime | null;
+    availableDaysAndTimes?: AvailableDaysAndTimes | null;
   };
 }
 
@@ -39,7 +39,7 @@ export function RestrictionModal({
     discountRestrictions,
     minPurchaseAmount,
     maxDiscountAmount,
-    excludedDaysAndTime,
+    availableDaysAndTimes,
     excludedDaysOfWeek,
     excludedHours,
     additionalRestrictions,
@@ -51,18 +51,18 @@ export function RestrictionModal({
     minPurchaseAmount ||
     maxDiscountAmount ||
     (additionalRestrictions && additionalRestrictions.length > 0) ||
-    (excludedDaysAndTime && excludedDaysAndTime.availableDays.length > 0) ||
+    (availableDaysAndTimes && availableDaysAndTimes.availableDays.length > 0) ||
     (excludedDaysOfWeek && excludedDaysOfWeek.length > 0) ||
     (excludedHours && excludedHours.length > 0);
 
   const daysOfTheWeekIndex = [0, 1, 2, 3, 4, 5, 6];
 
   const getTimesOfDay = (dayIndex: number) => {
-    if (!excludedDaysAndTime) {
+    if (!availableDaysAndTimes) {
       return "--";
     }
 
-    const dayInfo = excludedDaysAndTime.availableDays.find(
+    const dayInfo = availableDaysAndTimes.availableDays.find(
       (d) => d.dayIndex === dayIndex
     );
     return dayInfo
@@ -132,10 +132,10 @@ export function RestrictionModal({
                 </div>
               ) : null}
 
-              {excludedDaysAndTime
+              {availableDaysAndTimes
                 ? daysOfTheWeekIndex.map((dayIndex) => {
                     const isExcluded =
-                      excludedDaysAndTime.availableDays?.some(
+                      availableDaysAndTimes.availableDays?.some(
                         (dayAndTime: AvailableDay) =>
                           dayAndTime.dayIndex === dayIndex
                       ) ?? false;
@@ -149,7 +149,7 @@ export function RestrictionModal({
                             <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
                             <div>
                               <h3 className="text-sm font-semibold text-amber-900 mb-2">
-                                No válido los {DAYS_OF_WEEK_BY_INDEX[dayIndex]}
+                                Válido en {DAYS_OF_WEEK_BY_INDEX[dayIndex]}
                               </h3>
                               <p className="text-sm text-amber-700">
                                 A las {getTimesOfDay(dayIndex) || "--"}

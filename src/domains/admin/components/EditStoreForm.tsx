@@ -43,6 +43,7 @@ export function EditStoreForm({
     city: store.city,
     address: store.address,
     phoneNumber: store.phoneNumber,
+    email: store.email,
     price: store.price,
     active: store.active,
     url: store.url,
@@ -420,6 +421,20 @@ export function EditStoreForm({
                     placeholder="+52 55 1234 5678"
                   />
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email || ""}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  placeholder="store@example.com"
+                />
               </div>
 
               <div>

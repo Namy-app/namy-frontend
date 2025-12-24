@@ -490,8 +490,8 @@ export default function MyCouponsPage(): React.JSX.Element {
               discountRestrictions: restrictionCoupon.discount?.restrictions,
               minPurchaseAmount: restrictionCoupon.discount?.minPurchaseAmount,
               maxDiscountAmount: restrictionCoupon.discount?.maxDiscountAmount,
-              excludedDaysAndTime:
-                restrictionCoupon.discount?.excludedDaysAndTime ?? undefined,
+              availableDaysAndTimes:
+                restrictionCoupon.discount?.availableDaysAndTimes ?? undefined,
               excludedDaysOfWeek:
                 restrictionCoupon.discount?.excludedDaysOfWeek,
               excludedHours: restrictionCoupon.discount?.excludedHours,

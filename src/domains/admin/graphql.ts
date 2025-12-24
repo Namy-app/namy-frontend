@@ -17,6 +17,7 @@ export const CREATE_STORE_MUTATION = gql`
         lat
         lng
         phoneNumber
+        email
         price
         active
         url
@@ -53,6 +54,7 @@ export const UPDATE_STORE_MUTATION = gql`
         lat
         lng
         phoneNumber
+        email
         price
         active
         url
@@ -134,6 +136,7 @@ export const GET_ALL_STORES = gql`
         lat
         lng
         phoneNumber
+        email
         price
         active
         url
@@ -176,6 +179,7 @@ export const GET_STORE_BY_ID = gql`
       lat
       lng
       phoneNumber
+      email
       price
       active
       url
@@ -221,7 +225,7 @@ export const GET_STORE_DISCOUNTS = gql`
         usedCount
         minPurchaseAmount
         maxDiscountAmount
-        excludedDaysAndTime
+        availableDaysAndTimes
         excludedDaysOfWeek
         excludedHours
         additionalRestrictions
@@ -551,5 +555,11 @@ export const GET_USER_DETAILS_WITH_ACTIVITY = gql`
         }
       }
     }
+  }
+`;
+
+export const RESEND_STORE_PIN_EMAIL = `
+  mutation ResendStorePinEmail($id: String!, $email: String!) {
+    resendStorePinEmail(id: $id, email: $email)
   }
 `;

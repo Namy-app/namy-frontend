@@ -74,8 +74,8 @@ export default function AuthPage(): React.JSX.Element {
       updateCrisp(response.user);
 
       toast({
-        title: "Welcome back!",
-        description: "You have successfully logged in.",
+        title: "Bienvenido de nuevo!",
+        description: "Has iniciado sesión con éxito.",
       });
 
       router.push("/explore");
@@ -86,7 +86,7 @@ export default function AuthPage(): React.JSX.Element {
       if (errorMessage?.includes("Email not verified")) {
         toast({
           variant: "default",
-          title: "Email verification required",
+          title: "Verificación de correo electrónico requerida",
           description: errorMessage,
         });
 
@@ -96,8 +96,9 @@ export default function AuthPage(): React.JSX.Element {
       } else {
         toast({
           variant: "destructive",
-          title: "Login failed",
-          description: errorMessage || "Invalid email or password",
+          title: "Error de inicio de sesión",
+          description:
+            errorMessage || "Correo electrónico o contraseña inválidos",
         });
       }
     }
@@ -109,8 +110,8 @@ export default function AuthPage(): React.JSX.Element {
     if (signupPassword !== signupConfirmPassword) {
       toast({
         variant: "destructive",
-        title: "Passwords don't match",
-        description: "Please make sure your passwords match.",
+        title: "Las contraseñas no coinciden",
+        description: "Por favor, asegúrate de que tus contraseñas coincidan.",
       });
       return;
     }
@@ -118,8 +119,9 @@ export default function AuthPage(): React.JSX.Element {
     if (!agreeToTerms) {
       toast({
         variant: "destructive",
-        title: "Terms Required",
-        description: "Please agree to the terms and conditions to continue.",
+        title: "Se requieren términos",
+        description:
+          "Por favor, acepta los términos y condiciones para continuar.",
       });
       return;
     }
@@ -135,9 +137,9 @@ export default function AuthPage(): React.JSX.Element {
 
       toast({
         title: response.user.isPremium
-          ? "Registration Successful and Premium membership activated!🎉"
-          : "Registration Successful! 🎉",
-        description: `A verification code has been sent to ${signupEmail}. Please check your email and verify your account.`,
+          ? "¡Registro exitoso y membresía Premium activada! 🎉"
+          : "¡Registro exitoso! 🎉",
+        description: `Se ha enviado un código de verificación a ${signupEmail}. Por favor, revisa tu correo electrónico y verifica tu cuenta.`,
       });
 
       // Redirect to verify email page
@@ -149,8 +151,8 @@ export default function AuthPage(): React.JSX.Element {
         error instanceof Error ? error.message : String(error);
       toast({
         variant: "destructive",
-        title: "Signup failed",
-        description: errorMessage || "Could not create account",
+        title: "Error de registro",
+        description: errorMessage || "No se pudo crear la cuenta",
       });
     }
   };

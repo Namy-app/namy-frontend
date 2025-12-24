@@ -214,13 +214,13 @@ export const DiscountSection = ({
               <p className="text-sm font-medium text-muted-foreground mb-2">
                 Restricciones
               </p>
-              {discount.excludedDaysAndTime &&
-              discount.excludedDaysAndTime.availableDays.length > 0 ? (
+              {discount.availableDaysAndTimes &&
+              discount.availableDaysAndTimes.availableDays.length > 0 ? (
                 <div className="mb-2">
                   <p className="text-sm text-foreground mb-1 font-medium">
                     Días y Horarios Disponibles:
                   </p>
-                  {discount.excludedDaysAndTime.availableDays.map((day) => (
+                  {discount.availableDaysAndTimes.availableDays.map((day) => (
                     <p
                       key={day.dayIndex}
                       className="text-sm text-foreground mb-1"

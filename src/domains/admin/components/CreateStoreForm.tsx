@@ -33,6 +33,7 @@ export function CreateStoreForm({ onClose, onSuccess }: CreateStoreFormProps) {
     city: "",
     address: "",
     phoneNumber: "",
+    email: "",
     price: PriceRange.BUDGET,
     active: true,
     url: "",
@@ -422,6 +423,20 @@ export function CreateStoreForm({ onClose, onSuccess }: CreateStoreFormProps) {
                     placeholder="+52 55 1234 5678"
                   />
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email || ""}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  placeholder="store@example.com"
+                />
               </div>
 
               <div>

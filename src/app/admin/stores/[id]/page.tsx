@@ -122,6 +122,7 @@ export default function StoreDetailPage() {
           city: store.city,
           address: store.address,
           phoneNumber: store.phoneNumber,
+          email: store.email,
           price: store.price,
           active: store.active,
           url: store.url,
