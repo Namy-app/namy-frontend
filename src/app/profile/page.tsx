@@ -19,12 +19,12 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { useWallet, useWalletBalance } from "@/domains/payment/hooks";
 import { useStores } from "@/domains/store/hooks";
-import { useLogout } from "@/domains/user/hooks";
+import { useLogout, useCurrentUser } from "@/domains/user/hooks";
 import { useMyLevel } from "@/domains/user/hooks/query/useMyLevel";
 import { useToast } from "@/hooks/use-toast";
 import { BasicLayout } from "@/layouts/BasicLayout";
@@ -36,11 +36,19 @@ import { useAuthStore } from "@/store/useAuthStore";
 export default function ProfilePage(): React.JSX.Element | null {
   const router = useRouter();
   const { toast } = useToast();
-  const { user } = useAuthStore();
+  const { user, updateUser } = useAuthStore();
   const { data: myLevel } = useMyLevel();
+  const { data: currentUser } = useCurrentUser();
   const logoutMutation = useLogout();
   const [expandPoints, setExpandPoints] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
+
+  // Sync current user data with auth store
+  useEffect(() => {
+    if (currentUser) {
+      updateUser(currentUser);
+    }
+  }, [currentUser, updateUser]);
 
   const { data: storesResult, isLoading: storesLoading } = useStores();
   const { data: wallet } = useWallet({ userId: user?.id });
