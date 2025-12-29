@@ -4,7 +4,7 @@ import { useState, useCallback } from "react";
 import {
   type Discount,
   DiscountType,
-  type ExcludedDaysAndTime,
+  type AvailableDaysAndTimes,
   useCreateDiscount,
   useUpdateDiscount,
 } from "@/domains/admin";
@@ -55,7 +55,9 @@ export const CreateDiscountModal = ({
     maxUsesPerUserPerMonth: discount?.maxUsesPerUserPerMonth?.toString() || "",
     minPurchaseAmount: discount?.minPurchaseAmount?.toString() || "",
     maxDiscountAmount: discount?.maxDiscountAmount?.toString() || "",
-    excludedDaysAndTime: discount?.excludedDaysAndTime || { availableDays: [] },
+    availableDaysAndTimes: discount?.availableDaysAndTimes || {
+      availableDays: [],
+    },
     additionalRestrictions: discount?.additionalRestrictions || [],
   });
 
@@ -65,9 +67,9 @@ export const CreateDiscountModal = ({
   const minStartDate = discount?.id ? undefined : today;
   const loading = createDiscount.isPending || updateDiscount.isPending;
 
-  const handleExcludedDaysAndTimeChange = useCallback(
-    (restrictions: ExcludedDaysAndTime) => {
-      setFormData((prev) => ({ ...prev, excludedDaysAndTime: restrictions }));
+  const handleavailableDaysAndTimesChange = useCallback(
+    (restrictions: AvailableDaysAndTimes) => {
+      setFormData((prev) => ({ ...prev, availableDaysAndTimes: restrictions }));
     },
     []
   );
@@ -130,9 +132,9 @@ export const CreateDiscountModal = ({
             maxDiscountAmount: formData.maxDiscountAmount
               ? parseFloat(formData.maxDiscountAmount)
               : undefined,
-            excludedDaysAndTime:
-              formData.excludedDaysAndTime.availableDays.length > 0
-                ? formData.excludedDaysAndTime
+            availableDaysAndTimes:
+              formData.availableDaysAndTimes.availableDays.length > 0
+                ? formData.availableDaysAndTimes
                 : undefined,
             additionalRestrictions:
               formData.additionalRestrictions.length > 0
@@ -163,9 +165,9 @@ export const CreateDiscountModal = ({
           maxDiscountAmount: formData.maxDiscountAmount
             ? parseFloat(formData.maxDiscountAmount)
             : undefined,
-          excludedDaysAndTime:
-            formData.excludedDaysAndTime.availableDays.length > 0
-              ? formData.excludedDaysAndTime
+          availableDaysAndTimes:
+            formData.availableDaysAndTimes.availableDays.length > 0
+              ? formData.availableDaysAndTimes
               : undefined,
           additionalRestrictions:
             formData.additionalRestrictions.length > 0
@@ -507,8 +509,8 @@ export const CreateDiscountModal = ({
               {/* Time Restrictions Editor */}
               <div className="space-y-4">
                 <TimeRestrictionsEditor
-                  value={formData.excludedDaysAndTime}
-                  onChange={handleExcludedDaysAndTimeChange}
+                  value={formData.availableDaysAndTimes}
+                  onChange={handleavailableDaysAndTimesChange}
                 />
               </div>
 

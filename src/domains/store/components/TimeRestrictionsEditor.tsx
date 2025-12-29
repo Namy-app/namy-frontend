@@ -13,13 +13,13 @@ interface AvailableDay {
   timeRanges: TimeRange[];
 }
 
-interface ExcludedDaysAndTime {
+interface AvailableDaysAndTimes {
   availableDays: AvailableDay[];
 }
 
 interface Props {
-  value?: ExcludedDaysAndTime;
-  onChange: (restrictions: ExcludedDaysAndTime) => void;
+  value?: AvailableDaysAndTimes;
+  onChange: (restrictions: AvailableDaysAndTimes) => void;
 }
 
 const DAY_LABELS: Record<number, string> = {
@@ -152,10 +152,10 @@ export const TimeRestrictionsEditor = ({ value, onChange }: Props) => {
         <div>
           <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
             <Clock className="w-5 h-5 text-muted-foreground" />
-            Días y horas excluidos
+            Días y horarios disponibles
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
-            Configurar los días y horas en los que el descuento está excluido
+            Configurar los días y horas en los que el descuento está disponible
           </p>
         </div>
         {canAddMore ? (
@@ -173,10 +173,9 @@ export const TimeRestrictionsEditor = ({ value, onChange }: Props) => {
       {availableDays.length === 0 ? (
         <div className="text-center py-8 text-muted-foreground">
           <Clock className="w-12 h-12 mx-auto mb-3 opacity-50" />
-          <p className="text-sm">No hay días ni horas excluidos.</p>
+          <p className="text-sm">No hay días ni horas disponibles.</p>
           <p className="text-xs mt-1">
-            Haz clic en &quot;Añadir Día&quot; para excluir horarios
-            específicos.
+            Haz clic en &quot;Añadir Día&quot; para añadir horarios específicos.
           </p>
         </div>
       ) : (

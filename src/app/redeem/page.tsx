@@ -35,7 +35,7 @@ function StoreRedeemContent(): React.JSX.Element {
       try {
         const enc =
           searchParams?.get?.("enc") ??
-          searchParams.get?.("Enc") ??
+          searchParams?.get?.("Enc") ??
           (params?.encodedData && !Array.isArray(params.encodedData)
             ? params.encodedData
             : null);

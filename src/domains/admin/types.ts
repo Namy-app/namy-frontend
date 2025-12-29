@@ -53,6 +53,7 @@ export interface Store {
   lat?: number;
   lng?: number;
   phoneNumber?: string;
+  email?: string;
   price: PriceRange;
   active: boolean;
   url?: string;
@@ -122,6 +123,7 @@ export interface CreateStoreInput {
   lat?: number;
   lng?: number;
   phoneNumber?: string;
+  email?: string;
   price: PriceRange;
   active: boolean;
   url?: string;
@@ -142,6 +144,7 @@ export interface UpdateStoreInput {
   lat?: number;
   lng?: number;
   phoneNumber?: string;
+  email?: string;
   price?: PriceRange;
   active?: boolean;
   pin?: string;
@@ -187,7 +190,7 @@ export interface AvailableDay {
   timeRanges: TimeRange[];
 }
 
-export interface ExcludedDaysAndTime {
+export interface AvailableDaysAndTimes {
   availableDays: AvailableDay[];
 }
 
@@ -209,7 +212,7 @@ export interface Discount {
   excludedDaysOfWeek: number[];
   excludedHours: number[];
   additionalRestrictions: string[];
-  excludedDaysAndTime?: ExcludedDaysAndTime;
+  availableDaysAndTimes?: AvailableDaysAndTimes;
   maxUsesPerUserPerMonth?: number;
   monthlyRedemptionCap?: number;
   createdAt: string;
@@ -237,7 +240,7 @@ export interface CreateDiscountInput {
   excludedDaysOfWeek?: number[];
   additionalRestrictions?: string[];
   excludedHours?: number[];
-  excludedDaysAndTime?: ExcludedDaysAndTime;
+  availableDaysAndTimes?: AvailableDaysAndTimes;
   maxUsesPerUserPerMonth?: number;
   monthlyRedemptionCap?: number;
   id?: string;
@@ -258,7 +261,7 @@ export interface UpdateDiscountInput {
   excludedDaysOfWeek?: number[];
   excludedHours?: number[];
   additionalRestrictions?: string[];
-  excludedDaysAndTime?: ExcludedDaysAndTime;
+  availableDaysAndTimes?: AvailableDaysAndTimes;
   maxUsesPerUserPerMonth?: number;
   monthlyRedemptionCap?: number;
 }
