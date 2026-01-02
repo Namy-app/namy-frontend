@@ -3,6 +3,7 @@ import { Poppins } from "next/font/google";
 
 import "../styles/globals.css";
 import { GoogleAdsense } from "@/components/GoogleAdsense";
+import { CapacitorProvider } from "@/providers/CapacitorProvider";
 import CrispProvider from "@/providers/CrispProvider";
 import { ReactQueryProvider } from "@/providers/ReactQueryProvider";
 import { Toaster } from "@/shared/components/Toaster";
@@ -20,6 +21,19 @@ export const metadata: Metadata = {
   description:
     "Watch ads, unlock discounts, and discover amazing restaurants in Mexico. Earn rewards and climb the leaderboard!",
   authors: [{ name: "Ñamy" }],
+  manifest: "/manifest.json",
+  viewport: {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 1,
+    userScalable: false,
+  },
+  themeColor: "#000000",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Ñamy",
+  },
   openGraph: {
     title: "675baa49-1cbe-4559-813b-6547a81e9bdf",
     description: "Lovable Generated Project",
@@ -55,11 +69,13 @@ export default function RootLayout({
         />
       </head>
       <body className={`${poppins.variable}  font-sans`}>
-        <ReactQueryProvider>
-          {children}
-          <CrispProvider />
-          <Toaster />
-        </ReactQueryProvider>
+        <CapacitorProvider>
+          <ReactQueryProvider>
+            {children}
+            <CrispProvider />
+            <Toaster />
+          </ReactQueryProvider>
+        </CapacitorProvider>
       </body>
     </html>
   );
