@@ -550,7 +550,7 @@ export const COUPONS_QUERY = `
         description
         type
         value
-        excludedDaysAndTime
+        availableDaysAndTimes
         excludedDaysOfWeek
         excludedHours
         additionalRestrictions
