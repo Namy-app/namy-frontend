@@ -105,7 +105,7 @@ export default function RestaurantListingPage(): React.JSX.Element {
 
   const handleMapView = (): void => {
     // TODO: Implement map view
-    alert("Map view coming soon!");
+    alert("¡Vista de mapa próximamente!");
   };
 
   const clearFilters = (): void => {
@@ -165,7 +165,7 @@ export default function RestaurantListingPage(): React.JSX.Element {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <Input
                   type="text"
-                  placeholder="Search restaurants..."
+                  placeholder="Buscar restaurantes..."
                   value={searchQuery}
                   onChange={(e) => handleSetSearchQuery(e.target.value)}
                   className="pl-10 h-12 bg-card border-border rounded-2xl"
@@ -200,7 +200,9 @@ export default function RestaurantListingPage(): React.JSX.Element {
           <div className="px-6 mb-6 max-w-5xl mx-auto">
             <div className="flex items-center justify-between">
               <p className="text-sm text-muted-foreground">
-                {restaurants.length} restaurants found
+                {isLoading
+                  ? "Cargando..."
+                  : `${restaurants.length} restaurantes encontrados`}
               </p>
               <div className="flex items-center gap-2">
                 <SlidersHorizontal className="w-4 h-4 text-muted-foreground" />
@@ -213,9 +215,9 @@ export default function RestaurantListingPage(): React.JSX.Element {
                   }
                   className="text-sm bg-transparent text-foreground border-none focus:outline-none cursor-pointer"
                 >
-                  <option value="distance">Nearest</option>
-                  <option value="rating">Highest Rated</option>
-                  <option value="discount">Best Discount</option>
+                  <option value="distance">Mas cercano</option>
+                  <option value="rating">Mejor valorado</option>
+                  <option value="discount">Mejor descuento</option>
                 </select>
               </div>
             </div>
@@ -226,7 +228,9 @@ export default function RestaurantListingPage(): React.JSX.Element {
             <div className="flex items-center justify-center py-12 max-w-5xl mx-auto">
               <div className="text-center">
                 <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-                <p className="text-muted-foreground">Loading restaurants...</p>
+                <p className="text-muted-foreground">
+                  Cargando restaurantes...
+                </p>
               </div>
             </div>
           ) : (
@@ -236,10 +240,11 @@ export default function RestaurantListingPage(): React.JSX.Element {
                 {restaurants.length === 0 ? (
                   <div className="col-span-full text-center py-12">
                     <p className="text-muted-foreground text-lg mb-4">
-                      No restaurants found matching your criteria
+                      No se encontraron restaurantes que coincidan con tus
+                      criterios
                     </p>
                     <Button onClick={clearFilters} variant="outline">
-                      Clear Filters
+                      Limpiar filtros
                     </Button>
                   </div>
                 ) : (
@@ -315,20 +320,20 @@ export default function RestaurantListingPage(): React.JSX.Element {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-bold text-foreground">Filters</h3>
+              <h3 className="text-xl font-bold text-foreground">Filtros</h3>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowFilterModal(false)}
               >
-                Done
+                Listo
               </Button>
             </div>
 
             <div className="space-y-4">
               <div>
                 <label className="text-sm font-semibold text-foreground mb-2 block">
-                  Sort By
+                  Ordenar por
                 </label>
                 <div className="space-y-2">
                   {["distance", "rating", "discount"].map((option) => (
@@ -341,9 +346,9 @@ export default function RestaurantListingPage(): React.JSX.Element {
                           : "bg-muted hover:bg-muted/80"
                       }`}
                     >
-                      {option === "distance" && "Nearest First"}
-                      {option === "rating" && "Highest Rated"}
-                      {option === "discount" && "Best Discount"}
+                      {option === "distance" && "Más cercano"}
+                      {option === "rating" && "Mejor valorado"}
+                      {option === "discount" && "Mejor descuento"}
                     </button>
                   ))}
                 </div>
@@ -354,7 +359,7 @@ export default function RestaurantListingPage(): React.JSX.Element {
                 variant="outline"
                 className="w-full"
               >
-                Clear All Filters
+                Limpiar todos los filtros
               </Button>
             </div>
           </div>

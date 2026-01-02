@@ -1,14 +1,17 @@
 "use client";
 
-import { Grid3x3, Map, MapPin, Star } from "lucide-react";
+import { Grid3x3, Map, MapPin, Search, Star } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 
 import { useStores } from "@/domains/store/hooks";
+import { type StoreFilters } from "@/domains/store/type";
+import { useMyLevel } from "@/domains/user/hooks/query/useMyLevel";
 import { BasicLayout } from "@/layouts/BasicLayout";
 import { Button } from "@/shared/components/Button";
 import { Card } from "@/shared/components/Card";
+import { Input } from "@/shared/components/Input";
 
 // Service type definition
 interface Service {
@@ -26,26 +29,45 @@ interface Service {
 
 type ViewMode = "grid" | "map";
 
+let timeout: NodeJS.Timeout;
+
 export default function ServicesPage(): React.JSX.Element {
-  const { data: storesResult, isLoading } = useStores({ noRestaurants: true });
+  const [filters, setFilters] = useState<StoreFilters>({
+    noRestaurants: true,
+  });
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const { data: storesResult, isLoading } = useStores(filters);
+  const { data: myLevel } = useMyLevel();
   const allStores = storesResult?.data ?? [];
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
 
-  // Filter stores to only show services (categoryId !== "Food & Beverage")
-  const servicesData: Service[] = allStores
-    .filter((store) => store.categoryId?.toLowerCase() !== "food & beverage")
-    .map((store) => ({
-      id: store.id,
-      slug: store.id,
-      name: store.name,
-      image:
-        store.imageUrl ||
-        "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=800&auto=format&fit=crop",
-      category: store.categoryId || "Service",
-      discount: 20, // Default discount
-      rating: store.averageRating ?? 4.7,
-      distance: "N/A", // Distance calculation would need geolocation
-    }));
+  const servicesData: Service[] = allStores.map((store) => ({
+    id: store.id,
+    slug: store.id,
+    name: store.name,
+    image:
+      store.imageUrl ||
+      "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=800&auto=format&fit=crop",
+    category: store.categoryId || "Service",
+    discount: myLevel?.discountPercentage ?? 10,
+    rating: store.averageRating ?? 4.7,
+    distance: "N/A", // Distance calculation would need geolocation
+  }));
+
+  const handleSetSearchQuery = (query: string): void => {
+    if (timeout) {
+      clearTimeout(timeout);
+    }
+
+    setSearchQuery(query);
+    timeout = setTimeout(() => {
+      setFilters((prev) => ({
+        ...prev,
+        search: query || undefined,
+      }));
+    }, 300);
+  };
 
   return (
     <BasicLayout className="pb-20">
@@ -59,6 +81,17 @@ export default function ServicesPage(): React.JSX.Element {
             <p className="text-muted-foreground text-center">
               Spas, barberías y salones de belleza
             </p>
+            {/* Search Bar */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Buscar servicios..."
+                value={searchQuery}
+                onChange={(e) => handleSetSearchQuery(e.target.value)}
+                className="pl-10 h-12 bg-card border-border rounded-2xl"
+              />
+            </div>
 
             {/* View Mode Toggle */}
             <div className="flex gap-2 justify-center mt-4">

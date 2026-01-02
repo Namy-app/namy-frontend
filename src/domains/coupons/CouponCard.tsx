@@ -74,8 +74,8 @@ export default function CouponCard({
       coupon.discount?.maxDiscountAmount ||
       (coupon.discount?.additionalRestrictions &&
         coupon.discount.additionalRestrictions.length > 0) ||
-      (coupon.discount?.excludedDaysAndTime &&
-        coupon.discount.excludedDaysAndTime.availableDays.length > 0) ||
+      (coupon.discount?.availableDaysAndTimes &&
+        coupon.discount.availableDaysAndTimes.availableDays.length > 0) ||
       (coupon.discount?.excludedDaysOfWeek &&
         coupon.discount.excludedDaysOfWeek.length > 0) ||
       (coupon.discount?.excludedHours &&

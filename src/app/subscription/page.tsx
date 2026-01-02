@@ -28,7 +28,7 @@ function SubscriptionContent(): React.JSX.Element {
   );
 
   // Fetch subscription status
-  const { data: subscriptionData, isLoading: _statusLoading } =
+  const { data: subscriptionData, isLoading: subscriptionLoading } =
     useSubscriptionStatus();
   const createCheckout = useCreateCheckout();
   const cancelSubscription = useCancelSubscription();
@@ -293,7 +293,19 @@ function SubscriptionContent(): React.JSX.Element {
             ) : null}
 
             {/* Pricing Card */}
-            <div className="bg-white rounded-lg shadow-xl p-8 mb-6 border-2 border-yellow-400">
+            <div className="bg-white rounded-lg shadow-xl p-8 mb-6 border-2 border-yellow-400 relative">
+              {/* Loading Overlay */}
+              {subscriptionLoading ? (
+                <div className="absolute inset-0 bg-white/80 backdrop-blur-sm rounded-lg flex items-center justify-center z-10">
+                  <div className="text-center">
+                    <div className="w-12 h-12 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+                    <p className="text-sm text-gray-600 font-medium">
+                      Loading subscription details...
+                    </p>
+                  </div>
+                </div>
+              ) : null}
+
               <div className="text-center mb-6">
                 <div className="inline-block bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-4 py-1 rounded-full text-sm font-semibold mb-4">
                   ⚡ BEST VALUE

@@ -238,10 +238,10 @@ export default function AdminDashboardPage() {
           <div className="flex items-center justify-between">
             <div className="flex-1">
               <h1 className="text-4xl font-bold text-foreground mb-2">
-                Admin Dashboard
+                Panel de administración
               </h1>
               <p className="text-muted-foreground">
-                Welcome back, {user.displayName || user.email}
+                Bienvenido de nuevo, {user.displayName || user.email}
               </p>
             </div>
 

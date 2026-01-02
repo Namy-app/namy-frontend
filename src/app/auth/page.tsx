@@ -44,6 +44,7 @@ export default function AuthPage(): React.JSX.Element {
   const [signupPassword, setSignupPassword] = useState("");
   const [signupConfirmPassword, setSignupConfirmPassword] = useState("");
   const [signupDisplayName, setSignupDisplayName] = useState("");
+  const [referralCode, setReferralCode] = useState("");
   const [agreeToTerms, setAgreeToTerms] = useState(false);
 
   const loginMutation = useLogin();
@@ -73,8 +74,8 @@ export default function AuthPage(): React.JSX.Element {
       updateCrisp(response.user);
 
       toast({
-        title: "Welcome back!",
-        description: "You have successfully logged in.",
+        title: "Bienvenido de nuevo!",
+        description: "Has iniciado sesión con éxito.",
       });
 
       router.push("/explore");
@@ -85,7 +86,7 @@ export default function AuthPage(): React.JSX.Element {
       if (errorMessage?.includes("Email not verified")) {
         toast({
           variant: "default",
-          title: "Email verification required",
+          title: "Verificación de correo electrónico requerida",
           description: errorMessage,
         });
 
@@ -95,8 +96,9 @@ export default function AuthPage(): React.JSX.Element {
       } else {
         toast({
           variant: "destructive",
-          title: "Login failed",
-          description: errorMessage || "Invalid email or password",
+          title: "Error de inicio de sesión",
+          description:
+            errorMessage || "Correo electrónico o contraseña inválidos",
         });
       }
     }
@@ -108,8 +110,8 @@ export default function AuthPage(): React.JSX.Element {
     if (signupPassword !== signupConfirmPassword) {
       toast({
         variant: "destructive",
-        title: "Passwords don't match",
-        description: "Please make sure your passwords match.",
+        title: "Las contraseñas no coinciden",
+        description: "Por favor, asegúrate de que tus contraseñas coincidan.",
       });
       return;
     }
@@ -117,8 +119,9 @@ export default function AuthPage(): React.JSX.Element {
     if (!agreeToTerms) {
       toast({
         variant: "destructive",
-        title: "Terms Required",
-        description: "Please agree to the terms and conditions to continue.",
+        title: "Se requieren términos",
+        description:
+          "Por favor, acepta los términos y condiciones para continuar.",
       });
       return;
     }
@@ -128,12 +131,15 @@ export default function AuthPage(): React.JSX.Element {
         email: signupEmail,
         password: signupPassword,
         displayName: signupDisplayName || undefined,
+        referralCode: referralCode || undefined,
       });
       updateCrisp(response.user);
 
       toast({
-        title: "Registration Successful! 🎉",
-        description: `A verification code has been sent to ${signupEmail}. Please check your email and verify your account.`,
+        title: response.user.isPremium
+          ? "¡Registro exitoso y membresía Premium activada! 🎉"
+          : "¡Registro exitoso! 🎉",
+        description: `Se ha enviado un código de verificación a ${signupEmail}. Por favor, revisa tu correo electrónico y verifica tu cuenta.`,
       });
 
       // Redirect to verify email page
@@ -145,8 +151,8 @@ export default function AuthPage(): React.JSX.Element {
         error instanceof Error ? error.message : String(error);
       toast({
         variant: "destructive",
-        title: "Signup failed",
-        description: errorMessage || "Could not create account",
+        title: "Error de registro",
+        description: errorMessage || "No se pudo crear la cuenta",
       });
     }
   };
@@ -301,6 +307,20 @@ export default function AuthPage(): React.JSX.Element {
                   required
                   value={signupConfirmPassword}
                   onChange={(e) => setSignupConfirmPassword(e.target.value)}
+                  disabled={signupMutation.isPending}
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-foreground mb-2 block">
+                  Código de referido (opcional)
+                </label>
+                <Input
+                  type="text"
+                  placeholder="Ingresa el código de referido"
+                  className="h-12 rounded-xl"
+                  value={referralCode}
+                  onChange={(e) => setReferralCode(e.target.value)}
                   disabled={signupMutation.isPending}
                 />
               </div>

@@ -1,4 +1,4 @@
-import type { ExcludedDaysAndTime } from "../admin";
+import type { AvailableDaysAndTimes } from "../admin";
 
 export type CouponItem = {
   code: string;
@@ -17,7 +17,7 @@ export type CouponItem = {
     restrictions?: string | null;
     minPurchaseAmount?: number | null;
     maxDiscountAmount?: number | null;
-    excludedDaysAndTime?: ExcludedDaysAndTime | null;
+    availableDaysAndTimes?: AvailableDaysAndTimes | null;
     excludedDaysOfWeek?: number[] | null;
     excludedHours?: number[] | null;
   } | null;
@@ -49,7 +49,7 @@ export type Coupon = {
     description?: string;
     type?: string;
     value?: number;
-    excludedDaysAndTime?: ExcludedDaysAndTime | null;
+    availableDaysAndTimes?: AvailableDaysAndTimes | null;
     excludedDaysOfWeek?: number[] | null;
     excludedHours?: number[] | null;
     restrictions?: string | null;
