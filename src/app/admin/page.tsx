@@ -9,6 +9,7 @@ import {
   ShoppingBag,
   ArrowRight,
   Activity,
+  Video,
 } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -81,7 +82,17 @@ export default function AdminDashboardPage() {
   // Calculate active users (users who are active)
   const activeUsersCount = usersData?.data.filter((u) => u.active).length ?? 0;
 
-  const adminSections = [
+  // Build admin sections
+  const adminSections: Array<{
+    title: string;
+    description: string;
+    icon: React.ComponentType<{ className?: string }>;
+    color: string;
+    href: string;
+    stats: Array<{ label: string; value: string | React.ReactNode }>;
+    comingSoon?: boolean;
+    superAdminOnly?: boolean;
+  }> = [
     {
       title: "Stores Management",
       description: "Manage stores, discounts, and catalogs",
@@ -132,6 +143,28 @@ export default function AdminDashboardPage() {
         },
       ],
     },
+  ];
+
+  // Add Video Ads section for super admins
+  if (user?.role === UserRole.SUPER_ADMIN) {
+    adminSections.push({
+      title: "Video Ads",
+      description: "Upload and manage video advertisements",
+      icon: Video,
+      color: "from-red-500 to-red-600",
+      href: "/admin/video-ads",
+      stats: [
+        { label: "Total Ads", value: "-" },
+        { label: "Active Ads", value: "-" },
+      ],
+      superAdminOnly: true,
+    });
+  } else {
+    console.log("Not adding Video Ads - user role is:", user?.role);
+  }
+
+  // Add remaining sections
+  adminSections.push(
     {
       title: "Coupons & Discounts",
       description: "Monitor coupon usage and redemptions",
@@ -155,8 +188,8 @@ export default function AdminDashboardPage() {
         { label: "Growth", value: "-" },
       ],
       comingSoon: true,
-    },
-  ];
+    }
+  );
 
   const quickStats = [
     {
@@ -301,6 +334,11 @@ export default function AdminDashboardPage() {
                               Coming Soon
                             </span>
                           ) : null}
+                          {section.superAdminOnly ? (
+                            <span className="px-2 py-1 text-xs bg-red-100 text-red-600 rounded-full font-semibold">
+                              Super Admin
+                            </span>
+                          ) : null}
                         </h3>
                         <p className="text-sm text-muted-foreground">
                           {section.description}
@@ -375,22 +413,45 @@ export default function AdminDashboardPage() {
               </div>
             </button>
 
-            <button
-              disabled
-              className="p-4 bg-card rounded-lg shadow opacity-50 cursor-not-allowed text-left"
-            >
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-muted rounded-lg">
-                  <Settings className="w-5 h-5 text-muted-foreground" />
+            {user?.role === UserRole.SUPER_ADMIN ? (
+              <button
+                onClick={() => router.push("/admin/video-ads")}
+                className="p-4 bg-card rounded-lg shadow hover:shadow-lg transition-all text-left group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-red-500/10 rounded-lg">
+                    <Video className="w-5 h-5 text-red-600" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-foreground group-hover:text-red-600 transition-colors">
+                      Manage Video Ads
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Upload & manage video ads
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-semibold text-foreground">
-                    Configuración de Plataforma
-                  </p>
-                  <p className="text-sm text-muted-foreground">Próximamente</p>
+              </button>
+            ) : (
+              <button
+                disabled
+                className="p-4 bg-card rounded-lg shadow opacity-50 cursor-not-allowed text-left"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-muted rounded-lg">
+                    <Settings className="w-5 h-5 text-muted-foreground" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-foreground">
+                      Configuración de Plataforma
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Próximamente
+                    </p>
+                  </div>
                 </div>
-              </div>
-            </button>
+              </button>
+            )}
           </div>
         </div>
       </div>
