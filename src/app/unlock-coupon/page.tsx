@@ -2,7 +2,7 @@
 
 import { Check, Gift, Loader2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 
 import { VideoPlayer } from "@/components/VideoPlayer";
 import { useExchangeUnlock } from "@/domains/ads/hooks/mutation/useExchangeUnlock";
@@ -10,6 +10,23 @@ import { useGetVideoAdPair, useWatchVideoAd } from "@/domains/video-ads";
 import type { VideoAd } from "@/domains/video-ads/types";
 
 export default function UnlockCouponVideoAdsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-background">
+          <div className="text-center">
+            <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
+            <p className="text-lg text-muted-foreground">Cargando...</p>
+          </div>
+        </div>
+      }
+    >
+      <UnlockCouponContent />
+    </Suspense>
+  );
+}
+
+function UnlockCouponContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const discountId = searchParams?.get("discountId") ?? null;
