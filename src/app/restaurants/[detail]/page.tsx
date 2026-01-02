@@ -868,6 +868,12 @@ export default function RestaurantDetailPage(): React.JSX.Element {
     });
   };
 
+  const navigateToCouponsWithDelay = (): void => {
+    setTimeout(() => {
+      router.push("/my-coupons");
+    }, 500); // 500ms delay for better UX
+  };
+
   return (
     <BasicLayout className="bg-gradient-hero pb-20">
       {!parsedStore ? (
@@ -1332,8 +1338,7 @@ export default function RestaurantDetailPage(): React.JSX.Element {
         onSuccess={(_couponCode) => {
           setShowVideoAdsModal(false);
           setShowSuccess(true);
-          // Optionally navigate to coupon page
-          router.push(`/my-coupons`);
+          navigateToCouponsWithDelay();
         }}
         discountId={selectedDiscount?.id || ""}
       />
@@ -1355,132 +1360,135 @@ export default function RestaurantDetailPage(): React.JSX.Element {
 
       {/* All Hours Modal */}
       {showAllHours &&
-        parsedStore?.hoursStructured &&
-        typeof window !== "undefined" ? createPortal(
-          <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-            onClick={() => setShowAllHours(false)}
-          >
+      parsedStore?.hoursStructured &&
+      typeof window !== "undefined"
+        ? createPortal(
             <div
-              className="bg-card rounded-lg shadow-xl max-w-md w-full"
-              onClick={(e) => e.stopPropagation()}
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+              onClick={() => setShowAllHours(false)}
             >
-              {/* Header */}
-              <div className="flex items-center justify-between p-6 border-b border-border">
-                <div className="flex items-center gap-3">
-                  <Clock className="w-6 h-6 text-primary" />
-                  <h2 className="text-xl font-bold text-foreground">
-                    Horario de Apertura
-                  </h2>
+              <div
+                className="bg-card rounded-lg shadow-xl max-w-md w-full"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Header */}
+                <div className="flex items-center justify-between p-6 border-b border-border">
+                  <div className="flex items-center gap-3">
+                    <Clock className="w-6 h-6 text-primary" />
+                    <h2 className="text-xl font-bold text-foreground">
+                      Horario de Apertura
+                    </h2>
+                  </div>
+                  <button
+                    onClick={() => setShowAllHours(false)}
+                    className="p-2 hover:bg-muted rounded-lg transition-colors"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
                 </div>
-                <button
-                  onClick={() => setShowAllHours(false)}
-                  className="p-2 hover:bg-muted rounded-lg transition-colors"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
 
-              {/* Hours List */}
-              <div className="p-6 space-y-3 max-h-[60vh] overflow-y-auto">
-                {parsedStore.hoursStructured.map((item) => {
-                  const currentDay = getCurrentDayOfWeek();
-                  const isToday =
-                    item.day.toLowerCase() ===
-                    DAY_LABELS[currentDay]?.toLowerCase();
+                {/* Hours List */}
+                <div className="p-6 space-y-3 max-h-[60vh] overflow-y-auto">
+                  {parsedStore.hoursStructured.map((item) => {
+                    const currentDay = getCurrentDayOfWeek();
+                    const isToday =
+                      item.day.toLowerCase() ===
+                      DAY_LABELS[currentDay]?.toLowerCase();
 
-                  return (
-                    <div
-                      key={item.day}
-                      className={`flex justify-between p-3 rounded-lg transition-colors ${
-                        isToday
-                          ? "bg-primary/10 border-2 border-primary"
-                          : "bg-muted/50"
-                      }`}
-                    >
-                      <span
-                        className={`font-medium ${
-                          isToday ? "text-primary" : "text-foreground"
+                    return (
+                      <div
+                        key={item.day}
+                        className={`flex justify-between p-3 rounded-lg transition-colors ${
+                          isToday
+                            ? "bg-primary/10 border-2 border-primary"
+                            : "bg-muted/50"
                         }`}
                       >
-                        {item.day}
-                        {isToday ? (
-                          <span className="ml-2 text-xs font-semibold">
-                            (Hoy)
-                          </span>
-                        ) : null}
-                      </span>
-                      <span
-                        className={
-                          isToday
-                            ? "text-primary font-medium"
-                            : "text-muted-foreground"
-                        }
-                      >
-                        {item.hours}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
+                        <span
+                          className={`font-medium ${
+                            isToday ? "text-primary" : "text-foreground"
+                          }`}
+                        >
+                          {item.day}
+                          {isToday ? (
+                            <span className="ml-2 text-xs font-semibold">
+                              (Hoy)
+                            </span>
+                          ) : null}
+                        </span>
+                        <span
+                          className={
+                            isToday
+                              ? "text-primary font-medium"
+                              : "text-muted-foreground"
+                          }
+                        >
+                          {item.hours}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
 
-              {/* Footer */}
-              <div className="p-6 border-t border-border">
-                <button
-                  onClick={() => setShowAllHours(false)}
-                  className="w-full px-4 py-3 bg-primary text-primary-foreground font-semibold rounded-lg hover:opacity-90 transition-colors"
-                >
-                  Cerrar
-                </button>
-              </div>
-            </div>
-          </div>,
-          document.body
-        ) : null}
-
-      {/* Catalog Image Modal */}
-      {selectedCatalogImage &&
-        typeof window !== "undefined" ? createPortal(
-          <div
-            className="fixed inset-0 z-50 bg-black/80 overflow-y-auto"
-            onClick={() => setSelectedCatalogImage(null)}
-          >
-            <div className="min-h-screen flex items-center justify-center p-4">
-              <div className="relative max-w-5xl w-full">
-                <button
-                  onClick={() => setSelectedCatalogImage(null)}
-                  className="sticky top-4 left-full ml-4 z-10 p-2 rounded-full bg-black/50 hover:bg-black/70 text-white transition-colors"
-                  aria-label="Close"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
+                {/* Footer */}
+                <div className="p-6 border-t border-border">
+                  <button
+                    onClick={() => setShowAllHours(false)}
+                    className="w-full px-4 py-3 bg-primary text-primary-foreground font-semibold rounded-lg hover:opacity-90 transition-colors"
                   >
-                    <line x1="18" y1="6" x2="6" y2="18" />
-                    <line x1="6" y1="6" x2="18" y2="18" />
-                  </svg>
-                </button>
-                <div className="relative w-full">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={selectedCatalogImage}
-                    alt="Catalog image"
-                    className="w-full h-auto"
-                    onClick={(e: React.MouseEvent) => e.stopPropagation()}
-                  />
+                    Cerrar
+                  </button>
                 </div>
               </div>
-            </div>
-          </div>,
-          document.body
-        ) : null}
+            </div>,
+            document.body
+          )
+        : null}
+
+      {/* Catalog Image Modal */}
+      {selectedCatalogImage && typeof window !== "undefined"
+        ? createPortal(
+            <div
+              className="fixed inset-0 z-50 bg-black/80 overflow-y-auto"
+              onClick={() => setSelectedCatalogImage(null)}
+            >
+              <div className="min-h-screen flex items-center justify-center p-4">
+                <div className="relative max-w-5xl w-full">
+                  <button
+                    onClick={() => setSelectedCatalogImage(null)}
+                    className="sticky top-4 left-full ml-4 z-10 p-2 rounded-full bg-black/50 hover:bg-black/70 text-white transition-colors"
+                    aria-label="Close"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <line x1="18" y1="6" x2="6" y2="18" />
+                      <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                  </button>
+                  <div className="relative w-full">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={selectedCatalogImage}
+                      alt="Catalog image"
+                      className="w-full h-auto"
+                      onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>,
+            document.body
+          )
+        : null}
     </BasicLayout>
   );
 }

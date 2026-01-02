@@ -89,12 +89,12 @@ export default function VideoAdsPage() {
       return;
     }
 
-    // Validate file size (max 100MB)
-    const maxSize = 100 * 1024 * 1024; // 100MB
+    // Validate file size (max 20MB)
+    const maxSize = 20 * 1024 * 1024; // 20MB
     if (file.size > maxSize) {
       toast({
         title: "Error",
-        description: "File size must be less than 100MB",
+        description: "File size must be less than 20MB",
         variant: "destructive",
       });
       return;
