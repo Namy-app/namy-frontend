@@ -18,11 +18,12 @@ import {
 import Image from "next/image";
 import { useRouter, useParams } from "next/navigation";
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 
 import { CongratulationsModal } from "@/components/CongratulationsModal";
 import { DiscountSuccessModal } from "@/components/DiscountSuccessModal";
-import { RewardedVideoAd } from "@/components/RewardedVideoAd";
 import { UnlockDiscountModal } from "@/components/UnlockDiscountModal";
+import { VideoAdsModal } from "@/components/VideoAdsModal";
 import { PlaceHolderTypeEnum } from "@/data/constants";
 import { StoreType } from "@/domains/admin";
 import { useStoreDiscounts, useStoreCatalogs } from "@/domains/admin/hooks";
@@ -35,7 +36,6 @@ import { graphqlRequest } from "@/lib/graphql-client";
 import {
   GENERATE_COUPON_MUTATION,
   QUICK_PAY_FOR_DISCOUNT_MUTATION,
-  REWARD_AD_MUTATION,
   EXCHANGE_UNLOCK_MUTATION,
 } from "@/lib/graphql-queries";
 import { openInGoogleMaps } from "@/lib/maps";
@@ -111,6 +111,7 @@ const CatalogCarousel = ({
           src={images[currentIndex] || ""}
           alt={`${catalogName} - Image ${currentIndex + 1}`}
           fill
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           className="object-cover cursor-pointer"
           unoptimized
           onClick={() => onImageClick(images[currentIndex] || "")}
@@ -147,7 +148,7 @@ const CatalogCarousel = ({
         <div className="mt-4 flex gap-2 overflow-x-auto pb-2">
           {images.map((image, index) => (
             <button
-              key={index}
+              key={`${image}-${index}`}
               onClick={() => setCurrentIndex(index)}
               className={`relative flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all ${
                 index === currentIndex
@@ -159,6 +160,7 @@ const CatalogCarousel = ({
                 src={image}
                 alt={`Thumbnail ${index + 1}`}
                 fill
+                sizes="80px"
                 className="object-cover"
                 unoptimized
               />
@@ -215,14 +217,15 @@ export default function RestaurantDetailPage(): React.JSX.Element {
 
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
-  const [showVideoAd, setShowVideoAd] = useState(false);
   const [showAllHours, setShowAllHours] = useState(false);
-  const [adsWatched, setAdsWatched] = useState(0);
-  const [totalAdsRequired] = useState(2);
   const [showUnlockModal, setShowUnlockModal] = useState(false);
+  const [showVideoAdsModal, setShowVideoAdsModal] = useState(false);
   const [showCongratulations, setShowCongratulations] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [unlockToken, setUnlockToken] = useState<string | null>(null);
+  const [selectedDiscount, setSelectedDiscount] = useState<{
+    id: string;
+  } | null>(null);
   const [selectedCatalogImage, setSelectedCatalogImage] = useState<
     string | null
   >(null);
@@ -279,9 +282,9 @@ export default function RestaurantDetailPage(): React.JSX.Element {
           percentage: userLevel?.discountPercentage ?? 10,
           points: 0,
           restrictions: [
-            "Show your QR code before paying",
-            "Valid for dine-in only",
-            "Cannot be combined with other offers",
+            "Muestra tu código QR antes de pagar",
+            "Válido solo para consumo en el local",
+            "No se puede combinar con otras ofertas",
           ],
           // id: firstActiveDiscount?.id,
           // percentage:
@@ -355,9 +358,9 @@ export default function RestaurantDetailPage(): React.JSX.Element {
                   .filter(Boolean)
                   .join(", ");
 
-                return formattedHours || "Hours not available";
+                return formattedHours || "Horario no disponible";
               })()
-            : "Hours not available",
+            : "Horario no disponible",
         hoursStructured:
           store.openDays && typeof store.openDays === "object"
             ? (() => {
@@ -422,12 +425,12 @@ export default function RestaurantDetailPage(): React.JSX.Element {
               })()
             : undefined,
         location: {
-          address: store.address || "Address not available",
-          city: store.city || "City not available",
+          address: store.address || "Dirección no disponible",
+          city: store.city || "Ciudad no disponible",
           lat: store.lat,
           lng: store.lng,
         },
-        phone: store.phoneNumber || "Phone not available",
+        phone: store.phoneNumber || "Teléfono no disponible",
         images: (() => {
           const allImages = [
             store.imageUrl, // Main image first
@@ -454,7 +457,7 @@ export default function RestaurantDetailPage(): React.JSX.Element {
           )
             ? ((store.additionalInfo as { amenities: string[] })
                 .amenities as string[])
-            : ["Store amenities not available"],
+            : ["Comodidades no disponibles"],
       }
     : null;
 
@@ -462,11 +465,17 @@ export default function RestaurantDetailPage(): React.JSX.Element {
     if (!isAuthenticated) {
       toast({
         variant: "default",
-        title: "Sign in required",
-        description: "Please sign in to unlock discounts.",
+        title: "Inicio de sesión requerido",
+        description: "Por favor inicia sesión para desbloquear descuentos.",
       });
       router.push("/");
       return;
+    }
+
+    // Set the selected discount
+    const firstActive = discountsData?.data?.find((d) => d.active);
+    if (firstActive) {
+      setSelectedDiscount({ id: firstActive.id });
     }
 
     // If user is premium, directly unlock discount
@@ -480,7 +489,8 @@ export default function RestaurantDetailPage(): React.JSX.Element {
 
   const handleWatchAdClick = (): void => {
     setShowUnlockModal(false);
-    setShowVideoAd(true);
+    // Show video ads modal
+    setShowVideoAdsModal(true);
   };
 
   const handleQuickPayClick = (): void => {
@@ -488,67 +498,13 @@ export default function RestaurantDetailPage(): React.JSX.Element {
     void handleQuickPay();
   };
 
-  const handleVideoComplete = async (): Promise<void> => {
-    try {
-      // Call rewardAd mutation to record the ad view
-      const rewardData = await graphqlRequest<{
-        rewardAd: {
-          canGenerateCoupon: boolean;
-          remaining?: number;
-          token?: string;
-          adsWatched?: number;
-        };
-      }>(REWARD_AD_MUTATION, {
-        input: {
-          adUnitId: process.env.NEXT_PUBLIC_ADMOB_AD_UNIT_ID || "test-ad-unit",
-          rewardToken: `reward-${Date.now()}-${Math.random()}`,
-          deviceId:
-            typeof navigator !== "undefined" ? navigator.userAgent : undefined,
-        },
-      });
-
-      const newAdsWatched = rewardData.rewardAd.adsWatched ?? adsWatched + 1;
-      setAdsWatched(newAdsWatched);
-
-      if (rewardData.rewardAd.canGenerateCoupon && rewardData.rewardAd.token) {
-        // Got unlock token, exchange it for coupon
-        setUnlockToken(rewardData.rewardAd.token);
-        setShowVideoAd(false);
-        setShowCongratulations(true);
-      } else {
-        // Show message and prepare for next ad
-        const remaining =
-          rewardData.rewardAd.remaining ?? totalAdsRequired - newAdsWatched;
-        toast({
-          title: `Ad ${newAdsWatched} of ${totalAdsRequired} complete`,
-          description: `Watch ${remaining} more ad${remaining !== 1 ? "s" : ""} to unlock your discount.`,
-        });
-        setShowVideoAd(false);
-        // Automatically show next ad after a short delay
-        setTimeout(() => {
-          setShowVideoAd(true);
-        }, 1500);
-      }
-    } catch (error) {
-      console.error("Error recording ad view:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description:
-          error instanceof Error
-            ? error.message
-            : "Failed to record ad view. Please try again.",
-      });
-      setShowVideoAd(false);
-    }
-  };
-
   const handleCongratulationsComplete = async (): Promise<void> => {
     if (!unlockToken || !parsedStore) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Missing unlock token. Please try again.",
+        description:
+          "Token de desbloqueo faltante. Por favor intenta de nuevo.",
       });
       setShowCongratulations(false);
       return;
@@ -561,9 +517,9 @@ export default function RestaurantDetailPage(): React.JSX.Element {
       if (!firstActiveDiscount) {
         toast({
           variant: "destructive",
-          title: "No discounts available",
+          title: "No hay descuentos disponibles",
           description:
-            "This store doesn't have any active discounts at the moment.",
+            "Esta tienda no tiene descuentos activos en este momento.",
         });
         setShowCongratulations(false);
         return;
@@ -600,21 +556,14 @@ export default function RestaurantDetailPage(): React.JSX.Element {
       console.error("Error exchanging unlock token:", error);
       toast({
         variant: "destructive",
-        title: "Failed to unlock coupon",
+        title: "Error al desbloquear el cupón",
         description:
-          error instanceof Error ? error.message : "Please try again.",
+          error instanceof Error
+            ? error.message
+            : "Por favor intenta de nuevo.",
       });
       setShowCongratulations(false);
     }
-  };
-
-  const handleVideoSkip = (): void => {
-    toast({
-      variant: "default",
-      title: "Ad skipped",
-      description: "Please watch the full video to unlock your coupon.",
-    });
-    setShowVideoAd(false);
   };
 
   const handleUnlockDiscount = async (): Promise<void> => {
@@ -625,8 +574,8 @@ export default function RestaurantDetailPage(): React.JSX.Element {
     if (!isAuthenticated) {
       toast({
         variant: "default",
-        title: "Sign in required",
-        description: "Please sign in to unlock discounts.",
+        title: "Inicio de sesión requerido",
+        description: "Por favor inicia sesión para desbloquear descuentos.",
       });
       router.push("/");
       return;
@@ -638,9 +587,8 @@ export default function RestaurantDetailPage(): React.JSX.Element {
     if (!firstActiveDiscount) {
       toast({
         variant: "destructive",
-        title: "No discounts available",
-        description:
-          "This store doesn't have any active discounts at the moment.",
+        title: "No hay descuentos disponibles",
+        description: "Esta tienda no tiene descuentos activos en este momento.",
       });
       return;
     }
@@ -648,7 +596,7 @@ export default function RestaurantDetailPage(): React.JSX.Element {
     const discountId = firstActiveDiscount.id;
 
     try {
-      toast({ title: "Generating coupon...", description: "Please wait." });
+      toast({ title: "Generando cupón...", description: "Por favor espera." });
 
       const data = await graphqlRequest<{
         generateCoupon: {
@@ -691,13 +639,13 @@ export default function RestaurantDetailPage(): React.JSX.Element {
         }
         router.push("/my-coupons");
       } else {
-        throw new Error("No coupon returned from server");
+        throw new Error("No se recibió cupón del servidor");
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       toast({
         variant: "destructive",
-        title: "Failed to create coupon",
+        title: "Error al crear cupón",
         description: message,
       });
     }
@@ -711,8 +659,8 @@ export default function RestaurantDetailPage(): React.JSX.Element {
     if (!isAuthenticated) {
       toast({
         variant: "default",
-        title: "Sign in required",
-        description: "Please sign in to use Quick Pay.",
+        title: "Inicio de sesión requerido",
+        description: "Por favor inicia sesión para usar Pago Rápido.",
       });
       router.push("/");
       return;
@@ -722,9 +670,8 @@ export default function RestaurantDetailPage(): React.JSX.Element {
     if (!parsedStore.discount?.id) {
       toast({
         variant: "destructive",
-        title: "No discount available",
-        description:
-          "This store doesn't have any active discounts at the moment.",
+        title: "No hay descuento disponible",
+        description: "Esta tienda no tiene descuentos activos en este momento.",
       });
       return;
     }
@@ -734,14 +681,14 @@ export default function RestaurantDetailPage(): React.JSX.Element {
     if (wallet && wallet.balance < QUICK_PAY_COST) {
       toast({
         variant: "destructive",
-        title: "Insufficient funds",
-        description: `You need $${QUICK_PAY_COST / 100} MXN but only have $${wallet.balance / 100} MXN. Add funds to continue.`,
+        title: "Fondos insuficientes",
+        description: `Necesitas $${QUICK_PAY_COST / 100} MXN pero solo tienes $${wallet.balance / 100} MXN. Agrega fondos para continuar.`,
         action: (
           <button
             onClick={() => router.push("/wallet")}
             className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700"
           >
-            Add Funds
+            Agregar Fondos
           </button>
         ),
       });
@@ -750,8 +697,8 @@ export default function RestaurantDetailPage(): React.JSX.Element {
 
     try {
       toast({
-        title: "Processing payment...",
-        description: "Deducting $9MXN from your wallet.",
+        title: "Procesando pago...",
+        description: "Deduciendo $9MXN de tu cartera.",
       });
 
       const data = await graphqlRequest<{
@@ -794,7 +741,7 @@ export default function RestaurantDetailPage(): React.JSX.Element {
         }
         router.push("/my-coupons");
       } else {
-        throw new Error("Quick Pay failed");
+        throw new Error("Pago Rápido falló");
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
@@ -803,7 +750,7 @@ export default function RestaurantDetailPage(): React.JSX.Element {
       if (message.toLowerCase().includes("insufficient funds")) {
         toast({
           variant: "destructive",
-          title: "Insufficient funds",
+          title: "Fondos insuficientes",
           description:
             "No tienes saldo suficiente. Agrega fondos a tu billetera.",
           action: (
@@ -1378,14 +1325,18 @@ export default function RestaurantDetailPage(): React.JSX.Element {
         onQuickPay={handleQuickPayClick}
       />
 
-      {showVideoAd ? (
-        <RewardedVideoAd
-          onAdComplete={() => {
-            void handleVideoComplete();
-          }}
-          onAdSkipped={handleVideoSkip}
-        />
-      ) : null}
+      {/* Video Ads Modal */}
+      <VideoAdsModal
+        isOpen={showVideoAdsModal}
+        onClose={() => setShowVideoAdsModal(false)}
+        onSuccess={(_couponCode) => {
+          setShowVideoAdsModal(false);
+          setShowSuccess(true);
+          // Optionally navigate to coupon page
+          router.push(`/my-coupons`);
+        }}
+        discountId={selectedDiscount?.id || ""}
+      />
 
       <CongratulationsModal
         isOpen={showCongratulations}
@@ -1403,128 +1354,133 @@ export default function RestaurantDetailPage(): React.JSX.Element {
       />
 
       {/* All Hours Modal */}
-      {showAllHours && parsedStore?.hoursStructured ? (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-          onClick={() => setShowAllHours(false)}
-        >
+      {showAllHours &&
+        parsedStore?.hoursStructured &&
+        typeof window !== "undefined" ? createPortal(
           <div
-            className="bg-card rounded-lg shadow-xl max-w-md w-full"
-            onClick={(e) => e.stopPropagation()}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+            onClick={() => setShowAllHours(false)}
           >
-            {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-border">
-              <div className="flex items-center gap-3">
-                <Clock className="w-6 h-6 text-primary" />
-                <h2 className="text-xl font-bold text-foreground">
-                  Horario de Apertura
-                </h2>
+            <div
+              className="bg-card rounded-lg shadow-xl max-w-md w-full"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between p-6 border-b border-border">
+                <div className="flex items-center gap-3">
+                  <Clock className="w-6 h-6 text-primary" />
+                  <h2 className="text-xl font-bold text-foreground">
+                    Horario de Apertura
+                  </h2>
+                </div>
+                <button
+                  onClick={() => setShowAllHours(false)}
+                  className="p-2 hover:bg-muted rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
               </div>
-              <button
-                onClick={() => setShowAllHours(false)}
-                className="p-2 hover:bg-muted rounded-lg transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
 
-            {/* Hours List */}
-            <div className="p-6 space-y-3 max-h-[60vh] overflow-y-auto">
-              {parsedStore.hoursStructured.map((item, index) => {
-                const currentDay = getCurrentDayOfWeek();
-                const isToday =
-                  item.day.toLowerCase() ===
-                  DAY_LABELS[currentDay]?.toLowerCase();
+              {/* Hours List */}
+              <div className="p-6 space-y-3 max-h-[60vh] overflow-y-auto">
+                {parsedStore.hoursStructured.map((item) => {
+                  const currentDay = getCurrentDayOfWeek();
+                  const isToday =
+                    item.day.toLowerCase() ===
+                    DAY_LABELS[currentDay]?.toLowerCase();
 
-                return (
-                  <div
-                    key={index}
-                    className={`flex justify-between p-3 rounded-lg transition-colors ${
-                      isToday
-                        ? "bg-primary/10 border-2 border-primary"
-                        : "bg-muted/50"
-                    }`}
-                  >
-                    <span
-                      className={`font-medium ${
-                        isToday ? "text-primary" : "text-foreground"
+                  return (
+                    <div
+                      key={item.day}
+                      className={`flex justify-between p-3 rounded-lg transition-colors ${
+                        isToday
+                          ? "bg-primary/10 border-2 border-primary"
+                          : "bg-muted/50"
                       }`}
                     >
-                      {item.day}
-                      {isToday ? (
-                        <span className="ml-2 text-xs font-semibold">
-                          (Hoy)
-                        </span>
-                      ) : null}
-                    </span>
-                    <span
-                      className={
-                        isToday
-                          ? "text-primary font-medium"
-                          : "text-muted-foreground"
-                      }
-                    >
-                      {item.hours}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
+                      <span
+                        className={`font-medium ${
+                          isToday ? "text-primary" : "text-foreground"
+                        }`}
+                      >
+                        {item.day}
+                        {isToday ? (
+                          <span className="ml-2 text-xs font-semibold">
+                            (Hoy)
+                          </span>
+                        ) : null}
+                      </span>
+                      <span
+                        className={
+                          isToday
+                            ? "text-primary font-medium"
+                            : "text-muted-foreground"
+                        }
+                      >
+                        {item.hours}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
 
-            {/* Footer */}
-            <div className="p-6 border-t border-border">
-              <button
-                onClick={() => setShowAllHours(false)}
-                className="w-full px-4 py-3 bg-primary text-primary-foreground font-semibold rounded-lg hover:opacity-90 transition-colors"
-              >
-                Cerrar
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
-
-      {/* Catalog Image Modal */}
-      {selectedCatalogImage ? (
-        <div
-          className="fixed inset-0 z-50 bg-black/80 overflow-y-auto"
-          onClick={() => setSelectedCatalogImage(null)}
-        >
-          <div className="min-h-screen flex items-center justify-center p-4">
-            <div className="relative max-w-5xl w-full">
-              <button
-                onClick={() => setSelectedCatalogImage(null)}
-                className="sticky top-4 left-full ml-4 z-10 p-2 rounded-full bg-black/50 hover:bg-black/70 text-white transition-colors"
-                aria-label="Close"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
+              {/* Footer */}
+              <div className="p-6 border-t border-border">
+                <button
+                  onClick={() => setShowAllHours(false)}
+                  className="w-full px-4 py-3 bg-primary text-primary-foreground font-semibold rounded-lg hover:opacity-90 transition-colors"
                 >
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </button>
-              <div className="relative w-full">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={selectedCatalogImage}
-                  alt="Catalog image"
-                  className="w-full h-auto"
-                  onClick={(e: React.MouseEvent) => e.stopPropagation()}
-                />
+                  Cerrar
+                </button>
               </div>
             </div>
-          </div>
-        </div>
-      ) : null}
+          </div>,
+          document.body
+        ) : null}
+
+      {/* Catalog Image Modal */}
+      {selectedCatalogImage &&
+        typeof window !== "undefined" ? createPortal(
+          <div
+            className="fixed inset-0 z-50 bg-black/80 overflow-y-auto"
+            onClick={() => setSelectedCatalogImage(null)}
+          >
+            <div className="min-h-screen flex items-center justify-center p-4">
+              <div className="relative max-w-5xl w-full">
+                <button
+                  onClick={() => setSelectedCatalogImage(null)}
+                  className="sticky top-4 left-full ml-4 z-10 p-2 rounded-full bg-black/50 hover:bg-black/70 text-white transition-colors"
+                  aria-label="Close"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                </button>
+                <div className="relative w-full">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={selectedCatalogImage}
+                    alt="Catalog image"
+                    className="w-full h-auto"
+                    onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>,
+          document.body
+        ) : null}
     </BasicLayout>
   );
 }

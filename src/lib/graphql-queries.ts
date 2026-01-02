@@ -550,8 +550,8 @@ export const COUPONS_QUERY = `
         description
         type
         value
-        excludedDaysOfWeek
         availableDaysAndTimes
+        excludedDaysOfWeek
         excludedHours
         additionalRestrictions
         restrictions
@@ -656,5 +656,214 @@ export const PAY_PREMIUM_WITH_WALLET_MUTATION = `
 export const RESEND_STORE_PIN_EMAIL_MUTATION = `
   mutation ResendStorePinEmail($id: String!, $email: String!) {
     resendStorePinEmail(id: $id, email: $email)
+  }
+`;
+
+// ============ YOUTUBE ADS ============
+export const GET_YOUTUBE_AD_PAIR_QUERY = `
+  query GetYouTubeAdPair($deviceId: String) {
+    getYouTubeAdPair(deviceId: $deviceId) {
+      ads {
+        id
+        videoId
+        youtubeUrl
+        title
+        description
+        duration
+        priority
+      }
+      sessionId
+    }
+  }
+`;
+
+export const WATCH_YOUTUBE_AD_MUTATION = `
+  mutation WatchYouTubeAd($input: WatchYouTubeAdInput!) {
+    watchYouTubeAd(input: $input) {
+      success
+      canGenerateCoupon
+      remaining
+      token
+      adsWatched
+    }
+  }
+`;
+
+// Super Admin YouTube Ad Management
+export const GET_ALL_YOUTUBE_ADS_QUERY = `
+  query GetAllYouTubeAds {
+    getAllYouTubeAds {
+      id
+      videoId
+      youtubeUrl
+      title
+      description
+      duration
+      active
+      priority
+      impressionCount
+      watchCount
+      createdAt
+      updatedAt
+    }
+  }
+`;
+
+export const CREATE_YOUTUBE_AD_MUTATION = `
+  mutation CreateYouTubeAd($input: CreateYouTubeAdInput!) {
+    createYouTubeAd(input: $input) {
+      id
+      videoId
+      youtubeUrl
+      title
+      description
+      duration
+      active
+      priority
+      impressionCount
+      watchCount
+      createdAt
+    }
+  }
+`;
+
+export const UPDATE_YOUTUBE_AD_MUTATION = `
+  mutation UpdateYouTubeAd($input: UpdateYouTubeAdInput!) {
+    updateYouTubeAd(input: $input) {
+      id
+      videoId
+      youtubeUrl
+      title
+      description
+      duration
+      active
+      priority
+      impressionCount
+      watchCount
+      updatedAt
+    }
+  }
+`;
+
+export const DELETE_YOUTUBE_AD_MUTATION = `
+  mutation DeleteYouTubeAd($id: String!) {
+    deleteYouTubeAd(id: $id)
+  }
+`;
+
+// ============ VIDEO ADS ============
+export const REQUEST_VIDEO_UPLOAD_MUTATION = `
+  mutation RequestVideoUpload($input: RequestVideoUploadInput!) {
+    requestVideoUpload(input: $input) {
+      uploadUrl
+      videoKey
+      publicUrl
+    }
+  }
+`;
+
+export const CREATE_VIDEO_AD_MUTATION = `
+  mutation CreateVideoAd($input: CreateVideoAdInput!) {
+    createVideoAd(input: $input) {
+      id
+      videoKey
+      videoUrl
+      thumbnailKey
+      thumbnailUrl
+      title
+      description
+      duration
+      fileSize
+      mimeType
+      active
+      priority
+      impressionCount
+      watchCount
+      createdAt
+    }
+  }
+`;
+
+export const UPDATE_VIDEO_AD_MUTATION = `
+  mutation UpdateVideoAd($input: UpdateVideoAdInput!) {
+    updateVideoAd(input: $input) {
+      id
+      videoKey
+      videoUrl
+      thumbnailKey
+      thumbnailUrl
+      title
+      description
+      duration
+      fileSize
+      mimeType
+      active
+      priority
+      impressionCount
+      watchCount
+      updatedAt
+    }
+  }
+`;
+
+export const DELETE_VIDEO_AD_MUTATION = `
+  mutation DeleteVideoAd($id: String!) {
+    deleteVideoAd(id: $id)
+  }
+`;
+
+export const GET_ALL_VIDEO_ADS_QUERY = `
+  query GetAllVideoAds {
+    getAllVideoAds {
+      id
+      videoKey
+      videoUrl
+      thumbnailKey
+      thumbnailUrl
+      title
+      description
+      duration
+      fileSize
+      mimeType
+      active
+      priority
+      impressionCount
+      watchCount
+      createdAt
+      updatedAt
+    }
+  }
+`;
+
+export const GET_VIDEO_AD_PAIR_QUERY = `
+  query GetVideoAdPair($deviceId: String) {
+    getVideoAdPair(deviceId: $deviceId) {
+      ads {
+        id
+        videoKey
+        videoUrl
+        thumbnailKey
+        thumbnailUrl
+        title
+        description
+        duration
+        fileSize
+        mimeType
+        priority
+      }
+      sessionId
+    }
+  }
+`;
+
+export const WATCH_VIDEO_AD_MUTATION = `
+  mutation WatchVideoAd($input: WatchVideoAdInput!) {
+    watchVideoAd(input: $input) {
+      success
+      canGenerateCoupon
+      remaining
+      token
+      adsWatched
+    }
   }
 `;
