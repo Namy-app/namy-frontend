@@ -18,7 +18,7 @@ export default function ExplorePage(): React.JSX.Element {
   const { data: myLevel } = useMyLevel();
 
   // For guests, show 0% discount (no user-specific discounts)
-  const discountPercentage = myLevel?.discountPercentage ?? 0;
+  const discountPercentage = myLevel?.discountPercentage ?? 10;
 
   return (
     <BasicLayout className="bg-gradient-hero">

@@ -132,10 +132,10 @@ export async function graphqlRequest<T>(
         parsedError?.response?.errors?.[0]?.message;
 
       // For guest pages, just log the error but don't throw
-      if (isGuestPage) {
-        console.warn("Auth required for this feature:", errorMsg);
-        throw new Error("Please log in to access this feature");
-      }
+      // if (isGuestPage) {
+      //   console.warn("Auth required for this feature:", errorMsg);
+      //   throw new Error("Please log in to access this feature");
+      // }
 
       throw new Error(
         errorMsg ?? "Your session has expired. Please log in again."
