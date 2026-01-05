@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import { graphqlRequest } from "@/lib/graphql-client";
 import { GET_MY_LEVEL_QUERY } from "@/lib/graphql-queries";
+import { useAuthStore } from "@/store/useAuthStore";
 
 export interface UserLevelInfo {
   level: number;
@@ -16,6 +17,8 @@ export interface UserLevelInfo {
 }
 
 export function useMyLevel() {
+  const { isAuthenticated } = useAuthStore();
+
   return useQuery({
     queryKey: ["myLevel"],
     queryFn: async () => {
@@ -24,6 +27,7 @@ export function useMyLevel() {
       }>(GET_MY_LEVEL_QUERY);
       return res.myLevel;
     },
+    enabled: isAuthenticated, // Only run query if user is authenticated
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 }
