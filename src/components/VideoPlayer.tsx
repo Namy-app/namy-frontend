@@ -28,7 +28,7 @@ export function VideoPlayer({
   const [currentTime, setCurrentTime] = useState(0);
   const [hasCompleted, setHasCompleted] = useState(false);
 
-  const progress = (currentTime / duration) * 100;
+  // const progress = (currentTime / duration) * 100;
 
   useEffect(() => {
     const video = videoRef.current;
@@ -145,12 +145,12 @@ export function VideoPlayer({
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3 sm:p-4">
           {/* Progress Bar */}
           <div className="mb-2 sm:mb-3">
-            <div className="h-1.5 sm:h-2 bg-gray-700 rounded-full overflow-hidden">
+            {/* <div className="h-1.5 sm:h-2 bg-gray-700 rounded-full overflow-hidden">
               <div
                 className="h-full bg-primary transition-all duration-300"
                 style={{ width: `${progress}%` }}
               />
-            </div>
+            </div> */}
             <div className="flex justify-between text-[10px] sm:text-xs text-white mt-1">
               <span>{formatTime(currentTime)}</span>
               {/* <span>{formatTime(duration)}</span> */}
