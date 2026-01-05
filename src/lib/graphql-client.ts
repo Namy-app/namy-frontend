@@ -110,13 +110,19 @@ export async function graphqlRequest<T>(
 
     // Check if this is an authentication error
     if (isAuthenticationError(parsedError)) {
-      // Check if current page is an auth page to avoid redirect loops
-      const isAuthPage =
-        typeof window !== "undefined" &&
-        window.location.pathname.includes("/auth");
+      // Guest-accessible pages - don't trigger logout
+      const guestPages = ["/", "/explore", "/restaurants", "/service", "/auth"];
 
-      // Call the registered callback to clear auth state only if not on auth pages
-      if (authErrorCallback && !isAuthPage) {
+      const isGuestPage =
+        typeof window !== "undefined" &&
+        guestPages.some(
+          (page) =>
+            window.location.pathname === page ||
+            window.location.pathname.startsWith(page + "/")
+        );
+
+      // Call the registered callback to clear auth state only if not on guest-accessible pages
+      if (authErrorCallback && !isGuestPage) {
         console.error("Authentication error detected - triggering logout");
         authErrorCallback();
       }
@@ -124,6 +130,13 @@ export async function graphqlRequest<T>(
       const errorMsg =
         parsedError?.response?.errors?.[0]?.extensions?.validationErrors?.[0] ??
         parsedError?.response?.errors?.[0]?.message;
+
+      // For guest pages, just log the error but don't throw
+      // if (isGuestPage) {
+      //   console.warn("Auth required for this feature:", errorMsg);
+      //   throw new Error("Please log in to access this feature");
+      // }
+
       throw new Error(
         errorMsg ?? "Your session has expired. Please log in again."
       );

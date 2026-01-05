@@ -293,10 +293,10 @@ export default function RestaurantListingPage(): React.JSX.Element {
                             </div>
 
                             {/* Distance */}
-                            <div className="flex items-center gap-1">
+                            {/* <div className="flex items-center gap-1">
                               <MapPin className="w-3 h-3" />
                               <span>{restaurant.distance}</span>
-                            </div>
+                            </div> */}
                           </div>
                         </div>
                       </Card>

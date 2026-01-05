@@ -82,114 +82,109 @@ export default function Home() {
   };
 
   return (
-    <>
-      <div className="min-h-screen bg-gradient-hero flex flex-col">
-        <div className="flex-2 flex flex-col items-center justify-center p-6 pt-20">
-          <Image
-            src="/namy-logo.webp"
-            alt="Ñamy Logo"
-            width={80}
-            height={80}
-            className="mb-8 rounded-2xl shadow-glow"
-            priority
-          />
+    <div className="min-h-screen bg-gradient-hero flex flex-col">
+      <div className="flex-2 flex flex-col items-center justify-center p-6 pt-20">
+        <Image
+          src="/namy-logo.webp"
+          alt="Ñamy Logo"
+          width={80}
+          height={80}
+          className="mb-8 rounded-2xl shadow-glow"
+          priority
+        />
 
-          {/* Carousel */}
-          <div className="relative w-full max-w-2xl pb-12">
+        {/* Carousel */}
+        <div className="relative w-full max-w-2xl pb-12">
+          <div
+            ref={containerRef}
+            className="overflow-hidden cursor-grab active:cursor-grabbing"
+            onMouseDown={handleDragStart}
+            onMouseMove={handleDragMove}
+            onMouseUp={handleDragEnd}
+            onMouseLeave={handleDragEnd}
+            onTouchStart={handleDragStart}
+            onTouchMove={handleDragMove}
+            onTouchEnd={handleDragEnd}
+          >
             <div
-              ref={containerRef}
-              className="overflow-hidden cursor-grab active:cursor-grabbing"
-              onMouseDown={handleDragStart}
-              onMouseMove={handleDragMove}
-              onMouseUp={handleDragEnd}
-              onMouseLeave={handleDragEnd}
-              onTouchStart={handleDragStart}
-              onTouchMove={handleDragMove}
-              onTouchEnd={handleDragEnd}
+              className="flex -ml-4"
+              style={{
+                transform: `translate3d(calc(-${currentSlide * 100}% + ${translateX}px), 0px, 0px)`,
+                transition: isDragging ? "none" : "transform 0.5s ease-in-out",
+              }}
             >
-              <div
-                className="flex -ml-4"
-                style={{
-                  transform: `translate3d(calc(-${currentSlide * 100}% + ${translateX}px), 0px, 0px)`,
-                  transition: isDragging
-                    ? "none"
-                    : "transform 0.5s ease-in-out",
-                }}
-              >
-                {slides.map((slide, index) => (
-                  <div
-                    key={index}
-                    className="min-w-0 shrink-0 grow-0 basis-full pl-4"
-                  >
-                    <div className="flex flex-col items-center text-center space-y-6 px-4">
-                      <Image
-                        src={slide.image}
-                        alt={slide.title}
-                        width={600}
-                        height={600}
-                        className="w-full max-w-md h-auto rounded-3xl shadow-elegant pointer-events-none"
-                        priority={index === 0}
-                      />
-                      <div className="space-y-3">
-                        <h2 className="text-3xl font-bold text-foreground">
-                          {slide.title}
-                        </h2>
-                        <p className="text-lg text-muted-foreground max-w-md mx-auto">
-                          {slide.description}
-                        </p>
-                      </div>
+              {slides.map((slide, index) => (
+                <div
+                  key={index}
+                  className="min-w-0 shrink-0 grow-0 basis-full pl-4"
+                >
+                  <div className="flex flex-col items-center text-center space-y-6 px-4">
+                    <Image
+                      src={slide.image}
+                      alt={slide.title}
+                      width={600}
+                      height={600}
+                      className="w-full max-w-md h-auto rounded-3xl shadow-elegant pointer-events-none"
+                      priority={index === 0}
+                    />
+                    <div className="space-y-3">
+                      <h2 className="text-3xl font-bold text-foreground">
+                        {slide.title}
+                      </h2>
+                      <p className="text-lg text-muted-foreground max-w-md mx-auto">
+                        {slide.description}
+                      </p>
                     </div>
                   </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Carousel Indicators */}
-            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 flex gap-2 justify-center">
-              {slides.map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => setCurrentSlide(index)}
-                  className={`h-2 rounded-full transition-all ${
-                    currentSlide === index ? "w-8 bg-primary" : "w-2 bg-muted"
-                  }`}
-                  aria-label={`Go to slide ${index + 1}`}
-                />
+                </div>
               ))}
             </div>
           </div>
-        </div>
 
-        {/* CTA Buttons */}
-        <div className="flex-1 flex flex-col items-center justify-center p-6  bg-background/50 backdrop-blur-sm">
-          {isAuthenticated ? (
-            <div className="w-full max-w-md ">
-              <Link href="/explore" className="mt-3 block ">
-                <button className="inline-flex items-center justify-center gap-2 whitespace-nowrap ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-background hover:text-accent-foreground px-4 py-2 w-full h-14 border-2 border-border rounded-full font-semibold text-lg hover:bg-accent">
-                  Explorar Tiendas
-                </button>
-              </Link>
-            </div>
-          ) : (
-            <div className="w-full max-w-md ">
-              <Link href="/auth">
-                <button className="inline-flex items-center justify-center gap-2 whitespace-nowrap ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 px-4 py-2 w-full h-14 bg-primary text-primary-foreground hover:bg-primary/90 rounded-full font-bold text-lg shadow-glow">
-                  Registrarse / Iniciar sesión
-                </button>
-              </Link>
-              <Link href="/explore" className="mt-3 block ">
-                <button className="inline-flex items-center justify-center gap-2 whitespace-nowrap ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-background hover:text-accent-foreground px-4 py-2 w-full h-14 border-2 border-border rounded-full font-semibold text-lg hover:bg-accent">
-                  Continuar como invitado
-                </button>
-              </Link>
-              <p className="text-sm text-muted-foreground text-center mt-4">
-                🔓 Puedes registrarte en cualquier momento para empezar a
-                ahorrar
-              </p>
-            </div>
-          )}
+          {/* Carousel Indicators */}
+          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 flex gap-2 justify-center">
+            {slides.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => setCurrentSlide(index)}
+                className={`h-2 rounded-full transition-all ${
+                  currentSlide === index ? "w-8 bg-primary" : "w-2 bg-muted"
+                }`}
+                aria-label={`Go to slide ${index + 1}`}
+              />
+            ))}
+          </div>
         </div>
       </div>
-    </>
+
+      {/* CTA Buttons */}
+      <div className="flex-1 flex flex-col items-center justify-center p-6  bg-background/50 backdrop-blur-sm">
+        {isAuthenticated ? (
+          <div className="w-full max-w-md ">
+            <Link href="/explore" className="mt-3 block ">
+              <button className="inline-flex items-center justify-center gap-2 whitespace-nowrap ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-background hover:text-accent-foreground px-4 py-2 w-full h-14 border-2 border-border rounded-full font-semibold text-lg hover:bg-accent">
+                Explorar Tiendas
+              </button>
+            </Link>
+          </div>
+        ) : (
+          <div className="w-full max-w-md ">
+            <Link href="/auth">
+              <button className="inline-flex items-center justify-center gap-2 whitespace-nowrap ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 px-4 py-2 w-full h-14 bg-primary text-primary-foreground hover:bg-primary/90 rounded-full font-bold text-lg shadow-glow">
+                Registrarse / Iniciar sesión
+              </button>
+            </Link>
+            <Link href="/explore" className="mt-3 block ">
+              <button className="inline-flex items-center justify-center gap-2 whitespace-nowrap ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-background hover:text-accent-foreground px-4 py-2 w-full h-14 border-2 border-border rounded-full font-semibold text-lg hover:bg-accent">
+                Continuar como invitado
+              </button>
+            </Link>
+            <p className="text-sm text-muted-foreground text-center mt-4">
+              🔓 Puedes registrarte en cualquier momento para empezar a ahorrar
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
   );
 }

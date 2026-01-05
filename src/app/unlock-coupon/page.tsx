@@ -1,205 +1,291 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { Check, Gift, Loader2 } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useState, Suspense } from "react";
 
-import { RewardedVideoAd } from "@/components/RewardedVideoAd";
+import { VideoPlayer } from "@/components/VideoPlayer";
+import { useExchangeUnlock } from "@/domains/ads/hooks/mutation/useExchangeUnlock";
+import { useGetVideoAdPair, useWatchVideoAd } from "@/domains/video-ads";
+import type { VideoAd } from "@/domains/video-ads/types";
 
-export default function UnlockCouponPage(): React.JSX.Element {
-  const [couponUnlocked, setCouponUnlocked] = useState(false);
-  const [showAd, setShowAd] = useState(false);
-
-  // Generate coupon code using useMemo to avoid recreating it on every render
-  const couponCode = useMemo(
-    // eslint-disable-next-line react-hooks/purity
-    () => `COUPON-${Math.random().toString(36).substring(7).toUpperCase()}`,
-    []
-  );
-
-  // This would come from your actual coupon data
-  const coupon = {
-    name: "50% OFF at Restaurant XYZ",
-    restaurant: "Tacos El Güero",
-    discount: "50%",
-    value: "$10",
-    expiresAt: "2025-12-31",
-  };
-
-  const handleAdComplete = () => {
-    setCouponUnlocked(true);
-    // Here you would call your backend to mark coupon as redeemed
-    // Example: await redeemCoupon(couponId);
-  };
-
-  const handleAdSkipped = () => {
-    alert("Please watch the full video to unlock your coupon");
-    setShowAd(false);
-  };
-
-  const handleAdError = (error: Error) => {
-    console.error("Ad error:", error);
-    alert("Failed to load ad. Please try again.");
-    setShowAd(false);
-  };
-
-  if (couponUnlocked) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-green-50 to-green-100 p-6">
-        <div className="max-w-2xl mx-auto pt-20">
-          {/* Success State */}
-          <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
-            <div className="bg-gradient-to-r from-green-500 to-emerald-500 p-8 text-white text-center">
-              <div className="text-6xl mb-4">🎉</div>
-              <h1 className="text-3xl font-bold mb-2">Coupon Unlocked!</h1>
-              <p className="text-green-100">Show this to the cashier</p>
-            </div>
-
-            <div className="p-8">
-              {/* QR Code / Barcode Placeholder */}
-              <div className="bg-gray-100 rounded-lg p-8 mb-6 text-center">
-                <div className="text-6xl mb-4">📱</div>
-                <div className="font-mono text-2xl font-bold">{couponCode}</div>
-              </div>
-
-              {/* Coupon Details */}
-              <div className="space-y-4 mb-6">
-                <div className="flex justify-between items-center border-b pb-3">
-                  <span className="text-gray-600">Restaurant</span>
-                  <span className="font-bold text-lg">{coupon.restaurant}</span>
-                </div>
-                <div className="flex justify-between items-center border-b pb-3">
-                  <span className="text-gray-600">Discount</span>
-                  <span className="font-bold text-2xl text-green-600">
-                    {coupon.discount}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center border-b pb-3">
-                  <span className="text-gray-600">Value</span>
-                  <span className="font-bold text-lg">
-                    Up to {coupon.value}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Expires</span>
-                  <span className="font-semibold">{coupon.expiresAt}</span>
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="space-y-3">
-                <button className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-full shadow-lg">
-                  Use Now
-                </button>
-                <button className="w-full border-2 border-gray-300 hover:border-gray-400 text-gray-700 font-semibold py-4 rounded-full">
-                  Save for Later
-                </button>
-              </div>
-            </div>
+export default function UnlockCouponVideoAdsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-background">
+          <div className="text-center">
+            <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
+            <p className="text-lg text-muted-foreground">Cargando...</p>
           </div>
         </div>
-      </div>
-    );
-  }
+      }
+    >
+      <UnlockCouponContent />
+    </Suspense>
+  );
+}
 
-  if (showAd) {
+function UnlockCouponContent() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const discountId = searchParams?.get("discountId") ?? null;
+
+  const [currentAdIndex, setCurrentAdIndex] = useState(0);
+  const [watchedAds, setWatchedAds] = useState<string[]>([]);
+  const [unlockToken, setUnlockToken] = useState<string | null>(null);
+  const [deviceId] = useState(() => {
+    // Generate or retrieve device ID
+    if (typeof window !== "undefined") {
+      let id = localStorage.getItem("deviceId");
+      if (!id) {
+        id = `device-${Math.random().toString(36).substring(2, 15)}`;
+        localStorage.setItem("deviceId", id);
+      }
+      return id;
+    }
+    return undefined;
+  });
+
+  // Fetch video ad pair
+  const {
+    data: adPairData,
+    isLoading: loadingAds,
+    error: adError,
+  } = useGetVideoAdPair(deviceId);
+
+  // Log for debugging
+  console.log("Video Ads Debug:", {
+    loadingAds,
+    adError: adError?.message,
+    adsCount: adPairData?.ads?.length,
+    sessionId: adPairData?.sessionId,
+    deviceId,
+    discountId,
+  });
+
+  // Watch ad mutation
+  const watchAdMutation = useWatchVideoAd();
+
+  // Exchange unlock mutation
+  const exchangeUnlockMutation = useExchangeUnlock();
+
+  const ads = adPairData?.ads || [];
+  const sessionId = adPairData?.sessionId;
+  const currentAd: VideoAd | undefined = ads[currentAdIndex];
+
+  // Handle watch completion
+  const handleWatchComplete = async (watchDuration: number) => {
+    if (!currentAd || !sessionId) {
+      return;
+    }
+
+    try {
+      const result = await watchAdMutation.mutateAsync({
+        videoAdId: currentAd.id,
+        videoKey: currentAd.videoKey,
+        watchDuration: Math.floor(watchDuration),
+        deviceId,
+        sessionId,
+      });
+
+      // Mark ad as watched
+      setWatchedAds((prev) => [...prev, currentAd.id]);
+
+      if (result.canGenerateCoupon && result.token) {
+        // Got unlock token, ready to exchange for coupon
+        setUnlockToken(result.token);
+      } else {
+        // Need to watch more ads
+        if (currentAdIndex < ads.length - 1) {
+          // Move to next ad automatically
+          setTimeout(() => {
+            setCurrentAdIndex(currentAdIndex + 1);
+          }, 1500);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to track watch:", error);
+    }
+  };
+
+  // Exchange token for coupon
+  const handleExchangeToken = async () => {
+    if (!unlockToken || !discountId) {
+      console.error("Missing token or discountId");
+      return;
+    }
+
+    try {
+      const coupon = await exchangeUnlockMutation.mutateAsync({
+        token: unlockToken,
+        discountId,
+      });
+
+      // Redirect to coupon page
+      router.push(`/coupon/${coupon.code}`);
+    } catch (error) {
+      console.error("Failed to exchange unlock:", error);
+    }
+  };
+
+  // Show loading state
+  if (loadingAds) {
     return (
-      <div className="min-h-screen bg-gray-900 p-6 flex items-center justify-center">
-        <div className="max-w-4xl w-full">
-          <RewardedVideoAd
-            onAdComplete={handleAdComplete}
-            onAdSkipped={handleAdSkipped}
-            onAdError={handleAdError}
-            couponName={coupon.name}
-          />
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
+          <p className="text-lg text-muted-foreground">Cargando anuncios...</p>
         </div>
       </div>
     );
   }
 
-  return (
-    <div className="min-h-screen bg-gradient-to-b from-purple-50 to-pink-50 p-6">
-      <div className="max-w-2xl mx-auto pt-20">
-        {/* Initial State - Locked Coupon */}
-        <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
-          <div className="bg-gradient-to-r from-purple-500 to-pink-500 p-8 text-white text-center relative">
-            <div className="absolute top-4 right-4">
-              <div className="bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full text-sm font-semibold">
-                🔒 Locked
-              </div>
+  // Show error state
+  if (adError || !ads.length) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-6">
+        <div className="max-w-md w-full bg-card border border-border rounded-lg p-8 text-center">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <span className="text-3xl">❌</span>
+          </div>
+          <h2 className="text-2xl font-bold text-foreground mb-2">
+            No hay anuncios disponibles
+          </h2>
+          <p className="text-muted-foreground mb-6">
+            {adError
+              ? "Error al cargar los anuncios. Por favor intenta más tarde."
+              : "No hay suficientes anuncios disponibles. Por favor contacta soporte."}
+          </p>
+          <button
+            onClick={() => router.back()}
+            className="px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+          >
+            Volver
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Show unlock token exchange screen
+  if (unlockToken) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-green-50 to-green-100 dark:from-green-950 dark:to-background p-6">
+        <div className="max-w-md w-full bg-card border border-border rounded-2xl shadow-2xl overflow-hidden">
+          <div className="bg-gradient-to-r from-green-500 to-emerald-500 p-8 text-white text-center">
+            <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-4">
+              <Gift className="w-10 h-10 text-green-500" />
             </div>
-            <div className="text-6xl mb-4 opacity-50">🎟️</div>
-            <h1 className="text-3xl font-bold mb-2">{coupon.name}</h1>
-            <p className="text-purple-100">{coupon.restaurant}</p>
+            <h1 className="text-3xl font-bold mb-2">¡Felicitaciones!</h1>
+            <p className="text-lg opacity-90">
+              Has visto ambos anuncios de video
+            </p>
           </div>
 
           <div className="p-8">
-            {/* Coupon Preview (Blurred) */}
-            <div className="relative mb-6">
-              <div className="filter blur-sm pointer-events-none">
-                <div className="bg-gradient-to-r from-purple-100 to-pink-100 rounded-lg p-6 text-center">
-                  <div className="text-4xl font-bold text-purple-600 mb-2">
-                    {coupon.discount}
-                  </div>
-                  <div className="text-gray-600">
-                    Value up to {coupon.value}
-                  </div>
-                </div>
-              </div>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="bg-black/80 text-white px-6 py-3 rounded-full font-bold text-lg">
-                  🔒 Watch Ad to Unlock
-                </div>
-              </div>
-            </div>
-
-            {/* Info Box */}
-            <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-6 mb-6">
-              <h3 className="font-bold text-blue-900 mb-3 flex items-center">
-                <span className="text-2xl mr-2">💡</span>
-                How it works
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold text-foreground mb-4">
+                Anuncios vistos:
               </h3>
-              <ol className="space-y-2 text-blue-800">
-                <li className="flex items-start">
-                  <span className="font-bold mr-2">1.</span>
-                  <span>Watch a short 30-second video advertisement</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="font-bold mr-2">2.</span>
-                  <span>Get your coupon code instantly</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="font-bold mr-2">3.</span>
-                  <span>
-                    Show it at the restaurant and enjoy your discount!
-                  </span>
-                </li>
-              </ol>
             </div>
 
-            {/* Unlock Button */}
             <button
-              onClick={() => setShowAd(true)}
-              className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-5 rounded-full text-xl shadow-2xl transform transition hover:scale-105"
+              onClick={() => void handleExchangeToken()}
+              disabled={exchangeUnlockMutation.isPending}
+              className="w-full py-4 bg-gradient-to-r from-green-500 to-emerald-500 text-white font-semibold rounded-lg hover:from-green-600 hover:to-emerald-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
-              🎬 Watch Video & Unlock Coupon
+              {exchangeUnlockMutation.isPending ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Desbloqueando cupón...
+                </>
+              ) : (
+                <>
+                  <Gift className="w-5 h-5" />
+                  Desbloquear tu cupón
+                </>
+              )}
             </button>
 
-            {/* Benefits */}
-            <div className="mt-6 grid grid-cols-3 gap-4 text-center">
-              <div>
-                <div className="text-3xl mb-2">⚡</div>
-                <div className="text-sm text-gray-600">30 Seconds</div>
-              </div>
-              <div>
-                <div className="text-3xl mb-2">🎁</div>
-                <div className="text-sm text-gray-600">100% Free</div>
-              </div>
-              <div>
-                <div className="text-3xl mb-2">💰</div>
-                <div className="text-sm text-gray-600">Save Money</div>
-              </div>
-            </div>
+            {exchangeUnlockMutation.isError ? (
+              <p className="text-sm text-red-500 mt-4 text-center">
+                Error al desbloquear el cupón. Por favor intenta de nuevo.
+              </p>
+            ) : null}
           </div>
         </div>
+      </div>
+    );
+  }
+
+  // Show video player for current ad
+  return (
+    <div className="min-h-screen bg-background p-6">
+      <div className="max-w-6xl mx-auto pt-8">
+        {/* Progress Header */}
+        <div className="mb-8 text-center">
+          {/* <h1 className="text-3xl font-bold text-foreground mb-2">
+            Mira los videos para desbloquear tu cupón
+          </h1> */}
+          <p className="text-muted-foreground">
+            Video {currentAdIndex + 1} de {ads.length}
+          </p>
+
+          {/* Progress Indicators */}
+          <div className="flex items-center justify-center gap-4 mt-6">
+            {ads.map((ad, index) => (
+              <div key={ad.id} className="flex flex-col items-center gap-2">
+                <div
+                  className={`w-12 h-12 rounded-full flex items-center justify-center font-bold transition-all ${
+                    watchedAds.includes(ad.id)
+                      ? "bg-green-500 text-white"
+                      : index === currentAdIndex
+                        ? "bg-primary text-white ring-4 ring-primary/30"
+                        : "bg-muted text-muted-foreground"
+                  }`}
+                >
+                  {watchedAds.includes(ad.id) ? (
+                    <Check className="w-6 h-6" />
+                  ) : (
+                    index + 1
+                  )}
+                </div>
+                <span className="text-xs text-muted-foreground">
+                  {watchedAds.includes(ad.id)
+                    ? "Completado"
+                    : index === currentAdIndex
+                      ? "Viendo"
+                      : "Pendiente"}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Video Player */}
+        {currentAd ? (
+          <VideoPlayer
+            videoUrl={currentAd.videoUrl}
+            title={currentAd.title}
+            description={currentAd.description}
+            duration={currentAd.duration}
+            autoplay={currentAdIndex > 0} // Autoplay second video
+            // VideoPlayer component is designed to accept async callbacks
+            // eslint-disable-next-line @typescript-eslint/no-misused-promises
+            onWatchComplete={handleWatchComplete}
+          />
+        ) : null}
+
+        {/* Watching Status */}
+        {watchAdMutation.isPending ? (
+          <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg flex items-center gap-3">
+            <Loader2 className="w-5 h-5 animate-spin text-blue-500" />
+            <p className="text-sm text-blue-700 dark:text-blue-300">
+              Registrando tu progreso...
+            </p>
+          </div>
+        ) : null}
       </div>
     </div>
   );

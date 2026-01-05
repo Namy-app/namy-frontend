@@ -373,7 +373,7 @@ export default function MyCouponsPage(): React.JSX.Element {
 
             {/* Coupons List */}
             {filteredCoupons.length > 0 && (
-              <div className="grid grid-cols-2 gap-4 px-4 pb-6 max-w-5xl mx-auto">
+              <div className="grid md:grid-cols-2 grid-cols-1  gap-4 px-4 pb-6 max-w-5xl mx-auto">
                 {filteredCoupons.map((coupon, index) => (
                   <div
                     key={coupon.code}
