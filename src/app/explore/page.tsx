@@ -17,19 +17,22 @@ export default function ExplorePage(): React.JSX.Element {
   const { data: storesResult, isLoading: isLoadingStores } = useStores();
   const { data: myLevel } = useMyLevel();
 
+  // For guests, show 0% discount (no user-specific discounts)
+  const discountPercentage = myLevel?.discountPercentage ?? 10;
+
   return (
     <BasicLayout className="bg-gradient-hero">
       <div className="pt-14 pb-16 max-w-5xl mx-auto">
         <CategoryCards />
         <FeaturedCarousel
           stores={storesResult?.data}
-          discountPercentage={myLevel?.discountPercentage}
+          discountPercentage={discountPercentage}
           isLoading={isLoadingStores}
         />
         <NearbyPlaces
           closestStores={closestStores?.data}
           isLoading={isLoadingClosestStores}
-          discountPercentage={myLevel?.discountPercentage}
+          discountPercentage={discountPercentage}
         />
         {/* <GamificationCard /> */}
         <PageFooter />

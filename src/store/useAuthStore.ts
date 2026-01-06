@@ -54,9 +54,25 @@ export const useAuthStore = create<AuthState>()(
           expiresAt: null,
         });
 
-        // Redirect to login page after clearing auth
+        // Guest-accessible pages - don't redirect
+        const guestPages = [
+          "/",
+          "/explore",
+          "/restaurants",
+          "/service",
+          "/auth",
+        ];
+
+        // Redirect to home page only if not on a guest-accessible page
         if (typeof window !== "undefined") {
-          window.location.href = "/";
+          const currentPath = window.location.pathname;
+          const isGuestPage = guestPages.some(
+            (page) => currentPath === page || currentPath.startsWith(page + "/")
+          );
+
+          if (!isGuestPage) {
+            window.location.href = "/";
+          }
         }
       },
 

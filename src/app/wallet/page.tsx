@@ -47,9 +47,9 @@ export default function PaymentPage(): React.JSX.Element {
 
   return (
     <ProtectedRoute>
-      <BasicLayout className="pb-20">
+      <BasicLayout>
         {/* Main Content - with padding for fixed header and bottom nav */}
-        <div className="pt-14 pb-16 bg-gradient-hero p-6">
+        <div className="pt-20 pb-16 bg-gradient-hero p-6 h-full min-h-screen">
           <div className="max-w-4xl mx-auto">
             <div className="mb-8">
               <h1 className="text-3xl font-bold text-foreground">

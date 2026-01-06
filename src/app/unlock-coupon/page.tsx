@@ -225,9 +225,9 @@ function UnlockCouponContent() {
       <div className="max-w-6xl mx-auto pt-8">
         {/* Progress Header */}
         <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold text-foreground mb-2">
+          {/* <h1 className="text-3xl font-bold text-foreground mb-2">
             Mira los videos para desbloquear tu cupón
-          </h1>
+          </h1> */}
           <p className="text-muted-foreground">
             Video {currentAdIndex + 1} de {ads.length}
           </p>

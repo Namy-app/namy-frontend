@@ -112,6 +112,16 @@ export function VideoAdsModal({
       return;
     }
 
+    // Determine the next action BEFORE making the API call
+    const isLastAd = currentAdIndex === ads.length - 1;
+
+    // Optimistically move to next video immediately for better UX
+    // The API call will happen in the background
+    if (!isLastAd) {
+      setCurrentAdIndex((prevIndex) => prevIndex + 1);
+    }
+
+    // Track the watch in the background (non-blocking)
     try {
       const result = await watchAdMutation.mutateAsync({
         videoAdId: ad.id,
@@ -121,20 +131,14 @@ export function VideoAdsModal({
         sessionId,
       });
 
+      // Only set unlock token if this was the last ad or if we can generate coupon
       if (result.canGenerateCoupon && result.token) {
         setUnlockToken(result.token);
-      } else {
-        // Move to next ad immediately
-        setCurrentAdIndex((prevIndex) => {
-          const nextIndex = prevIndex + 1;
-          if (nextIndex < ads.length) {
-            return nextIndex;
-          }
-          return prevIndex;
-        });
       }
     } catch (error) {
       console.error("Failed to track watch:", error);
+      // On error, we could optionally revert to previous video
+      // but for now we'll just log it to avoid bad UX
     }
   };
 
@@ -154,6 +158,7 @@ export function VideoAdsModal({
       onClose();
     } catch (error) {
       console.error("Failed to exchange unlock:", error);
+      // Error will be displayed via exchangeUnlockMutation.error
     }
   };
 
@@ -162,22 +167,22 @@ export function VideoAdsModal({
   }
 
   const modalContent = (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
-      <div className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-background rounded-2xl shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-2 sm:p-4">
+      <div className="relative w-full max-w-md sm:max-w-lg max-h-[98vh] sm:max-h-[95vh] overflow-y-auto bg-background rounded-xl sm:rounded-2xl shadow-2xl">
         {/* Close button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 z-10 p-2 bg-black/20 hover:bg-black/40 rounded-full transition-colors"
+          className="absolute top-2 right-2 sm:top-4 sm:right-4 z-10 p-1.5 sm:p-2 bg-black/20 hover:bg-black/40 rounded-full transition-colors"
           aria-label="Cerrar"
         >
-          <X className="w-6 h-6 text-white" />
+          <X className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
         </button>
 
         {/* Loading state */}
         {loadingAds ? (
-          <div className="flex flex-col items-center justify-center p-12">
-            <Loader2 className="w-12 h-12 animate-spin text-primary mb-4" />
-            <p className="text-lg text-muted-foreground">
+          <div className="flex flex-col items-center justify-center p-6 sm:p-12">
+            <Loader2 className="w-10 h-10 sm:w-12 sm:h-12 animate-spin text-primary mb-4" />
+            <p className="text-base sm:text-lg text-muted-foreground">
               Cargando anuncios...
             </p>
           </div>
@@ -185,21 +190,21 @@ export function VideoAdsModal({
 
         {/* Error state */}
         {adError || (!loadingAds && !ads.length) ? (
-          <div className="flex flex-col items-center justify-center p-12">
-            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
-              <span className="text-3xl">❌</span>
+          <div className="flex flex-col items-center justify-center p-6 sm:p-12">
+            <div className="w-12 h-12 sm:w-16 sm:h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
+              <span className="text-2xl sm:text-3xl">❌</span>
             </div>
-            <h2 className="text-2xl font-bold text-foreground mb-2">
+            <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-2 text-center px-2">
               No hay anuncios disponibles
             </h2>
-            <p className="text-muted-foreground mb-6 text-center">
+            <p className="text-sm sm:text-base text-muted-foreground mb-6 text-center px-4">
               {adError
                 ? "Error al cargar los anuncios. Por favor intenta más tarde."
                 : "No hay suficientes anuncios disponibles."}
             </p>
             <button
               onClick={onClose}
-              className="px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90"
+              className="px-5 py-2.5 sm:px-6 sm:py-3 bg-primary text-white rounded-lg hover:bg-primary/90 text-sm sm:text-base"
             >
               Cerrar
             </button>
@@ -208,13 +213,15 @@ export function VideoAdsModal({
 
         {/* Unlock success screen */}
         {unlockToken && !loadingAds ? (
-          <div className="p-8">
-            <div className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-2xl p-8 text-white text-center mb-6">
-              <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-4">
-                <Gift className="w-10 h-10 text-green-500" />
+          <div className="p-4 sm:p-6 md:p-8">
+            <div className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl sm:rounded-2xl p-6 sm:p-8 text-white text-center mb-4 sm:mb-6">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                <Gift className="w-8 h-8 sm:w-10 sm:h-10 text-green-500" />
               </div>
-              <h1 className="text-3xl font-bold mb-2">¡Felicitaciones!</h1>
-              <p className="text-lg opacity-90">
+              <h1 className="text-2xl sm:text-3xl font-bold mb-2">
+                ¡Felicitaciones!
+              </h1>
+              <p className="text-base sm:text-lg opacity-90">
                 Has visto ambos anuncios de video
               </p>
             </div>
@@ -246,66 +253,70 @@ export function VideoAdsModal({
             <button
               onClick={() => void handleExchangeToken()}
               disabled={exchangeUnlockMutation.isPending}
-              className="w-full py-4 bg-gradient-to-r from-green-500 to-emerald-500 text-white font-semibold rounded-lg hover:from-green-600 hover:to-emerald-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full py-3 sm:py-4 bg-gradient-to-r from-green-500 to-emerald-500 text-white font-semibold rounded-lg hover:from-green-600 hover:to-emerald-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm sm:text-base"
             >
               {exchangeUnlockMutation.isPending ? (
                 <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" />
                   Desbloqueando cupón...
                 </>
               ) : (
                 <>
-                  <Gift className="w-5 h-5" />
+                  <Gift className="w-4 h-4 sm:w-5 sm:h-5" />
                   Desbloquear tu cupón
                 </>
               )}
             </button>
 
             {exchangeUnlockMutation.isError ? (
-              <p className="text-sm text-red-500 mt-4 text-center">
-                Error al desbloquear el cupón. Por favor intenta de nuevo.
-              </p>
+              <div className="mt-4 p-3 sm:p-4 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg">
+                <p className="text-sm text-red-700 dark:text-red-300 text-center">
+                  {exchangeUnlockMutation.error instanceof Error
+                    ? exchangeUnlockMutation.error.message
+                    : "Error al desbloquear el cupón. Por favor intenta de nuevo."}
+                </p>
+              </div>
             ) : null}
           </div>
         ) : null}
 
         {/* Video player */}
         {!loadingAds && !adError && ads.length > 0 && !unlockToken && (
-          <div className="p-8">
+          <div className="p-4 sm:p-6 md:p-8">
             {/* Progress Header */}
-            <div className="mb-8 text-center">
-              <h1 className="text-2xl font-bold text-foreground mb-2">
+            <div className="mb-6 sm:mb-8 text-center">
+              {/* <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-foreground mb-2 px-2 leading-tight">
                 Mira los videos para desbloquear tu cupón
-              </h1>
-              <p className="text-muted-foreground">
+              </h1> */}
+              <p className="text-sm sm:text-base text-muted-foreground">
                 Video {currentAdIndex + 1} de {ads.length}
               </p>
             </div>
 
             {/* Video Player */}
             {currentAd ? (
-              <VideoPlayer
-                key={currentAd.id} // Force re-mount when ad changes
-                videoUrl={currentAd.videoUrl}
-                title=""
-                description=""
-                duration={currentAd.duration}
-                autoplay // Autoplay all videos
-                onWatchComplete={(watchDuration) => {
-                  // Capture the current ad in the callback closure
-                  const adToReport = currentAd;
-                  void handleWatchComplete(watchDuration, adToReport);
-                }}
-              />
+              <div className="animate-fade-in">
+                <VideoPlayer
+                  key={currentAd.id} // Force re-mount when ad changes
+                  videoUrl={currentAd.videoUrl}
+                  title=""
+                  description=""
+                  duration={currentAd.duration}
+                  autoplay // Autoplay all videos
+                  onWatchComplete={(watchDuration) => {
+                    // Capture the current ad in the callback closure
+                    const adToReport = currentAd;
+                    void handleWatchComplete(watchDuration, adToReport);
+                  }}
+                />
+              </div>
             ) : null}
 
-            {/* Watching Status */}
+            {/* Watching Status - Subtle indicator */}
             {watchAdMutation.isPending ? (
-              <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg flex items-center gap-3">
-                <Loader2 className="w-5 h-5 animate-spin text-blue-500" />
-                <p className="text-sm text-blue-700 dark:text-blue-300">
-                  Registrando tu progreso...
-                </p>
+              <div className="mt-3 flex items-center justify-center gap-2 text-muted-foreground">
+                <Loader2 className="w-3 h-3 animate-spin" />
+                <p className="text-xs">Guardando...</p>
               </div>
             ) : null}
           </div>
