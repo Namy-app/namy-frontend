@@ -1,10 +1,13 @@
 "use client";
 
+import clsx from "clsx";
 import { Share2, Trash2, QrCode, Copy, Info } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import type { CouponItem } from "@/domains/coupon/type";
 import { useToast } from "@/hooks/use-toast";
+
+import { useMyLevel } from "../user/hooks/query/useMyLevel";
 
 type Props = {
   coupon: CouponItem;
@@ -14,20 +17,18 @@ type Props = {
   onViewRestrictions?: (c: CouponItem) => void;
 };
 
-function formatDiscount(
-  discount: { type?: string; value?: number } | null
-): string {
-  if (!discount) {
-    return "";
+function formatDiscount(type?: string, value?: number): string {
+  if (!type || value === undefined) {
+    return "--";
   }
-  const t = String(discount.type ?? "").toLowerCase();
+  const t = String(type ?? "").toLowerCase();
   if (t === "percentage" || t === "percent") {
-    return `${discount.value}% OFF`;
+    return `${value}% OFF`;
   }
   if (t.includes("fixed") || t === "fixed") {
-    return `$${discount.value} OFF`;
+    return `$${value} OFF`;
   }
-  return `${discount.value} OFF`;
+  return `${value} OFF`;
 }
 
 function getTimeRemaining(
@@ -54,6 +55,7 @@ export default function CouponCard({
 }: Props): React.JSX.Element {
   const { toast } = useToast();
   const [countdown, setCountdown] = useState<string | null>(null);
+  const { data: myLevel } = useMyLevel();
 
   const status = useMemo(() => {
     if (coupon.used) {
@@ -64,6 +66,7 @@ export default function CouponCard({
     }
     return "active";
   }, [coupon]);
+  const disableDelete = status === "redeemed" || status === "expired";
 
   // Check if any restrictions exist
   const hasRestrictions = useMemo(() => {
@@ -188,7 +191,10 @@ export default function CouponCard({
             <div className="flex items-center gap-2">
               {coupon.discount ? (
                 <div className="px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-semibold whitespace-nowrap">
-                  {formatDiscount(coupon.discount)}
+                  {formatDiscount(
+                    coupon.discount.type,
+                    myLevel?.discountPercentage
+                  )}
                 </div>
               ) : null}
             </div>
@@ -213,9 +219,10 @@ export default function CouponCard({
         <div className="flex items-center justify-between gap-3">
           <button
             onClick={() => void onViewQr(coupon)}
-            className="px-8 py-3 bg-gradient-primary text-primary-foreground rounded-full font-semibold flex items-center gap-2"
+            className="px-8 py-3 bg-gradient-primary text-primary-foreground rounded-full font-semibold flex items-center gap-2 text-xs md:text-base"
           >
-            <QrCode className="w-5 h-5" /> Ver QR
+            <QrCode className="w-5 h-5" />
+            <span className="hidden md:inline-block">Ver QR</span>
           </button>
 
           <button
@@ -236,8 +243,12 @@ export default function CouponCard({
 
           <button
             onClick={() => void onDelete(coupon)}
-            className="p-3 rounded-xl bg-destructive/10 text-destructive"
+            className={clsx(
+              "p-3 rounded-xl bg-destructive/10 text-destructive",
+              disableDelete ? "opacity-30 cursor-not-allowed" : ""
+            )}
             aria-label="delete"
+            disabled={disableDelete}
           >
             <Trash2 className="w-5 h-5" />
           </button>

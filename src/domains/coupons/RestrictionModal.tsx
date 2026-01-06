@@ -114,7 +114,7 @@ export function RestrictionModal({
               </p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-4 pb-24">
               {/* Discount-level auto-formatted restrictions */}
               {discountRestrictions ? (
                 <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">

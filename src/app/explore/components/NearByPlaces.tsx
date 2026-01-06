@@ -8,16 +8,19 @@ import { PlaceHolderTypeEnum } from "@/data/constants";
 import { type Store } from "@/lib/api-types";
 import { getInitials } from "@/lib/user.lib";
 import { Card } from "@/shared/components/Card";
+import { useStoresStore } from "@/store/useStoresStore";
 
 export function NearbyPlaces({
   closestStores = [],
   isLoading = true,
   discountPercentage = 10,
-}: {
+}: Readonly<{
   closestStores?: Store[];
   isLoading?: boolean;
   discountPercentage?: number;
-}): React.JSX.Element {
+}>): React.JSX.Element {
+  const { setStoreId } = useStoresStore();
+
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 gap-4">
@@ -44,6 +47,7 @@ export function NearbyPlaces({
               <Card key={place.id} className="shadow-md group">
                 <Link
                   href={`/restaurants/${place.id}`}
+                  onClick={() => setStoreId(place.id)}
                   className="flex items-center gap-4 p-3 cursor-pointer hover:shadow-glow transition-all border-0 "
                 >
                   <div className="relative w-20 h-20 rounded-lg overflow-hidden shrink-0">

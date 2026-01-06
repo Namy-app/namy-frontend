@@ -32,6 +32,7 @@ import { getInitials, getUserLevelTitle } from "@/lib/user.lib";
 import { Button } from "@/shared/components/Button";
 import { Card } from "@/shared/components/Card";
 import { useAuthStore } from "@/store/useAuthStore";
+import { useStoresStore } from "@/store/useStoresStore";
 
 export default function ProfilePage(): React.JSX.Element | null {
   const router = useRouter();
@@ -42,6 +43,7 @@ export default function ProfilePage(): React.JSX.Element | null {
   const logoutMutation = useLogout();
   const [expandPoints, setExpandPoints] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
+  const { setStoreId } = useStoresStore();
 
   // Sync current user data with auth store
   useEffect(() => {
@@ -386,7 +388,10 @@ export default function ProfilePage(): React.JSX.Element | null {
                 {allStores.slice(0, 3).map((store) => (
                   <button
                     key={store.id}
-                    onClick={() => router.push(`/restaurants/${store.id}`)}
+                    onClick={() => {
+                      setStoreId(store.id);
+                      router.push(`/restaurants/${store.id}`);
+                    }}
                     className="w-full flex items-center gap-4 p-3 rounded-lg bg-gradient-hero hover:shadow-card transition-all"
                   >
                     <div className="w-12 h-12 rounded-full bg-gradient-primary flex items-center justify-center flex-shrink-0">

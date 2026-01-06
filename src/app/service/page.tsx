@@ -12,6 +12,7 @@ import { BasicLayout } from "@/layouts/BasicLayout";
 import { Button } from "@/shared/components/Button";
 import { Card } from "@/shared/components/Card";
 import { Input } from "@/shared/components/Input";
+import { useStoresStore } from "@/store/useStoresStore";
 
 // Service type definition
 interface Service {
@@ -36,6 +37,7 @@ export default function ServicesPage(): React.JSX.Element {
     noRestaurants: true,
   });
   const [searchQuery, setSearchQuery] = useState("");
+  const { setStoreId } = useStoresStore();
 
   const { data: storesResult, isLoading } = useStores(filters);
   const { data: myLevel } = useMyLevel();
@@ -123,83 +125,90 @@ export default function ServicesPage(): React.JSX.Element {
                   <p className="text-muted-foreground">Loading services...</p>
                 </div>
               </div>
-            ) : viewMode === "grid" ? (
-              <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {servicesData.length === 0 ? (
-                  <div className="col-span-full text-center py-12">
-                    <p className="text-muted-foreground text-lg mb-4">
-                      No services found
-                    </p>
+            ) : (
+              <>
+                {viewMode === "grid" ? (
+                  <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {servicesData.length === 0 ? (
+                      <div className="col-span-full text-center py-12">
+                        <p className="text-muted-foreground text-lg mb-4">
+                          No services found
+                        </p>
+                      </div>
+                    ) : (
+                      servicesData.map((service, index) => (
+                        <Card
+                          key={service.id}
+                          className="overflow-hidden cursor-pointer transition-all hover:shadow-card hover:scale-[1.02] bg-card border-border animate-slide-up"
+                          style={{ animationDelay: `${index * 0.1}s` }}
+                        >
+                          <Link
+                            href={`/restaurants/${service.id}`}
+                            onClick={() => setStoreId(service.id)}
+                          >
+                            {/* Image */}
+                            <div className="relative">
+                              <Image
+                                src={service.image}
+                                alt={service.name}
+                                width={800}
+                                height={400}
+                                className="w-full h-48 object-cover"
+                                unoptimized
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement;
+                                  target.src =
+                                    "https://placehold.co/800x400/e2e8f0/64748b?text=Service+Image";
+                                }}
+                              />
+                              <div className="absolute top-3 right-3 bg-[hsl(var(--services))] text-[hsl(var(--services-foreground))] px-3 py-1 rounded-full font-bold text-sm shadow-lg">
+                                {service.discount}% OFF
+                              </div>
+                            </div>
+
+                            {/* Content */}
+                            <div className="p-4">
+                              <h3 className="font-bold text-lg text-foreground mb-1">
+                                {service.name}
+                              </h3>
+                              <div className="flex items-center justify-between text-sm text-muted-foreground">
+                                {/* Rating & Category */}
+                                <div className="flex items-center gap-1">
+                                  <Star className="w-4 h-4 fill-[hsl(var(--services))] text-[hsl(var(--services))]" />
+                                  <span className="font-medium text-foreground">
+                                    {service.rating}
+                                  </span>
+                                  <span>• {service.category}</span>
+                                </div>
+
+                                {/* Distance */}
+                                <div className="flex items-center gap-1">
+                                  <MapPin className="w-3 h-3" />
+                                  <span>{service.distance}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </Link>
+                        </Card>
+                      ))
+                    )}
                   </div>
                 ) : (
-                  servicesData.map((service, index) => (
-                    <Card
-                      key={service.id}
-                      className="overflow-hidden cursor-pointer transition-all hover:shadow-card hover:scale-[1.02] bg-card border-border animate-slide-up"
-                      style={{ animationDelay: `${index * 0.1}s` }}
-                    >
-                      <Link href={`/restaurants/${service.id}`}>
-                        {/* Image */}
-                        <div className="relative">
-                          <Image
-                            src={service.image}
-                            alt={service.name}
-                            width={800}
-                            height={400}
-                            className="w-full h-48 object-cover"
-                            unoptimized
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.src =
-                                "https://placehold.co/800x400/e2e8f0/64748b?text=Service+Image";
-                            }}
-                          />
-                          <div className="absolute top-3 right-3 bg-[hsl(var(--services))] text-[hsl(var(--services-foreground))] px-3 py-1 rounded-full font-bold text-sm shadow-lg">
-                            {service.discount}% OFF
-                          </div>
-                        </div>
-
-                        {/* Content */}
-                        <div className="p-4">
-                          <h3 className="font-bold text-lg text-foreground mb-1">
-                            {service.name}
-                          </h3>
-                          <div className="flex items-center justify-between text-sm text-muted-foreground">
-                            {/* Rating & Category */}
-                            <div className="flex items-center gap-1">
-                              <Star className="w-4 h-4 fill-[hsl(var(--services))] text-[hsl(var(--services))]" />
-                              <span className="font-medium text-foreground">
-                                {service.rating}
-                              </span>
-                              <span>• {service.category}</span>
-                            </div>
-
-                            {/* Distance */}
-                            <div className="flex items-center gap-1">
-                              <MapPin className="w-3 h-3" />
-                              <span>{service.distance}</span>
-                            </div>
-                          </div>
-                        </div>
-                      </Link>
+                  /* Map View Placeholder */
+                  <div className="p-6">
+                    <Card className="p-8 text-center">
+                      <Map className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
+                      <h3 className="text-xl font-bold text-foreground mb-2">
+                        Map View Coming Soon
+                      </h3>
+                      <p className="text-muted-foreground">
+                        We are working on an interactive map view to help you
+                        find services near you.
+                      </p>
                     </Card>
-                  ))
+                  </div>
                 )}
-              </div>
-            ) : (
-              /* Map View Placeholder */
-              <div className="p-6">
-                <Card className="p-8 text-center">
-                  <Map className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-                  <h3 className="text-xl font-bold text-foreground mb-2">
-                    Map View Coming Soon
-                  </h3>
-                  <p className="text-muted-foreground">
-                    We are working on an interactive map view to help you find
-                    services near you.
-                  </p>
-                </Card>
-              </div>
+              </>
             )}
           </div>
         </div>

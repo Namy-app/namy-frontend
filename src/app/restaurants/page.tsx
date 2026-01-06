@@ -22,6 +22,7 @@ import { BasicLayout } from "@/layouts/BasicLayout";
 import { Button } from "@/shared/components/Button";
 import { Card } from "@/shared/components/Card";
 import { Input } from "@/shared/components/Input";
+import { useStoresStore } from "@/store/useStoresStore";
 
 // Restaurant type definition
 interface Restaurant {
@@ -59,6 +60,7 @@ export default function RestaurantListingPage(): React.JSX.Element {
   const { data: storesResult, isLoading } = useStores(filters);
   const allStores = storesResult?.data ?? [];
 
+  const { setStoreId } = useStoresStore();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSubCategory, setSelectedSubCategory] = useState("All");
   const [showFilterModal, setShowFilterModal] = useState(false);
@@ -253,6 +255,7 @@ export default function RestaurantListingPage(): React.JSX.Element {
                       key={restaurant.id}
                       className="animate-slide-up"
                       style={{ animationDelay: `${index * 0.1}s` }}
+                      onClick={() => setStoreId(restaurant.id)}
                       href={`/restaurants/${restaurant.id}`}
                     >
                       <Card className="overflow-hidden cursor-pointer transition-all hover:shadow-card hover:scale-[1.02] bg-card border-border">

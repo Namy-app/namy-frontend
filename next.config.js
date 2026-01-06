@@ -1,8 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   /* config options here */
-  output: "export",
-  distDir: "out",
+  reactStrictMode: true,
   experimental: {
     optimizePackageImports: ["lucide-react", "@tanstack/react-query"],
   },
@@ -10,6 +9,7 @@ const nextConfig = {
     removeConsole: process.env.NODE_ENV === "production",
   },
   images: {
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: "https",

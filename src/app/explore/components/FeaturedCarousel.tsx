@@ -10,18 +10,20 @@ import { type Store } from "@/lib/api-types";
 import { cn } from "@/lib/utils";
 import { Button } from "@/shared/components/Button";
 import { Card } from "@/shared/components/Card";
+import { useStoresStore } from "@/store/useStoresStore";
 
 export function FeaturedCarousel({
   discountPercentage = 10,
   isLoading,
   stores,
-}: {
+}: Readonly<{
   discountPercentage?: number;
   isLoading?: boolean;
   stores?: Store[];
-}): React.JSX.Element {
+}>): React.JSX.Element {
   const allStores = stores ?? [];
   const [currentSlide, setCurrentSlide] = useState(0);
+  const { setStoreId } = useStoresStore();
 
   // Get first 6 stores for carousel
   const featuredItems: Store[] = allStores.slice(0, 6);
@@ -66,6 +68,7 @@ export function FeaturedCarousel({
                   <Link
                     key={item.id}
                     href={`/restaurants/${item.id}`}
+                    onClick={() => setStoreId(item.id)}
                     className="shrink-0 w-1/2 group"
                   >
                     <Card className="relative h-48 overflow-hidden cursor-pointer group border-0 shadow-lg rounded-3xl">

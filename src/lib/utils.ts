@@ -20,6 +20,15 @@ export interface GraphQLError {
   };
 }
 
+export function convertTo12Hour(time24: string): string {
+  const parts = time24.split(":");
+  const hours = parseInt(parts[0] || "0", 10);
+  const minutes = parseInt(parts[1] || "0", 10);
+  const period = hours >= 12 ? "PM" : "AM";
+  const hours12 = hours % 12 || 12;
+  return `${hours12}:${minutes.toString().padStart(2, "0")} ${period}`;
+}
+
 /**
  * Extracts user-friendly error messages from various error formats
  * @param error - The error object to extract message from
