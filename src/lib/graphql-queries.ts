@@ -211,6 +211,7 @@ export const GET_STORE_QUERY = `
         city
         lat
         lng
+        plainPin
       }
     }
   }

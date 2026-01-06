@@ -8,10 +8,9 @@ import {
   Phone,
   Tag,
 } from "lucide-react";
-import { useState } from "react";
 
 import { PRICE_SYMBOLS } from "@/data/constants";
-import { useStorePin, useResendStorePinEmail } from "@/domains/admin/hooks";
+import { useResendStorePinEmail } from "@/domains/admin/hooks";
 import { type Discount, type Store } from "@/domains/admin/types";
 import { useToast } from "@/hooks/use-toast";
 
@@ -54,12 +53,7 @@ export const StoreInfo = ({
   store,
   onGeneratePin,
 }: Props) => {
-  const [showPin, setShowPin] = useState(false);
   const { toast } = useToast();
-  const { data: decryptedPin, isLoading: isPinLoading } = useStorePin(
-    store.id,
-    showPin
-  );
   const resendPinEmail = useResendStorePinEmail();
 
   const handleResendPin = () => {
@@ -196,40 +190,14 @@ export const StoreInfo = ({
                 PIN de Tienda (4 dígitos)
               </p>
               <p className="text-foreground">
-                {store.pin ? (
+                {store.plainPin ?? "••••"}
+                {store.plainPin ? (
                   <>
-                    {showPin ? (
-                      isPinLoading ? (
-                        <Loader2 className="w-4 h-4 text-primary animate-spin inline" />
-                      ) : (
-                        decryptedPin || "••••"
-                      )
-                    ) : (
-                      "••••"
-                    )}
-                    <button
-                      onClick={() => setShowPin((prev: boolean) => !prev)}
-                      className="ml-3 text-sm text-primary hover:underline"
-                    >
-                      {showPin ? "Ocultar" : "Ver PIN"}
-                    </button>
-                    <span className="mx-2 text-muted-foreground">|</span>
-                    <button
-                      onClick={() => onGeneratePin()}
-                      disabled={generatingPin}
-                      className="text-sm text-primary hover:underline disabled:opacity-50"
-                    >
-                      {generatingPin ? (
-                        <Loader2 className="w-4 h-4 text-primary animate-spin inline" />
-                      ) : (
-                        "Regenerar"
-                      )}
-                    </button>
                     <span className="mx-2 text-muted-foreground">|</span>
                     <button
                       onClick={handleResendPin}
                       disabled={resendPinEmail.isPending || !store.email}
-                      className="text-sm text-primary hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="text-sm text-primary hover:underline disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:no-underline"
                       title={
                         !store.email
                           ? "No hay email configurado"
@@ -245,19 +213,18 @@ export const StoreInfo = ({
                   </>
                 ) : (
                   <>
-                    {generatingPin ? (
-                      <Loader2 className="w-4 h-4 text-primary animate-spin ml-2" />
-                    ) : (
-                      <>
-                        --{" "}
-                        <button
-                          onClick={() => onGeneratePin()}
-                          className="text-sm text-primary hover:underline"
-                        >
-                          Generar PIN
-                        </button>
-                      </>
-                    )}
+                    <span className="mx-2 text-muted-foreground">|</span>
+                    <button
+                      onClick={() => onGeneratePin()}
+                      disabled={generatingPin}
+                      className="text-sm text-primary hover:underline disabled:opacity-50"
+                    >
+                      {generatingPin ? (
+                        <Loader2 className="w-4 h-4 text-primary animate-spin inline" />
+                      ) : (
+                        "Regenerar"
+                      )}
+                    </button>
                   </>
                 )}
               </p>

@@ -187,6 +187,7 @@ export const GET_STORE_BY_ID = gql`
       tags
       restrictions
       pin
+      plainPin
       averageRating
       reviewCounter
       additionalInfo
