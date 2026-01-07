@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 
 type Props = {
   coupon: CouponItem;
+  discountPercentage: number;
   onViewQr: (c: CouponItem) => void;
   onShare: (c: CouponItem) => void;
   onDelete: (c: CouponItem) => void;
@@ -47,6 +48,7 @@ function getTimeRemaining(
 
 export default function CouponCard({
   coupon,
+  discountPercentage,
   onViewQr,
   onShare,
   onDelete,
@@ -186,11 +188,12 @@ export default function CouponCard({
             </div>
 
             <div className="flex items-center gap-2">
-              {coupon.discount ? (
-                <div className="px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-semibold whitespace-nowrap">
-                  {formatDiscount(coupon.discount)}
-                </div>
-              ) : null}
+              <div className="px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-semibold whitespace-nowrap">
+                {formatDiscount({
+                  value: discountPercentage,
+                  type: "Percentage",
+                })}
+              </div>
             </div>
           </div>
         </div>
