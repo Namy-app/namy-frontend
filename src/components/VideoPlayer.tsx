@@ -117,7 +117,7 @@ export function VideoPlayer({
     <div className="w-full max-w-sm mx-auto">
       {/* Video Title */}
       {title ? (
-        <div className="mb-3 sm:mb-4">
+        <div className="mb-2">
           <h2 className="text-xl sm:text-2xl font-bold text-foreground">
             {title}
           </h2>
@@ -134,7 +134,7 @@ export function VideoPlayer({
         <video
           ref={videoRef}
           src={videoUrl}
-          className="w-full h-50 object-cover"
+          className="w-full object-cover"
           playsInline
           preload="auto"
         >
