@@ -4,8 +4,7 @@ import { cn } from "@/lib/utils";
 
 import { Input } from "../Input";
 
-export interface PasswordInputProps
-  extends React.InputHTMLAttributes<HTMLInputElement> {
+export interface PasswordInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   showStrength?: boolean;
 }
 
@@ -97,6 +96,7 @@ const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputProps>(
             type={showPassword ? "text" : "password"}
             className={cn("pr-10", className)}
             ref={ref}
+            name={props.name}
             onChange={handleChange}
             {...props}
           />
