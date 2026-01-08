@@ -30,6 +30,7 @@ import { useStore } from "@/domains/store/hooks";
 import { useMyLevel } from "@/domains/user/hooks/query/useMyLevel";
 import { useToast } from "@/hooks/use-toast";
 import { BasicLayout } from "@/layouts/BasicLayout";
+import { convertTo12Hour } from "@/lib/date-time-utils";
 import { graphqlRequest } from "@/lib/graphql-client";
 import {
   GENERATE_COUPON_MUTATION,
@@ -40,16 +41,6 @@ import { openInGoogleMaps } from "@/lib/maps";
 import { Button } from "@/shared/components/Button";
 import { Card } from "@/shared/components/Card";
 import { useAuthStore } from "@/store/useAuthStore";
-
-// Utility function to convert 24-hour time to 12-hour AM/PM format
-function convertTo12Hour(time24: string): string {
-  const parts = time24.split(":");
-  const hours = parseInt(parts[0] || "0", 10);
-  const minutes = parseInt(parts[1] || "0", 10);
-  const period = hours >= 12 ? "PM" : "AM";
-  const hours12 = hours % 12 || 12;
-  return `${hours12}:${minutes.toString().padStart(2, "0")} ${period}`;
-}
 
 // Mapping for Spanish day labels
 const DAY_LABELS: Record<string, string> = {
