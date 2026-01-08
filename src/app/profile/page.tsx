@@ -386,7 +386,7 @@ export default function ProfilePage(): React.JSX.Element | null {
                 {allStores.slice(0, 3).map((store) => (
                   <button
                     key={store.id}
-                    onClick={() => router.push(`/restaurants/${store.id}`)}
+                    onClick={() => router.push(`/stores/${store.id}`)}
                     className="w-full flex items-center gap-4 p-3 rounded-lg bg-gradient-hero hover:shadow-card transition-all"
                   >
                     <div className="w-12 h-12 rounded-full bg-gradient-primary flex items-center justify-center flex-shrink-0">
