@@ -25,7 +25,10 @@
     "playwright:headed": "playwright test --headed",
     "e2e": "playwright test",
     "e2e:headed": "playwright test --headed",
-    "e2e:debug": "playwright test --debug"
+    "e2e:debug": "playwright test --debug",
+    "e2e:admin": "playwright test tests/e2e/admin",
+    "e2e:admin:headed": "playwright test tests/e2e/admin --headed",
+    "e2e:admin:ui": "playwright test tests/e2e/admin --ui"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.12",
@@ -58,7 +61,7 @@
     "@testing-library/react": "^16.1.0",
     "@testing-library/user-event": "^14.5.2",
     "@types/canvas-confetti": "^1.9.0",
-    "@types/node": "^20",
+    "@types/node": "^20.19.27",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vitejs/plugin-react": "^4.3.4",
