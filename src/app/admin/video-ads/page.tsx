@@ -14,6 +14,7 @@ import {
 } from "@/domains/video-ads/hooks";
 import type { VideoAd, CreateVideoAdInput } from "@/domains/video-ads/types";
 import { useToast } from "@/hooks/use-toast";
+import { extractErrorMessage } from "@/lib/utils";
 import { useAuthStore } from "@/store/useAuthStore";
 
 export default function VideoAdsPage() {
@@ -184,8 +185,7 @@ export default function VideoAdsPage() {
       console.error("Upload error:", error);
       toast({
         title: "Error",
-        description:
-          error instanceof Error ? error.message : "Failed to upload video",
+        description: extractErrorMessage(error),
         variant: "destructive",
       });
     } finally {
@@ -217,8 +217,7 @@ export default function VideoAdsPage() {
     } catch (error) {
       toast({
         title: "Error",
-        description:
-          error instanceof Error ? error.message : "Failed to update video ad",
+        description: extractErrorMessage(error),
         variant: "destructive",
       });
     }
@@ -238,8 +237,7 @@ export default function VideoAdsPage() {
     } catch (error) {
       toast({
         title: "Error",
-        description:
-          error instanceof Error ? error.message : "Failed to delete video ad",
+        description: extractErrorMessage(error),
         variant: "destructive",
       });
     }
@@ -269,8 +267,7 @@ export default function VideoAdsPage() {
     } catch (error) {
       toast({
         title: "Error",
-        description:
-          error instanceof Error ? error.message : "Failed to update video ad",
+        description: extractErrorMessage(error),
         variant: "destructive",
       });
     }

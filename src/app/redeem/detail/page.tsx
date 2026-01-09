@@ -16,6 +16,7 @@ import {
   getRedeemViewData,
   clearRedeemViewData,
 } from "@/lib/redeem-view-store";
+import { extractErrorMessage } from "@/lib/utils";
 
 function RedeemContent(): React.JSX.Element {
   const searchParams = useSearchParams();
@@ -324,7 +325,7 @@ function RedeemContent(): React.JSX.Element {
       console.error("Redeem error:", err);
       toast({
         title: "Error",
-        description: err instanceof Error ? err.message : String(err),
+        description: extractErrorMessage(error),
         variant: "destructive",
       });
     } finally {

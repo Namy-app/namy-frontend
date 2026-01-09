@@ -102,6 +102,7 @@ export async function graphqlRequest<T>(
   variables?: any
 ): Promise<T> {
   try {
+    console.error("GraphQL Calling");
     const result = await graphqlClient.request<T>(query, variables);
     return result;
   } catch (error) {

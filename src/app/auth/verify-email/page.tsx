@@ -6,6 +6,7 @@ import { useState, useEffect, Suspense } from "react";
 
 import { useVerifyEmail, useResendVerification } from "@/domains/user/hooks";
 import { useToast } from "@/hooks/use-toast";
+import { extractErrorMessage } from "@/lib/utils";
 import { Button } from "@/shared/components/Button";
 import { Card } from "@/shared/components/Card";
 import { Input } from "@/shared/components/Input";
@@ -64,8 +65,7 @@ function VerifyEmailForm(): React.JSX.Element {
         router.push("/auth");
       }, 2000);
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
+      const errorMessage = extractErrorMessage(error);
       toast({
         variant: "destructive",
         title: "Verification failed",
@@ -98,8 +98,7 @@ function VerifyEmailForm(): React.JSX.Element {
       // Set cooldown to 60 seconds
       setResendCooldown(60);
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
+      const errorMessage = extractErrorMessage(error);
       // Check if error message contains cooldown information
       const cooldownMatch = errorMessage?.match(/wait (\d+) seconds/);
       if (cooldownMatch && cooldownMatch[1]) {

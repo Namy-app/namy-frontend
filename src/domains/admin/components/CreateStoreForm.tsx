@@ -12,6 +12,7 @@ import {
 } from "@/domains/admin/types";
 import { StoreHoursEditor } from "@/domains/store/components/StoreHoursEditor";
 import { useToast } from "@/hooks/use-toast";
+import { extractErrorMessage } from "@/lib/utils";
 
 interface CreateStoreFormProps {
   onClose: () => void;
@@ -137,12 +138,9 @@ export function CreateStoreForm({ onClose, onSuccess }: CreateStoreFormProps) {
         onSuccess();
       }
     } catch (error: unknown) {
-      console.error("Error creating store:", error);
       toast({
         title: "Error",
-        description:
-          (error instanceof Error ? error.message : null) ||
-          "Failed to create store. Please try again.",
+        description: extractErrorMessage(error),
         variant: "destructive",
       });
     }

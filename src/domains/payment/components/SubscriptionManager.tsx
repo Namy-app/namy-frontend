@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 
+import { extractErrorMessage } from "@/lib/utils";
+
 import {
   useCreateSubscription,
   useSubscriptionsByWallet,
@@ -93,7 +95,7 @@ export function SubscriptionManager({
       alert("Billing processed successfully!");
     } catch (error) {
       console.error("Failed to process billing:", error);
-      alert(`Billing failed: ${error}`);
+      alert(`Billing failed: ${extractErrorMessage(error)}`);
     }
   };
 

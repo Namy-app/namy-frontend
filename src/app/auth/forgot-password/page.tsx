@@ -6,6 +6,7 @@ import { useState } from "react";
 
 import { useForgotPassword } from "@/domains/user/hooks";
 import { useToast } from "@/hooks/use-toast";
+import { extractErrorMessage } from "@/lib/utils";
 import { Button } from "@/shared/components/Button";
 import { Card } from "@/shared/components/Card";
 import { Input } from "@/shared/components/Input";
@@ -33,8 +34,7 @@ export default function ForgotPasswordPage(): React.JSX.Element {
 
       setEmailSent(true);
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
+      const errorMessage = extractErrorMessage(error);
       toast({
         variant: "destructive",
         title: "Failed to send reset email",

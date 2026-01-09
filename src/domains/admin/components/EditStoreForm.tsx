@@ -14,6 +14,7 @@ import {
 } from "@/domains/admin/types";
 import { StoreHoursEditor } from "@/domains/store/components/StoreHoursEditor";
 import { useToast } from "@/hooks/use-toast";
+import { extractErrorMessage } from "@/lib/utils";
 
 interface EditStoreFormProps {
   store: Store;
@@ -193,7 +194,7 @@ export function EditStoreForm({
       toast({
         title: "Error",
         description:
-          (error instanceof Error ? error.message : null) ||
+          extractErrorMessage(error) ||
           "Failed to update store. Please try again.",
         variant: "destructive",
       });
