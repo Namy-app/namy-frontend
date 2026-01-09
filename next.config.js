@@ -23,6 +23,12 @@ const nextConfig = {
       },
       {
         protocol: "https",
+        hostname: "namy-app.s3.us-west-2.amazonaws.com",
+        port: "",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
         hostname: "subtrackr-bucket.s3.eu-north-1.amazonaws.com",
         port: "",
         pathname: "/**",

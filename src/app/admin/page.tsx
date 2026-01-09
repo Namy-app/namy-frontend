@@ -17,6 +17,7 @@ import { useState, useEffect } from "react";
 
 import { useStoreStatistics, useUsers } from "@/domains/admin/hooks";
 import { UserRole } from "@/domains/admin/types";
+import { contentfulImageLoader } from "@/lib/image-utils";
 import { useAuthStore } from "@/store/useAuthStore";
 
 export default function AdminDashboardPage() {
@@ -252,6 +253,7 @@ export default function AdminDashboardPage() {
               aria-label="Go to Explore"
             >
               <Image
+                loader={contentfulImageLoader}
                 src="/namy-logo.webp"
                 alt="Ñamy Logo"
                 width={60}
