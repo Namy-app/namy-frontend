@@ -9,7 +9,15 @@ export default defineConfig([
   prettier,
   {
     files: ["src/**/*.{js,jsx,ts,tsx}"],
-    ignores: [".next/**", "out/**", "build/**", "next-env.d.ts"],
+    ignores: [
+      ".next/**",
+      "out/**",
+      "build/**",
+      "next-env.d.ts",
+      "**/__tests__/**",
+      "**/*.test.ts",
+      "**/*.test.tsx",
+    ],
     languageOptions: {
       parserOptions: {
         project: "./tsconfig.json",
@@ -91,5 +99,13 @@ export default defineConfig([
     },
   },
   // global ignores (same as yours)
-  globalIgnores([".next/**", "out/**", "build/**", "next-env.d.ts"]),
+  globalIgnores([
+    ".next/**",
+    "out/**",
+    "build/**",
+    "next-env.d.ts",
+    "**/__tests__/**",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+  ]),
 ]);

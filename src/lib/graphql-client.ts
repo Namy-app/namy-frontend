@@ -70,13 +70,13 @@ function isAuthenticationError(graphqlError: GraphQLError | null): boolean {
 
     // Check for authentication-related error messages
     const authErrorMessages = [
-      // "User not found",
-      // "Unauthorized",
+      "User not found",
+      "Unauthorized",
       "Unauthenticated",
       "Authentication required",
       "Invalid token",
       "Token expired",
-      // "Forbidden",
+      "Forbidden",
     ];
 
     const messageMatch = authErrorMessages.some(
@@ -136,6 +136,13 @@ export async function graphqlRequest<T>(
       //   console.warn("Auth required for this feature:", errorMsg);
       //   throw new Error("Please log in to access this feature");
       // }
+
+      // Provide user-friendly error message for "User not found"
+      if (errorMsg?.toLowerCase().includes("user not found")) {
+        throw new Error(
+          "Your account is no longer available. Please log in again."
+        );
+      }
 
       throw new Error(
         errorMsg ?? "Your session has expired. Please log in again."
