@@ -11,6 +11,7 @@ import {
   GET_COUPON_REDEEM_DETAILS_QUERY,
   REDEEM_COUPON_BY_STAFF_MUTATION,
 } from "@/lib/graphql-queries";
+import { extractErrorMessage } from "@/lib/utils";
 
 type Props = {
   couponData: DecodedCouponData;
@@ -208,7 +209,7 @@ export default function RedeemDetail({
       console.error("Redeem error:", err);
       toast({
         title: "Error",
-        description: err instanceof Error ? err.message : String(err),
+        description: extractErrorMessage(error),
         variant: "destructive",
       });
     } finally {

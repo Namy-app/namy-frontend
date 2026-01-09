@@ -136,6 +136,7 @@ export function VideoPlayer({
           src={videoUrl}
           className="w-full object-cover"
           playsInline
+          loop={false}
           preload="auto"
         >
           Your browser does not support video playback.

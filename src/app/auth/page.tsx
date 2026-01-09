@@ -8,6 +8,8 @@ import { useState, useEffect } from "react";
 import { useLogin, useSignup } from "@/domains/user/hooks";
 import { useToast } from "@/hooks/use-toast";
 import type { AuthResponse } from "@/lib/api-types";
+import { contentfulImageLoader } from "@/lib/image-utils";
+import { extractErrorMessage } from "@/lib/utils";
 import { Button } from "@/shared/components/Button";
 import { Card } from "@/shared/components/Card";
 import { Checkbox } from "@/shared/components/Checkbox";
@@ -81,8 +83,7 @@ export default function AuthPage(): React.JSX.Element {
       router.push("/explore");
     } catch (error) {
       // Check if error is about unverified email
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
+      const errorMessage = extractErrorMessage(error);
       if (errorMessage?.includes("Email not verified")) {
         toast({
           variant: "default",
@@ -147,8 +148,7 @@ export default function AuthPage(): React.JSX.Element {
         `/auth/verify-email?email=${encodeURIComponent(signupEmail)}`
       );
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
+      const errorMessage = extractErrorMessage(error);
       toast({
         variant: "destructive",
         title: "Error de registro",
@@ -162,6 +162,7 @@ export default function AuthPage(): React.JSX.Element {
       <Card className="w-full max-w-md p-8 bg-card border-border shadow-glow">
         <div className="text-center mb-8">
           <Image
+            loader={contentfulImageLoader}
             src="/namy-logo.webp"
             alt="Ñamy Logo"
             width={96}

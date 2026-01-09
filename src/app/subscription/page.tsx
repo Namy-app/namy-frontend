@@ -15,6 +15,7 @@ import {
 } from "@/domains/subscription/hooks";
 import { useToast } from "@/hooks/use-toast";
 import { BasicLayout } from "@/layouts/BasicLayout";
+import { extractErrorMessage } from "@/lib/utils";
 import { useAuthStore } from "@/store/useAuthStore";
 
 function SubscriptionContent(): React.JSX.Element {
@@ -147,7 +148,9 @@ function SubscriptionContent(): React.JSX.Element {
     } catch (_error) {
       toast({
         title: "Error",
-        description: "Failed to cancel subscription. Please try again.",
+        description:
+          extractErrorMessage(_error) ??
+          "Failed to cancel subscription. Please try again.",
         variant: "destructive",
       });
     }
@@ -166,7 +169,9 @@ function SubscriptionContent(): React.JSX.Element {
     } catch (_error) {
       toast({
         title: "Error",
-        description: "Failed to update auto-renew setting. Please try again.",
+        description:
+          extractErrorMessage(_error) ??
+          "Failed to update auto-renew setting. Please try again.",
         variant: "destructive",
       });
     }
@@ -213,7 +218,7 @@ function SubscriptionContent(): React.JSX.Element {
       toast({
         title: "Payment Failed",
         description:
-          (error instanceof Error ? error.message : null) ||
+          extractErrorMessage(error) ??
           "Failed to process wallet payment. Please try again.",
         variant: "destructive",
       });

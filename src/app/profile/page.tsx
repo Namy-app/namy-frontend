@@ -29,6 +29,7 @@ import { useMyLevel } from "@/domains/user/hooks/query/useMyLevel";
 import { useToast } from "@/hooks/use-toast";
 import { BasicLayout } from "@/layouts/BasicLayout";
 import { getInitials, getUserLevelTitle } from "@/lib/user.lib";
+import { extractErrorMessage } from "@/lib/utils";
 import { Button } from "@/shared/components/Button";
 import { Card } from "@/shared/components/Card";
 import { useAuthStore } from "@/store/useAuthStore";
@@ -93,8 +94,7 @@ export default function ProfilePage(): React.JSX.Element | null {
       });
       router.push("/");
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
+      const errorMessage = extractErrorMessage(error);
       toast({
         variant: "destructive",
         title: "Error al cerrar sesión",

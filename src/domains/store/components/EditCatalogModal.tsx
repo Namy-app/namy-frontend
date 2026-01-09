@@ -8,6 +8,7 @@ import {
   formatFileSize,
   validateImageFile,
 } from "@/lib/image-utils";
+import { extractErrorMessage } from "@/lib/utils";
 import { useAuthStore } from "@/store/useAuthStore";
 
 interface ImageUploadProgress {
@@ -368,7 +369,9 @@ export const EditCatalogModal = ({
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to update catalog. Please try again.",
+        description:
+          extractErrorMessage(_error) ??
+          "Failed to update catalog. Please try again.",
       });
     } finally {
       setIsUploading(false);

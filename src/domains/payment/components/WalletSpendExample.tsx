@@ -4,6 +4,7 @@ import { ShoppingCart, AlertCircle, CheckCircle2 } from "lucide-react";
 import { useState } from "react";
 
 import { useToast } from "@/hooks/use-toast";
+import { extractErrorMessage } from "@/lib/utils";
 
 import { useWallet, useWalletBalance, useSpendFromWallet } from "../hooks";
 
@@ -90,7 +91,7 @@ export function WalletSpendExample({ userId }: WalletSpendExampleProps) {
       toast({
         title: "Payment Failed",
         description:
-          (error instanceof Error ? error.message : null) ||
+          extractErrorMessage(error) ||
           "Unable to process payment. Please try again.",
         variant: "destructive",
       });

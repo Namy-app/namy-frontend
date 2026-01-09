@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
 
+import { contentfulImageLoader } from "@/lib/image-utils";
 import { useAuthStore } from "@/store/useAuthStore";
 
 export default function Home() {
@@ -85,6 +86,7 @@ export default function Home() {
     <div className="min-h-screen bg-gradient-hero flex flex-col">
       <div className="flex-2 flex flex-col items-center justify-center p-6 pt-20">
         <Image
+          loader={contentfulImageLoader}
           src="/namy-logo.webp"
           alt="Ñamy Logo"
           width={80}
@@ -120,6 +122,7 @@ export default function Home() {
                 >
                   <div className="flex flex-col items-center text-center space-y-6 px-4">
                     <Image
+                      loader={contentfulImageLoader}
                       src={slide.image}
                       alt={slide.title}
                       width={600}
