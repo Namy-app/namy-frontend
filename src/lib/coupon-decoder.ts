@@ -9,6 +9,7 @@ export interface DecodedCouponData {
   expiresAt: string;
   createdAt: string;
   storeId: string;
+  value: number;
   // discountId: string;
   store: {
     name: string;

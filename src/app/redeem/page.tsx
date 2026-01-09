@@ -136,6 +136,7 @@ function StoreRedeemContent(): React.JSX.Element {
         code: details.code,
         expiresAt: details.expiresAt,
         createdAt: details.createdAt,
+        value: details.value,
         storeId: details.store?.id ?? "",
         store: details.store,
         discount: details.discount,

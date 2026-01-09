@@ -111,6 +111,7 @@ function RedeemContent(): React.JSX.Element {
               code: payload.code,
               expiresAt: payload.expiresAt,
               createdAt: payload.createdAt,
+              value: payload.value,
               storeId: payload.storeId ?? payload.store?.id ?? "",
               store: {
                 name: payload.store?.name ?? payload.storeName ?? "",
@@ -218,6 +219,7 @@ function RedeemContent(): React.JSX.Element {
               expiresAt: details.expiresAt,
               createdAt: details.createdAt,
               storeId: details.store?.id ?? "",
+              value: details.value ?? 10,
               store: {
                 name: details.store?.name ?? "",
                 description: details.store?.description,
