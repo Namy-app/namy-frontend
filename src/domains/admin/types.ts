@@ -58,6 +58,7 @@ export interface Store {
   active: boolean;
   url?: string;
   pin: boolean; // Indicates whether a PIN has been set
+  plainPin?: string;
   openDays?: OpenDaysStructure;
   tags?: string;
   restrictions?: string;

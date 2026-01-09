@@ -204,7 +204,8 @@ export default function RestaurantListingPage(): React.JSX.Element {
                   ? "Cargando..."
                   : `${restaurants.length} restaurantes encontrados`}
               </p>
-              <div className="flex items-center gap-2">
+              {/* <div className="flex items-center gap-2"> */}
+              <div className="hidden items-center gap-2">
                 <SlidersHorizontal className="w-4 h-4 text-muted-foreground" />
                 <select
                   value={sortBy}
@@ -253,7 +254,7 @@ export default function RestaurantListingPage(): React.JSX.Element {
                       key={restaurant.id}
                       className="animate-slide-up"
                       style={{ animationDelay: `${index * 0.1}s` }}
-                      href={`/restaurants/${restaurant.id}`}
+                      href={`/stores/${restaurant.id}`}
                     >
                       <Card className="overflow-hidden cursor-pointer transition-all hover:shadow-card hover:scale-[1.02] bg-card border-border">
                         {/* Restaurant Image */}

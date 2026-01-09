@@ -10,6 +10,8 @@ import {
   CheckCircle,
   TrendingUp,
   Sparkles,
+  EyeClosed,
+  Eye,
 } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 
@@ -222,7 +224,7 @@ export default function RedeemDetail({
             </div>
           </div>
           <h2 className="text-3xl font-bold text-white mb-2">
-            Redemption Successful!
+            ¡Canjeo Exitoso!
           </h2>
           <p className="text-green-50 text-lg">
             {redemptionResult.message ||
@@ -235,16 +237,18 @@ export default function RedeemDetail({
           <div className="bg-linear-to-r from-purple-500 to-pink-500 p-6 text-center">
             <div className="flex items-center justify-center gap-3 mb-2">
               <TrendingUp className="w-8 h-8 text-white" />
-              <h3 className="text-2xl font-bold text-white">Level Up!</h3>
+              <h3 className="text-2xl font-bold text-white">
+                ¡Subiste de Nivel!
+              </h3>
               <TrendingUp className="w-8 h-8 text-white" />
             </div>
             <p className="text-white text-lg">
-              Congratulations! You have advanced from Level{" "}
-              {redemptionResult.oldLevel} to Level {redemptionResult.newLevel}
+              ¡Felicidades! Has avanzado del Nivel {redemptionResult.oldLevel}{" "}
+              al Nivel {redemptionResult.newLevel}
             </p>
             <div className="mt-4 inline-block bg-white/20 backdrop-blur-sm rounded-full px-6 py-2">
               <span className="text-white font-bold text-xl">
-                🎉 New Level: {redemptionResult.newLevel} 🎉
+                🎉 Nuevo Nivel: {redemptionResult.newLevel} 🎉
               </span>
             </div>
           </div>
@@ -253,7 +257,7 @@ export default function RedeemDetail({
         {/* Store Details */}
         <div className="p-6 border-b border-border">
           <h3 className="font-semibold text-lg text-foreground mb-4">
-            Redeemed at
+            Canjeado en
           </h3>
           <div className="space-y-3">
             <p className="text-xl font-bold text-foreground">
@@ -282,7 +286,7 @@ export default function RedeemDetail({
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground mb-1">
-                Discount Applied
+                Descuento Aplicado
               </p>
               <p className="text-3xl font-bold text-primary">
                 {CouponDecoder.formatDiscountValue(
@@ -301,10 +305,11 @@ export default function RedeemDetail({
             onClick={onClose}
             className="w-full py-3 px-4 bg-gradient-primary text-primary-foreground rounded-xl font-semibold hover:shadow-glow transition-all"
           >
-            Done
+            Listo
           </button>
           <p className="text-xs text-muted-foreground">
-            This coupon has been marked as used and cannot be redeemed again
+            Este cupón ha sido marcado como usado y no se puede redimir
+            nuevamente
           </p>
         </div>
       </div>
@@ -320,15 +325,15 @@ export default function RedeemDetail({
             <AlertCircle className="w-8 h-8 text-destructive" />
           </div>
           <h2 className="text-2xl font-bold text-foreground">
-            Oops! Something went wrong
+            ¡Vaya! Algo salió mal
           </h2>
-          <p className="text-muted-foreground">{error || "Invalid coupon"}</p>
+          <p className="text-muted-foreground">{error || "Cupón inválido"}</p>
           <div className="mt-4">
             <button
               onClick={onClose}
               className="px-6 py-3 bg-primary text-primary-foreground rounded-xl font-semibold hover:opacity-90 transition-opacity"
             >
-              Back
+              Volver
             </button>
           </div>
         </div>
@@ -347,7 +352,7 @@ export default function RedeemDetail({
     <div className="bg-white rounded-2xl shadow-card overflow-hidden animate-slide-up w-full max-w-2xl mx-auto">
       <div className="bg-gradient-primary p-8 text-center">
         <div className="inline-block bg-white rounded-2xl px-8 py-4 shadow-glow">
-          <p className="text-sm text-muted-foreground mb-1">Your Discount</p>
+          <p className="text-sm text-muted-foreground mb-1">Tu Descuento</p>
           <p className="text-5xl font-bold text-primary">{discountText}</p>
         </div>
       </div>
@@ -355,7 +360,9 @@ export default function RedeemDetail({
       <div className="p-6 border-b border-border">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm text-muted-foreground mb-1">Coupon Code</p>
+            <p className="text-sm text-muted-foreground mb-1">
+              Código del Cupón
+            </p>
             <p className="text-3xl font-bold font-mono tracking-wider text-foreground">
               {couponData.code}
             </p>
@@ -396,7 +403,7 @@ export default function RedeemDetail({
         <div className="space-y-2">
           {couponData.discount.minPurchaseAmount ? (
             <div className="flex items-center gap-2 text-sm">
-              <span className="text-muted-foreground">Minimum spend:</span>
+              <span className="text-muted-foreground">Gasto mínimo:</span>
               <span className="font-semibold text-foreground">
                 ${couponData.discount.minPurchaseAmount}
               </span>
@@ -450,7 +457,7 @@ export default function RedeemDetail({
                 <Clock className="w-4 h-4 text-primary mt-0.5 shrink-0" />
                 <div>
                   <p className="text-xs font-semibold text-primary mb-1">
-                    Usage Restrictions
+                    Restricciones de uso
                   </p>
                   <ul className="text-sm text-foreground">
                     {couponData.discount.additionalRestrictions?.map(
@@ -468,18 +475,13 @@ export default function RedeemDetail({
 
       <div className="p-6">
         <h3 className="font-semibold text-lg text-foreground mb-4">
-          Store Information
+          Información de la tienda
         </h3>
         <div className="space-y-4">
           <div>
             <p className="text-xl font-bold text-foreground">
               {couponData.store.name}
             </p>
-            {couponData.store.description ? (
-              <p className="text-sm text-muted-foreground mt-1">
-                {couponData.store.description}
-              </p>
-            ) : null}
           </div>
 
           {couponData.store.address ? (
@@ -519,7 +521,7 @@ export default function RedeemDetail({
             <AlertCircle className="w-5 h-5 text-destructive shrink-0" />
             <div>
               <p className="text-sm font-semibold text-destructive mb-1">
-                Cannot Redeem
+                No se puede redimir
               </p>
               <p className="text-sm text-destructive/80">
                 {blockReason === "Already redeemed" &&
@@ -534,11 +536,11 @@ export default function RedeemDetail({
         ) : null}
 
         <div className="grid grid-cols-2 gap-3">
-          <div>
+          <div className="col-span-2 md:col-span-1">
             <label className="block text-sm font-semibold text-foreground mb-2">
-              Store PIN
+              PIN de la tienda
             </label>
-            <div className="relative">
+            <div className="relative col-span-2 md:col-span-1">
               <input
                 ref={storePinRef}
                 type={showPin ? "text" : "password"}
@@ -548,7 +550,7 @@ export default function RedeemDetail({
                 onChange={(e) => setStorePin(e.target.value)}
                 placeholder="Enter your PIN"
                 disabled={!canRedeem}
-                className="w-full px-4 py-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary font-mono text-lg tracking-widest text-center disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-muted"
+                className="w-full text-sm px-4 py-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary font-mono md:text-lg tracking-widest text-center disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-muted"
                 maxLength={6}
                 required
               />
@@ -559,26 +561,26 @@ export default function RedeemDetail({
                 disabled={!canRedeem}
                 className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {showPin ? "Hide" : "Show"}
+                {showPin ? <EyeClosed /> : <Eye />}
               </button>
             </div>
           </div>
 
-          <div className="flex items-end">
+          <div className="flex items-end col-span-2 md:col-span-1">
             <button
               onClick={() => void handleRedeem()}
               disabled={!canRedeem || redeeming}
               className="w-full py-3 px-4 bg-gradient-primary text-primary-foreground rounded-xl font-semibold hover:shadow-glow transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
               title={
                 !canRedeem
-                  ? blockReason || "Cannot redeem this coupon"
-                  : "Redeem coupon"
+                  ? blockReason || "No se puede canjear este cupón"
+                  : "Canjear cupón"
               }
             >
               {redeeming ? (
                 <span className="h-5 w-5 block border-2 border-dashed border-white rounded-full animate-spin" />
               ) : (
-                "Redeem"
+                "Canjear"
               )}
             </button>
           </div>
@@ -587,7 +589,7 @@ export default function RedeemDetail({
         {/* Help Text */}
         {canRedeem ? (
           <p className="mt-3 text-xs text-muted-foreground text-center">
-            Enter your store PIN to redeem this coupon
+            Ingresa tu PIN para redimir el cupón
           </p>
         ) : null}
       </div>
@@ -597,7 +599,7 @@ export default function RedeemDetail({
           onClick={onClose}
           className="text-sm text-muted-foreground underline"
         >
-          Back
+          Volver
         </button>
       </div>
     </div>

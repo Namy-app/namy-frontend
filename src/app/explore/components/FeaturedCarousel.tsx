@@ -65,7 +65,7 @@ export function FeaturedCarousel({
                 {featuredItems.map((item) => (
                   <Link
                     key={item.id}
-                    href={`/restaurants/${item.id}`}
+                    href={`/stores/${item.id}`}
                     className="shrink-0 w-1/2 group"
                   >
                     <Card className="relative h-48 overflow-hidden cursor-pointer group border-0 shadow-lg rounded-3xl">

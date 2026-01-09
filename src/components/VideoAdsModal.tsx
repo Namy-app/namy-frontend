@@ -168,7 +168,7 @@ export function VideoAdsModal({
 
   const modalContent = (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-2 sm:p-4">
-      <div className="relative w-full max-w-md sm:max-w-lg max-h-[98vh] sm:max-h-[95vh] overflow-y-auto bg-background rounded-xl sm:rounded-2xl shadow-2xl">
+      <div className="relative w-full max-w-md sm:max-w-lg sm:max-h-[95vh] overflow-y-auto bg-background rounded-xl sm:rounded-2xl shadow-2xl">
         {/* Close button */}
         <button
           onClick={onClose}
