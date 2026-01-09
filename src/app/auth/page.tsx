@@ -193,6 +193,7 @@ export default function AuthPage(): React.JSX.Element {
                   Correo electrónico
                 </label>
                 <Input
+                  name="email"
                   type="text"
                   placeholder="your@email.com"
                   className="h-12 rounded-xl"
@@ -208,6 +209,7 @@ export default function AuthPage(): React.JSX.Element {
                   Contraseña
                 </label>
                 <PasswordInput
+                  name="password"
                   placeholder="••••••••"
                   className="h-12 rounded-xl"
                   required

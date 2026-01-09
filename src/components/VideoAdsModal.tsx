@@ -226,11 +226,11 @@ export function VideoAdsModal({
               </p>
             </div>
 
-            {/* <div className="mb-6">
-              <h3 className="text-lg font-semibold text-foreground mb-4">
-                Anuncios vistos:
-              </h3>
-              <div className="space-y-2">
+            {/* <div className="mb-6"> */}
+            {/* <h3 className="text-lg font-semibold text-foreground mb-4">
+              Anuncios vistos:
+            </h3> */}
+            {/* <div className="space-y-2">
                 {ads.map((ad) => (
                   <div
                     key={ad.id}
