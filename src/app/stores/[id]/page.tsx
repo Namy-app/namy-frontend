@@ -13,6 +13,7 @@ import {
   ChevronRight,
   X,
   Loader2,
+  ChevronDown,
 } from "lucide-react";
 import Image from "next/image";
 import { useRouter, useParams } from "next/navigation";
@@ -84,6 +85,7 @@ export default function StoresDetailPage(): React.JSX.Element {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
   const [showAllHours, setShowAllHours] = useState(false);
+  const [showRestrictions, setShowRestrictions] = useState(false);
   const [showUnlockModal, setShowUnlockModal] = useState(false);
   const [showVideoAdsModal, setShowVideoAdsModal] = useState(false);
   const [showCongratulations, setShowCongratulations] = useState(false);
@@ -1079,12 +1081,63 @@ export default function StoresDetailPage(): React.JSX.Element {
                     🕑 Discount Restrictions
                   </h2>
                   <ul className="space-y-3">
-                    {discountRestrictions.map(({ icon, text, key }) => (
-                      <li key={key} className="flex items-start gap-3 text-sm">
-                        <span className="text-base mt-0.5">{icon}</span>
-                        <span className="text-muted-foreground">{text}</span>
-                      </li>
-                    ))}
+                    {discountRestrictions.map(({ icon, text, key }) => {
+                      // Check if this is the available days/times restriction
+                      const isAvailableDays = icon === "📅";
+
+                      if (isAvailableDays) {
+                        const days = text.split(" • ");
+                        return (
+                          <li
+                            key={key}
+                            className="border border-border rounded-lg overflow-hidden"
+                          >
+                            <button
+                              onClick={() =>
+                                setShowRestrictions(!showRestrictions)
+                              }
+                              className="w-full flex items-start gap-3 text-sm p-3 hover:bg-muted/50 transition-colors"
+                            >
+                              <span className="text-base mt-0.5">{icon}</span>
+                              <span className="text-muted-foreground flex-1 text-left">
+                                Ver horarios disponibles
+                              </span>
+                              <ChevronDown
+                                className={`w-4 h-4 text-muted-foreground transition-transform shrink-0 mt-0.5 ${
+                                  showRestrictions ? "rotate-180" : ""
+                                }`}
+                              />
+                            </button>
+                            {showRestrictions ? (
+                              <div className="border-t border-border">
+                                {days.map((day, idx) => (
+                                  <div
+                                    key={idx}
+                                    className={`px-3 py-2 text-sm text-muted-foreground ${
+                                      idx !== days.length - 1
+                                        ? "border-b border-border"
+                                        : ""
+                                    }`}
+                                  >
+                                    {day}
+                                  </div>
+                                ))}
+                              </div>
+                            ) : null}
+                          </li>
+                        );
+                      }
+
+                      return (
+                        <li
+                          key={key}
+                          className="flex items-start gap-3 text-sm"
+                        >
+                          <span className="text-base mt-0.5">{icon}</span>
+                          <span className="text-muted-foreground">{text}</span>
+                        </li>
+                      );
+                    })}
                   </ul>
                 </Card>
 

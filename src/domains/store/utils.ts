@@ -89,14 +89,6 @@ export const getDiscountRestrictions = (
   }
 
   // Total max uses
-  if (discount.maxUses && discount.maxUses > 0) {
-    const remaining = discount.maxUses - discount.usedCount;
-    restrictions.push({
-      key: generateKey(),
-      icon: "🎫",
-      text: `${remaining} ${remaining === 1 ? "uso disponible" : "usos disponibles"} de ${discount.maxUses}`,
-    });
-  }
 
   // Excluded days of week
   if (discount.excludedDaysOfWeek && discount.excludedDaysOfWeek.length > 0) {
@@ -137,30 +129,6 @@ export const getDiscountRestrictions = (
   }
 
   // Available days and times
-  if (
-    discount.availableDaysAndTimes?.availableDays &&
-    discount.availableDaysAndTimes.availableDays.length > 0
-  ) {
-    const dayNames = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
-    const availableDays = discount.availableDaysAndTimes.availableDays
-      .map(
-        (day) =>
-          `${dayNames[day.dayIndex]} (${day.timeRanges
-            .map((tr) => {
-              return `${convertTo12Hour(tr.start, true)} - ${convertTo12Hour(tr.end, true)}`;
-            })
-            .join(", ")})`
-      )
-      .filter(Boolean);
-
-    if (availableDays.length > 0) {
-      restrictions.push({
-        key: generateKey(),
-        icon: "📅",
-        text: `Disponible solo ${availableDays.join(", ")}`,
-      });
-    }
-  }
 
   // Validity period
   const startDate = new Date(discount.startDate);
@@ -180,6 +148,39 @@ export const getDiscountRestrictions = (
     icon: "📆",
     text: `Válido hasta ${endDate.toLocaleDateString("es-ES")}`,
   });
+
+  if (
+    discount.availableDaysAndTimes?.availableDays &&
+    discount.availableDaysAndTimes.availableDays.length > 0
+  ) {
+    const dayNames = [
+      "Domingo",
+      "Lunes",
+      "Martes",
+      "Miércoles",
+      "Jueves",
+      "Viernes",
+      "Sábado",
+    ];
+    const availableDays = discount.availableDaysAndTimes.availableDays
+      .map((day) => {
+        const timeRangesFormatted = day.timeRanges
+          .map((tr) => {
+            return `${convertTo12Hour(tr.start, true)} - ${convertTo12Hour(tr.end, true)}`;
+          })
+          .join(", ");
+        return `${dayNames[day.dayIndex]}: ${timeRangesFormatted}`;
+      })
+      .filter(Boolean);
+
+    if (availableDays.length > 0) {
+      restrictions.push({
+        key: generateKey(),
+        icon: "📅",
+        text: availableDays.join(" • "),
+      });
+    }
+  }
 
   return restrictions;
 };
