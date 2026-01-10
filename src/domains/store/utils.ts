@@ -1,4 +1,5 @@
 import type { Discount } from "@/domains/admin/types";
+import type { DecodedCouponData } from "@/lib/coupon-decoder";
 import { convertTo12Hour } from "@/lib/date-time-utils";
 
 export interface RestrictionItem {
@@ -180,6 +181,103 @@ export const getDiscountRestrictions = (
         key: generateKey(),
         icon: "📅",
         text: availableDays.join(" • "),
+        isAvailableDays: true,
+      });
+    }
+  }
+
+  return restrictions;
+};
+
+/**
+ * Generates a list of discount restrictions with icons based on the discount properties
+ * @param discount - The discount object from DiscountsResponse
+ * @returns Array of restriction items with icons and text
+ */
+export const getDiscountRestrictionsFromDecodedCouponData = (
+  discount?: DecodedCouponData["discount"]
+): RestrictionItem[] => {
+  const restrictions: RestrictionItem[] = [
+    {
+      key: "discount-0",
+      icon: "❌",
+      text: "Muestra tu código QR antes de pagar",
+    },
+  ];
+
+  if (!discount) {
+    return restrictions;
+  }
+
+  let counter = 0;
+
+  const generateKey = (): string => {
+    counter += 1;
+    return `discount-${counter}`;
+  };
+
+  // Add custom additional restrictions first
+  if (
+    discount.additionalRestrictions &&
+    discount.additionalRestrictions.length > 0
+  ) {
+    discount.additionalRestrictions.forEach((restriction) => {
+      restrictions.push({
+        key: generateKey(),
+        icon: "📋",
+        text: restriction,
+      });
+    });
+  }
+
+  // Minimum purchase amount
+  if (discount.minPurchaseAmount && discount.minPurchaseAmount > 0) {
+    restrictions.push({
+      key: generateKey(),
+      icon: "💰",
+      text: `Compra mínima de $${discount.minPurchaseAmount.toFixed(2)}`,
+    });
+  }
+
+  // Maximum discount amount (for percentage discounts)
+  if (discount.maxDiscountAmount && discount.maxDiscountAmount > 0) {
+    restrictions.push({
+      key: generateKey(),
+      icon: "🔝",
+      text: `Descuento máximo de $${discount.maxDiscountAmount.toFixed(2)}`,
+    });
+  }
+
+  if (
+    discount.availableDaysAndTimes?.availableDays &&
+    discount.availableDaysAndTimes.availableDays.length > 0
+  ) {
+    const dayNames = [
+      "Domingo",
+      "Lunes",
+      "Martes",
+      "Miércoles",
+      "Jueves",
+      "Viernes",
+      "Sábado",
+    ];
+    const availableDays = discount.availableDaysAndTimes.availableDays
+      .map((day) => {
+        const timeRangesFormatted = day.timeRanges
+          .map((tr) => {
+            return `${convertTo12Hour(tr.start, true)} - ${convertTo12Hour(tr.end, true)}`;
+          })
+          .join(", ");
+        return `${dayNames[day.dayIndex]}: ${timeRangesFormatted}`;
+      })
+      .filter(Boolean);
+
+    if (availableDays.length > 0) {
+      restrictions.push({
+        key: generateKey(),
+        icon: "📅",
+        text: availableDays.join(" • "),
+        isAvailableDays: true,
       });
     }
   }
