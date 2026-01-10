@@ -12,10 +12,11 @@ import {
   Sparkles,
   EyeClosed,
   Eye,
+  ChevronDown,
 } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 
-import { DAYS_OF_WEEK_BY_INDEX } from "@/data/constants";
+import { getDiscountRestrictionsFromDecodedCouponData } from "@/domains/store/utils";
 import { useToast } from "@/hooks/use-toast";
 import { CouponDecoder, type DecodedCouponData } from "@/lib/coupon-decoder";
 import { graphqlRequest } from "@/lib/graphql-client";
@@ -55,6 +56,7 @@ export default function RedeemDetail({
   const [blockReason, setBlockReason] = useState<string | null>(null);
   const storePinRef = useRef<HTMLInputElement | null>(null);
   const fetchedCodeRef = useRef<string | null>(null);
+  const [showRestrictions, setShowRestrictions] = useState(false);
 
   const deviceId = (() => {
     if (typeof window === "undefined") {
@@ -69,6 +71,9 @@ export default function RedeemDetail({
   })();
 
   const queryClient = useQueryClient();
+  const discountRestrictions = getDiscountRestrictionsFromDecodedCouponData(
+    couponData?.discount
+  );
 
   const redeemMutation = useMutation<
     { redeemCouponByStaff: RedemptionResult },
@@ -418,59 +423,65 @@ export default function RedeemDetail({
               </span>
             </div>
           ) : null}
-          {couponData.discount.availableDaysAndTimes
-            ? couponData.discount.availableDaysAndTimes.availableDays.length >
-                0 && (
-                <div className="mt-3 p-3 bg-primary/5 border border-primary/20 rounded-lg">
-                  <div className="flex items-start gap-2">
-                    <Clock className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-                    <div>
-                      <p className="text-xs font-semibold text-primary mb-1">
-                        Días/horarios disponibles
-                      </p>
-                      <ul className="text-sm text-foreground gap-x-4">
-                        {couponData.discount.availableDaysAndTimes.availableDays.map(
-                          ({ dayIndex, timeRanges }, index) => (
-                            <li key={index} className="flex gap-x-2">
-                              <span>
-                                &bull; {DAYS_OF_WEEK_BY_INDEX[dayIndex]}
-                              </span>
-                              <span>
-                                {`(${timeRanges
-                                  .map(
-                                    (timeRange) =>
-                                      `${timeRange.start} - ${timeRange.end}`
-                                  )
-                                  .join(", ")})`}
-                              </span>
-                            </li>
-                          )
-                        )}
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-              )
-            : null}
-          {couponData.discount.additionalRestrictions ? (
-            <div className="mt-3 p-3 bg-primary/5 border border-primary/20 rounded-lg">
-              <div className="flex items-start gap-2">
-                <Clock className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-                <div>
-                  <p className="text-xs font-semibold text-primary mb-1">
-                    Restricciones de uso
-                  </p>
-                  <ul className="text-sm text-foreground">
-                    {couponData.discount.additionalRestrictions?.map(
-                      (restriction, index) => (
-                        <li key={index}>&bull; {restriction}</li>
-                      )
-                    )}
-                  </ul>
-                </div>
-              </div>
-            </div>
-          ) : null}
+          <div className="mt-3 p-3 bg-primary/5 border border-primary/20 rounded-lg">
+            <h2 className="text-sm font-semibold text-primary mb-1 flex items-center flex-row gap-2">
+              <Clock className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+              <span>Restricciones de Descuento</span>
+            </h2>
+            <ul className="space-y-3">
+              {discountRestrictions.map(
+                ({ icon, text, key, isAvailableDays }) => {
+                  if (isAvailableDays) {
+                    const days = text.split(" • ");
+                    return (
+                      <li
+                        key={key}
+                        className="border border-border rounded-lg overflow-hidden"
+                      >
+                        <button
+                          onClick={() => setShowRestrictions(!showRestrictions)}
+                          className="w-full flex items-start gap-3 text-sm p-3 hover:bg-muted/50 transition-colors"
+                        >
+                          <span className="text-base mt-0.5">{icon}</span>
+                          <span className="text-muted-foreground flex-1 text-left">
+                            Ver horarios disponibles
+                          </span>
+                          <ChevronDown
+                            className={`w-4 h-4 text-muted-foreground transition-transform shrink-0 mt-0.5 ${
+                              showRestrictions ? "rotate-180" : ""
+                            }`}
+                          />
+                        </button>
+                        {showRestrictions ? (
+                          <div className="border-t border-border">
+                            {days.map((day, idx) => (
+                              <div
+                                key={idx}
+                                className={`px-3 py-2 text-sm text-muted-foreground ${
+                                  idx !== days.length - 1
+                                    ? "border-b border-border"
+                                    : ""
+                                }`}
+                              >
+                                {day}
+                              </div>
+                            ))}
+                          </div>
+                        ) : null}
+                      </li>
+                    );
+                  }
+
+                  return (
+                    <li key={key} className="flex items-baseline gap-3 text-sm">
+                      <span className="text-base mt-0.5">{icon}</span>
+                      <span className="text-muted-foreground">{text}</span>
+                    </li>
+                  );
+                }
+              )}
+            </ul>
+          </div>
         </div>
       </div>
 
