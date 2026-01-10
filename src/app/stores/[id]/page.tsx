@@ -1081,63 +1081,64 @@ export default function StoresDetailPage(): React.JSX.Element {
                     🕑 Discount Restrictions
                   </h2>
                   <ul className="space-y-3">
-                    {discountRestrictions.map(({ icon, text, key }) => {
-                      // Check if this is the available days/times restriction
-                      const isAvailableDays = icon === "📅";
+                    {discountRestrictions.map(
+                      ({ icon, text, key, isAvailableDays }) => {
+                        if (isAvailableDays) {
+                          const days = text.split(" • ");
+                          return (
+                            <li
+                              key={key}
+                              className="border border-border rounded-lg overflow-hidden"
+                            >
+                              <button
+                                onClick={() =>
+                                  setShowRestrictions(!showRestrictions)
+                                }
+                                className="w-full flex items-start gap-3 text-sm p-3 hover:bg-muted/50 transition-colors"
+                              >
+                                <span className="text-base mt-0.5">{icon}</span>
+                                <span className="text-muted-foreground flex-1 text-left">
+                                  Ver horarios disponibles
+                                </span>
+                                <ChevronDown
+                                  className={`w-4 h-4 text-muted-foreground transition-transform shrink-0 mt-0.5 ${
+                                    showRestrictions ? "rotate-180" : ""
+                                  }`}
+                                />
+                              </button>
+                              {showRestrictions ? (
+                                <div className="border-t border-border">
+                                  {days.map((day, idx) => (
+                                    <div
+                                      key={idx}
+                                      className={`px-3 py-2 text-sm text-muted-foreground ${
+                                        idx !== days.length - 1
+                                          ? "border-b border-border"
+                                          : ""
+                                      }`}
+                                    >
+                                      {day}
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : null}
+                            </li>
+                          );
+                        }
 
-                      if (isAvailableDays) {
-                        const days = text.split(" • ");
                         return (
                           <li
                             key={key}
-                            className="border border-border rounded-lg overflow-hidden"
+                            className="flex items-start gap-3 text-sm"
                           >
-                            <button
-                              onClick={() =>
-                                setShowRestrictions(!showRestrictions)
-                              }
-                              className="w-full flex items-start gap-3 text-sm p-3 hover:bg-muted/50 transition-colors"
-                            >
-                              <span className="text-base mt-0.5">{icon}</span>
-                              <span className="text-muted-foreground flex-1 text-left">
-                                Ver horarios disponibles
-                              </span>
-                              <ChevronDown
-                                className={`w-4 h-4 text-muted-foreground transition-transform shrink-0 mt-0.5 ${
-                                  showRestrictions ? "rotate-180" : ""
-                                }`}
-                              />
-                            </button>
-                            {showRestrictions ? (
-                              <div className="border-t border-border">
-                                {days.map((day, idx) => (
-                                  <div
-                                    key={idx}
-                                    className={`px-3 py-2 text-sm text-muted-foreground ${
-                                      idx !== days.length - 1
-                                        ? "border-b border-border"
-                                        : ""
-                                    }`}
-                                  >
-                                    {day}
-                                  </div>
-                                ))}
-                              </div>
-                            ) : null}
+                            <span className="text-base mt-0.5">{icon}</span>
+                            <span className="text-muted-foreground">
+                              {text}
+                            </span>
                           </li>
                         );
                       }
-
-                      return (
-                        <li
-                          key={key}
-                          className="flex items-start gap-3 text-sm"
-                        >
-                          <span className="text-base mt-0.5">{icon}</span>
-                          <span className="text-muted-foreground">{text}</span>
-                        </li>
-                      );
-                    })}
+                    )}
                   </ul>
                 </Card>
 

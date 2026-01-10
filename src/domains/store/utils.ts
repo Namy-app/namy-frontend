@@ -5,6 +5,7 @@ export interface RestrictionItem {
   key: string;
   icon: string;
   text: string;
+  isAvailableDays?: boolean;
 }
 
 /**
@@ -110,6 +111,7 @@ export const getDiscountRestrictions = (
         key: generateKey(),
         icon: "🚫",
         text: `No válido los ${excludedDays.join(", ")}`,
+        isAvailableDays: true,
       });
     }
   }
