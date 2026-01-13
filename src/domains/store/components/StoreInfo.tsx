@@ -13,6 +13,7 @@ import { PRICE_SYMBOLS } from "@/data/constants";
 import { useResendStorePinEmail } from "@/domains/admin/hooks";
 import { type Discount, type Store } from "@/domains/admin/types";
 import { useToast } from "@/hooks/use-toast";
+import { convertTo12Hour } from "@/lib/date-time-utils";
 
 import { DiscountSection } from "./DiscountSection";
 import { StoreImageUpload } from "./StoreImageUpload";
@@ -27,16 +28,6 @@ const DAY_LABELS: Record<string, string> = {
   saturday: "Sábado",
   sunday: "Domingo",
 };
-
-// Utility function to convert 24-hour time to 12-hour AM/PM format
-function convertTo12Hour(time24: string): string {
-  const parts = time24.split(":");
-  const hours = parseInt(parts[0] || "0", 10);
-  const minutes = parseInt(parts[1] || "0", 10);
-  const period = hours >= 12 ? "PM" : "AM";
-  const hours12 = hours % 12 || 12;
-  return `${hours12}:${minutes.toString().padStart(2, "0")} ${period}`;
-}
 
 interface Props {
   store: Store;

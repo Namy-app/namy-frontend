@@ -9,6 +9,8 @@ import {
 import { loadStripe } from "@stripe/stripe-js";
 import { useState, useEffect } from "react";
 
+import { extractErrorMessage } from "@/lib/utils";
+
 import { useCreatePaymentIntent } from "../hooks";
 import type { CreatePaymentIntentInput } from "../types";
 
@@ -169,9 +171,7 @@ export function StripePaymentForm({
       } catch (err) {
         console.error("Failed to create payment intent:", err);
         const message =
-          err instanceof Error
-            ? err.message
-            : "Failed to create payment intent";
+          extractErrorMessage(err) ?? "Failed to create payment intent";
         setInitError(message);
         onError?.(message);
       }

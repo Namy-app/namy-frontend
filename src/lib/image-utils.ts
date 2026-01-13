@@ -2,12 +2,22 @@
  * Image utility functions for compression and optimization
  */
 
+import type { ImageLoader, ImageLoaderProps } from "next/image";
+
 export interface CompressOptions {
   maxWidth?: number;
   maxHeight?: number;
   quality?: number;
   maxSizeMB?: number;
 }
+
+export const contentfulImageLoader: ImageLoader = ({
+  src,
+  width,
+  quality,
+}: ImageLoaderProps) => {
+  return `${src}?w=${width}&q=${quality || 75}`;
+};
 
 /**
  * Compress an image file before upload

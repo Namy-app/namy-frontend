@@ -387,6 +387,7 @@ export const GET_COUPON_REDEEM_DETAILS_QUERY = `
       expiresAt
       createdAt
       valid
+      value
       store {
         id
         name
@@ -524,6 +525,7 @@ export const EXCHANGE_UNLOCK_MUTATION = `
       url
       used
       usedAt
+      value
       expiresAt
       createdAt
       storeId
@@ -541,6 +543,7 @@ export const COUPONS_QUERY = `
       url
       used
       usedAt
+      value
       expiresAt
       createdAt
       storeId

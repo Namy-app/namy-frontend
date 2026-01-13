@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { useLogout } from "@/domains/user/hooks";
 import { useToast } from "@/hooks/use-toast";
+import { extractErrorMessage } from "@/lib/utils";
 import { Button } from "@/shared/components/Button";
 import { Card } from "@/shared/components/Card";
 import { useAuthStore } from "@/store/useAuthStore";
@@ -29,8 +30,7 @@ export default function UserPage(): React.JSX.Element | null {
       });
       router.push("/");
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
+      const errorMessage = extractErrorMessage(error);
       toast({
         variant: "destructive",
         title: "Logout failed",

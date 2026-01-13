@@ -5,7 +5,9 @@ import { useState } from "react";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { WalletDashboard, DepositForm } from "@/domains/payment/components";
 import { useCreateWallet, useWallet } from "@/domains/payment/hooks";
+import { toast } from "@/hooks/use-toast";
 import { BasicLayout } from "@/layouts/BasicLayout";
+import { extractErrorMessage } from "@/lib/utils";
 import { useAuthStore } from "@/store/useAuthStore";
 
 export default function PaymentPage(): React.JSX.Element {
@@ -36,6 +38,13 @@ export default function PaymentPage(): React.JSX.Element {
       await refetchWallet();
     } catch (error) {
       console.error("Failed to create wallet:", error);
+      const errorMessage = extractErrorMessage(error);
+      toast({
+        title: "Error",
+        description:
+          errorMessage || "Could not create wallet. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 

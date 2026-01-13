@@ -6,6 +6,7 @@ import { useState, useEffect, Suspense } from "react";
 
 import { useResetPassword } from "@/domains/user/hooks";
 import { useToast } from "@/hooks/use-toast";
+import { extractErrorMessage } from "@/lib/utils";
 import { Button } from "@/shared/components/Button";
 import { Card } from "@/shared/components/Card";
 import { PasswordInput } from "@/shared/components/PasswordInput";
@@ -67,8 +68,7 @@ function ResetPasswordForm(): React.JSX.Element {
 
       setTimeout(() => router.push("/auth"), 2000);
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
+      const errorMessage = extractErrorMessage(error);
       toast({
         variant: "destructive",
         title: "Reset failed",

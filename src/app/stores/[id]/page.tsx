@@ -1,5 +1,3 @@
-// Restaurant detail page (redesigned, with coupon generation)
-
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
@@ -14,6 +12,8 @@ import {
   ChevronLeft,
   ChevronRight,
   X,
+  Loader2,
+  ChevronDown,
 } from "lucide-react";
 import Image from "next/image";
 import { useRouter, useParams } from "next/navigation";
@@ -21,37 +21,31 @@ import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 
 import { CongratulationsModal } from "@/components/CongratulationsModal";
-import { DiscountSuccessModal } from "@/components/DiscountSuccessModal";
 import { UnlockDiscountModal } from "@/components/UnlockDiscountModal";
 import { VideoAdsModal } from "@/components/VideoAdsModal";
 import { PlaceHolderTypeEnum } from "@/data/constants";
 import { StoreType } from "@/domains/admin";
 import { useStoreDiscounts, useStoreCatalogs } from "@/domains/admin/hooks";
 import { useWallet } from "@/domains/payment/hooks";
+import { CatalogCarousel } from "@/domains/store/components/CatalogCarousel";
 import { useStore } from "@/domains/store/hooks";
+import type { ParsedStore } from "@/domains/store/type";
+import { getDiscountRestrictions } from "@/domains/store/utils";
 import { useMyLevel } from "@/domains/user/hooks/query/useMyLevel";
 import { useToast } from "@/hooks/use-toast";
 import { BasicLayout } from "@/layouts/BasicLayout";
+import { convertTo12Hour } from "@/lib/date-time-utils";
 import { graphqlRequest } from "@/lib/graphql-client";
 import {
   GENERATE_COUPON_MUTATION,
   QUICK_PAY_FOR_DISCOUNT_MUTATION,
   EXCHANGE_UNLOCK_MUTATION,
 } from "@/lib/graphql-queries";
+import { contentfulImageLoader } from "@/lib/image-utils";
 import { openInGoogleMaps } from "@/lib/maps";
 import { Button } from "@/shared/components/Button";
 import { Card } from "@/shared/components/Card";
 import { useAuthStore } from "@/store/useAuthStore";
-
-// Utility function to convert 24-hour time to 12-hour AM/PM format
-function convertTo12Hour(time24: string): string {
-  const parts = time24.split(":");
-  const hours = parseInt(parts[0] || "0", 10);
-  const minutes = parseInt(parts[1] || "0", 10);
-  const period = hours >= 12 ? "PM" : "AM";
-  const hours12 = hours % 12 || 12;
-  return `${hours12}:${minutes.toString().padStart(2, "0")} ${period}`;
-}
 
 // Mapping for Spanish day labels
 const DAY_LABELS: Record<string, string> = {
@@ -79,149 +73,24 @@ function getCurrentDayOfWeek(): string {
   return days[today.getDay()] || "";
 }
 
-// Catalog Carousel Component
-const CatalogCarousel = ({
-  images,
-  catalogName,
-  onImageClick,
-}: {
-  images: string[];
-  catalogName: string;
-  onImageClick: (url: string) => void;
-}) => {
-  const [currentIndex, setCurrentIndex] = useState(0);
-
-  const goToPrevious = () => {
-    setCurrentIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
-  };
-
-  const goToNext = () => {
-    setCurrentIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
-  };
-
-  if (images.length === 0) {
-    return null;
-  }
-
-  return (
-    <div className="relative">
-      {/* Main Image */}
-      <div className="relative aspect-[16/9] rounded-xl overflow-hidden shadow-lg bg-muted">
-        <Image
-          src={images[currentIndex] || ""}
-          alt={`${catalogName} - Image ${currentIndex + 1}`}
-          fill
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          className="object-cover cursor-pointer"
-          unoptimized
-          onClick={() => onImageClick(images[currentIndex] || "")}
-        />
-
-        {/* Navigation Arrows */}
-        {images.length > 1 && (
-          <>
-            <button
-              onClick={goToPrevious}
-              className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors z-10"
-              aria-label="Previous image"
-            >
-              <ChevronLeft className="w-6 h-6" />
-            </button>
-            <button
-              onClick={goToNext}
-              className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors z-10"
-              aria-label="Next image"
-            >
-              <ChevronRight className="w-6 h-6" />
-            </button>
-          </>
-        )}
-
-        {/* Image Counter */}
-        <div className="absolute bottom-4 right-4 bg-black/50 text-white px-3 py-1 rounded-full text-sm font-medium">
-          {currentIndex + 1} / {images.length}
-        </div>
-      </div>
-
-      {/* Thumbnail Strip */}
-      {images.length > 1 && (
-        <div className="mt-4 flex gap-2 overflow-x-auto pb-2">
-          {images.map((image, index) => (
-            <button
-              key={`${image}-${index}`}
-              onClick={() => setCurrentIndex(index)}
-              className={`relative flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all ${
-                index === currentIndex
-                  ? "border-primary scale-105"
-                  : "border-transparent opacity-60 hover:opacity-100"
-              }`}
-            >
-              <Image
-                src={image}
-                alt={`Thumbnail ${index + 1}`}
-                fill
-                sizes="80px"
-                className="object-cover"
-                unoptimized
-              />
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
-
-// Restaurant type definition
-interface Restaurant {
-  id: string;
-  name: string;
-  category: string;
-  emoji: string;
-  rating: number;
-  reviewCount: number;
-  isAdPartner: boolean;
-  discount: {
-    id?: string;
-    percentage: number;
-    points: number;
-    restrictions: string[];
-  };
-  hours: string;
-  hoursStructured?: Array<{ day: string; hours: string }>;
-  location: {
-    address: string;
-    city: string;
-    lat?: number;
-    lng?: number;
-  };
-  phone: string;
-  images: string[];
-  menuItems: Array<{ id: string; name: string; image: string }>;
-  reviews: Array<{
-    id: string;
-    name: string;
-    avatar: string;
-    rating: number;
-    comment: string;
-  }>;
-  amenities: string[];
-}
-
-export default function RestaurantDetailPage(): React.JSX.Element {
+export default function StoresDetailPage(): React.JSX.Element {
   const router = useRouter();
   const params = useParams();
   const { isAuthenticated, user } = useAuthStore();
+  const { data: userLevel } = useMyLevel();
+
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
   const [showAllHours, setShowAllHours] = useState(false);
+  const [showRestrictions, setShowRestrictions] = useState(false);
   const [showUnlockModal, setShowUnlockModal] = useState(false);
   const [showVideoAdsModal, setShowVideoAdsModal] = useState(false);
   const [showCongratulations, setShowCongratulations] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
+  const [_, setShowSuccess] = useState(false);
+  const [showQuickPaySuccess, setShowQuickPaySuccess] = useState(false);
   const [unlockToken, setUnlockToken] = useState<string | null>(null);
   const [selectedDiscount, setSelectedDiscount] = useState<{
     id: string;
@@ -244,16 +113,16 @@ export default function RestaurantDetailPage(): React.JSX.Element {
     };
   }, [selectedCatalogImage]);
 
-  const { data: userLevel } = useMyLevel();
   const { data: wallet } = useWallet({ userId: user?.id });
-  // Get restaurant ID from params
-  const storeId = (params?.detail as string) || null;
+  // Get store ID from params
+  const storeId = (params?.id as string) || null;
   const { data: store, isLoading } = useStore(storeId);
 
   // Fetch discounts for this store
-  const { data: discountsData } = useStoreDiscounts(
-    { storeId: storeId },
-    { page: 1, first: 10 }
+  const { data: discountsData, isLoading: isLoadingDiscounts } =
+    useStoreDiscounts({ storeId: storeId }, { page: 1, first: 10 });
+  const discountRestrictions = getDiscountRestrictions(
+    discountsData?.data?.[0]
   );
 
   // Fetch catalogs for this store
@@ -261,14 +130,16 @@ export default function RestaurantDetailPage(): React.JSX.Element {
 
   // Get the first active discount for this store
   const firstActiveDiscount = discountsData?.data?.find((d) => d.active);
+  const isRestaurant = store?.categoryId?.toLowerCase() === "restaurant";
+  const storeCategoryType = isRestaurant ? "Restaurant" : "Store";
 
   if (!isLoading && !store) {
     router.push("/explore");
     return <></>;
   }
 
-  // Convert store data to restaurant format for the UI
-  const parsedStore: Restaurant | null = store
+  // Convert store data to store format for the UI
+  const parsedStore: ParsedStore | null = store
     ? {
         id: store.id,
         name: store.name,
@@ -281,11 +152,6 @@ export default function RestaurantDetailPage(): React.JSX.Element {
           id: store.id,
           percentage: userLevel?.discountPercentage ?? 10,
           points: 0,
-          restrictions: [
-            "Muestra tu código QR antes de pagar",
-            "Válido solo para consumo en el local",
-            "No se puede combinar con otras ofertas",
-          ],
           // id: firstActiveDiscount?.id,
           // percentage:
           //   firstActiveDiscount?.type === "PERCENTAGE"
@@ -441,7 +307,7 @@ export default function RestaurantDetailPage(): React.JSX.Element {
           return allImages.length > 0
             ? allImages
             : [
-                store.categoryId?.toLowerCase() === "restaurant"
+                isRestaurant
                   ? PlaceHolderTypeEnum.RESTAURANT
                   : PlaceHolderTypeEnum.SHOP,
               ];
@@ -730,16 +596,12 @@ export default function RestaurantDetailPage(): React.JSX.Element {
       });
 
       if (data?.quickPayForDiscount) {
-        toast({
-          title: "¡Pago exitoso!",
-          description: "Cupón agregado a Mis Cupones.",
-        });
         try {
           void queryClient.invalidateQueries({ queryKey: ["coupons"] });
         } catch (_e) {
           // ignore
         }
-        router.push("/my-coupons");
+        setShowQuickPaySuccess(true);
       } else {
         throw new Error("Pago Rápido falló");
       }
@@ -817,8 +679,7 @@ export default function RestaurantDetailPage(): React.JSX.Element {
         .then(() => {
           toast({
             title: "Copied to clipboard!",
-            description:
-              "Restaurant details have been copied. Share them with friends!",
+            description: `${storeCategoryType} details have been copied. Share them with friends!`,
           });
         })
         .catch((error) => {
@@ -834,7 +695,7 @@ export default function RestaurantDetailPage(): React.JSX.Element {
       toast({
         variant: "destructive",
         title: "Share not supported",
-        description: "Please copy the restaurant details manually.",
+        description: `Please copy the ${storeCategoryType.toLowerCase()} details manually.`,
       });
     }
   };
@@ -880,10 +741,10 @@ export default function RestaurantDetailPage(): React.JSX.Element {
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-center">
             <p className="text-muted-foreground text-lg mb-4">
-              Restaurant not found
+              {storeCategoryType} not found
             </p>
             <Button onClick={() => router.push("/restaurants")}>
-              Back to Restaurants
+              Back to ${storeCategoryType}s
             </Button>
           </div>
         </div>
@@ -1031,7 +892,11 @@ export default function RestaurantDetailPage(): React.JSX.Element {
                           </Button>
                         ) : (
                           <h6 className="text-center text-white bg-black/50 px-4 py-2 rounded-full">
-                            Descuento no disponible en este momento
+                            {isLoadingDiscounts ? (
+                              <Loader2 className="mx-auto animate-spin" />
+                            ) : (
+                              "Descuento no disponible en este momento"
+                            )}
                           </h6>
                         )}
                       </div>
@@ -1213,23 +1078,63 @@ export default function RestaurantDetailPage(): React.JSX.Element {
                     🕑 Discount Restrictions
                   </h2>
                   <ul className="space-y-3">
-                    {parsedStore.discount.restrictions.map(
-                      (restriction, index) => (
-                        <li
-                          key={index}
-                          className="flex items-start gap-3 text-sm"
-                        >
-                          <span className="text-base mt-0.5">
-                            {index ===
-                            parsedStore.discount.restrictions.length - 1
-                              ? "✅"
-                              : "❌"}
-                          </span>
-                          <span className="text-muted-foreground">
-                            {restriction}
-                          </span>
-                        </li>
-                      )
+                    {discountRestrictions.map(
+                      ({ icon, text, key, isAvailableDays }) => {
+                        if (isAvailableDays) {
+                          const days = text.split(" • ");
+                          return (
+                            <li
+                              key={key}
+                              className="border border-border rounded-lg overflow-hidden"
+                            >
+                              <button
+                                onClick={() =>
+                                  setShowRestrictions(!showRestrictions)
+                                }
+                                className="w-full flex items-start gap-3 text-sm p-3 hover:bg-muted/50 transition-colors"
+                              >
+                                <span className="text-base mt-0.5">{icon}</span>
+                                <span className="text-muted-foreground flex-1 text-left">
+                                  Ver horarios disponibles
+                                </span>
+                                <ChevronDown
+                                  className={`w-4 h-4 text-muted-foreground transition-transform shrink-0 mt-0.5 ${
+                                    showRestrictions ? "rotate-180" : ""
+                                  }`}
+                                />
+                              </button>
+                              {showRestrictions ? (
+                                <div className="border-t border-border">
+                                  {days.map((day, idx) => (
+                                    <div
+                                      key={idx}
+                                      className={`px-3 py-2 text-sm text-muted-foreground ${
+                                        idx !== days.length - 1
+                                          ? "border-b border-border"
+                                          : ""
+                                      }`}
+                                    >
+                                      {day}
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : null}
+                            </li>
+                          );
+                        }
+
+                        return (
+                          <li
+                            key={key}
+                            className="flex items-start gap-3 text-sm"
+                          >
+                            <span className="text-base mt-0.5">{icon}</span>
+                            <span className="text-muted-foreground">
+                              {text}
+                            </span>
+                          </li>
+                        );
+                      }
                     )}
                   </ul>
                 </Card>
@@ -1350,13 +1255,43 @@ export default function RestaurantDetailPage(): React.JSX.Element {
         }}
       />
 
-      <DiscountSuccessModal
-        isOpen={showSuccess}
-        onClose={() => setShowSuccess(false)}
-        restaurantName={parsedStore?.name ?? ""}
-        discountPercentage={parsedStore?.discount.percentage ?? 10}
-        points={parsedStore?.discount.points ?? 0}
-      />
+      {/* Quick Pay Success Modal */}
+      {showQuickPaySuccess && typeof window !== "undefined"
+        ? createPortal(
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 sm:p-6">
+              <div className="bg-linear-to-br from-white to-white rounded-2xl shadow-2xl max-w-md w-full p-6 sm:p-8 text-center animate-bounce-in">
+                <Image
+                  loader={contentfulImageLoader}
+                  src="/success-modal.jpg"
+                  alt="Success"
+                  width={400}
+                  height={100}
+                  className="mx-auto mb-4 sm:mb-6 w-full h-auto max-w-[300px] sm:max-w-[400px]"
+                />
+
+                {/* Action Buttons */}
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                  <button
+                    onClick={() => setShowQuickPaySuccess(false)}
+                    className="w-full text-gray-700 bg-gray-200 font-semibold py-3 sm:py-4 px-4 sm:px-6 rounded-xl hover:bg-gray-300 transition-colors shadow-lg text-sm sm:text-base"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowQuickPaySuccess(false);
+                      router.push("/my-coupons");
+                    }}
+                    className="w-full text-white bg-green-600 font-semibold py-3 sm:py-4 px-4 sm:px-6 rounded-xl hover:bg-green-400 transition-colors shadow-lg text-sm sm:text-base"
+                  >
+                    Ver Mis Cupones
+                  </button>
+                </div>
+              </div>
+            </div>,
+            document.body
+          )
+        : null}
 
       {/* All Hours Modal */}
       {showAllHours &&

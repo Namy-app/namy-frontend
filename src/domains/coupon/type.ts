@@ -5,6 +5,7 @@ export type CouponItem = {
   used?: boolean;
   expiresAt: string;
   usedAt?: string;
+  value?: number;
   store?: {
     name?: string;
     restrictions?: string | null;
@@ -31,6 +32,7 @@ export type Coupon = {
   used: boolean;
   usedAt?: string;
   valid?: string;
+  value?: number;
   expiresAt: string;
   createdAt: string;
   storeId?: string;

@@ -254,7 +254,7 @@ export default function RestaurantListingPage(): React.JSX.Element {
                       key={restaurant.id}
                       className="animate-slide-up"
                       style={{ animationDelay: `${index * 0.1}s` }}
-                      href={`/restaurants/${restaurant.id}`}
+                      href={`/stores/${restaurant.id}`}
                     >
                       <Card className="overflow-hidden cursor-pointer transition-all hover:shadow-card hover:scale-[1.02] bg-card border-border">
                         {/* Restaurant Image */}

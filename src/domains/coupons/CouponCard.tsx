@@ -216,7 +216,7 @@ export default function CouponCard({
         <div className="flex items-center justify-between gap-3">
           <button
             onClick={() => void onViewQr(coupon)}
-            className="px-8 py-3 bg-gradient-primary text-primary-foreground rounded-full font-semibold flex items-center gap-2"
+            className="sm:px-8 px-3 sm:py-3  py-2 bg-gradient-primary text-primary-foreground rounded-full font-semibold flex items-center gap-2"
           >
             <QrCode className="w-5 h-5" /> Ver QR
           </button>

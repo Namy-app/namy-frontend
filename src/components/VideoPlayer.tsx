@@ -114,7 +114,7 @@ export function VideoPlayer({
   };
 
   return (
-    <div className="w-full max-w-sm mx-auto">
+    <div className="w-full mx-auto">
       {/* Video Title */}
       {title ? (
         <div className="mb-2">
@@ -130,19 +130,20 @@ export function VideoPlayer({
       ) : null}
 
       {/* Video Container - Mobile Portrait Aspect Ratio (9:16) */}
-      <div className="relative bg-black rounded-lg sm:rounded-xl overflow-hidden shadow-2xl">
+      <div className="relative bg-black overflow-hidden shadow-2xl">
         <video
           ref={videoRef}
           src={videoUrl}
-          className="w-full object-cover"
+          className="w-full h-[60vh] object-fit"
           playsInline
+          loop={false}
           preload="auto"
         >
           Your browser does not support video playback.
         </video>
 
         {/* Custom Controls Overlay */}
-        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3 sm:p-4">
+        <div className="absolute bottom-0 left-0 right-0 bg-linear-to-t from-black/80 to-transparent p-3 sm:p-4">
           {/* Progress Bar */}
           <div className="mb-2 sm:mb-3">
             {/* <div className="h-1.5 sm:h-2 bg-gray-700 rounded-full overflow-hidden">

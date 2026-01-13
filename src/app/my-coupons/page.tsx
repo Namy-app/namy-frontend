@@ -9,7 +9,6 @@ import { useEffect, useState } from "react";
 import type { Coupon } from "@/domains/coupon/type";
 import CouponCard from "@/domains/coupons/CouponCard";
 import { RestrictionModal } from "@/domains/coupons/RestrictionModal";
-import { useMyLevel } from "@/domains/user/hooks/query/useMyLevel";
 import { BasicLayout } from "@/layouts/BasicLayout";
 import { CouponDecoder, type DecodedCouponData } from "@/lib/coupon-decoder";
 import { graphqlRequest, setAuthToken } from "@/lib/graphql-client";
@@ -23,7 +22,6 @@ type FilterTab = "all" | CouponStatus;
 
 export default function MyCouponsPage(): React.JSX.Element {
   const router = useRouter();
-  const { data: myLevel } = useMyLevel();
   const { isAuthenticated, accessToken, user } = useAuthStore();
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [loading, setLoading] = useState(true);
@@ -384,7 +382,7 @@ export default function MyCouponsPage(): React.JSX.Element {
                   >
                     <CouponCard
                       coupon={coupon}
-                      discountPercentage={myLevel?.discountPercentage ?? 10}
+                      discountPercentage={coupon.value ?? 10}
                       onViewQr={() => void handleViewQR(coupon)}
                       onShare={() => void handleShare(coupon)}
                       onDelete={() => void handleDelete(coupon)}
