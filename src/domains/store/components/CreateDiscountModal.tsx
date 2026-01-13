@@ -38,27 +38,31 @@ export const CreateDiscountModal = ({
   const createDiscount = useCreateDiscount();
   const updateDiscount = useUpdateDiscount();
   const [formData, setFormData] = useState({
-    title: discount?.title || "",
-    description: discount?.description || "",
-    type: discount?.type || DiscountType.PERCENTAGE,
-    value: discount?.value.toString() || "15",
-    code: discount?.code || "",
+    title: discount?.title ?? "",
+    description: discount?.description ?? "",
+    // TODO: Undo once we confirm we want to have dynamic types
+    type: DiscountType.PERCENTAGE,
+    // type: discount?.type ?? DiscountType.PERCENTAGE,
+    value: "15",
+    // TODO: Undo once we confirm we want to have dynamic values
+    // value: discount?.value.toString() ?? "15",
+    code: discount?.code ?? "",
     startDate: discount?.startDate
       ? formatDateToYMDSafe(discount.startDate)
       : "",
     endDate: discount?.endDate ? formatDateToYMDSafe(discount.endDate) : "",
     active: discount?.active ?? true,
-    excludedDaysOfWeek: discount?.excludedDaysOfWeek || [],
+    excludedDaysOfWeek: discount?.excludedDaysOfWeek ?? [],
     excludedStartHour: discount?.excludedHours[0],
     excludedEndHour: discount?.excludedHours[1],
-    maxUses: discount?.maxUses?.toString() || "",
-    maxUsesPerUserPerMonth: discount?.maxUsesPerUserPerMonth?.toString() || "",
-    minPurchaseAmount: discount?.minPurchaseAmount?.toString() || "",
-    maxDiscountAmount: discount?.maxDiscountAmount?.toString() || "",
-    availableDaysAndTimes: discount?.availableDaysAndTimes || {
+    maxUses: discount?.maxUses?.toString() ?? "",
+    maxUsesPerUserPerMonth: discount?.maxUsesPerUserPerMonth?.toString() ?? "",
+    minPurchaseAmount: discount?.minPurchaseAmount?.toString() ?? "",
+    maxDiscountAmount: discount?.maxDiscountAmount?.toString() ?? "",
+    availableDaysAndTimes: discount?.availableDaysAndTimes ?? {
       availableDays: [],
     },
-    additionalRestrictions: discount?.additionalRestrictions || [],
+    additionalRestrictions: discount?.additionalRestrictions ?? [],
   });
 
   const [newRestriction, setNewRestriction] = useState("");
@@ -113,24 +117,26 @@ export const CreateDiscountModal = ({
           id: discount.id,
           input: {
             title: formData.title,
-            description: formData.description || undefined,
+            description: formData.description,
             type: formData.type,
-            value: parseFloat(formData.value),
-            code: formData.code || undefined,
+            value: Number.parseFloat(formData.value),
+            code: formData.code,
             startDate: formData.startDate,
             endDate: formData.endDate,
             active: formData.active,
             excludedDaysOfWeek: formData.excludedDaysOfWeek,
             excludedHours: parsedExcludedHours,
-            maxUses: formData.maxUses ? parseInt(formData.maxUses) : undefined,
+            maxUses: formData.maxUses
+              ? Number.parseInt(formData.maxUses)
+              : undefined,
             maxUsesPerUserPerMonth: formData.maxUsesPerUserPerMonth
-              ? parseInt(formData.maxUsesPerUserPerMonth)
+              ? Number.parseInt(formData.maxUsesPerUserPerMonth)
               : undefined,
             minPurchaseAmount: formData.minPurchaseAmount
-              ? parseFloat(formData.minPurchaseAmount)
+              ? Number.parseFloat(formData.minPurchaseAmount)
               : undefined,
             maxDiscountAmount: formData.maxDiscountAmount
-              ? parseFloat(formData.maxDiscountAmount)
+              ? Number.parseFloat(formData.maxDiscountAmount)
               : undefined,
             availableDaysAndTimes:
               formData.availableDaysAndTimes.availableDays.length > 0
@@ -148,22 +154,24 @@ export const CreateDiscountModal = ({
           title: formData.title,
           description: formData.description || undefined,
           type: formData.type,
-          value: parseFloat(formData.value),
-          code: formData.code || undefined,
+          value: Number.parseFloat(formData.value),
+          code: formData.code,
           startDate: formData.startDate,
           endDate: formData.endDate,
           active: formData.active,
           excludedDaysOfWeek: formData.excludedDaysOfWeek,
           excludedHours: parsedExcludedHours,
-          maxUses: formData.maxUses ? parseInt(formData.maxUses) : undefined,
+          maxUses: formData.maxUses
+            ? Number.parseInt(formData.maxUses)
+            : undefined,
           maxUsesPerUserPerMonth: formData.maxUsesPerUserPerMonth
-            ? parseInt(formData.maxUsesPerUserPerMonth)
+            ? Number.parseInt(formData.maxUsesPerUserPerMonth)
             : undefined,
           minPurchaseAmount: formData.minPurchaseAmount
-            ? parseFloat(formData.minPurchaseAmount)
+            ? Number.parseFloat(formData.minPurchaseAmount)
             : undefined,
           maxDiscountAmount: formData.maxDiscountAmount
-            ? parseFloat(formData.maxDiscountAmount)
+            ? Number.parseFloat(formData.maxDiscountAmount)
             : undefined,
           availableDaysAndTimes:
             formData.availableDaysAndTimes.availableDays.length > 0

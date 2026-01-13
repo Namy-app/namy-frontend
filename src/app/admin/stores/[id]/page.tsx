@@ -4,7 +4,6 @@ import {
   ArrowLeft,
   Store as StoreIcon,
   Plus,
-  Percent,
   Ticket,
   AlertCircle,
   X,
@@ -24,13 +23,7 @@ import {
   useStoreDiscounts,
   useUpdateStore,
 } from "@/domains/admin/hooks";
-import {
-  type Coupon,
-  type Discount,
-  DiscountType,
-  PriceRange,
-  UserRole,
-} from "@/domains/admin/types";
+import { type Coupon, PriceRange, UserRole } from "@/domains/admin/types";
 import { CatalogsTab } from "@/domains/store/components/CatalogsTab";
 import { StoreInfo } from "@/domains/store/components/StoreInfo";
 import { toast, useToast } from "@/hooks/use-toast";
@@ -332,162 +325,6 @@ export default function StoreDetailPage() {
           onClose={() => setGeneratedPin(null)}
         />
       ) : null}
-    </div>
-  );
-}
-
-// Discounts Tab Component - Unused, can be removed if not needed
-export function DiscountsTab({
-  discounts,
-  loading,
-  onCreateDiscount,
-}: {
-  discounts: Discount[];
-  loading: boolean;
-  onCreateDiscount: () => void;
-}) {
-  if (loading) {
-    return (
-      <div className="bg-card rounded-lg shadow p-8 text-center">
-        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
-        <p className="text-muted-foreground mt-2">Loading discounts...</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-foreground">Store Discounts</h2>
-        <button
-          onClick={onCreateDiscount}
-          className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-colors"
-        >
-          <Plus className="w-5 h-5" />
-          Create Discount
-        </button>
-      </div>
-
-      {discounts.length === 0 ? (
-        <div className="bg-card rounded-lg shadow p-8 text-center">
-          <Percent className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-          <p className="text-muted-foreground mb-4">No discounts found</p>
-          <button
-            onClick={onCreateDiscount}
-            className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-colors"
-          >
-            Create First Discount
-          </button>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 gap-6">
-          {discounts.map((discount) => (
-            <div
-              key={discount.id}
-              className="bg-card rounded-lg shadow p-6 hover:shadow-lg transition-shadow"
-            >
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-start gap-3">
-                  <div className="w-12 h-12 bg-secondary/100 rounded-lg flex items-center justify-center">
-                    <Percent className="w-6 h-6 text-secondary-foreground600" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-foreground">
-                      {discount.title}
-                    </h3>
-                    {discount.description ? (
-                      <p className="text-muted-foreground text-sm mt-1">
-                        {discount.description}
-                      </p>
-                    ) : null}
-                  </div>
-                </div>
-                <span
-                  className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    discount.active
-                      ? "bg-secondary/100 text-secondary-foreground800"
-                      : "bg-destructive/20 text-destructive800"
-                  }`}
-                >
-                  {discount.active ? "Active" : "Inactive"}
-                </span>
-              </div>
-
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">
-                    Type
-                  </p>
-                  <p className="text-foreground capitalize">
-                    {discount.type.replace("_", " ")}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">
-                    Value
-                  </p>
-                  <p className="text-foreground">
-                    {discount.type === DiscountType.PERCENTAGE
-                      ? `${discount.value}%`
-                      : `$${discount.value}`}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">
-                    Used
-                  </p>
-                  <p className="text-foreground">
-                    {discount.usedCount}
-                    {discount.maxUses ? ` / ${discount.maxUses}` : ""}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">
-                    Period
-                  </p>
-                  <p className="text-foreground text-sm">
-                    {new Date(discount.startDate).toLocaleDateString()} -{" "}
-                    {new Date(discount.endDate).toLocaleDateString()}
-                  </p>
-                </div>
-              </div>
-
-              {(discount.excludedDaysOfWeek.length > 0 ||
-                discount.excludedHours.length > 0) && (
-                <div className="border-t pt-4">
-                  <p className="text-sm font-medium text-muted-foreground mb-2">
-                    Restrictions
-                  </p>
-                  {discount.excludedDaysOfWeek.length > 0 && (
-                    <p className="text-sm text-foreground">
-                      Excluded Days:{" "}
-                      {discount.excludedDaysOfWeek
-                        .map(
-                          (d: number) =>
-                            [
-                              "Sunday",
-                              "Monday",
-                              "Tuesday",
-                              "Wednesday",
-                              "Thursday",
-                              "Friday",
-                              "Saturday",
-                            ][d]
-                        )
-                        .join(", ")}
-                    </p>
-                  )}
-                  {discount.excludedHours.length > 0 && (
-                    <p className="text-sm text-foreground">
-                      Excluded Hours: {discount.excludedHours.join(", ")}
-                    </p>
-                  )}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
     </div>
   );
 }
