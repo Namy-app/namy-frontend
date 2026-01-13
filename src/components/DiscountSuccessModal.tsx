@@ -114,7 +114,7 @@ export function DiscountSuccessModal({
               </button>
               <button
                 onClick={handleSaveForLater}
-                className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 border bg-background hover:text-accent-foreground h-11 px-8 w-full border-white/30 text-white hover:bg-white/10 rounded-full"
+                className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 h-11 px-8 w-full bg-white text-green-600 hover:bg-white/90 font-bold rounded-full shadow-lg"
               >
                 Save for later 💾
               </button>
