@@ -5,7 +5,6 @@ import {
   Store as StoreIcon,
   ShoppingBag,
   Package,
-  ArrowLeft,
   Pencil,
   Trash2,
   X,
@@ -14,7 +13,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { CreateStoreForm } from "@/domains/admin/components/CreateStoreForm";
 import { EditStoreForm } from "@/domains/admin/components/EditStoreForm";
@@ -24,40 +23,17 @@ import {
   useDeleteStore,
   useToggleStoreActive,
 } from "@/domains/admin/hooks";
-import { UserRole, type Store } from "@/domains/admin/types";
+import { type Store } from "@/domains/admin/types";
 import { useToast } from "@/hooks/use-toast";
-import { useAuthStore } from "@/store/useAuthStore";
 
 export default function AdminStoresPage() {
   const router = useRouter();
-  const { user } = useAuthStore();
   const { toast } = useToast();
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [storeToDelete, setStoreToDelete] = useState<Store | null>(null);
   const [storeToEdit, setStoreToEdit] = useState<Store | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
-  const [isHydrated, setIsHydrated] = useState(false);
-
-  // Wait for client-side hydration
-  useEffect(() => {
-    // Mark as hydrated after Zustand rehydrates from localStorage
-    // Use a small delay to ensure Zustand has fully rehydrated
-    const timer = setTimeout(() => {
-      setIsHydrated(true);
-    }, 100);
-    return () => clearTimeout(timer);
-  }, []);
-
-  useEffect(() => {
-    if (!isHydrated) {
-      return;
-    }
-
-    if (!user) {
-      router.replace("/auth");
-    }
-  }, [router, user, isHydrated]);
 
   const { data: stats, isLoading: statsLoading } = useStoreStatistics({
     active: null,
@@ -71,10 +47,6 @@ export default function AdminStoresPage() {
 
   const stores = storesData?.data ?? [];
   const paginationInfo = storesData?.paginationInfo;
-
-  // Check if user is admin
-  const isAdmin =
-    user?.role === UserRole.ADMIN || user?.role === UserRole.SUPER_ADMIN;
 
   // Handle delete store
   const handleDeleteStore = async () => {
@@ -132,86 +104,28 @@ export default function AdminStoresPage() {
     }
   };
 
-  // Redirect effect will run on client after hydration
-  if (!user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-hero">
-        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-      </div>
-    );
-  }
-
-  if (!isAdmin) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-hero">
-        <div className="bg-card rounded-lg shadow-lg p-8 max-w-md w-full text-center">
-          <div className="w-16 h-16 bg-destructive/20 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg
-              className="w-8 h-8 text-destructive"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-              />
-            </svg>
-          </div>
-          <h2 className="text-2xl font-bold text-foreground mb-2">
-            Access Denied
-          </h2>
-          <p className="text-muted-foreground mb-6">
-            You don&apos;t have permission to access the admin dashboard.
-          </p>
-          <button
-            onClick={() => router.push("/")}
-            className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-colors"
-          >
-            Go to Home
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-gradient-hero pb-20">
-      {/* Header */}
-      <div className="bg-card/80 backdrop-blur-sm border-b border-border/50 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="flex items-center gap-4 mb-2">
-                <button
-                  onClick={() => router.push("/admin")}
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground cursor-pointer"
-                >
-                  <ArrowLeft className="w-5 h-5" />
-                  Back to Dashboard
-                </button>
-              </div>
-              <h1 className="text-3xl font-bold text-foreground">
-                Admin Dashboard
-              </h1>
-              <p className="text-muted-foreground mt-1">
-                Manage stores and platform settings
-              </p>
-            </div>
-            <button
-              onClick={() => setShowCreateForm(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-colors"
-            >
-              <Plus className="w-5 h-5" />
-              Create Store
-            </button>
-          </div>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Page Header */}
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground mb-2">
+            Stores Management
+          </h1>
+          <p className="text-muted-foreground">
+            Manage stores and platform settings
+          </p>
         </div>
+        <button
+          onClick={() => setShowCreateForm(true)}
+          className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-colors"
+        >
+          <Plus className="w-5 h-5" />
+          Create Store
+        </button>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div>
         {/* Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           {/* Total Stores */}

@@ -210,6 +210,10 @@ export default function RedeemDetail({
     }
   };
 
+  const discountText = CouponDecoder.formatDiscountValue(
+    couponData.discount.type,
+    couponData.value
+  );
   // Success State - Show celebration UI
   if (redeemed && redemptionResult && couponData) {
     return (
@@ -294,12 +298,7 @@ export default function RedeemDetail({
               <p className="text-sm text-muted-foreground mb-1">
                 Descuento Aplicado
               </p>
-              <p className="text-3xl font-bold text-primary">
-                {CouponDecoder.formatDiscountValue(
-                  couponData.discount.type,
-                  couponData.discount.value
-                )}
-              </p>
+              <p className="text-3xl font-bold text-primary">{discountText}</p>
             </div>
             <Tag className="w-12 h-12 text-primary opacity-20" />
           </div>
@@ -349,10 +348,6 @@ export default function RedeemDetail({
 
   const isExpired = timeRemaining === "Expired";
   const canRedeem = isActive && !isExpired && !redeemed;
-  const discountText = CouponDecoder.formatDiscountValue(
-    couponData.discount.type,
-    couponData.value
-  );
 
   return (
     <div className="bg-white rounded-2xl shadow-card overflow-hidden animate-slide-up w-full max-w-2xl mx-auto">

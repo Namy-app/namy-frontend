@@ -11,74 +11,20 @@ import {
   Activity,
   Video,
 } from "lucide-react";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
 
 import { useStoreStatistics, useUsers } from "@/domains/admin/hooks";
 import { UserRole } from "@/domains/admin/types";
-import { contentfulImageLoader } from "@/lib/image-utils";
 import { useAuthStore } from "@/store/useAuthStore";
 
 export default function AdminDashboardPage() {
   const router = useRouter();
   const { user } = useAuthStore();
-  const [isHydrated, setIsHydrated] = useState(false);
-
-  // Wait for client-side hydration
-  useEffect(() => {
-    // Mark as hydrated after Zustand rehydrates from localStorage
-    // Use a small delay to ensure Zustand has fully rehydrated
-    const timer = setTimeout(() => {
-      setIsHydrated(true);
-    }, 100);
-    return () => clearTimeout(timer);
-  }, []);
 
   // Fetch real data
   const { data: storeStats, isLoading: storeStatsLoading } =
     useStoreStatistics();
   const { data: usersData, isLoading: usersLoading } = useUsers(1, 1000);
-
-  // Handle redirects after hydration
-  useEffect(() => {
-    if (!isHydrated) {
-      return;
-    }
-
-    if (!user) {
-      router.replace("/auth");
-      return;
-    }
-
-    const isAdmin =
-      user?.role === UserRole.ADMIN || user?.role === UserRole.SUPER_ADMIN;
-
-    if (!isAdmin) {
-      router.replace("/");
-    }
-  }, [user, isHydrated, router]);
-
-  // Show loading while hydrating or checking auth
-  if (!isHydrated || !user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-hero">
-        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-      </div>
-    );
-  }
-
-  // Check if user is admin
-  const isAdmin =
-    user?.role === UserRole.ADMIN || user?.role === UserRole.SUPER_ADMIN;
-
-  if (!isAdmin) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-hero">
-        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-      </div>
-    );
-  }
 
   // Calculate active users (users who are active)
   const activeUsersCount = usersData?.data.filter((u) => u.active).length ?? 0;
@@ -232,51 +178,19 @@ export default function AdminDashboardPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-hero">
-      {/* Header */}
-      <div className="bg-card/80 backdrop-blur-sm border-b border-border/50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex items-center justify-between">
-            <div className="flex-1">
-              <h1 className="text-4xl font-bold text-foreground mb-2">
-                Panel de administración
-              </h1>
-              <p className="text-muted-foreground">
-                Bienvenido de nuevo, {user.displayName || user.email}
-              </p>
-            </div>
-
-            {/* Namy Logo - Center */}
-            <button
-              onClick={() => router.push("/explore")}
-              className="shrink-0 mx-8 cursor-pointer hover:opacity-80 transition-opacity"
-              aria-label="Go to Explore"
-            >
-              <Image
-                loader={contentfulImageLoader}
-                src="/namy-logo.webp"
-                alt="Ñamy Logo"
-                width={60}
-                height={60}
-                className="rounded-xl shadow-lg"
-                priority
-              />
-            </button>
-
-            <div className="flex-1 flex items-center justify-end gap-4">
-              <div className="px-4 py-2 bg-primary/10 rounded-lg">
-                <p className="text-sm text-muted-foreground">Role</p>
-                <p className="font-semibold text-foreground capitalize">
-                  {user.role.replace("_", " ")}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Page Header */}
+      <div className="mb-8">
+        <h1 className="text-4xl font-bold text-foreground mb-2">
+          Panel de administración
+        </h1>
+        <p className="text-muted-foreground">
+          Bienvenido de nuevo, {user?.displayName || user?.email}
+        </p>
       </div>
 
       {/* Quick Stats */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {quickStats.map((stat, index) => (
             <div

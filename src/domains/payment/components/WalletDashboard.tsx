@@ -177,7 +177,7 @@ export function WalletDashboard({ userId }: WalletDashboardProps) {
                           {getStatusBadge(transaction.status)}
                         </div>
                         {transaction.description ? (
-                          <p className="text-sm text-gray-600">
+                          <p className="sm:text-sm text-xs text-gray-600">
                             {transaction.description}
                           </p>
                         ) : null}
@@ -188,7 +188,7 @@ export function WalletDashboard({ userId }: WalletDashboardProps) {
                     </div>
                     <div className="text-right">
                       <p
-                        className={`text-lg font-semibold ${
+                        className={`sm:text-lg text-md font-semibold ${
                           isCredit(transaction.type)
                             ? "text-green-600"
                             : "text-red-600"

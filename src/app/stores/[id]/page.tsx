@@ -21,7 +21,6 @@ import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 
 import { CongratulationsModal } from "@/components/CongratulationsModal";
-import { DiscountSuccessModal } from "@/components/DiscountSuccessModal";
 import { UnlockDiscountModal } from "@/components/UnlockDiscountModal";
 import { VideoAdsModal } from "@/components/VideoAdsModal";
 import { PlaceHolderTypeEnum } from "@/data/constants";
@@ -42,6 +41,7 @@ import {
   QUICK_PAY_FOR_DISCOUNT_MUTATION,
   EXCHANGE_UNLOCK_MUTATION,
 } from "@/lib/graphql-queries";
+import { contentfulImageLoader } from "@/lib/image-utils";
 import { openInGoogleMaps } from "@/lib/maps";
 import { Button } from "@/shared/components/Button";
 import { Card } from "@/shared/components/Card";
@@ -89,7 +89,8 @@ export default function StoresDetailPage(): React.JSX.Element {
   const [showUnlockModal, setShowUnlockModal] = useState(false);
   const [showVideoAdsModal, setShowVideoAdsModal] = useState(false);
   const [showCongratulations, setShowCongratulations] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
+  const [_, setShowSuccess] = useState(false);
+  const [showQuickPaySuccess, setShowQuickPaySuccess] = useState(false);
   const [unlockToken, setUnlockToken] = useState<string | null>(null);
   const [selectedDiscount, setSelectedDiscount] = useState<{
     id: string;
@@ -595,16 +596,12 @@ export default function StoresDetailPage(): React.JSX.Element {
       });
 
       if (data?.quickPayForDiscount) {
-        toast({
-          title: "¡Pago exitoso!",
-          description: "Cupón agregado a Mis Cupones.",
-        });
         try {
           void queryClient.invalidateQueries({ queryKey: ["coupons"] });
         } catch (_e) {
           // ignore
         }
-        router.push("/my-coupons");
+        setShowQuickPaySuccess(true);
       } else {
         throw new Error("Pago Rápido falló");
       }
@@ -1258,13 +1255,43 @@ export default function StoresDetailPage(): React.JSX.Element {
         }}
       />
 
-      <DiscountSuccessModal
-        isOpen={showSuccess}
-        onClose={() => setShowSuccess(false)}
-        restaurantName={parsedStore?.name ?? ""}
-        discountPercentage={parsedStore?.discount.percentage ?? 10}
-        points={parsedStore?.discount.points ?? 0}
-      />
+      {/* Quick Pay Success Modal */}
+      {showQuickPaySuccess && typeof window !== "undefined"
+        ? createPortal(
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 sm:p-6">
+              <div className="bg-linear-to-br from-white to-white rounded-2xl shadow-2xl max-w-md w-full p-6 sm:p-8 text-center animate-bounce-in">
+                <Image
+                  loader={contentfulImageLoader}
+                  src="/success-modal.jpg"
+                  alt="Success"
+                  width={400}
+                  height={100}
+                  className="mx-auto mb-4 sm:mb-6 w-full h-auto max-w-[300px] sm:max-w-[400px]"
+                />
+
+                {/* Action Buttons */}
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                  <button
+                    onClick={() => setShowQuickPaySuccess(false)}
+                    className="w-full text-gray-700 bg-gray-200 font-semibold py-3 sm:py-4 px-4 sm:px-6 rounded-xl hover:bg-gray-300 transition-colors shadow-lg text-sm sm:text-base"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowQuickPaySuccess(false);
+                      router.push("/my-coupons");
+                    }}
+                    className="w-full text-white bg-green-600 font-semibold py-3 sm:py-4 px-4 sm:px-6 rounded-xl hover:bg-green-400 transition-colors shadow-lg text-sm sm:text-base"
+                  >
+                    Ver Mis Cupones
+                  </button>
+                </div>
+              </div>
+            </div>,
+            document.body
+          )
+        : null}
 
       {/* All Hours Modal */}
       {showAllHours &&
