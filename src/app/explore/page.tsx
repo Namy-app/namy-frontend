@@ -4,6 +4,7 @@ import { useClosestStores } from "@/domains/store/hooks/query/useClosestStores";
 import { useStores } from "@/domains/store/hooks/query/useStores";
 import { useMyLevel } from "@/domains/user/hooks/query/useMyLevel";
 import { BasicLayout } from "@/layouts/BasicLayout";
+import { useAuthStore } from "@/store/useAuthStore";
 
 import { CategoryCards } from "./components/CategoryCards";
 import { FeaturedCarousel } from "./components/FeaturedCarousel";
@@ -12,13 +13,15 @@ import { PageFooter } from "./components/PageFooter";
 // import { GamificationCard } from "./components/GamificationCard"; // Unused component
 
 export default function ExplorePage(): React.JSX.Element {
+  const { user } = useAuthStore();
   const { data: closestStores, isLoading: isLoadingClosestStores } =
     useClosestStores();
   const { data: storesResult, isLoading: isLoadingStores } = useStores();
   const { data: myLevel } = useMyLevel();
 
   // For guests, show 0% discount (no user-specific discounts)
-  const discountPercentage = myLevel?.discountPercentage ?? 10;
+  const discountPercentage =
+    (user?.isPremium ? 15 : myLevel?.discountPercentage) ?? 10;
 
   return (
     <BasicLayout className="bg-gradient-hero">

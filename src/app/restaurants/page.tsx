@@ -22,6 +22,7 @@ import { BasicLayout } from "@/layouts/BasicLayout";
 import { Button } from "@/shared/components/Button";
 import { Card } from "@/shared/components/Card";
 import { Input } from "@/shared/components/Input";
+import { useAuthStore } from "@/store/useAuthStore";
 
 // Restaurant type definition
 interface Restaurant {
@@ -68,6 +69,9 @@ export default function RestaurantListingPage(): React.JSX.Element {
   );
 
   const { data: myLevel } = useMyLevel();
+  const { user } = useAuthStore();
+  const discountPercentage =
+    (user?.isPremium ? 15 : myLevel?.discountPercentage) ?? 10;
 
   const restaurants: Restaurant[] = allStores.map((store) => ({
     id: store.id,
@@ -78,7 +82,7 @@ export default function RestaurantListingPage(): React.JSX.Element {
     image:
       store.imageUrl ||
       "https://images.unsplash.com/photo-1565299507177-b0ac66763828?w=800&auto=format&fit=crop",
-    discount: myLevel?.discountPercentage ?? 10, // Default discount
+    discount: discountPercentage, // Default discount
     distance: "N/A", // Distance calculation would need geolocation
   }));
 

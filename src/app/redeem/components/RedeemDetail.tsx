@@ -245,7 +245,7 @@ export default function RedeemDetail({
   const canRedeem = isActive && !isExpired && !redeemed;
   const discountText = CouponDecoder.formatDiscountValue(
     couponData.discount.type,
-    couponData.discount.value
+    couponData.value
   );
 
   return (

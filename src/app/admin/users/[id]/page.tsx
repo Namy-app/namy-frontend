@@ -304,8 +304,8 @@ export default function UserDetailsPage({ params }: PageProps) {
                               <p className="text-sm text-muted-foreground mb-2">
                                 {coupon.discount.title} -{" "}
                                 {coupon.discount.type === "percentage"
-                                  ? `${coupon.discount.value}%`
-                                  : `$${coupon.discount.value}`}{" "}
+                                  ? `${coupon.value}%`
+                                  : `$${coupon.value}`}{" "}
                                 off
                               </p>
                             ) : null}
