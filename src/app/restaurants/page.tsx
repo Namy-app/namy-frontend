@@ -56,7 +56,6 @@ let timeout: NodeJS.Timeout;
 export default function RestaurantListingPage(): React.JSX.Element {
   const [filters, setFilters] = useState<StoreFilters>({
     categoryId: "restaurant",
-    active: true,
   });
   const { data: storesResult, isLoading } = useStores(filters);
   const allStores = storesResult?.data ?? [];
