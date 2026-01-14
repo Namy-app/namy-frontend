@@ -98,6 +98,7 @@ export default function StoresDetailPage(): React.JSX.Element {
   const [selectedCatalogImage, setSelectedCatalogImage] = useState<
     string | null
   >(null);
+  const [isGeneratingCoupon, setIsGeneratingCoupon] = useState(false);
 
   // Prevent body scroll when modal is open
   useEffect(() => {
@@ -462,6 +463,11 @@ export default function StoresDetailPage(): React.JSX.Element {
     const discountId = firstActiveDiscount.id;
 
     try {
+      // Set loading state for premium users
+      if (user?.isPremium) {
+        setIsGeneratingCoupon(true);
+      }
+
       toast({ title: "Generando cupón...", description: "Por favor espera." });
 
       const data = await graphqlRequest<{
@@ -493,21 +499,29 @@ export default function StoresDetailPage(): React.JSX.Element {
       });
 
       if (data?.generateCoupon) {
-        toast({
-          title: "Cupón creado",
-          description: "Cupón agregado a Mis Cupones.",
-        });
         // Ensure coupons cache is refreshed so UI shows the new coupon
         try {
           void queryClient.invalidateQueries({ queryKey: ["coupons"] });
         } catch (_e) {
           // ignore
         }
-        router.push("/my-coupons");
+
+        // Show success alert before redirecting
+        toast({
+          title: "¡Cupón creado exitosamente!",
+          description: "Tu cupón está listo. Redirigiendo a Mis Cupones...",
+        });
+
+        // Wait a moment for user to see the success message
+        setTimeout(() => {
+          setIsGeneratingCoupon(false);
+          router.push("/my-coupons");
+        }, 1500);
       } else {
         throw new Error("No se recibió cupón del servidor");
       }
     } catch (err) {
+      setIsGeneratingCoupon(false);
       const message = err instanceof Error ? err.message : String(err);
       toast({
         variant: "destructive",
@@ -737,6 +751,26 @@ export default function StoresDetailPage(): React.JSX.Element {
 
   return (
     <BasicLayout className="bg-gradient-hero pb-20">
+      {/* Loading Overlay for Premium Users */}
+      {isGeneratingCoupon && typeof window !== "undefined"
+        ? createPortal(
+            <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+              <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full mx-4 text-center animate-bounce-in">
+                <div className="flex flex-col items-center gap-4">
+                  <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+                  <h3 className="text-xl font-bold text-foreground">
+                    Generando tu cupón
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Por favor espera mientras creamos tu cupón...
+                  </p>
+                </div>
+              </div>
+            </div>,
+            document.body
+          )
+        : null}
+
       {!parsedStore ? (
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-center">
@@ -884,11 +918,19 @@ export default function StoresDetailPage(): React.JSX.Element {
                         {firstActiveDiscount ? (
                           <Button
                             onClick={handleUnlockDiscountClick}
-                            className="w-full bg-white text-rose-600 hover:bg-white/95 font-bold rounded-full shadow-lg py-4"
+                            disabled={isGeneratingCoupon}
+                            className="w-full bg-white text-rose-600 hover:bg-white/95 font-bold rounded-full shadow-lg py-4 disabled:opacity-50 disabled:cursor-not-allowed"
                           >
-                            {user?.isPremium
-                              ? "Desbloquear descuento ahora"
-                              : "Desbloquear descuento"}
+                            {isGeneratingCoupon ? (
+                              <span className="flex items-center justify-center gap-2">
+                                <Loader2 className="animate-spin" />
+                                Generando cupón...
+                              </span>
+                            ) : user?.isPremium ? (
+                              "Desbloquear descuento ahora"
+                            ) : (
+                              "Desbloquear descuento"
+                            )}
                           </Button>
                         ) : (
                           <h6 className="text-center text-white bg-black/50 px-4 py-2 rounded-full">

@@ -30,6 +30,7 @@ import { useToast } from "@/hooks/use-toast";
 import { BasicLayout } from "@/layouts/BasicLayout";
 import { getInitials, getUserLevelTitle } from "@/lib/user.lib";
 import { extractErrorMessage } from "@/lib/utils";
+import CrispProvider from "@/providers/CrispProvider";
 import { Button } from "@/shared/components/Button";
 import { Card } from "@/shared/components/Card";
 import { useAuthStore } from "@/store/useAuthStore";
@@ -139,7 +140,7 @@ export default function ProfilePage(): React.JSX.Element | null {
                   <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                 ) : (
                   <span className="text-2xl font-bold text-foreground">
-                    ${walletBalance?.balance || "0"}{" "}
+                    ${((walletBalance?.balance ?? 0) / 100).toFixed(2)}{" "}
                     {walletBalance?.currency || "MXN"}
                   </span>
                 )}
@@ -168,15 +169,6 @@ export default function ProfilePage(): React.JSX.Element | null {
                 </div>
               ) : null}
             </div>
-
-            {/* Points Card */}
-            {/* TODO: Hide until points is implemented */}
-            {/* <Card className="mt-4 p-4 bg-card border-border">
-              <div className="text-3xl font-bold text-primary mb-1">
-                8,450 🍽️
-              </div>
-              <p className="text-sm text-muted-foreground">Ñamy Points</p>
-            </Card> */}
           </div>
         </div>
 
@@ -285,6 +277,38 @@ export default function ProfilePage(): React.JSX.Element | null {
               <p className="text-white/80 text-xs mt-2">350 XP to next level</p>
             </div>
           </Card>
+
+          {/* Premium Section */}
+          {!user.isPremium ? (
+            <Card className="p-6 bg-gradient-secondary text-secondary-foreground border-0 shadow-glow text-center">
+              <Zap className="w-12 h-12 mx-auto mb-3 text-secondary-foreground" />
+              <h3 className="text-xl font-bold mb-2">
+                🚀 Upgrade to Ñamy Premium
+              </h3>
+              <p className="text-secondary-foreground/90 mb-4">
+                Earn 2× points on every order!
+              </p>
+              <Link
+                href="/subscription"
+                className="w-full bg-white text-secondary hover:bg-white/90 block font-semibold rounded-sm px-4 py-2"
+              >
+                Hazte Premium
+              </Link>
+            </Card>
+          ) : (
+            <Card className="p-6 bg-gradient-primary text-white border-0 shadow-glow text-center">
+              <Crown className="w-12 h-12 mx-auto mb-3 text-white" />
+              <h3 className="text-xl font-bold mb-2">✨ Ñamy Premium Member</h3>
+              <p className="text-white/90 mb-4">
+                ¡Estás ganando 2× puntos en cada pedido!
+              </p>
+              <div className="space-y-2 text-sm text-white/80">
+                <p>✅ Multiplicador de puntos activo</p>
+                <p>✅ Soporte al cliente prioritario</p>
+                <p>✅ Acceso exclusivo a restaurantes</p>
+              </div>
+            </Card>
+          )}
 
           {/* Points Breakdown */}
           {/* TODO: Hide until leadership is implemented */}
@@ -464,38 +488,6 @@ export default function ProfilePage(): React.JSX.Element | null {
             </Button>
           </Card>
 
-          {/* Premium Section */}
-          {!user.isPremium ? (
-            <Card className="p-6 bg-gradient-secondary text-secondary-foreground border-0 shadow-glow text-center">
-              <Zap className="w-12 h-12 mx-auto mb-3 text-secondary-foreground" />
-              <h3 className="text-xl font-bold mb-2">
-                🚀 Upgrade to Ñamy Premium
-              </h3>
-              <p className="text-secondary-foreground/90 mb-4">
-                Earn 2× points on every order!
-              </p>
-              <Link
-                href="/subscription"
-                className="w-full bg-white text-secondary hover:bg-white/90 block font-semibold rounded-sm px-4 py-2"
-              >
-                Hazte Premium
-              </Link>
-            </Card>
-          ) : (
-            <Card className="p-6 bg-gradient-primary text-white border-0 shadow-glow text-center">
-              <Crown className="w-12 h-12 mx-auto mb-3 text-white" />
-              <h3 className="text-xl font-bold mb-2">✨ Ñamy Premium Member</h3>
-              <p className="text-white/90 mb-4">
-                ¡Estás ganando 2× puntos en cada pedido!
-              </p>
-              <div className="space-y-2 text-sm text-white/80">
-                <p>✅ Multiplicador de puntos activo</p>
-                <p>✅ Soporte al cliente prioritario</p>
-                <p>✅ Acceso exclusivo a restaurantes</p>
-              </div>
-            </Card>
-          )}
-
           {/* Settings & Support */}
           <Card className="p-5 bg-card border-border">
             <h3 className="text-lg font-bold text-foreground mb-4">
@@ -529,6 +521,9 @@ export default function ProfilePage(): React.JSX.Element | null {
                   <ChevronRight className="w-5 h-5 text-muted-foreground" />
                 </button>
               ))}
+
+              <CrispProvider />
+
               <button
                 onClick={() => {
                   void handleLogout();

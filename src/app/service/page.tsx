@@ -34,6 +34,7 @@ let timeout: NodeJS.Timeout;
 export default function ServicesPage(): React.JSX.Element {
   const [filters, setFilters] = useState<StoreFilters>({
     noRestaurants: true,
+    active: true,
   });
   const [searchQuery, setSearchQuery] = useState("");
 

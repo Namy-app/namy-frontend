@@ -382,7 +382,7 @@ export default function MyCouponsPage(): React.JSX.Element {
                   >
                     <CouponCard
                       coupon={coupon}
-                      discountPercentage={coupon.value ?? 10}
+                      discountPercentage={coupon?.discount?.value ?? 10}
                       onViewQr={() => void handleViewQR(coupon)}
                       onShare={() => void handleShare(coupon)}
                       onDelete={() => void handleDelete(coupon)}
