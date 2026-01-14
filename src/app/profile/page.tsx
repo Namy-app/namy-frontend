@@ -57,6 +57,8 @@ export default function ProfilePage(): React.JSX.Element | null {
     wallet?.id || ""
   );
   const allStores = storesResult?.data ?? [];
+  const discountPercentage =
+    (user?.isPremium ? 15 : myLevel?.discountPercentage) ?? 10;
 
   if (!user) {
     return null;
@@ -403,7 +405,7 @@ export default function ProfilePage(): React.JSX.Element | null {
                     </div>
                     <div className="text-right shrink-0">
                       <p className="font-bold text-primary text-lg">
-                        {myLevel?.discountPercentage ?? 10}% OFF
+                        {discountPercentage}% OFF
                       </p>
                       {/* <p className="text-xs text-muted-foreground">+100 pts</p> */}
                     </div>

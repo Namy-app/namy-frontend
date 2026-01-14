@@ -419,6 +419,7 @@ export interface UserCoupon {
   qrCode: string;
   url: string;
   used: boolean;
+  value: number;
   usedAt?: string;
   expiresAt: string;
   createdAt: string;
