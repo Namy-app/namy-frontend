@@ -46,7 +46,7 @@ export const CreateDiscountModal = ({
     value: "15",
     // TODO: Undo once we confirm we want to have dynamic values
     // value: discount?.value.toString() ?? "15",
-    code: discount?.code ?? "",
+    code: discount?.code ?? undefined,
     startDate: discount?.startDate
       ? formatDateToYMDSafe(discount.startDate)
       : "",

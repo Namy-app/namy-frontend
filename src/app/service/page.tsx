@@ -12,6 +12,7 @@ import { BasicLayout } from "@/layouts/BasicLayout";
 import { Button } from "@/shared/components/Button";
 import { Card } from "@/shared/components/Card";
 import { Input } from "@/shared/components/Input";
+import { useAuthStore } from "@/store/useAuthStore";
 
 // Service type definition
 interface Service {
@@ -34,13 +35,17 @@ let timeout: NodeJS.Timeout;
 export default function ServicesPage(): React.JSX.Element {
   const [filters, setFilters] = useState<StoreFilters>({
     noRestaurants: true,
+    active: true,
   });
   const [searchQuery, setSearchQuery] = useState("");
 
   const { data: storesResult, isLoading } = useStores(filters);
+  const { user } = useAuthStore();
   const { data: myLevel } = useMyLevel();
   const allStores = storesResult?.data ?? [];
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
+  const discountPercentage =
+    (user?.isPremium ? 15 : myLevel?.discountPercentage) ?? 10;
 
   const servicesData: Service[] = allStores.map((store) => ({
     id: store.id,
@@ -50,7 +55,7 @@ export default function ServicesPage(): React.JSX.Element {
       store.imageUrl ||
       "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=800&auto=format&fit=crop",
     category: store.categoryId || "Service",
-    discount: myLevel?.discountPercentage ?? 10,
+    discount: discountPercentage,
     rating: store.averageRating ?? 4.7,
     distance: "N/A", // Distance calculation would need geolocation
   }));

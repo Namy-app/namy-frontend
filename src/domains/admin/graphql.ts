@@ -501,6 +501,7 @@ export const GET_USER_DETAILS_WITH_ACTIVITY = gql`
         url
         used
         usedAt
+        value
         expiresAt
         createdAt
         storeId

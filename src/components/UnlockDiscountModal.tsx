@@ -3,6 +3,7 @@
 import { X, Play, CreditCard } from "lucide-react";
 
 import { useMyLevel } from "@/domains/user/hooks/query/useMyLevel";
+import { useAuthStore } from "@/store/useAuthStore";
 
 interface UnlockDiscountModalProps {
   isOpen: boolean;
@@ -18,7 +19,9 @@ export function UnlockDiscountModal({
   onQuickPay,
 }: UnlockDiscountModalProps): React.JSX.Element | null {
   const { data: levelInfo } = useMyLevel();
-  const discountPercentage = levelInfo?.discountPercentage ?? 10;
+  const { user } = useAuthStore();
+  const discountPercentage =
+    (user?.isPremium ? 15 : levelInfo?.discountPercentage) ?? 10;
   const levelName = levelInfo?.levelName ?? "Novato";
 
   if (!isOpen) {
@@ -55,7 +58,7 @@ export function UnlockDiscountModal({
                       Ver Anuncio
                     </h3>
                     <p className="text-white/90 text-sm">
-                      Gratis • 15 segundos
+                      Gratis • 30 segundos
                     </p>
                   </div>
                 </div>
