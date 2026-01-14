@@ -99,7 +99,7 @@ export function RestrictionModal({
         </div>
 
         {/* Content */}
-        <div className="p-6 overflow-y-auto max-h-[calc(70vh-200px)]">
+        <div className="p-6 overflow-y-auto max-h-[calc(85vh-140px)]">
           {!hasAnyRestrictions ? (
             <div className="text-center py-8">
               <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
