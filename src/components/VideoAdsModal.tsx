@@ -98,8 +98,12 @@ export function VideoAdsModal({
         origin: { y: 0.6 },
         colors: colors,
       });
+
+      void handleExchangeToken();
     }
   }, [unlockToken]);
+
+  const isLastAd = currentAdIndex === ads.length - 1;
 
   // Handle watch completion
   const handleWatchComplete = async (watchDuration: number, ad: VideoAd) => {
@@ -112,9 +116,6 @@ export function VideoAdsModal({
       console.error("Ad is missing id:", ad);
       return;
     }
-
-    // Determine the next action BEFORE making the API call
-    const isLastAd = currentAdIndex === ads.length - 1;
 
     // Optimistically move to next video immediately for better UX
     // The API call will happen in the background
@@ -227,13 +228,12 @@ export function VideoAdsModal({
               </p>
             </div>
 
-            <button
-              onClick={() => void handleExchangeToken()}
-              className="w-full py-3 sm:py-4 bg-linear-to-r from-green-500 to-emerald-600 text-white font-semibold rounded-lg hover:from-green-600 hover:to-emerald-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm sm:text-base"
-            >
-              <Gift className="w-4 h-4 sm:w-5 sm:h-5" />
-              Desbloquear tu cupón
-            </button>
+            <div className="text-center">
+              <Loader2 className="w-8 h-8 text-green-600 animate-spin mx-auto mb-4" />
+              <p className="text-sm sm:text-base text-muted-foreground">
+                Generando tu cupón...
+              </p>
+            </div>
             {exchangeUnlockMutation?.isError ? (
               <p className="text-sm text-red-500 mt-4 bg-gray-900 text-center p-3">
                 {(exchangeUnlockMutation.error as Error).message}
@@ -243,8 +243,8 @@ export function VideoAdsModal({
         ) : null}
 
         {/* Video player */}
-        {!loadingAds && !adError && ads.length > 0 && !unlockToken && (
-          <>
+        {!loadingAds && !adError && ads.length > 0 && (
+          <div className={unlockToken ? "hidden" : ""}>
             <div className="rounded-t-lg text-card-foreground h-full flex items-center bg-[linear-gradient(180deg,#f5e6c8_0%,#f0c999_50%,#e8b884_100%)] shadow-sm  border-0 hover:shadow-glow transition-all cursor-pointer group">
               <Link
                 href="/subscription
@@ -274,6 +274,7 @@ export function VideoAdsModal({
                   description=""
                   duration={currentAd.duration}
                   autoplay
+                  shouldPauseOnComplete={isLastAd}
                   onWatchComplete={(watchDuration) => {
                     const adToReport = currentAd;
                     void handleWatchComplete(watchDuration, adToReport);
@@ -295,7 +296,7 @@ export function VideoAdsModal({
               </div>
             ) : null}
             {/* </div> */}
-          </>
+          </div>
         )}
       </div>
     </div>

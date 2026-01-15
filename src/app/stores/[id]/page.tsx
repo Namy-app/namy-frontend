@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { useRouter, useParams } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
 
 import { CongratulationsModal } from "@/components/CongratulationsModal";
@@ -26,6 +26,7 @@ import { VideoAdsModal } from "@/components/VideoAdsModal";
 import { PlaceHolderTypeEnum } from "@/data/constants";
 import { StoreType } from "@/domains/admin";
 import { useStoreDiscounts, useStoreCatalogs } from "@/domains/admin/hooks";
+import { GeneratingCouponModal } from "@/domains/coupons/GeneratingCouponModal";
 import { useWallet } from "@/domains/payment/hooks";
 import { CatalogCarousel } from "@/domains/store/components/CatalogCarousel";
 import { useStore } from "@/domains/store/hooks";
@@ -90,6 +91,7 @@ export default function StoresDetailPage(): React.JSX.Element {
   const [showVideoAdsModal, setShowVideoAdsModal] = useState(false);
   const [showCongratulations, setShowCongratulations] = useState(false);
   const [_, setShowSuccess] = useState(false);
+  const [isGeneratingCoupon, setIsGeneratingCoupon] = useState(false);
   const [showQuickPaySuccess, setShowQuickPaySuccess] = useState(false);
   const [unlockToken, setUnlockToken] = useState<string | null>(null);
   const [selectedDiscount, setSelectedDiscount] = useState<{
@@ -133,6 +135,52 @@ export default function StoresDetailPage(): React.JSX.Element {
   const isRestaurant = store?.categoryId?.toLowerCase() === "restaurant";
   const storeCategoryType = isRestaurant ? "Restaurant" : "Store";
 
+  const isValidDiscount = useMemo(() => {
+    if (!discountsData?.data?.[0]) {
+      return false;
+    }
+
+    const discount = discountsData.data[0];
+
+    if (!discount?.active) {
+      return false;
+    }
+
+    const now = new Date();
+    if (discount.endDate && new Date(discount.endDate) < now) {
+      return false;
+    }
+
+    if (discount.startDate && new Date(discount.startDate) > now) {
+      return false;
+    }
+
+    if (discount.availableDaysAndTimes) {
+      const dayOfWeek = now.getDay() - 1; // 0 (Mon) to 6 (Sun)
+      const hourOfDay = now.getHours();
+      const { availableDays } = discount.availableDaysAndTimes;
+      const dayAvailability = availableDays.find(
+        (day) => day.dayIndex === dayOfWeek
+      );
+      if (!dayAvailability) {
+        return false;
+      }
+
+      const isWithinTimeRange = dayAvailability.timeRanges.some((timeRange) => {
+        return (
+          hourOfDay >= Number.parseInt(timeRange.start.split(":")[0]!, 10) &&
+          hourOfDay <= Number.parseInt(timeRange.end.split(":")[0]!, 10)
+        );
+      });
+
+      if (!isWithinTimeRange) {
+        return false;
+      }
+    }
+
+    return true;
+  }, [discountsData]);
+
   if (!isLoading && !store) {
     router.push("/explore");
     return <></>;
@@ -152,21 +200,6 @@ export default function StoresDetailPage(): React.JSX.Element {
           id: store.id,
           percentage: userLevel?.discountPercentage ?? 10,
           points: 0,
-          // id: firstActiveDiscount?.id,
-          // percentage:
-          //   firstActiveDiscount?.type === "PERCENTAGE"
-          //     ? firstActiveDiscount.value
-          //     : firstActiveDiscount?.type === "FIXED_AMOUNT"
-          //       ? Math.round((firstActiveDiscount.value / 100) * 10) // Convert fixed amount to approximate percentage
-          //       : 15, // Fallback if no discount
-          // points: firstActiveDiscount?.usedCount ?? 0, // Use actual usage count
-          // restrictions: firstActiveDiscount?.description
-          //   ? [firstActiveDiscount.description]
-          //   : [
-          //       "Show your QR code before paying",
-          //       "Valid for dine-in only",
-          //       "Cannot be combined with other offers",
-          //     ],
         },
         hours:
           store.openDays && typeof store.openDays === "object"
@@ -433,10 +466,6 @@ export default function StoresDetailPage(): React.JSX.Element {
   };
 
   const handleUnlockDiscount = async (): Promise<void> => {
-    if (!parsedStore) {
-      return;
-    }
-
     if (!isAuthenticated) {
       toast({
         variant: "default",
@@ -462,7 +491,8 @@ export default function StoresDetailPage(): React.JSX.Element {
     const discountId = firstActiveDiscount.id;
 
     try {
-      toast({ title: "Generando cupón...", description: "Por favor espera." });
+      // Set loading state for premium users
+      setIsGeneratingCoupon(true);
 
       const data = await graphqlRequest<{
         generateCoupon: {
@@ -518,10 +548,6 @@ export default function StoresDetailPage(): React.JSX.Element {
   };
 
   const handleQuickPay = async (): Promise<void> => {
-    if (!parsedStore) {
-      return;
-    }
-
     if (!isAuthenticated) {
       toast({
         variant: "default",
@@ -529,16 +555,6 @@ export default function StoresDetailPage(): React.JSX.Element {
         description: "Por favor inicia sesión para usar Pago Rápido.",
       });
       router.push("/");
-      return;
-    }
-
-    // Check if discount ID is available
-    if (!parsedStore.discount?.id) {
-      toast({
-        variant: "destructive",
-        title: "No hay descuento disponible",
-        description: "Esta tienda no tiene descuentos activos en este momento.",
-      });
       return;
     }
 
@@ -562,10 +578,7 @@ export default function StoresDetailPage(): React.JSX.Element {
     }
 
     try {
-      toast({
-        title: "Procesando pago...",
-        description: "Deduciendo $9MXN de tu cartera.",
-      });
+      setIsGeneratingCoupon(true);
 
       const data = await graphqlRequest<{
         quickPayForDiscount: {
@@ -601,11 +614,14 @@ export default function StoresDetailPage(): React.JSX.Element {
         } catch (_e) {
           // ignore
         }
+        setIsGeneratingCoupon(false);
         setShowQuickPaySuccess(true);
       } else {
+        setIsGeneratingCoupon(false);
         throw new Error("Pago Rápido falló");
       }
     } catch (err) {
+      setIsGeneratingCoupon(false);
       const message = err instanceof Error ? err.message : String(err);
 
       // Check if error is due to insufficient funds
@@ -881,7 +897,7 @@ export default function StoresDetailPage(): React.JSX.Element {
                         this discount
                       </p> */}
                       <div className="mt-4">
-                        {firstActiveDiscount ? (
+                        {isValidDiscount ? (
                           <Button
                             onClick={handleUnlockDiscountClick}
                             className="w-full bg-white text-rose-600 hover:bg-white/95 font-bold rounded-full shadow-lg py-4"
@@ -1424,6 +1440,7 @@ export default function StoresDetailPage(): React.JSX.Element {
             document.body
           )
         : null}
+      <GeneratingCouponModal isOpen={isGeneratingCoupon} />
     </BasicLayout>
   );
 }
