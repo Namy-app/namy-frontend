@@ -55,19 +55,29 @@ export function VideoAdsModal({
   const sessionId = adPairData?.sessionId;
   const currentAd: VideoAd | undefined = ads[currentAdIndex];
 
-  // Reset state when modal opens
+  // Reset state when modal opens/closes
   useEffect(() => {
     if (isOpen) {
       setCurrentAdIndex(0);
       setUnlockToken(null);
       setIsGeneratingCoupon(false);
       setProgress(0);
+    } else {
+      // When modal closes, ensure any video is stopped
+      // This is a cleanup safety measure
+      const videos = document.querySelectorAll("video");
+      videos.forEach((video) => {
+        video.pause();
+        video.currentTime = 0;
+      });
     }
   }, [isOpen]);
 
   // Progress bar animation (8 seconds)
   useEffect(() => {
-    if (!isGeneratingCoupon) {return;}
+    if (!isGeneratingCoupon) {
+      return;
+    }
 
     const duration = 8000; // 8 seconds
     const intervalTime = 50; // Update every 50ms for smooth animation
