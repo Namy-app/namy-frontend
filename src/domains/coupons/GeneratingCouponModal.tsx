@@ -8,6 +8,10 @@ interface GeneratingCouponModalProps {
   isLoading?: boolean;
   error?: string | null;
   onClose?: () => void;
+  actionButton?: {
+    label: string;
+    onClick: () => void;
+  };
 }
 
 export function GeneratingCouponModal({
@@ -15,6 +19,7 @@ export function GeneratingCouponModal({
   isLoading = true,
   error = null,
   onClose,
+  actionButton,
 }: GeneratingCouponModalProps) {
   if (!isOpen) {
     return null;
@@ -50,12 +55,29 @@ export function GeneratingCouponModal({
             <p className="text-base text-muted-foreground whitespace-pre-line">
               {error}
             </p>
-            {onClose ? <button
-                onClick={onClose}
-                className="mt-6 px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
-              >
-                Cerrar
-              </button> : null}
+
+            {/* Action Buttons */}
+            <div className="flex flex-col gap-2 w-full mt-6">
+              {actionButton ? <button
+                  onClick={() => {
+                    actionButton.onClick();
+                    onClose?.();
+                  }}
+                  className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+                >
+                  {actionButton.label}
+                </button> : null}
+              {onClose ? <button
+                  onClick={onClose}
+                  className={`px-6 py-2 rounded-lg transition-colors ${
+                    actionButton
+                      ? "bg-muted text-foreground hover:bg-muted/80"
+                      : "bg-primary text-primary-foreground hover:bg-primary/90"
+                  }`}
+                >
+                  {actionButton ? "Cancelar" : "Cerrar"}
+                </button> : null}
+            </div>
           </div> : null}
       </div>
     </div>

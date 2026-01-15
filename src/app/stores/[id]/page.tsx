@@ -95,6 +95,8 @@ export default function StoresDetailPage(): React.JSX.Element {
   const [couponGenerationError, setCouponGenerationError] = useState<
     string | null
   >(null);
+  const [quickPayError, setQuickPayError] = useState<string | null>(null);
+  const [showAddFundsAction, setShowAddFundsAction] = useState(false);
   const [showQuickPaySuccess, setShowQuickPaySuccess] = useState(false);
   const [unlockToken, setUnlockToken] = useState<string | null>(null);
   const [selectedDiscount, setSelectedDiscount] = useState<{
@@ -680,19 +682,10 @@ export default function StoresDetailPage(): React.JSX.Element {
     // Check wallet balance before attempting payment
     const QUICK_PAY_COST = 900; // $9 MXN in cents
     if (wallet && wallet.balance < QUICK_PAY_COST) {
-      toast({
-        variant: "destructive",
-        title: "Fondos insuficientes",
-        description: `Necesitas $${QUICK_PAY_COST / 100} MXN pero solo tienes $${wallet.balance / 100} MXN. Agrega fondos para continuar.`,
-        action: (
-          <button
-            onClick={() => router.push("/wallet")}
-            className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700"
-          >
-            Agregar Fondos
-          </button>
-        ),
-      });
+      setQuickPayError(
+        `Fondos insuficientes\n\nNecesitas $${QUICK_PAY_COST / 100} MXN pero solo tienes $${wallet.balance / 100} MXN. Agrega fondos para continuar.`
+      );
+      setShowAddFundsAction(true);
       return;
     }
 
@@ -743,29 +736,8 @@ export default function StoresDetailPage(): React.JSX.Element {
       setIsGeneratingCoupon(false);
       const message = err instanceof Error ? err.message : String(err);
 
-      // Check if error is due to insufficient funds
-      if (message.toLowerCase().includes("insufficient funds")) {
-        toast({
-          variant: "destructive",
-          title: "Fondos insuficientes",
-          description:
-            "No tienes saldo suficiente. Agrega fondos a tu billetera.",
-          action: (
-            <button
-              onClick={() => router.push("/wallet")}
-              className="bg-lime-600 text-white px-4 py-2 rounded-md text-sm hover:bg-lime-700"
-            >
-              Añadir
-            </button>
-          ),
-        });
-      } else {
-        toast({
-          variant: "destructive",
-          title: "Payment failed",
-          description: message,
-        });
-      }
+      // Set error message for modal
+      setQuickPayError(message);
     }
   };
 
@@ -1572,13 +1544,23 @@ export default function StoresDetailPage(): React.JSX.Element {
           )
         : null}
       <GeneratingCouponModal
-        isOpen={isGeneratingCoupon}
-        isLoading={!couponGenerationError}
-        error={couponGenerationError}
+        isOpen={isGeneratingCoupon || !!quickPayError}
+        isLoading={isGeneratingCoupon && !couponGenerationError && !quickPayError}
+        error={couponGenerationError || quickPayError}
         onClose={() => {
           setIsGeneratingCoupon(false);
           setCouponGenerationError(null);
+          setQuickPayError(null);
+          setShowAddFundsAction(false);
         }}
+        actionButton={
+          showAddFundsAction
+            ? {
+                label: "Agregar Fondos",
+                onClick: () => router.push("/wallet"),
+              }
+            : undefined
+        }
       />
     </BasicLayout>
   );

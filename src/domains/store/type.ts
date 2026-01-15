@@ -57,6 +57,7 @@ export interface StoreFilters {
   noRestaurants?: boolean;
   lat?: number;
   lng?: number;
+  id?: string;
 }
 
 export interface PaginationInput {

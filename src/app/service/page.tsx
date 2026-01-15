@@ -1,10 +1,11 @@
 "use client";
 
-import { Grid3x3, Map, MapPin, Search, Star } from "lucide-react";
+import { Grid3x3, Map, MapPin, Search, Star, Info } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 
+import { AvailabilityGuideModal } from "@/components/AvailabilityGuideModal";
 import { useStores } from "@/domains/store/hooks";
 import { type StoreFilters } from "@/domains/store/type";
 import { useMyLevel } from "@/domains/user/hooks/query/useMyLevel";
@@ -24,7 +25,12 @@ interface Service {
   discount: number;
   rating: number;
   distance: string;
+  availabilityStatus: "available" | "soon" | "unavailable";
+  availabilityText?: string;
 }
+
+// Note: Now using calculateAvailabilityStatus from availability-utils
+// which uses real openDays data from the backend
 
 // (Removed unused mock data to satisfy TypeScript noUnusedLocals)
 
@@ -37,6 +43,7 @@ export default function ServicesPage(): React.JSX.Element {
     noRestaurants: true,
   });
   const [searchQuery, setSearchQuery] = useState("");
+  const [showGuideModal, setShowGuideModal] = useState(false);
 
   const { data: storesResult, isLoading } = useStores(filters);
   const { user } = useAuthStore();
@@ -46,18 +53,84 @@ export default function ServicesPage(): React.JSX.Element {
   const discountPercentage =
     (user?.isPremium ? 15 : myLevel?.discountPercentage) ?? 10;
 
-  const servicesData: Service[] = allStores.map((store) => ({
-    id: store.id,
-    slug: store.id,
-    name: store.name,
-    image:
-      store.imageUrl ||
-      "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=800&auto=format&fit=crop",
-    category: store.categoryId || "Service",
-    discount: discountPercentage,
-    rating: store.averageRating ?? 4.7,
-    distance: "N/A", // Distance calculation would need geolocation
-  }));
+  // Create a component to handle individual service availability
+  const ServiceCard = ({ store }: { store: (typeof allStores)[0] }) => {
+    const service: Service = {
+      id: store.id,
+      slug: store.id,
+      name: store.name,
+      image:
+        store.imageUrl ||
+        "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=800&auto=format&fit=crop",
+      category: store.categoryId || "Service",
+      discount: discountPercentage,
+      rating: store.averageRating ?? 4.7,
+      distance: "N/A",
+      availabilityStatus: store.discountAvailabilityStatus ?? "unavailable",
+      availabilityText: store.discountAvailabilityText,
+    };
+
+    return (
+      <Link href={`/stores/${service.id}`} key={service.id}>
+        <Card className="overflow-hidden hover:shadow-card hover:scale-[1.02] transition-all cursor-pointer bg-card border-border">
+          <div className="relative">
+            <Image
+              src={service.image}
+              alt={service.name}
+              width={400}
+              height={240}
+              className="w-full h-60 object-cover"
+              unoptimized
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.src =
+                  "https://placehold.co/400x240/fef2f2/f87171?text=Service+Image";
+              }}
+            />
+            <div className="absolute top-3 right-3 bg-primary text-primary-foreground px-3 py-1.5 rounded-full font-bold text-sm shadow-lg">
+              {service.discount}% OFF
+            </div>
+
+            {/* Availability Indicator */}
+            <div className="absolute top-3 left-3 flex items-center gap-2">
+              <div
+                className={`w-3 h-3 rounded-full ${
+                  service.availabilityStatus === "available"
+                    ? "bg-green-500"
+                    : service.availabilityStatus === "soon"
+                      ? "bg-yellow-500"
+                      : "bg-red-500"
+                }`}
+              />
+              {service.availabilityStatus === "soon" &&
+                service.availabilityText ? <span className="bg-black/70 text-white px-2 py-0.5 rounded-full text-xs font-medium">
+                    {service.availabilityText}
+                  </span> : null}
+            </div>
+          </div>
+
+          <div className="p-4">
+            <h3 className="font-bold text-lg text-foreground mb-2">
+              {service.name}
+            </h3>
+            <div className="flex items-center justify-between text-sm text-muted-foreground">
+              <div className="flex items-center gap-1">
+                <Star className="w-4 h-4 fill-primary text-primary" />
+                <span className="font-medium text-foreground">
+                  {service.rating}
+                </span>
+                <span>• {service.category}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <MapPin className="w-3 h-3" />
+                <span>{service.distance}</span>
+              </div>
+            </div>
+          </div>
+        </Card>
+      </Link>
+    );
+  };
 
   const handleSetSearchQuery = (query: string): void => {
     if (timeout) {
@@ -100,6 +173,15 @@ export default function ServicesPage(): React.JSX.Element {
             {/* View Mode Toggle */}
             <div className="flex gap-2 justify-center mt-4">
               <Button
+                onClick={() => setShowGuideModal(true)}
+                variant="outline"
+                size="sm"
+                className="gap-2"
+              >
+                <Info className="w-4 h-4" />
+                Guía
+              </Button>
+              <Button
                 onClick={() => setViewMode("grid")}
                 variant={viewMode === "grid" ? "default" : "outline"}
                 size="sm"
@@ -129,64 +211,15 @@ export default function ServicesPage(): React.JSX.Element {
               </div>
             ) : viewMode === "grid" ? (
               <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {servicesData.length === 0 ? (
+                {allStores.length === 0 ? (
                   <div className="col-span-full text-center py-12">
                     <p className="text-muted-foreground text-lg mb-4">
                       No services found
                     </p>
                   </div>
                 ) : (
-                  servicesData.map((service, index) => (
-                    <Card
-                      key={service.id}
-                      className="overflow-hidden cursor-pointer transition-all hover:shadow-card hover:scale-[1.02] bg-card border-border animate-slide-up"
-                      style={{ animationDelay: `${index * 0.1}s` }}
-                    >
-                      <Link href={`/stores/${service.id}`}>
-                        {/* Image */}
-                        <div className="relative">
-                          <Image
-                            src={service.image}
-                            alt={service.name}
-                            width={800}
-                            height={400}
-                            className="w-full h-48 object-cover"
-                            unoptimized
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.src =
-                                "https://placehold.co/800x400/e2e8f0/64748b?text=Service+Image";
-                            }}
-                          />
-                          <div className="absolute top-3 right-3 bg-[hsl(var(--services))] text-[hsl(var(--services-foreground))] px-3 py-1 rounded-full font-bold text-sm shadow-lg">
-                            {service.discount}% OFF
-                          </div>
-                        </div>
-
-                        {/* Content */}
-                        <div className="p-4">
-                          <h3 className="font-bold text-lg text-foreground mb-1">
-                            {service.name}
-                          </h3>
-                          <div className="flex items-center justify-between text-sm text-muted-foreground">
-                            {/* Rating & Category */}
-                            <div className="flex items-center gap-1">
-                              <Star className="w-4 h-4 fill-[hsl(var(--services))] text-[hsl(var(--services))]" />
-                              <span className="font-medium text-foreground">
-                                {service.rating}
-                              </span>
-                              <span>• {service.category}</span>
-                            </div>
-
-                            {/* Distance */}
-                            <div className="flex items-center gap-1">
-                              <MapPin className="w-3 h-3" />
-                              <span>{service.distance}</span>
-                            </div>
-                          </div>
-                        </div>
-                      </Link>
-                    </Card>
+                  allStores.map((store) => (
+                    <ServiceCard key={store.id} store={store} />
                   ))
                 )}
               </div>
@@ -208,6 +241,12 @@ export default function ServicesPage(): React.JSX.Element {
           </div>
         </div>
       </div>
+
+      {/* Availability Guide Modal */}
+      <AvailabilityGuideModal
+        isOpen={showGuideModal}
+        onClose={() => setShowGuideModal(false)}
+      />
     </BasicLayout>
   );
 }
