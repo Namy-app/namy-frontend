@@ -100,6 +100,8 @@ export default function StoresDetailPage(): React.JSX.Element {
   const [selectedCatalogImage, setSelectedCatalogImage] = useState<
     string | null
   >(null);
+  const [nextAvailableTime, setNextAvailableTime] = useState<Date | null>(null);
+  const [timeUntilNext, setTimeUntilNext] = useState<string>("");
 
   // Prevent body scroll when modal is open
   useEffect(() => {
@@ -134,6 +136,73 @@ export default function StoresDetailPage(): React.JSX.Element {
   const firstActiveDiscount = discountsData?.data?.find((d) => d.active);
   const isRestaurant = store?.categoryId?.toLowerCase() === "restaurant";
   const storeCategoryType = isRestaurant ? "Restaurant" : "Store";
+
+  // Calculate next available discount time
+  const calculateNextAvailableTime = useMemo(() => {
+    if (!discountsData?.data?.[0]) {
+      return null;
+    }
+
+    const discount = discountsData.data[0];
+    if (!discount?.active || !discount.availableDaysAndTimes) {
+      return null;
+    }
+
+    const now = new Date();
+    const { availableDays } = discount.availableDaysAndTimes;
+
+    // Try to find next available time today
+    const currentDayIndex = now.getDay() - 1; // Convert to 0-6 (Mon-Sun)
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
+
+    const todayAvailability = availableDays.find(
+      (day) => day.dayIndex === currentDayIndex
+    );
+
+    if (todayAvailability) {
+      for (const timeRange of todayAvailability.timeRanges) {
+        const startHour = Number.parseInt(timeRange.start.split(":")[0]!, 10);
+        const startMinute = Number.parseInt(timeRange.start.split(":")[1]!, 10);
+
+        if (
+          currentHour < startHour ||
+          (currentHour === startHour && currentMinute < startMinute)
+        ) {
+          const nextTime = new Date(now);
+          nextTime.setHours(startHour, startMinute, 0, 0);
+          return nextTime;
+        }
+      }
+    }
+
+    // Look for next available day
+    for (let i = 1; i <= 7; i++) {
+      const checkDayIndex = (currentDayIndex + i) % 7;
+      const dayAvailability = availableDays.find(
+        (day) => day.dayIndex === checkDayIndex
+      );
+
+      if (dayAvailability && dayAvailability.timeRanges.length > 0) {
+        const firstTimeRange = dayAvailability.timeRanges[0];
+        const startHour = Number.parseInt(
+          firstTimeRange!.start.split(":")[0]!,
+          10
+        );
+        const startMinute = Number.parseInt(
+          firstTimeRange!.start.split(":")[1]!,
+          10
+        );
+
+        const nextTime = new Date(now);
+        nextTime.setDate(now.getDate() + i);
+        nextTime.setHours(startHour, startMinute, 0, 0);
+        return nextTime;
+      }
+    }
+
+    return null;
+  }, [discountsData]);
 
   const isValidDiscount = useMemo(() => {
     if (!discountsData?.data?.[0]) {
@@ -180,6 +249,56 @@ export default function StoresDetailPage(): React.JSX.Element {
 
     return true;
   }, [discountsData]);
+
+  // Update next available time
+  useEffect(() => {
+    setNextAvailableTime(calculateNextAvailableTime);
+  }, [calculateNextAvailableTime]);
+
+  // Countdown timer
+  useEffect(() => {
+    if (!nextAvailableTime || isValidDiscount) {
+      setTimeUntilNext("");
+      return;
+    }
+
+    const updateCountdown = () => {
+      const now = new Date();
+      const diff = nextAvailableTime.getTime() - now.getTime();
+
+      if (diff <= 0) {
+        setTimeUntilNext("Disponible ahora");
+        // Refresh discount validity
+        window.location.reload();
+        return;
+      }
+
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor(
+        (diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+      );
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+      let countdownText = "";
+      if (days > 0) {
+        countdownText = `${days}d ${hours}h ${minutes}m`;
+      } else if (hours > 0) {
+        countdownText = `${hours}h ${minutes}m ${seconds}s`;
+      } else if (minutes > 0) {
+        countdownText = `${minutes}m ${seconds}s`;
+      } else {
+        countdownText = `${seconds}s`;
+      }
+
+      setTimeUntilNext(countdownText);
+    };
+
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 1000);
+
+    return () => clearInterval(interval);
+  }, [nextAvailableTime, isValidDiscount]);
 
   if (!isLoading && !store) {
     router.push("/explore");
@@ -907,13 +1026,23 @@ export default function StoresDetailPage(): React.JSX.Element {
                               : "Desbloquear descuento"}
                           </Button>
                         ) : (
-                          <h6 className="text-center text-white bg-black/50 px-4 py-2 rounded-full">
+                          <div className="text-center text-white bg-black/50 px-4 py-3 rounded-full">
                             {isLoadingDiscounts ? (
                               <Loader2 className="mx-auto animate-spin" />
                             ) : (
-                              "Descuento no disponible en este momento"
+                              <div className="flex flex-col gap-1">
+                                <p className="text-sm font-semibold">
+                                  Descuento no disponible en este momento
+                                </p>
+                                {timeUntilNext ? <p className="text-xs text-white/80">
+                                    Disponible en:{" "}
+                                    <span className="font-mono font-bold">
+                                      {timeUntilNext}
+                                    </span>
+                                  </p> : null}
+                              </div>
                             )}
-                          </h6>
+                          </div>
                         )}
                       </div>
                     </div>
