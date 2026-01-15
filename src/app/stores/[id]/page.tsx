@@ -92,6 +92,9 @@ export default function StoresDetailPage(): React.JSX.Element {
   const [showCongratulations, setShowCongratulations] = useState(false);
   const [_, setShowSuccess] = useState(false);
   const [isGeneratingCoupon, setIsGeneratingCoupon] = useState(false);
+  const [couponGenerationError, setCouponGenerationError] = useState<
+    string | null
+  >(null);
   const [showQuickPaySuccess, setShowQuickPaySuccess] = useState(false);
   const [unlockToken, setUnlockToken] = useState<string | null>(null);
   const [selectedDiscount, setSelectedDiscount] = useState<{
@@ -612,6 +615,7 @@ export default function StoresDetailPage(): React.JSX.Element {
     try {
       // Set loading state for premium users
       setIsGeneratingCoupon(true);
+      setCouponGenerationError(null);
 
       const data = await graphqlRequest<{
         generateCoupon: {
@@ -658,11 +662,7 @@ export default function StoresDetailPage(): React.JSX.Element {
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      toast({
-        variant: "destructive",
-        title: "Error al crear cupón",
-        description: message,
-      });
+      setCouponGenerationError(message);
     }
   };
 
@@ -1034,12 +1034,14 @@ export default function StoresDetailPage(): React.JSX.Element {
                                 <p className="text-sm font-semibold">
                                   Descuento no disponible en este momento
                                 </p>
-                                {timeUntilNext ? <p className="text-xs text-white/80">
+                                {timeUntilNext ? (
+                                  <p className="text-xs text-white/80">
                                     Disponible en:{" "}
                                     <span className="font-mono font-bold">
                                       {timeUntilNext}
                                     </span>
-                                  </p> : null}
+                                  </p>
+                                ) : null}
                               </div>
                             )}
                           </div>
@@ -1569,7 +1571,15 @@ export default function StoresDetailPage(): React.JSX.Element {
             document.body
           )
         : null}
-      <GeneratingCouponModal isOpen={isGeneratingCoupon} />
+      <GeneratingCouponModal
+        isOpen={isGeneratingCoupon}
+        isLoading={!couponGenerationError}
+        error={couponGenerationError}
+        onClose={() => {
+          setIsGeneratingCoupon(false);
+          setCouponGenerationError(null);
+        }}
+      />
     </BasicLayout>
   );
 }
