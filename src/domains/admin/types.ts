@@ -165,6 +165,7 @@ export interface StoreFiltersInput {
   type?: StoreType;
   price?: PriceRange;
   active?: boolean | null;
+  includeAll?: boolean | null;
   search?: string;
 }
 

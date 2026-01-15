@@ -9,6 +9,7 @@ interface VideoPlayerProps {
   description?: string;
   duration: number; // in seconds
   autoplay?: boolean;
+  shouldPauseOnComplete?: boolean;
   onWatchComplete: (watchDuration: number) => void;
   onProgress?: (currentTime: number, duration: number) => void;
 }
@@ -19,6 +20,7 @@ export function VideoPlayer({
   description,
   duration,
   autoplay = false,
+  shouldPauseOnComplete = false,
   onWatchComplete,
   onProgress,
 }: VideoPlayerProps) {
@@ -79,6 +81,11 @@ export function VideoPlayer({
       if (!hasCompleted) {
         setHasCompleted(true);
         onWatchComplete(Math.floor(video.duration)); // Report actual video duration
+
+        // If shouldPauseOnComplete is true, keep the video paused at the end
+        if (shouldPauseOnComplete) {
+          video.pause();
+        }
       }
     };
 
@@ -93,7 +100,14 @@ export function VideoPlayer({
       video.removeEventListener("pause", handlePause);
       video.removeEventListener("ended", handleEnded);
     };
-  }, [autoplay, duration, hasCompleted, onWatchComplete, onProgress]);
+  }, [
+    autoplay,
+    duration,
+    hasCompleted,
+    onWatchComplete,
+    onProgress,
+    shouldPauseOnComplete,
+  ]);
 
   const togglePlay = () => {
     const video = videoRef.current;

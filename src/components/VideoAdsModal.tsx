@@ -26,8 +26,6 @@ export function VideoAdsModal({
 }: VideoAdsModalProps) {
   const [currentAdIndex, setCurrentAdIndex] = useState(0);
   const [unlockToken, setUnlockToken] = useState<string | null>(null);
-  const [isGeneratingCoupon, setIsGeneratingCoupon] = useState(false);
-  const [progress, setProgress] = useState(0);
   const [deviceId] = useState(() => {
     if (typeof window !== "undefined") {
       let id = localStorage.getItem("deviceId");
@@ -60,42 +58,8 @@ export function VideoAdsModal({
     if (isOpen) {
       setCurrentAdIndex(0);
       setUnlockToken(null);
-      setIsGeneratingCoupon(false);
-      setProgress(0);
-    } else {
-      // When modal closes, ensure any video is stopped
-      // This is a cleanup safety measure
-      const videos = document.querySelectorAll("video");
-      videos.forEach((video) => {
-        video.pause();
-        video.currentTime = 0;
-      });
     }
   }, [isOpen]);
-
-  // Progress bar animation (8 seconds)
-  useEffect(() => {
-    if (!isGeneratingCoupon) {
-      return;
-    }
-
-    const duration = 8000; // 8 seconds
-    const intervalTime = 50; // Update every 50ms for smooth animation
-    const increment = (100 / duration) * intervalTime;
-
-    const interval = setInterval(() => {
-      setProgress((prev) => {
-        const next = prev + increment;
-        if (next >= 100) {
-          clearInterval(interval);
-          return 100;
-        }
-        return next;
-      });
-    }, intervalTime);
-
-    return () => clearInterval(interval);
-  }, [isGeneratingCoupon]);
 
   // Trigger confetti when unlock token is received
   useEffect(() => {
@@ -134,8 +98,12 @@ export function VideoAdsModal({
         origin: { y: 0.6 },
         colors: colors,
       });
+
+      void handleExchangeToken();
     }
   }, [unlockToken]);
+
+  const isLastAd = currentAdIndex === ads.length - 1;
 
   // Handle watch completion
   const handleWatchComplete = async (watchDuration: number, ad: VideoAd) => {
@@ -148,9 +116,6 @@ export function VideoAdsModal({
       console.error("Ad is missing id:", ad);
       return;
     }
-
-    // Determine the next action BEFORE making the API call
-    const isLastAd = currentAdIndex === ads.length - 1;
 
     // Optimistically move to next video immediately for better UX
     // The API call will happen in the background
@@ -185,29 +150,15 @@ export function VideoAdsModal({
       return;
     }
 
-    // Start generating coupon with progress bar
-    setIsGeneratingCoupon(true);
-    setProgress(0);
-
     try {
-      // Start the API call
-      const couponPromise = exchangeUnlockMutation.mutateAsync({
+      const coupon = await exchangeUnlockMutation.mutateAsync({
         token: unlockToken,
         discountId,
       });
 
-      // Wait minimum 8 seconds for progress bar to complete
-      const [coupon] = await Promise.all([
-        couponPromise,
-        new Promise((resolve) => setTimeout(resolve, 8000)),
-      ]);
-
-      // Redirect after progress completes
       onSuccess(coupon.code as string);
       onClose();
     } catch (error) {
-      setIsGeneratingCoupon(false);
-      setProgress(0);
       console.error("Failed to exchange unlock:", error);
       // Error will be displayed via exchangeUnlockMutation.error
     }
@@ -262,59 +213,28 @@ export function VideoAdsModal({
           </div>
         ) : null}
 
-        {/* Unlock success screen / Generating coupon screen */}
+        {/* Unlock success screen */}
         {unlockToken && !loadingAds ? (
           <div className="p-4 sm:p-6 md:p-8">
-            {!isGeneratingCoupon ? (
-              <>
-                <div className="bg-linear-to-r from-green-500 to-emerald-700 rounded-xl sm:rounded-2xl p-6 sm:p-8 text-white text-center mb-4 sm:mb-6">
-                  <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
-                    <Gift className="w-8 h-8 sm:w-10 sm:h-10 text-green-500" />
-                  </div>
-                  <h1 className="text-2xl sm:text-3xl font-bold mb-2">
-                    ¡Felicitaciones!
-                  </h1>
-                  <p className="text-base sm:text-lg opacity-90">
-                    Has visto ambos anuncios de video
-                  </p>
-                </div>
+            <div className="bg-linear-to-r from-green-500 to-emerald-700 rounded-xl sm:rounded-2xl p-6 sm:p-8 text-white text-center mb-4 sm:mb-6">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                <Gift className="w-8 h-8 sm:w-10 sm:h-10 text-green-500" />
+              </div>
+              <h1 className="text-2xl sm:text-3xl font-bold mb-2">
+                ¡Felicitaciones!
+              </h1>
+              <p className="text-base sm:text-lg opacity-90">
+                Has visto ambos anuncios de video
+              </p>
+            </div>
 
-                <button
-                  onClick={() => void handleExchangeToken()}
-                  disabled={isGeneratingCoupon}
-                  className="w-full py-3 sm:py-4 bg-linear-to-r from-green-500 to-emerald-600 text-white font-semibold rounded-lg hover:from-green-600 hover:to-emerald-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm sm:text-base"
-                >
-                  <Gift className="w-4 h-4 sm:w-5 sm:h-5" />
-                  Generar cupón
-                </button>
-              </>
-            ) : (
-              <>
-                <div className="bg-linear-to-r from-blue-500 to-indigo-600 rounded-xl sm:rounded-2xl p-6 sm:p-8 text-white text-center mb-6">
-                  <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Loader2 className="w-8 h-8 sm:w-10 sm:h-10 text-blue-500 animate-spin" />
-                  </div>
-                  <h1 className="text-2xl sm:text-3xl font-bold mb-2">
-                    Generando tu cupón
-                  </h1>
-                  <p className="text-base sm:text-lg opacity-90 mb-6">
-                    Por favor espera, generando tu cupón...
-                  </p>
-
-                  {/* Progress Bar */}
-                  <div className="w-full bg-white/20 rounded-full h-3 overflow-hidden">
-                    <div
-                      className="h-full bg-white transition-all duration-100 ease-linear rounded-full"
-                      style={{ width: `${progress}%` }}
-                    />
-                  </div>
-                  <p className="text-sm mt-2 opacity-75">
-                    {Math.round(progress)}%
-                  </p>
-                </div>
-              </>
-            )}
-            {exchangeUnlockMutation?.isError && !isGeneratingCoupon ? (
+            <div className="text-center">
+              <Loader2 className="w-8 h-8 text-green-600 animate-spin mx-auto mb-4" />
+              <p className="text-sm sm:text-base text-muted-foreground">
+                Generando tu cupón...
+              </p>
+            </div>
+            {exchangeUnlockMutation?.isError ? (
               <p className="text-sm text-red-500 mt-4 bg-gray-900 text-center p-3">
                 {(exchangeUnlockMutation.error as Error).message}
               </p>
@@ -324,7 +244,7 @@ export function VideoAdsModal({
 
         {/* Video player */}
         {!loadingAds && !adError && ads.length > 0 && !unlockToken && (
-          <>
+          <div>
             <div className="rounded-t-lg text-card-foreground h-full flex items-center bg-[linear-gradient(180deg,#f5e6c8_0%,#f0c999_50%,#e8b884_100%)] shadow-sm  border-0 hover:shadow-glow transition-all cursor-pointer group">
               <Link
                 href="/subscription
@@ -354,6 +274,7 @@ export function VideoAdsModal({
                   description=""
                   duration={currentAd.duration}
                   autoplay
+                  shouldPauseOnComplete={isLastAd}
                   onWatchComplete={(watchDuration) => {
                     const adToReport = currentAd;
                     void handleWatchComplete(watchDuration, adToReport);
@@ -375,7 +296,7 @@ export function VideoAdsModal({
               </div>
             ) : null}
             {/* </div> */}
-          </>
+          </div>
         )}
       </div>
     </div>

@@ -57,7 +57,10 @@ export function ExploreHeader({
     <header className="fixed top-0 left-0 right-0 bg-white/85 backdrop-blur-sm shadow-sm z-20">
       <div className="flex items-center justify-between h-14 max-w-5xl mx-auto px-4">
         <div className="flex-1">
-          <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/70 backdrop-blur-md hover:bg-white transition-colors shadow-sm">
+          <Link
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/70 backdrop-blur-md hover:bg-white transition-colors shadow-sm"
+            href="/help"
+          >
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="24"
@@ -74,10 +77,10 @@ export function ExploreHeader({
               <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
               <path d="M12 17h.01" />
             </svg>
-            <span className="text-sm font-medium text-foreground">
-              <Link href="/help">Cómo funciona</Link>
+            <span className="text-sm font-medium text-foreground hidden md:inline-flex">
+              <span>Cómo funciona</span>
             </span>
-          </button>
+          </Link>
         </div>
 
         <button
