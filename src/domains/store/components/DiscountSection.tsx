@@ -7,13 +7,13 @@ import { type Discount, DiscountType } from "@/domains/admin";
 import { CreateDiscountModal } from "./CreateDiscountModal";
 
 const daysOfTheWeek = [
-  "Domingo",
   "Lunes",
   "Martes",
   "Miércoles",
   "Jueves",
   "Viernes",
   "Sábado",
+  "Domingo",
 ];
 
 // Discount Card Component
