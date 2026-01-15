@@ -15,13 +15,13 @@ import { extractValidationErrors } from "@/lib/utils";
 import { TimeRestrictionsEditor } from "./TimeRestrictionsEditor";
 
 const daysOfTheWeek = [
-  { label: "Lunes", index: 1 },
-  { label: "Martes", index: 2 },
-  { label: "Miércoles", index: 3 },
-  { label: "Jueves", index: 4 },
-  { label: "Viernes", index: 5 },
-  { label: "Sábado", index: 6 },
-  { label: "Domingo", index: 0 },
+  { label: "Lunes", index: 0 },
+  { label: "Martes", index: 1 },
+  { label: "Miércoles", index: 2 },
+  { label: "Jueves", index: 3 },
+  { label: "Viernes", index: 4 },
+  { label: "Sábado", index: 5 },
+  { label: "Domingo", index: 6 },
 ];
 
 // Create Discount Modal - Unused, can be removed

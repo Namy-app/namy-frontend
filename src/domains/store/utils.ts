@@ -95,13 +95,13 @@ export const getDiscountRestrictions = (
   // Excluded days of week
   if (discount.excludedDaysOfWeek && discount.excludedDaysOfWeek.length > 0) {
     const dayNames = [
-      "Domingo",
       "Lunes",
       "Martes",
       "Miércoles",
       "Jueves",
       "Viernes",
       "Sábado",
+      "Domingo",
     ];
     const excludedDays = discount.excludedDaysOfWeek
       .map((dayIndex) => dayNames[dayIndex])
@@ -157,13 +157,13 @@ export const getDiscountRestrictions = (
     discount.availableDaysAndTimes.availableDays.length > 0
   ) {
     const dayNames = [
-      "Domingo",
       "Lunes",
       "Martes",
       "Miércoles",
       "Jueves",
       "Viernes",
       "Sábado",
+      "Domingo",
     ];
     const availableDays = discount.availableDaysAndTimes.availableDays
       .map((day) => {
@@ -253,13 +253,13 @@ export const getDiscountRestrictionsFromDecodedCouponData = (
     discount.availableDaysAndTimes.availableDays.length > 0
   ) {
     const dayNames = [
-      "Domingo",
       "Lunes",
       "Martes",
       "Miércoles",
       "Jueves",
       "Viernes",
       "Sábado",
+      "Domingo",
     ];
     const availableDays = discount.availableDaysAndTimes.availableDays
       .map((day) => {
