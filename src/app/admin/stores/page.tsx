@@ -39,7 +39,7 @@ export default function AdminStoresPage() {
     active: null,
   });
   const { data: storesData, isLoading: storesLoading } = useStores(
-    {},
+    { includeAll: true },
     { first: itemsPerPage, page: currentPage }
   );
   const deleteStore = useDeleteStore();
@@ -304,7 +304,7 @@ export default function AdminStoresPage() {
                             }
                             className={`p-2 rounded-lg transition-colors ${
                               store.active
-                                ? "text-orange-500 hover:bg-orange-500/10"
+                                ? "text-green-500 hover:bg-green-500/10"
                                 : "text-secondary-foreground hover:bg-secondary/10"
                             }`}
                             title={
