@@ -41,6 +41,15 @@ export default function CrispProvider() {
       // Hide the chat widget by default
       window.$crisp.push(["do", "chat:hide"]);
 
+      // Listen for chat close event and hide the widget again
+      window.$crisp.push([
+        "on",
+        "chat:closed",
+        () => {
+          window.$crisp.push(["do", "chat:hide"]);
+        },
+      ]);
+
       const script = document.createElement("script");
       script.src = "https://client.crisp.chat/l.js";
       script.async = true;
