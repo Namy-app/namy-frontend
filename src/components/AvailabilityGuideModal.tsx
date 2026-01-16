@@ -36,7 +36,7 @@ export function AvailabilityGuideModal({
         </h2>
 
         {/* Availability Guide Items */}
-        <div className="grid grid-cols-2 items-start gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 items-start gap-3">
           {/* Disponible ahora */}
           <AvailabilityStatusBadge status="available" />
           {/* Disponible en 2h 15m */}

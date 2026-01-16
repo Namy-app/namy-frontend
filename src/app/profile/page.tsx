@@ -9,7 +9,7 @@ import {
   // User as UserIcon,
   // CreditCard,
   HelpCircle,
-  Phone,
+  // Phone,
   LogOut,
   ChevronRight,
   Crown,
@@ -22,13 +22,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useState, useEffect } from "react";
 
-declare global {
-  interface Window {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    $crisp?: any;
-  }
-}
-
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { useWallet, useWalletBalance } from "@/domains/payment/hooks";
 import { useStores } from "@/domains/store/hooks";
@@ -38,6 +31,7 @@ import { useToast } from "@/hooks/use-toast";
 import { BasicLayout } from "@/layouts/BasicLayout";
 import { getInitials, getUserLevelTitle } from "@/lib/user.lib";
 import { extractErrorMessage } from "@/lib/utils";
+import CrispProvider from "@/providers/CrispProvider";
 import { Button } from "@/shared/components/Button";
 import { Card } from "@/shared/components/Card";
 import { useAuthStore } from "@/store/useAuthStore";
@@ -532,7 +526,7 @@ export default function ProfilePage(): React.JSX.Element | null {
                   label: "Ayuda & Preguntas",
                   action: () => router.push("/help"),
                 },
-                { icon: Phone, label: "Contactar Soporte", action: undefined },
+                // { icon: Phone, label: "Contactar Soporte", action: undefined },
               ].map((item) => (
                 <button
                   key={item.label}
@@ -583,6 +577,7 @@ export default function ProfilePage(): React.JSX.Element | null {
             </p>
           </div>
         </div>
+        <CrispProvider />
       </BasicLayout>
     </ProtectedRoute>
   );
