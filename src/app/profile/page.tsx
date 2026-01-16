@@ -16,10 +16,18 @@ import {
   Percent,
   Copy,
   CheckCircle,
+  MessageCircle,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useState, useEffect } from "react";
+
+declare global {
+  interface Window {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    $crisp?: any;
+  }
+}
 
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { useWallet, useWalletBalance } from "@/domains/payment/hooks";
@@ -102,6 +110,13 @@ export default function ProfilePage(): React.JSX.Element | null {
         title: "Error al cerrar sesión",
         description: errorMessage || "No se pudo cerrar sesión",
       });
+    }
+  };
+
+  const handleOpenCrisp = (): void => {
+    if (typeof window !== "undefined" && window.$crisp) {
+      window.$crisp.push(["do", "chat:show"]);
+      window.$crisp.push(["do", "chat:open"]);
     }
   };
 
@@ -531,6 +546,16 @@ export default function ProfilePage(): React.JSX.Element | null {
                   <ChevronRight className="w-5 h-5 text-muted-foreground" />
                 </button>
               ))}
+              <button
+                onClick={handleOpenCrisp}
+                className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-muted transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <MessageCircle className="w-5 h-5 text-muted-foreground" />
+                  <span className="text-foreground">Abrir Chat de Soporte</span>
+                </div>
+                <ChevronRight className="w-5 h-5 text-muted-foreground" />
+              </button>
               <button
                 onClick={() => {
                   void handleLogout();

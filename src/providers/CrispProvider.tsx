@@ -37,6 +37,10 @@ export default function CrispProvider() {
       }
       window.$crisp = window.$crisp || [];
       window.CRISP_WEBSITE_ID = websiteId;
+
+      // Hide the chat widget by default
+      window.$crisp.push(["do", "chat:hide"]);
+
       const script = document.createElement("script");
       script.src = "https://client.crisp.chat/l.js";
       script.async = true;
