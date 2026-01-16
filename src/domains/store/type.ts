@@ -34,6 +34,19 @@ export interface ParsedStore {
   amenities: string[];
 }
 
+export interface Restaurant {
+  id: string;
+  slug: string;
+  name: string;
+  category: string;
+  rating: number;
+  image: string;
+  discount: number;
+  distance: string;
+  availabilityStatus: "available" | "soon" | "unavailable";
+  availabilityText?: string;
+}
+
 export interface StoresResponse {
   stores: {
     data: Store[];
@@ -57,6 +70,7 @@ export interface StoreFilters {
   noRestaurants?: boolean;
   lat?: number;
   lng?: number;
+  id?: string;
 }
 
 export interface PaginationInput {

@@ -3,10 +3,11 @@
 import { ShoppingCart, AlertCircle, CheckCircle2 } from "lucide-react";
 import { useState } from "react";
 
-import { useToast } from "@/hooks/use-toast";
 import { extractErrorMessage } from "@/lib/utils";
 
 import { useWallet, useWalletBalance, useSpendFromWallet } from "../hooks";
+
+import { WalletTransactionModal } from "./WalletTransactionModal";
 
 interface WalletSpendExampleProps {
   userId: string;
@@ -22,10 +23,15 @@ interface WalletSpendExampleProps {
  * - UI feedback
  */
 export function WalletSpendExample({ userId }: WalletSpendExampleProps) {
-  const { toast } = useToast();
   const [amount, setAmount] = useState<number>(1000); // Default: 10.00 MXN
   const [description, setDescription] = useState<string>("");
   const [referenceId, setReferenceId] = useState<string>("");
+  const [showModal, setShowModal] = useState(false);
+  const [modalContent, setModalContent] = useState({
+    isSuccess: false,
+    title: "",
+    message: "",
+  });
 
   // Fetch wallet data
   const { data: wallet, isLoading: walletLoading } = useWallet({ userId });
@@ -48,20 +54,22 @@ export function WalletSpendExample({ userId }: WalletSpendExampleProps) {
 
   const handleSpend = async () => {
     if (!wallet) {
-      toast({
+      setModalContent({
+        isSuccess: false,
         title: "Error",
-        description: "Wallet not found. Please try again.",
-        variant: "destructive",
+        message: "Wallet not found. Please try again.",
       });
+      setShowModal(true);
       return;
     }
 
     if (!hasEnoughBalance) {
-      toast({
+      setModalContent({
+        isSuccess: false,
         title: "Insufficient Balance",
-        description: `You need ${formatAmount(amount)} but only have ${formatAmount(availableBalance)} available.`,
-        variant: "destructive",
+        message: `You need ${formatAmount(amount)} but only have ${formatAmount(availableBalance)} available.`,
       });
+      setShowModal(true);
       return;
     }
 
@@ -78,23 +86,26 @@ export function WalletSpendExample({ userId }: WalletSpendExampleProps) {
         },
       });
 
-      toast({
+      setModalContent({
+        isSuccess: true,
         title: "✅ Payment Successful",
-        description: `${formatAmount(amount)} has been deducted from your wallet. New balance: ${formatAmount(result.balanceAfter)}`,
+        message: `${formatAmount(amount)} has been deducted from your wallet. New balance: ${formatAmount(result.balanceAfter)}`,
       });
+      setShowModal(true);
 
       // Reset form
       setAmount(1000);
       setDescription("");
       setReferenceId("");
     } catch (error: unknown) {
-      toast({
+      setModalContent({
+        isSuccess: false,
         title: "Payment Failed",
-        description:
+        message:
           extractErrorMessage(error) ||
           "Unable to process payment. Please try again.",
-        variant: "destructive",
       });
+      setShowModal(true);
     }
   };
 
@@ -286,6 +297,15 @@ export function WalletSpendExample({ userId }: WalletSpendExampleProps) {
           </li>
         </ul>
       </div>
+
+      {/* Transaction Modal */}
+      <WalletTransactionModal
+        isOpen={showModal}
+        isSuccess={modalContent.isSuccess}
+        title={modalContent.title}
+        message={modalContent.message}
+        onClose={() => setShowModal(false)}
+      />
     </div>
   );
 }

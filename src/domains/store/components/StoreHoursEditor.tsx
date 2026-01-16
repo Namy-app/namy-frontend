@@ -68,7 +68,9 @@ export const StoreHoursEditor = ({ value = [], onChange }: Props) => {
   ) => {
     const newHours = [...hours];
     const currentDay = newHours[index];
-    if (!currentDay) {return;}
+    if (!currentDay) {
+      return;
+    }
 
     newHours[index] = {
       day: currentDay.day,

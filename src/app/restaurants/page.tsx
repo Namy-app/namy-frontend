@@ -8,33 +8,24 @@ import {
   MapPin,
   Filter,
   Map,
-  Star,
   SlidersHorizontal,
+  Info,
 } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
 import { useState } from "react";
 
+import { AvailabilityGuideModal } from "@/components/AvailabilityGuideModal";
+import { RestaurantCard } from "@/domains/store/components/RestaurantCard";
 import { useStores } from "@/domains/store/hooks";
 import { type StoreFilters } from "@/domains/store/type";
 import { useMyLevel } from "@/domains/user/hooks/query/useMyLevel";
 import { BasicLayout } from "@/layouts/BasicLayout";
 import { Button } from "@/shared/components/Button";
-import { Card } from "@/shared/components/Card";
 import { Input } from "@/shared/components/Input";
 import { useAuthStore } from "@/store/useAuthStore";
 
-// Restaurant type definition
-interface Restaurant {
-  id: string;
-  slug: string;
-  name: string;
-  category: string;
-  rating: number;
-  image: string;
-  discount: number;
-  distance: string;
-}
+// Note: Now using calculateAvailabilityStatus from availability-utils
+// which uses real openDays data from the backend
 
 // (Removed unused mock data to satisfy TypeScript noUnusedLocals)
 
@@ -63,6 +54,7 @@ export default function RestaurantListingPage(): React.JSX.Element {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSubCategory, setSelectedSubCategory] = useState("All");
   const [showFilterModal, setShowFilterModal] = useState(false);
+  const [showGuideModal, setShowGuideModal] = useState(false);
   const [sortBy, setSortBy] = useState<"distance" | "rating" | "discount">(
     "distance"
   );
@@ -71,19 +63,6 @@ export default function RestaurantListingPage(): React.JSX.Element {
   const { user } = useAuthStore();
   const discountPercentage =
     (user?.isPremium ? 15 : myLevel?.discountPercentage) ?? 10;
-
-  const restaurants: Restaurant[] = allStores.map((store) => ({
-    id: store.id,
-    slug: store.id,
-    name: store.name,
-    category: store.subCategory || "Restaurant",
-    rating: store.averageRating ?? 4.5,
-    image:
-      store.imageUrl ||
-      "https://images.unsplash.com/photo-1565299507177-b0ac66763828?w=800&auto=format&fit=crop",
-    discount: discountPercentage, // Default discount
-    distance: "N/A", // Distance calculation would need geolocation
-  }));
 
   const handleCategoryClick = (subCategory: string): void => {
     setSelectedSubCategory(subCategory);
@@ -149,6 +128,14 @@ export default function RestaurantListingPage(): React.JSX.Element {
                     variant="ghost"
                     size="icon"
                     className="rounded-full"
+                    onClick={() => setShowGuideModal(true)}
+                  >
+                    <Info className="w-5 h-5" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="rounded-full"
                     onClick={handleMapView}
                   >
                     <Map className="w-5 h-5" />
@@ -206,7 +193,7 @@ export default function RestaurantListingPage(): React.JSX.Element {
               <p className="text-sm text-muted-foreground">
                 {isLoading
                   ? "Cargando..."
-                  : `${restaurants.length} restaurantes encontrados`}
+                  : `${allStores.length} restaurantes encontrados`}
               </p>
               {/* <div className="flex items-center gap-2"> */}
               <div className="hidden items-center gap-2">
@@ -242,7 +229,7 @@ export default function RestaurantListingPage(): React.JSX.Element {
             <>
               {/* Restaurant Grid */}
               <div className="px-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-5xl mx-auto">
-                {restaurants.length === 0 ? (
+                {allStores.length === 0 ? (
                   <div className="col-span-full text-center py-12">
                     <p className="text-muted-foreground text-lg mb-4">
                       No se encontraron restaurantes que coincidan con tus
@@ -253,59 +240,12 @@ export default function RestaurantListingPage(): React.JSX.Element {
                     </Button>
                   </div>
                 ) : (
-                  restaurants.map((restaurant, index) => (
-                    <Link
-                      key={restaurant.id}
-                      className="animate-slide-up"
-                      style={{ animationDelay: `${index * 0.1}s` }}
-                      href={`/stores/${restaurant.id}`}
-                    >
-                      <Card className="overflow-hidden cursor-pointer transition-all hover:shadow-card hover:scale-[1.02] bg-card border-border">
-                        {/* Restaurant Image */}
-                        <div className="relative">
-                          <Image
-                            src={restaurant.image}
-                            alt={restaurant.name}
-                            width={400}
-                            height={192}
-                            className="w-full h-48 object-cover"
-                            unoptimized
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.src =
-                                "https://placehold.co/400x192/fef2f2/f87171?text=Restaurant+Image";
-                            }}
-                          />
-                          {/* Discount Badge */}
-                          <div className="absolute top-3 right-3 bg-primary text-primary-foreground px-3 py-1 rounded-full font-bold text-sm shadow-lg">
-                            {restaurant.discount}% OFF
-                          </div>
-                        </div>
-
-                        {/* Restaurant Info */}
-                        <div className="p-4">
-                          <h3 className="font-bold text-lg text-foreground mb-1">
-                            {restaurant.name}
-                          </h3>
-                          <div className="flex items-center justify-between text-sm text-muted-foreground">
-                            {/* Rating and Category */}
-                            <div className="flex items-center gap-1">
-                              <Star className="w-4 h-4 fill-primary text-primary" />
-                              <span className="font-medium text-foreground">
-                                {restaurant.rating}
-                              </span>
-                              <span>• {restaurant.category}</span>
-                            </div>
-
-                            {/* Distance */}
-                            {/* <div className="flex items-center gap-1">
-                              <MapPin className="w-3 h-3" />
-                              <span>{restaurant.distance}</span>
-                            </div> */}
-                          </div>
-                        </div>
-                      </Card>
-                    </Link>
+                  allStores.map((store) => (
+                    <RestaurantCard
+                      key={store.id}
+                      discountPercentage={discountPercentage}
+                      store={store}
+                    />
                   ))
                 )}
               </div>
@@ -370,6 +310,12 @@ export default function RestaurantListingPage(): React.JSX.Element {
           </div>
         </div>
       ) : null}
+
+      {/* Availability Guide Modal */}
+      <AvailabilityGuideModal
+        isOpen={showGuideModal}
+        onClose={() => setShowGuideModal(false)}
+      />
     </BasicLayout>
   );
 }

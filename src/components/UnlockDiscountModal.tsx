@@ -58,7 +58,7 @@ export function UnlockDiscountModal({
                       Ver Anuncio
                     </h3>
                     <p className="text-white/90 text-sm">
-                      Gratis • 15 segundos
+                      Gratis • 30 segundos
                     </p>
                   </div>
                 </div>
