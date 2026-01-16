@@ -157,7 +157,7 @@ export default function StoresDetailPage(): React.JSX.Element {
     const { availableDays } = discount.availableDaysAndTimes;
 
     // Try to find next available time today
-    const currentDayIndex = now.getDay() - 1; // Convert to 0-6 (Mon-Sun)
+    const currentDayIndex = (now.getDay() + 6) % 7; // Convert to 0-6 (Mon-Sun)
     const currentHour = now.getHours();
     const currentMinute = now.getMinutes();
 
@@ -230,7 +230,7 @@ export default function StoresDetailPage(): React.JSX.Element {
     }
 
     if (discount.availableDaysAndTimes) {
-      const dayOfWeek = now.getDay() - 1; // 0 (Mon) to 6 (Sun)
+      const dayOfWeek = (now.getDay() + 6) % 7; // 0 (Mon) to 6 (Sun)
       const hourOfDay = now.getHours();
       const { availableDays } = discount.availableDaysAndTimes;
       const dayAvailability = availableDays.find(
