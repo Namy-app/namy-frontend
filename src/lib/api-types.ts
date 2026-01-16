@@ -70,6 +70,8 @@ export interface Store {
   city?: string;
   openDays?: Record<string, unknown>;
   additionalInfo?: Record<string, unknown>;
+  discountAvailabilityStatus?: "available" | "soon" | "unavailable";
+  discountAvailabilityText?: string;
 }
 
 export interface Discount {
@@ -88,6 +90,7 @@ export interface Discount {
   storeId: string;
   createdAt: string;
   updatedAt: string;
+  availableDaysAndTimes?: Record<string, unknown>;
 }
 
 export interface ApiError {

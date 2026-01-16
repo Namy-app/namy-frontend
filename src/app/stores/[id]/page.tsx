@@ -92,6 +92,11 @@ export default function StoresDetailPage(): React.JSX.Element {
   const [showCongratulations, setShowCongratulations] = useState(false);
   const [_, setShowSuccess] = useState(false);
   const [isGeneratingCoupon, setIsGeneratingCoupon] = useState(false);
+  const [couponGenerationError, setCouponGenerationError] = useState<
+    string | null
+  >(null);
+  const [quickPayError, setQuickPayError] = useState<string | null>(null);
+  const [showAddFundsAction, setShowAddFundsAction] = useState(false);
   const [showQuickPaySuccess, setShowQuickPaySuccess] = useState(false);
   const [unlockToken, setUnlockToken] = useState<string | null>(null);
   const [selectedDiscount, setSelectedDiscount] = useState<{
@@ -100,6 +105,8 @@ export default function StoresDetailPage(): React.JSX.Element {
   const [selectedCatalogImage, setSelectedCatalogImage] = useState<
     string | null
   >(null);
+  const [nextAvailableTime, setNextAvailableTime] = useState<Date | null>(null);
+  const [timeUntilNext, setTimeUntilNext] = useState<string>("");
 
   // Prevent body scroll when modal is open
   useEffect(() => {
@@ -135,6 +142,73 @@ export default function StoresDetailPage(): React.JSX.Element {
   const isRestaurant = store?.categoryId?.toLowerCase() === "restaurant";
   const storeCategoryType = isRestaurant ? "Restaurant" : "Store";
 
+  // Calculate next available discount time
+  const calculateNextAvailableTime = useMemo(() => {
+    if (!discountsData?.data?.[0]) {
+      return null;
+    }
+
+    const discount = discountsData.data[0];
+    if (!discount?.active || !discount.availableDaysAndTimes) {
+      return null;
+    }
+
+    const now = new Date();
+    const { availableDays } = discount.availableDaysAndTimes;
+
+    // Try to find next available time today
+    const currentDayIndex = (now.getDay() + 6) % 7; // Convert to 0-6 (Mon-Sun)
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
+
+    const todayAvailability = availableDays.find(
+      (day) => day.dayIndex === currentDayIndex
+    );
+
+    if (todayAvailability) {
+      for (const timeRange of todayAvailability.timeRanges) {
+        const startHour = Number.parseInt(timeRange.start.split(":")[0]!, 10);
+        const startMinute = Number.parseInt(timeRange.start.split(":")[1]!, 10);
+
+        if (
+          currentHour < startHour ||
+          (currentHour === startHour && currentMinute < startMinute)
+        ) {
+          const nextTime = new Date(now);
+          nextTime.setHours(startHour, startMinute, 0, 0);
+          return nextTime;
+        }
+      }
+    }
+
+    // Look for next available day
+    for (let i = 1; i <= 7; i++) {
+      const checkDayIndex = (currentDayIndex + i) % 7;
+      const dayAvailability = availableDays.find(
+        (day) => day.dayIndex === checkDayIndex
+      );
+
+      if (dayAvailability && dayAvailability.timeRanges.length > 0) {
+        const firstTimeRange = dayAvailability.timeRanges[0];
+        const startHour = Number.parseInt(
+          firstTimeRange!.start.split(":")[0]!,
+          10
+        );
+        const startMinute = Number.parseInt(
+          firstTimeRange!.start.split(":")[1]!,
+          10
+        );
+
+        const nextTime = new Date(now);
+        nextTime.setDate(now.getDate() + i);
+        nextTime.setHours(startHour, startMinute, 0, 0);
+        return nextTime;
+      }
+    }
+
+    return null;
+  }, [discountsData]);
+
   const isValidDiscount = useMemo(() => {
     if (!discountsData?.data?.[0]) {
       return false;
@@ -156,7 +230,7 @@ export default function StoresDetailPage(): React.JSX.Element {
     }
 
     if (discount.availableDaysAndTimes) {
-      const dayOfWeek = now.getDay() - 1; // 0 (Mon) to 6 (Sun)
+      const dayOfWeek = (now.getDay() + 6) % 7; // 0 (Mon) to 6 (Sun)
       const hourOfDay = now.getHours();
       const { availableDays } = discount.availableDaysAndTimes;
       const dayAvailability = availableDays.find(
@@ -180,6 +254,56 @@ export default function StoresDetailPage(): React.JSX.Element {
 
     return true;
   }, [discountsData]);
+
+  // Update next available time
+  useEffect(() => {
+    setNextAvailableTime(calculateNextAvailableTime);
+  }, [calculateNextAvailableTime]);
+
+  // Countdown timer
+  useEffect(() => {
+    if (!nextAvailableTime || isValidDiscount) {
+      setTimeUntilNext("");
+      return;
+    }
+
+    const updateCountdown = () => {
+      const now = new Date();
+      const diff = nextAvailableTime.getTime() - now.getTime();
+
+      if (diff <= 0) {
+        setTimeUntilNext("Disponible ahora");
+        // Refresh discount validity
+        window.location.reload();
+        return;
+      }
+
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor(
+        (diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+      );
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+      let countdownText = "";
+      if (days > 0) {
+        countdownText = `${days}d ${hours}h ${minutes}m`;
+      } else if (hours > 0) {
+        countdownText = `${hours}h ${minutes}m ${seconds}s`;
+      } else if (minutes > 0) {
+        countdownText = `${minutes}m ${seconds}s`;
+      } else {
+        countdownText = `${seconds}s`;
+      }
+
+      setTimeUntilNext(countdownText);
+    };
+
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 1000);
+
+    return () => clearInterval(interval);
+  }, [nextAvailableTime, isValidDiscount]);
 
   if (!isLoading && !store) {
     router.push("/explore");
@@ -493,6 +617,7 @@ export default function StoresDetailPage(): React.JSX.Element {
     try {
       // Set loading state for premium users
       setIsGeneratingCoupon(true);
+      setCouponGenerationError(null);
 
       const data = await graphqlRequest<{
         generateCoupon: {
@@ -539,11 +664,7 @@ export default function StoresDetailPage(): React.JSX.Element {
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      toast({
-        variant: "destructive",
-        title: "Error al crear cupón",
-        description: message,
-      });
+      setCouponGenerationError(message);
     }
   };
 
@@ -561,19 +682,10 @@ export default function StoresDetailPage(): React.JSX.Element {
     // Check wallet balance before attempting payment
     const QUICK_PAY_COST = 900; // $9 MXN in cents
     if (wallet && wallet.balance < QUICK_PAY_COST) {
-      toast({
-        variant: "destructive",
-        title: "Fondos insuficientes",
-        description: `Necesitas $${QUICK_PAY_COST / 100} MXN pero solo tienes $${wallet.balance / 100} MXN. Agrega fondos para continuar.`,
-        action: (
-          <button
-            onClick={() => router.push("/wallet")}
-            className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700"
-          >
-            Agregar Fondos
-          </button>
-        ),
-      });
+      setQuickPayError(
+        `Fondos insuficientes\n\nNecesitas $${QUICK_PAY_COST / 100} MXN pero solo tienes $${wallet.balance / 100} MXN. Agrega fondos para continuar.`
+      );
+      setShowAddFundsAction(true);
       return;
     }
 
@@ -624,29 +736,8 @@ export default function StoresDetailPage(): React.JSX.Element {
       setIsGeneratingCoupon(false);
       const message = err instanceof Error ? err.message : String(err);
 
-      // Check if error is due to insufficient funds
-      if (message.toLowerCase().includes("insufficient funds")) {
-        toast({
-          variant: "destructive",
-          title: "Fondos insuficientes",
-          description:
-            "No tienes saldo suficiente. Agrega fondos a tu billetera.",
-          action: (
-            <button
-              onClick={() => router.push("/wallet")}
-              className="bg-lime-600 text-white px-4 py-2 rounded-md text-sm hover:bg-lime-700"
-            >
-              Añadir
-            </button>
-          ),
-        });
-      } else {
-        toast({
-          variant: "destructive",
-          title: "Payment failed",
-          description: message,
-        });
-      }
+      // Set error message for modal
+      setQuickPayError(message);
     }
   };
 
@@ -907,13 +998,25 @@ export default function StoresDetailPage(): React.JSX.Element {
                               : "Desbloquear descuento"}
                           </Button>
                         ) : (
-                          <h6 className="text-center text-white bg-black/50 px-4 py-2 rounded-full">
+                          <div className="text-center text-white bg-black/50 px-4 py-3 rounded-full">
                             {isLoadingDiscounts ? (
                               <Loader2 className="mx-auto animate-spin" />
                             ) : (
-                              "Descuento no disponible en este momento"
+                              <div className="flex flex-col gap-1">
+                                <p className="text-sm font-semibold">
+                                  Descuento no disponible en este momento
+                                </p>
+                                {timeUntilNext ? (
+                                  <p className="text-xs text-white/80">
+                                    Disponible en:{" "}
+                                    <span className="font-mono font-bold">
+                                      {timeUntilNext}
+                                    </span>
+                                  </p>
+                                ) : null}
+                              </div>
                             )}
-                          </h6>
+                          </div>
                         )}
                       </div>
                     </div>
@@ -1440,7 +1543,27 @@ export default function StoresDetailPage(): React.JSX.Element {
             document.body
           )
         : null}
-      <GeneratingCouponModal isOpen={isGeneratingCoupon} />
+      <GeneratingCouponModal
+        isOpen={isGeneratingCoupon || !!quickPayError}
+        isLoading={
+          !!(isGeneratingCoupon && !couponGenerationError && !quickPayError)
+        }
+        error={couponGenerationError || quickPayError}
+        onClose={() => {
+          setIsGeneratingCoupon(false);
+          setCouponGenerationError(null);
+          setQuickPayError(null);
+          setShowAddFundsAction(false);
+        }}
+        actionButton={
+          showAddFundsAction
+            ? {
+                label: "Agregar Fondos",
+                onClick: () => router.push("/wallet"),
+              }
+            : undefined
+        }
+      />
     </BasicLayout>
   );
 }

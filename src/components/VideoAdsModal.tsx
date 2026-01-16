@@ -53,7 +53,7 @@ export function VideoAdsModal({
   const sessionId = adPairData?.sessionId;
   const currentAd: VideoAd | undefined = ads[currentAdIndex];
 
-  // Reset state when modal opens
+  // Reset state when modal opens/closes
   useEffect(() => {
     if (isOpen) {
       setCurrentAdIndex(0);
@@ -243,8 +243,8 @@ export function VideoAdsModal({
         ) : null}
 
         {/* Video player */}
-        {!loadingAds && !adError && ads.length > 0 && (
-          <div className={unlockToken ? "hidden" : ""}>
+        {!loadingAds && !adError && ads.length > 0 && !unlockToken && (
+          <div>
             <div className="rounded-t-lg text-card-foreground h-full flex items-center bg-[linear-gradient(180deg,#f5e6c8_0%,#f0c999_50%,#e8b884_100%)] shadow-sm  border-0 hover:shadow-glow transition-all cursor-pointer group">
               <Link
                 href="/subscription

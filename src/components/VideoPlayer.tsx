@@ -32,6 +32,17 @@ export function VideoPlayer({
 
   // const progress = (currentTime / duration) * 100;
 
+  // Cleanup effect - pause video when component unmounts
+  useEffect(() => {
+    return () => {
+      const video = videoRef.current;
+      if (video) {
+        video.pause();
+        video.currentTime = 0;
+      }
+    };
+  }, []);
+
   useEffect(() => {
     const video = videoRef.current;
     if (!video) {
