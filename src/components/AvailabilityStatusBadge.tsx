@@ -19,13 +19,13 @@ export const AvailabilityStatusBadge = ({
       text: "text-green-700 dark:text-green-400",
     },
     soon: {
-      bg: "bg-yellow-500/30",
+      bg: "bg-yellow-500/10",
       border: "border-yellow-500/30",
       dot: "bg-yellow-500",
       text: "text-yellow-700 dark:text-yellow-400",
     },
     unavailable: {
-      bg: "bg-red-500/30",
+      bg: "bg-red-500/10",
       border: "border-red-500/20",
       dot: "bg-red-500",
       text: "text-red-700 dark:text-red-400",
@@ -49,7 +49,9 @@ export const AvailabilityStatusBadge = ({
         className
       )}
     >
-      <div className={clsx("w-2 h-2 rounded-full", colors[status].dot)} />
+      <div
+        className={clsx("w-2 h-2 shrink-0 rounded-full", colors[status].dot)}
+      />
       <span
         className={clsx(
           "text-xs truncate",

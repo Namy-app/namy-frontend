@@ -56,12 +56,6 @@ export const RestaurantCard = ({
           <div className="absolute top-4 right-3 bg-primary text-primary-foreground px-3 py-1 rounded-full font-bold text-sm shadow-lg">
             {restaurant.discount}% OFF
           </div>
-
-          {/* Availability Indicator */}
-          <AvailabilityStatusBadge
-            className="absolute top-3 left-3 flex items-center gap-2 max-w-30 md:max-w-none"
-            status={restaurant.availabilityStatus}
-          />
         </div>
 
         {/* Restaurant Info */}
@@ -78,6 +72,11 @@ export const RestaurantCard = ({
               </span>
               <span>• {restaurant.category}</span>
             </div>
+            {/* Availability Indicator */}
+            <AvailabilityStatusBadge
+              className="flex items-center gap-2 max-w-30 md:max-w-none"
+              status={restaurant.availabilityStatus}
+            />
           </div>
         </div>
       </Card>
