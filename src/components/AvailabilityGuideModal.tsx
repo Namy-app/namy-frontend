@@ -3,6 +3,8 @@
 import { X } from "lucide-react";
 import { createPortal } from "react-dom";
 
+import { AvailabilityStatusBadge } from "./AvailabilityStatusBadge";
+
 interface AvailabilityGuideModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -34,32 +36,15 @@ export function AvailabilityGuideModal({
         </h2>
 
         {/* Availability Guide Items */}
-        <div className="space-y-4">
+        <div className="grid grid-cols-2 items-start gap-3">
           {/* Disponible ahora */}
-          <div className="flex items-center gap-3">
-            <div className="w-4 h-4 rounded-full bg-green-500 flex-shrink-0" />
-            <span className="text-base text-foreground font-medium">
-              Disponible ahora
-            </span>
-          </div>
-
+          <AvailabilityStatusBadge status="available" />
           {/* Disponible en 2h 15m */}
-          <div className="flex items-center gap-3">
-            <div className="w-4 h-4 rounded-full bg-yellow-500 flex-shrink-0" />
-            <span className="text-base text-foreground font-medium">
-              Disponible bientôt
-            </span>
-          </div>
+          <AvailabilityStatusBadge status="soon" />
 
           {/* No disponible hoy */}
-          <div className="flex items-center gap-3">
-            <div className="w-4 h-4 rounded-full bg-red-500 flex-shrink-0" />
-            <span className="text-base text-foreground font-medium">
-              No disponible hoy
-            </span>
-          </div>
+          <AvailabilityStatusBadge status="unavailable" />
         </div>
-
         {/* Close Button */}
         <button
           onClick={onClose}

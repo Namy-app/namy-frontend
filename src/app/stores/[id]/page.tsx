@@ -1545,7 +1545,9 @@ export default function StoresDetailPage(): React.JSX.Element {
         : null}
       <GeneratingCouponModal
         isOpen={isGeneratingCoupon || !!quickPayError}
-        isLoading={isGeneratingCoupon && !couponGenerationError && !quickPayError}
+        isLoading={
+          !!(isGeneratingCoupon && !couponGenerationError && !quickPayError)
+        }
         error={couponGenerationError || quickPayError}
         onClose={() => {
           setIsGeneratingCoupon(false);
