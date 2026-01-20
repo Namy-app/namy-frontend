@@ -24,8 +24,8 @@ interface Service {
   discount: number;
   rating: number;
   distance: string;
-  // availabilityStatus: "available" | "soon" | "unavailable";
-  // availabilityText?: string;
+  availabilityStatus: "available" | "soon" | "unavailable";
+  availabilityText?: string;
 }
 
 // Note: Now using calculateAvailabilityStatus from availability-utils
@@ -65,8 +65,8 @@ export default function ServicesPage(): React.JSX.Element {
       discount: discountPercentage,
       rating: store.averageRating ?? 4.7,
       distance: "N/A",
-      // availabilityStatus: store.discountAvailabilityStatus ?? "unavailable",
-      // availabilityText: store.discountAvailabilityText,
+      availabilityStatus: store.discountAvailabilityStatus ?? "unavailable",
+      availabilityText: store.discountAvailabilityText,
     };
 
     return (

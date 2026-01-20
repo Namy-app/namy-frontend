@@ -25,8 +25,8 @@ export const RestaurantCard = ({
       "https://images.unsplash.com/photo-1565299507177-b0ac66763828?w=800&auto=format&fit=crop",
     discount: discountPercentage,
     distance: "N/A",
-    // availabilityStatus: store.discountAvailabilityStatus ?? "unavailable",
-    // availabilityText: store.discountAvailabilityText,
+    availabilityStatus: store.discountAvailabilityStatus ?? "unavailable",
+    availabilityText: store.discountAvailabilityText,
   };
 
   return (

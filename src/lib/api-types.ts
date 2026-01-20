@@ -70,8 +70,8 @@ export interface Store {
   city?: string;
   openDays?: Record<string, unknown>;
   additionalInfo?: Record<string, unknown>;
-  // discountAvailabilityStatus?: "available" | "soon" | "unavailable";
-  // discountAvailabilityText?: string;
+  discountAvailabilityStatus?: "available" | "soon" | "unavailable";
+  discountAvailabilityText?: string;
 }
 
 export interface Discount {
