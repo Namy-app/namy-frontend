@@ -43,8 +43,8 @@ export interface Restaurant {
   image: string;
   discount: number;
   distance: string;
-  availabilityStatus: "available" | "soon" | "unavailable";
-  availabilityText?: string;
+  // availabilityStatus: "available" | "soon" | "unavailable";
+  // availabilityText?: string;
 }
 
 export interface StoresResponse {

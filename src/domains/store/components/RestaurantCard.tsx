@@ -2,7 +2,6 @@ import { Star } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
-import { AvailabilityStatusBadge } from "@/components/AvailabilityStatusBadge";
 import type { Store } from "@/lib/api-types";
 import { Card } from "@/shared/components/Card";
 
@@ -26,8 +25,8 @@ export const RestaurantCard = ({
       "https://images.unsplash.com/photo-1565299507177-b0ac66763828?w=800&auto=format&fit=crop",
     discount: discountPercentage,
     distance: "N/A",
-    availabilityStatus: store.discountAvailabilityStatus ?? "unavailable",
-    availabilityText: store.discountAvailabilityText,
+    // availabilityStatus: store.discountAvailabilityStatus ?? "unavailable",
+    // availabilityText: store.discountAvailabilityText,
   };
 
   return (
@@ -58,10 +57,10 @@ export const RestaurantCard = ({
           </div>
 
           {/* Availability Indicator */}
-          <AvailabilityStatusBadge
+          {/* <AvailabilityStatusBadge
             className="absolute top-3 left-3 flex items-center gap-2 max-w-30 md:max-w-none"
             status={restaurant.availabilityStatus}
-          />
+          /> */}
         </div>
 
         {/* Restaurant Info */}
@@ -78,6 +77,11 @@ export const RestaurantCard = ({
               </span>
               <span>• {restaurant.category}</span>
             </div>
+            {/* Availability Indicator */}
+            {/* <AvailabilityStatusBadge
+              className="flex items-center gap-2 max-w-30 md:max-w-none"
+              status={restaurant.availabilityStatus}
+            /> */}
           </div>
         </div>
       </Card>

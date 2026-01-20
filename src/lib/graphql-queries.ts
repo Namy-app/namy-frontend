@@ -178,8 +178,6 @@ export const GET_ALL_STORES_QUERY = `
         city
         lat
         lng
-        discountAvailabilityStatus
-        discountAvailabilityText
       }
       paginationInfo {
         total
