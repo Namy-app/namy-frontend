@@ -5,7 +5,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 
-import { AvailabilityGuideModal } from "@/components/AvailabilityGuideModal";
 import { useStores } from "@/domains/store/hooks";
 import { type StoreFilters } from "@/domains/store/type";
 import { useMyLevel } from "@/domains/user/hooks/query/useMyLevel";
@@ -43,7 +42,7 @@ export default function ServicesPage(): React.JSX.Element {
     noRestaurants: true,
   });
   const [searchQuery, setSearchQuery] = useState("");
-  const [showGuideModal, setShowGuideModal] = useState(false);
+  const [_, setShowGuideModal] = useState(false);
 
   const { data: storesResult, isLoading } = useStores(filters);
   const { user } = useAuthStore();
@@ -92,7 +91,7 @@ export default function ServicesPage(): React.JSX.Element {
             </div>
 
             {/* Availability Indicator */}
-            <div className="absolute top-3 left-3 flex items-center gap-2">
+            {/* <div className="absolute top-3 left-3 flex items-center gap-2">
               <div
                 className={`w-3 h-3 rounded-full ${
                   service.availabilityStatus === "available"
@@ -103,10 +102,12 @@ export default function ServicesPage(): React.JSX.Element {
                 }`}
               />
               {service.availabilityStatus === "soon" &&
-                service.availabilityText ? <span className="bg-black/70 text-white px-2 py-0.5 rounded-full text-xs font-medium">
-                    {service.availabilityText}
-                  </span> : null}
-            </div>
+              service.availabilityText ? (
+                <span className="bg-black/70 text-white px-2 py-0.5 rounded-full text-xs font-medium">
+                  {service.availabilityText}
+                </span>
+              ) : null}
+            </div> */}
           </div>
 
           <div className="p-4">
@@ -243,10 +244,10 @@ export default function ServicesPage(): React.JSX.Element {
       </div>
 
       {/* Availability Guide Modal */}
-      <AvailabilityGuideModal
+      {/* <AvailabilityGuideModal
         isOpen={showGuideModal}
         onClose={() => setShowGuideModal(false)}
-      />
+      /> */}
     </BasicLayout>
   );
 }
