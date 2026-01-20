@@ -2,6 +2,7 @@
 
 import confetti from "canvas-confetti";
 import { X, Loader2, Gift } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
@@ -245,20 +246,21 @@ export function VideoAdsModal({
         {/* Video player */}
         {!loadingAds && !adError && ads.length > 0 && !unlockToken && (
           <div>
-            <div className="rounded-t-lg text-card-foreground h-full flex items-center bg-[linear-gradient(180deg,#f5e6c8_0%,#f0c999_50%,#e8b884_100%)] shadow-sm  border-0 hover:shadow-glow transition-all cursor-pointer group">
-              <Link
-                href="/subscription
-              "
-                className="w-full h-full"
-              >
-                <div className="flex h-full items-center gap-4">
-                  <div className="flex-1 text-center p-10">
-                    <h3 className="text-3xl font-bold text-secondary-foreground mb-1">
-                      ¿Quieres hacerlo sin anuncios?
-                    </h3>
-                    <p className="text-secondary-foreground/80 text-sm">
-                      Premium desde $99/mes
-                    </p>
+            <div className="rounded-t-lg text-card-foreground h-full flex items-center bg-linear-to-br from-[#4138c2] via-[#4138c2] to-[#4138c2] shadow-sm border-0 hover:shadow-glow transition-all cursor-pointer group">
+              <Link href="/subscription" className="w-full h-full">
+                <div className="flex flex-col h-full items-center justify-center gap-6 p-10">
+                  <h3 className="text-3xl sm:text-4xl font-bold text-white">
+                    Sin Anuncios. Sin Esperas
+                  </h3>
+                  <p className="text-white/90 text-lg">Premium desde $99/mes</p>
+                  <div className="w-24 h-24 flex items-center justify-center">
+                    <Image
+                      src="/logo-gold.png"
+                      alt="Namy Logo"
+                      width={96}
+                      height={96}
+                      className="object-contain"
+                    />
                   </div>
                 </div>
               </Link>

@@ -41,7 +41,6 @@ export function AvailabilityGuideModal({
           <AvailabilityStatusBadge status="available" />
           {/* Disponible en 2h 15m */}
           <AvailabilityStatusBadge status="soon" />
-
           {/* No disponible hoy */}
           <AvailabilityStatusBadge status="unavailable" />
         </div>

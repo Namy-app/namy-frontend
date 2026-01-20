@@ -14,7 +14,6 @@ import {
 import Image from "next/image";
 import { useState } from "react";
 
-import { AvailabilityGuideModal } from "@/components/AvailabilityGuideModal";
 import { RestaurantCard } from "@/domains/store/components/RestaurantCard";
 import { useStores } from "@/domains/store/hooks";
 import { type StoreFilters } from "@/domains/store/type";
@@ -54,7 +53,7 @@ export default function RestaurantListingPage(): React.JSX.Element {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSubCategory, setSelectedSubCategory] = useState("All");
   const [showFilterModal, setShowFilterModal] = useState(false);
-  const [showGuideModal, setShowGuideModal] = useState(false);
+  const [_, setShowGuideModal] = useState(false);
   const [sortBy, setSortBy] = useState<"distance" | "rating" | "discount">(
     "distance"
   );
@@ -312,10 +311,10 @@ export default function RestaurantListingPage(): React.JSX.Element {
       ) : null}
 
       {/* Availability Guide Modal */}
-      <AvailabilityGuideModal
+      {/* <AvailabilityGuideModal
         isOpen={showGuideModal}
         onClose={() => setShowGuideModal(false)}
-      />
+      /> */}
     </BasicLayout>
   );
 }
