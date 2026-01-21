@@ -249,21 +249,23 @@ export function VideoAdsModal({
             <div className="rounded-t-lg text-card-foreground flex items-center bg-linear-to-br from-[#4138c2] via-[#4138c2] to-[#4138c2] shadow-sm border-0 hover:shadow-glow transition-all cursor-pointer group">
               <Link href="/subscription" className="w-full h-full">
                 <div className="flex flex-col h-full items-center justify-evenly gap-2 p-5 sm:p-10">
-                  <div className="flex w-full justify-between sm:justify-center">
+                  <h3 className="text-2xl sm:text-3xl flex font-bold text-white items-centre sm:text-center">
+                    Sin Anuncios. Sin Esperas
+                  </h3>
+                  <div className="flex w-full justify-center">
                     <div className="sm:hidden sm:w-24 sm:h-24 w-12 h-12 flex items-center justify-center">
                       <Image
                         src="/logo-gold.png"
                         alt="Namy Logo"
-                        width={96}
-                        height={96}
+                        width={24}
+                        height={24}
                         className="object-contain"
                       />
                     </div>
-                    <h3 className="text-xl sm:text-3xl flex font-bold text-white items-centre sm:text-center">
-                      Sin Anuncios. Sin Esperas
-                    </h3>
+                    <p className="text-white/90 text-lg flex place-items-center">
+                      Premium desde $99/mes
+                    </p>
                   </div>
-                  <p className="text-white/90 text-lg">Premium desde $99/mes</p>
                   <div className="hidden sm:w-24 sm:h-24 w-12 h-12 sm:flex items-center justify-center">
                     <Image
                       src="/logo-gold.png"
