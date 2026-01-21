@@ -246,13 +246,10 @@ export function VideoAdsModal({
         {/* Video player */}
         {!loadingAds && !adError && ads.length > 0 && !unlockToken && (
           <div>
-            <div className="rounded-t-lg text-card-foreground h-full flex items-center bg-linear-to-br from-[#4138c2] via-[#4138c2] to-[#4138c2] shadow-sm border-0 hover:shadow-glow transition-all cursor-pointer group">
+            <div className="rounded-t-lg text-card-foreground flex items-center bg-linear-to-br from-[#4138c2] via-[#4138c2] to-[#4138c2] shadow-sm border-0 hover:shadow-glow transition-all cursor-pointer group">
               <Link href="/subscription" className="w-full h-full">
-                <div className="flex flex-col h-full items-center  justify-center gap-6 p-5 sm:p-10">
-                  <div className="flex">
-                    <h3 className="text-3xl sm:text-4xl font-bold text-white items-left sm:text-center">
-                      Sin Anuncios. Sin Esperas
-                    </h3>
+                <div className="flex flex-col h-full items-center justify-evenly gap-2 p-5 sm:p-10">
+                  <div className="flex w-full justify-between sm:justify-center">
                     <div className="sm:hidden sm:w-24 sm:h-24 w-12 h-12 flex items-center justify-center">
                       <Image
                         src="/logo-gold.png"
@@ -262,6 +259,9 @@ export function VideoAdsModal({
                         className="object-contain"
                       />
                     </div>
+                    <h3 className="text-xl sm:text-3xl flex font-bold text-white items-centre sm:text-center">
+                      Sin Anuncios. Sin Esperas
+                    </h3>
                   </div>
                   <p className="text-white/90 text-lg">Premium desde $99/mes</p>
                   <div className="hidden sm:w-24 sm:h-24 w-12 h-12 sm:flex items-center justify-center">
