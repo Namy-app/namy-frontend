@@ -7,7 +7,7 @@ import { Card } from "@/shared/components/Card";
 
 export function CategoryCards(): React.JSX.Element {
   const router = useRouter();
-  const { data: user } = useCurrentUser();
+  const { data: user, isLoading } = useCurrentUser();
 
   return (
     <div className="px-4 sm:px-6 py-6 sm:py-8">
@@ -125,7 +125,7 @@ export function CategoryCards(): React.JSX.Element {
         </button>
       </div>
 
-      {!user?.isPremium && (
+      {!isLoading && !user?.isPremium && (
         <div className="w-full mt-4 sm:mt-5">
           <Card className="p-6 sm:p-8 bg-black hover:shadow-glow transition-all group border-0 shadow-lg rounded-3xl">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-6">
