@@ -16,7 +16,7 @@ export function BottomNavigation(): React.JSX.Element {
       <div className="flex justify-around items-center h-16 max-w-5xl mx-auto">
         <button
           onClick={() => router.push("/explore")}
-          className={`flex flex-col items-center justify-center gap-1 px-6 py-2 transition-all rounded-lg ${isActive("/explore") ? "text-primary scale-105" : "text-muted-foreground hover:text-foreground hover:scale-105"}`}
+          className={`flex flex-col items-center justify-center gap-1 md:px-6  py-2 transition-all rounded-lg ${isActive("/explore") ? "text-primary scale-105" : "text-muted-foreground hover:text-foreground hover:scale-105"}`}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -39,7 +39,7 @@ export function BottomNavigation(): React.JSX.Element {
         {isAuthenticated ? (
           <button
             onClick={() => router.push("/my-coupons")}
-            className={`flex flex-col items-center justify-center gap-1 px-6 py-2 transition-all rounded-lg ${isActive("/my-coupons") ? "text-primary scale-105" : "text-muted-foreground hover:text-foreground hover:scale-105"}`}
+            className={`flex flex-col items-center justify-center gap-1 md:px-6  py-2 transition-all rounded-lg ${isActive("/my-coupons") ? "text-primary scale-105" : "text-muted-foreground hover:text-foreground hover:scale-105"}`}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -63,8 +63,8 @@ export function BottomNavigation(): React.JSX.Element {
         ) : (
           <button
             onClick={() => router.push("/coming-soon?feature=Top Ñamy")}
-            // className="flex flex-col items-center justify-center gap-1 px-6 py-2 transition-all rounded-lg text-muted-foreground hover:text-foreground hover:scale-105"
-            className="hidden flex-col items-center justify-center gap-1 px-6 py-2 transition-all rounded-lg text-muted-foreground hover:text-foreground hover:scale-105"
+            // className="flex flex-col items-center justify-center gap-1 md:px-6  py-2 transition-all rounded-lg text-muted-foreground hover:text-foreground hover:scale-105"
+            className="hidden flex-col items-center justify-center gap-1 md:px-6  py-2 transition-all rounded-lg text-muted-foreground hover:text-foreground hover:scale-105"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -92,7 +92,7 @@ export function BottomNavigation(): React.JSX.Element {
         {isAuthenticated ? (
           <button
             onClick={() => router.push("/profile")}
-            className={`flex flex-col items-center justify-center gap-1 px-6 py-2 transition-all rounded-lg ${isActive("/profile") ? "text-primary scale-105" : "text-muted-foreground hover:text-foreground hover:scale-105"}`}
+            className={`flex flex-col items-center justify-center gap-1 md:px-6  py-2 transition-all rounded-lg ${isActive("/profile") ? "text-primary scale-105" : "text-muted-foreground hover:text-foreground hover:scale-105"}`}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -114,8 +114,8 @@ export function BottomNavigation(): React.JSX.Element {
         ) : (
           <button
             onClick={() => router.push("/coming-soon?feature=Mural")}
-            className="hidden flex-col items-center justify-center gap-1 px-6 py-2 transition-all rounded-lg text-muted-foreground hover:text-foreground hover:scale-105"
-            // className="flex flex-col items-center justify-center gap-1 px-6 py-2 transition-all rounded-lg text-muted-foreground hover:text-foreground hover:scale-105"
+            className="hidden flex-col items-center justify-center gap-1 md:px-6  py-2 transition-all rounded-lg text-muted-foreground hover:text-foreground hover:scale-105"
+            // className="flex flex-col items-center justify-center gap-1 md:px-6  py-2 transition-all rounded-lg text-muted-foreground hover:text-foreground hover:scale-105"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -139,7 +139,7 @@ export function BottomNavigation(): React.JSX.Element {
 
         <button
           onClick={() => router.push("/wallet")}
-          className={`flex flex-col items-center justify-center gap-1 px-6 py-2 transition-all rounded-lg relative ${isActive("/wallet") ? "text-primary scale-105" : "text-muted-foreground hover:text-foreground hover:scale-105"}`}
+          className={`flex flex-col items-center justify-center gap-1 md:px-6  py-2 transition-all rounded-lg relative ${isActive("/wallet") ? "text-primary scale-105" : "text-muted-foreground hover:text-foreground hover:scale-105"}`}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
