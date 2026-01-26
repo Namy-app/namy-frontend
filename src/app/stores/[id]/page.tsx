@@ -63,13 +63,13 @@ const DAY_LABELS: Record<string, string> = {
 // Get current day of the week in lowercase English
 function getCurrentDayOfWeek(): string {
   const days = [
+    "sunday",
     "monday",
     "tuesday",
     "wednesday",
     "thursday",
     "friday",
     "saturday",
-    "sunday",
   ];
   const today = new Date();
   return days[today.getDay()] || "";
