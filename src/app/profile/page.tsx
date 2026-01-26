@@ -150,7 +150,7 @@ export default function ProfilePage(): React.JSX.Element | null {
                   <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                 ) : (
                   <span className="text-2xl font-bold text-foreground">
-                    ${walletBalance?.balance || "0"}{" "}
+                    ${((walletBalance?.balance || 0) / 100).toFixed(2)}{" "}
                     {walletBalance?.currency || "MXN"}
                   </span>
                 )}

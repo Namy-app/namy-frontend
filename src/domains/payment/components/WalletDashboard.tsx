@@ -164,7 +164,7 @@ export function WalletDashboard({ userId }: WalletDashboardProps) {
                   key={transaction.id}
                   className="px-6 py-4 hover:bg-gray-50 transition-colors"
                 >
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-wrap md:flex-nowrap items-center justify-between">
                     <div className="flex-1 flex items-start gap-3">
                       <div className="text-2xl mt-1">
                         {getTransactionIcon(transaction.type)}
@@ -175,6 +175,21 @@ export function WalletDashboard({ userId }: WalletDashboardProps) {
                             {transaction.type.replace(/_/g, " ")}
                           </p>
                           {getStatusBadge(transaction.status)}
+                        </div>
+                        <div className="text-left">
+                          <p
+                            className={`text-[18px] pb-1 font-semibold md:hidden block ${
+                              isCredit(transaction.type)
+                                ? "text-green-600"
+                                : "text-red-600"
+                            }`}
+                          >
+                            {isCredit(transaction.type) ? "+" : "-"}
+                            {formatAmount(
+                              transaction.amount,
+                              transaction.currency
+                            )}
+                          </p>
                         </div>
                         {transaction.description ? (
                           <p className="sm:text-sm text-xs text-gray-600">
@@ -188,7 +203,7 @@ export function WalletDashboard({ userId }: WalletDashboardProps) {
                     </div>
                     <div className="text-right">
                       <p
-                        className={`sm:text-lg text-md font-semibold ${
+                        className={`text-md font-semibold hidden md:block ${
                           isCredit(transaction.type)
                             ? "text-green-600"
                             : "text-red-600"
