@@ -77,7 +77,7 @@ export default function ProfilePage(): React.JSX.Element | null {
 
   const handleCopyReferralCode = async () => {
     if (user.referralCode) {
-      const copyText = `Use my referral code "${user.referralCode}" to win 1 month free subscription!`;
+      const copyText = `¡Usa mi código de referido "${user.referralCode}" y gana $99mxn en tu billetera!`;
       await navigator.clipboard.writeText(copyText);
       setCopiedCode(true);
       setTimeout(() => setCopiedCode(false), 2000);
