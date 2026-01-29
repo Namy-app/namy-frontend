@@ -63,13 +63,13 @@ const DAY_LABELS: Record<string, string> = {
 // Get current day of the week in lowercase English
 function getCurrentDayOfWeek(): string {
   const days = [
+    "sunday",
     "monday",
     "tuesday",
     "wednesday",
     "thursday",
     "friday",
     "saturday",
-    "sunday",
   ];
   const today = new Date();
   return days[today.getDay()] || "";
@@ -1365,7 +1365,9 @@ export default function StoresDetailPage(): React.JSX.Element {
                     {(() => {
                       // Get the catalog and its images
                       const catalog = catalogs?.[0];
-                      if (!catalog) {return null;}
+                      if (!catalog) {
+                        return null;
+                      }
 
                       const catalogImages = Array.from(
                         { length: 10 },
@@ -1388,7 +1390,8 @@ export default function StoresDetailPage(): React.JSX.Element {
                           />
 
                           {/* Navigation Controls */}
-                          {hasMultipleImages && currentImageIndex !== -1 ? <>
+                          {hasMultipleImages && currentImageIndex !== -1 ? (
+                            <>
                               {/* Previous Button */}
                               {currentImageIndex > 0 && (
                                 <button
@@ -1452,7 +1455,8 @@ export default function StoresDetailPage(): React.JSX.Element {
                                   </button>
                                 ))}
                               </div>
-                            </> : null}
+                            </>
+                          ) : null}
                         </>
                       );
                     })()}
