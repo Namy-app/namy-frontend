@@ -6,13 +6,12 @@
 import {
   Search,
   MapPin,
+  Filter,
   Map,
   SlidersHorizontal,
   Info,
-  Grid3x3,
-  ChevronLeft,
-  ChevronRight,
 } from "lucide-react";
+import Image from "next/image";
 import { useState } from "react";
 
 import { RestaurantCard } from "@/domains/store/components/RestaurantCard";
@@ -23,6 +22,11 @@ import { BasicLayout } from "@/layouts/BasicLayout";
 import { Button } from "@/shared/components/Button";
 import { Input } from "@/shared/components/Input";
 import { useAuthStore } from "@/store/useAuthStore";
+
+// Note: Now using calculateAvailabilityStatus from availability-utils
+// which uses real openDays data from the backend
+
+// (Removed unused mock data to satisfy TypeScript noUnusedLocals)
 
 const categories = [
   "All",
@@ -39,27 +43,17 @@ const categories = [
 
 let timeout: NodeJS.Timeout;
 
-const ITEMS_PER_PAGE = 12;
-
 export default function RestaurantListingPage(): React.JSX.Element {
   const [filters, setFilters] = useState<StoreFilters>({
     categoryId: "restaurant",
   });
-  const [currentPage, setCurrentPage] = useState(1);
-  const { data: storesResult, isLoading } = useStores(filters, {
-    page: currentPage,
-    first: ITEMS_PER_PAGE,
-  });
+  const { data: storesResult, isLoading } = useStores(filters);
   const allStores = storesResult?.data ?? [];
-  const paginationInfo = storesResult?.paginationInfo;
-  type ViewMode = "grid" | "map";
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSubCategory, setSelectedSubCategory] = useState("All");
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [_, setShowGuideModal] = useState(false);
-  const [viewMode, setViewMode] = useState<ViewMode>("grid");
-
   const [sortBy, setSortBy] = useState<"distance" | "rating" | "discount">(
     "distance"
   );
@@ -71,7 +65,6 @@ export default function RestaurantListingPage(): React.JSX.Element {
 
   const handleCategoryClick = (subCategory: string): void => {
     setSelectedSubCategory(subCategory);
-    setCurrentPage(1);
     setFilters((prev) => ({
       ...prev,
       subCategory: subCategory === "All" ? undefined : subCategory,
@@ -85,7 +78,6 @@ export default function RestaurantListingPage(): React.JSX.Element {
 
     setSearchQuery(query);
     timeout = setTimeout(() => {
-      setCurrentPage(1);
       setFilters((prev) => ({
         ...prev,
         search: query || undefined,
@@ -93,67 +85,69 @@ export default function RestaurantListingPage(): React.JSX.Element {
     }, 300);
   };
 
-  // const handleMapView = (): void => {
-  //   // TODO: Implement map view
-  //   alert("¡Vista de mapa próximamente!");
-  // };
+  const handleMapView = (): void => {
+    // TODO: Implement map view
+    alert("¡Vista de mapa próximamente!");
+  };
 
   const clearFilters = (): void => {
     setSearchQuery("");
     setSelectedSubCategory("All");
     setSortBy("distance");
-    setCurrentPage(1);
-  };
-
-  const handlePageChange = (page: number): void => {
-    setCurrentPage(page);
-    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   return (
     <BasicLayout>
-      <div className="pt-14">
-        <div className="min-h-screen bg-gradient-hero">
+      <div className="pt-14 pb-16 ">
+        <div className="min-h-screen bg-background pb-20">
           {/* Header Section with Search */}
-          <div className="p-6 pb-8 ">
+          <div className="bg-gradient-hero p-6 pb-8 ">
             <div className="max-w-5xl mx-auto">
-              <div className="flex h-20 justify-center w-full gap-1 text-muted-foreground text-sm mt-1">
-                <div className="flex place-items-center">
-                  <MapPin className="w-4 h-4" />
-                  <span className="text-center w-full">
-                    Cancún, Quintana Roo
-                  </span>
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <Image
+                    src="/namy-logo.webp"
+                    alt="Ñamy Logo"
+                    width={48}
+                    height={48}
+                    className="w-12 h-12 rounded-xl object-cover shadow-card"
+                  />
+                  <div>
+                    <h1 className="text-3xl font-bold text-foreground">Amy</h1>
+                    <div className="flex items-center gap-1 text-muted-foreground text-sm mt-1">
+                      <MapPin className="w-4 h-4" />
+                      <span>Cancún, Quintana Roo</span>
+                    </div>
+                  </div>
                 </div>
-              </div>
-              {/* View Mode Toggle */}
-              <div className="flex gap-2 justify-center my-4">
-                <Button
-                  onClick={() => setShowGuideModal(true)}
-                  variant="outline"
-                  size="sm"
-                  className="gap-2"
-                >
-                  <Info className="w-4 h-4" />
-                  Guía
-                </Button>
-                <Button
-                  onClick={() => setViewMode("grid")}
-                  variant={viewMode === "grid" ? "default" : "outline"}
-                  size="sm"
-                  className="gap-2"
-                >
-                  <Grid3x3 className="w-4 h-4" />
-                  Grid
-                </Button>
-                <Button
-                  onClick={() => setViewMode("map")}
-                  variant={viewMode === "map" ? "default" : "outline"}
-                  size="sm"
-                  className="gap-2"
-                >
-                  <Map className="w-4 h-4" />
-                  Mapa
-                </Button>
+
+                {/* Action Buttons */}
+                <div className="flex gap-2">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="rounded-full"
+                    onClick={() => setShowGuideModal(true)}
+                  >
+                    <Info className="w-5 h-5" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="rounded-full"
+                    onClick={handleMapView}
+                  >
+                    <Map className="w-5 h-5" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="rounded-full"
+                    onClick={() => setShowFilterModal(!showFilterModal)}
+                  >
+                    <Filter className="w-5 h-5" />
+                  </Button>
+                </div>
               </div>
 
               {/* Search Bar */}
@@ -254,78 +248,6 @@ export default function RestaurantListingPage(): React.JSX.Element {
                   ))
                 )}
               </div>
-
-              {/* Pagination */}
-              {paginationInfo && paginationInfo.totalPages > 1 ? <div className="px-6 py-8 max-w-5xl mx-auto">
-                  <div className="flex items-center justify-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handlePageChange(currentPage - 1)}
-                      disabled={!paginationInfo.hasPreviousPage}
-                      className="gap-1"
-                    >
-                      <ChevronLeft className="w-4 h-4" />
-                      Anterior
-                    </Button>
-
-                    <div className="flex items-center gap-1">
-                      {Array.from(
-                        { length: paginationInfo.totalPages },
-                        (_, i) => i + 1
-                      )
-                        .filter((page) => {
-                          const distance = Math.abs(page - currentPage);
-                          return (
-                            distance === 0 ||
-                            distance === 1 ||
-                            page === 1 ||
-                            page === paginationInfo?.totalPages
-                          );
-                        })
-                        .map((page, index, array) => {
-                          const prevPage = array[index - 1];
-                          const showEllipsisBefore =
-                            index > 0 &&
-                            prevPage !== undefined &&
-                            page - prevPage > 1;
-                          return (
-                            <span key={page} className="flex items-center">
-                              {showEllipsisBefore ? <span className="px-2 text-muted-foreground">
-                                  ...
-                                </span> : null}
-                              <Button
-                                variant={
-                                  currentPage === page ? "default" : "outline"
-                                }
-                                size="sm"
-                                onClick={() => handlePageChange(page)}
-                                className="min-w-10"
-                              >
-                                {page}
-                              </Button>
-                            </span>
-                          );
-                        })}
-                    </div>
-
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handlePageChange(currentPage + 1)}
-                      disabled={!paginationInfo.hasNextPage}
-                      className="gap-1"
-                    >
-                      Siguiente
-                      <ChevronRight className="w-4 h-4" />
-                    </Button>
-                  </div>
-
-                  <p className="text-center text-sm text-muted-foreground mt-4">
-                    Página {paginationInfo.page} de {paginationInfo.totalPages}{" "}
-                    ({paginationInfo.total} restaurantes)
-                  </p>
-                </div> : null}
             </>
           )}
         </div>
