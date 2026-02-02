@@ -29,10 +29,12 @@ export function MapDisplay({
       zoom={15}
       options={{
         disableDefaultUI: true,
-        zoomControl: true,
         mapTypeControl: false,
         streetViewControl: false,
-        fullscreenControl: true,
+        draggable: false,
+        scrollwheel: false,
+        disableDoubleClickZoom: true,
+        gestureHandling: "none",
       }}
     >
       <Marker position={center} title={storeName} />

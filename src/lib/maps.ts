@@ -2,6 +2,7 @@
  * Interface for location data
  */
 export interface LocationData {
+  placeId?: string;
   lat?: number;
   lng?: number;
   address?: string;
@@ -16,7 +17,9 @@ export function openInGoogleMaps(location: LocationData): void {
   let mapsUrl = "https://www.google.com/maps/search/";
 
   // Use coordinates if available (more precise)
-  if (location.lat && location.lng) {
+  if (location.placeId) {
+    mapsUrl = `https://www.google.com/maps/dir/?api=1&destination_place_id=${location.placeId}`;
+  } else if (location.lat && location.lng) {
     mapsUrl += `${location.lat},${location.lng}`;
   } else if (location.address) {
     // Fallback to address if coordinates aren't available

@@ -201,7 +201,7 @@ export default function RedeemDetail({
     } catch (err) {
       toast({
         title: "Error",
-        description: extractErrorMessage(error ?? err),
+        description: extractErrorMessage(err),
         variant: "destructive",
       });
     } finally {

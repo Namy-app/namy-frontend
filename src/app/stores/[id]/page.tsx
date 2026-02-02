@@ -668,6 +668,7 @@ export default function StoresDetailPage(): React.JSX.Element {
       return;
     }
     openInGoogleMaps({
+      placeId: store?.placeId,
       ...(parsedStore.location.lat &&
         parsedStore.location.lng && {
           lat: +Number(parsedStore.location.lat).toFixed(6),
@@ -923,14 +924,16 @@ export default function StoresDetailPage(): React.JSX.Element {
                       </p>
 
                       {/* NEW: Embedded Map Display */}
-                      {parsedStore.location.lat && parsedStore.location.lng ? <div className="my-3">
+                      {parsedStore.location.lat && parsedStore.location.lng ? (
+                        <div className="my-3">
                           <MapDisplay
                             lat={parsedStore.location.lat}
                             lng={parsedStore.location.lng}
                             storeName={parsedStore.name}
                             height="180px"
                           />
-                        </div> : null}
+                        </div>
+                      ) : null}
 
                       <Button
                         variant="outline"

@@ -56,6 +56,7 @@ export interface Store {
   image3Url?: string;
   lat?: number;
   lng?: number;
+  placeId?: string;
   distance?: number;
   isActive: boolean;
   ownerId: string;
