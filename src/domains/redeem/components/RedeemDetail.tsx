@@ -199,10 +199,9 @@ export default function RedeemDetail({
         });
       }
     } catch (err) {
-      console.error("Redeem error:", err);
       toast({
         title: "Error",
-        description: extractErrorMessage(error),
+        description: extractErrorMessage(error ?? err),
         variant: "destructive",
       });
     } finally {
