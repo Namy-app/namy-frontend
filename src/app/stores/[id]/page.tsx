@@ -21,6 +21,7 @@ import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 
 import { CongratulationsModal } from "@/components/CongratulationsModal";
+import { MapDisplay } from "@/components/MapDisplay";
 import { UnlockDiscountModal } from "@/components/UnlockDiscountModal";
 import { VideoAdsModal } from "@/components/VideoAdsModal";
 import { PlaceHolderTypeEnum } from "@/data/constants";
@@ -920,13 +921,24 @@ export default function StoresDetailPage(): React.JSX.Element {
                         {parsedStore.location.address},{" "}
                         {parsedStore.location.city}
                       </p>
+
+                      {/* NEW: Embedded Map Display */}
+                      {parsedStore.location.lat && parsedStore.location.lng ? <div className="my-3">
+                          <MapDisplay
+                            lat={parsedStore.location.lat}
+                            lng={parsedStore.location.lng}
+                            storeName={parsedStore.name}
+                            height="180px"
+                          />
+                        </div> : null}
+
                       <Button
                         variant="outline"
                         size="sm"
                         className="text-xs"
                         onClick={handleGetDirections}
                       >
-                        View on map 📍
+                        Get Directions 📍
                       </Button>
                     </div>
                   </div>

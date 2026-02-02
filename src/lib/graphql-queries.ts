@@ -210,6 +210,7 @@ export const GET_STORE_QUERY = `
         subCategory
         averageRating
         reviewCounter
+        placeId
         city
         lat
         lng
@@ -227,6 +228,7 @@ export const CREATE_STORE_MUTATION = `
     createStore(input: $input) {
       store {
         id
+        placeId
         name
         description
         address

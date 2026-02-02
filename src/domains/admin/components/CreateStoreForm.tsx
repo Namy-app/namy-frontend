@@ -3,6 +3,7 @@
 import { X, Store as StoreIcon, Loader2, Copy, Check } from "lucide-react";
 import { useState } from "react";
 
+import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 import { useCreateStore } from "@/domains/admin/hooks";
 import {
   type CreateStoreInput,
@@ -441,48 +442,50 @@ export function CreateStoreForm({ onClose, onSuccess }: CreateStoreFormProps) {
                 <label className="block text-sm font-medium text-foreground mb-2">
                   Address <span className="text-destructive">*</span>
                 </label>
-                <input
-                  type="text"
-                  name="address"
+                <AddressAutocomplete
                   value={formData.address}
-                  onChange={handleChange}
+                  onChange={(address, placeId, lat, lng) => {
+                    setFormData((prev) => ({
+                      ...prev,
+                      address,
+                      placeId: placeId || undefined,
+                      lat: lat || undefined,
+                      lng: lng || undefined,
+                    }));
+                  }}
+                  placeholder="Search for store address..."
                   required
-                  className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder="Full street address"
                 />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Start typing to search for an address using Google Places
+                </p>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    Latitude
-                  </label>
-                  <input
-                    type="number"
-                    name="lat"
-                    value={formData.lat || ""}
-                    onChange={handleChange}
-                    step="any"
-                    className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                    placeholder="19.4326"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    Longitude
-                  </label>
-                  <input
-                    type="number"
-                    name="lng"
-                    value={formData.lng || ""}
-                    onChange={handleChange}
-                    step="any"
-                    className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                    placeholder="-99.1332"
-                  />
-                </div>
-              </div>
+              {/* Show coordinates as read-only when auto-filled */}
+              {formData.lat && formData.lng ? <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-2">
+                      Latitude (auto-filled)
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.lat}
+                      readOnly
+                      className="w-full px-4 py-2 border border-border rounded-lg bg-muted"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-2">
+                      Longitude (auto-filled)
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.lng}
+                      readOnly
+                      className="w-full px-4 py-2 border border-border rounded-lg bg-muted"
+                    />
+                  </div>
+                </div> : null}
             </div>
 
             {/* Additional Information */}
