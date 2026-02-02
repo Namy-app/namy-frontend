@@ -10,6 +10,8 @@ import {
   Map,
   SlidersHorizontal,
   Info,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
@@ -43,12 +45,19 @@ const categories = [
 
 let timeout: NodeJS.Timeout;
 
+const ITEMS_PER_PAGE = 12;
+
 export default function RestaurantListingPage(): React.JSX.Element {
   const [filters, setFilters] = useState<StoreFilters>({
     categoryId: "restaurant",
   });
-  const { data: storesResult, isLoading } = useStores(filters);
+  const [currentPage, setCurrentPage] = useState(1);
+  const { data: storesResult, isLoading } = useStores(filters, {
+    page: currentPage,
+    first: ITEMS_PER_PAGE,
+  });
   const allStores = storesResult?.data ?? [];
+  const paginationInfo = storesResult?.paginationInfo;
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSubCategory, setSelectedSubCategory] = useState("All");
@@ -65,6 +74,7 @@ export default function RestaurantListingPage(): React.JSX.Element {
 
   const handleCategoryClick = (subCategory: string): void => {
     setSelectedSubCategory(subCategory);
+    setCurrentPage(1);
     setFilters((prev) => ({
       ...prev,
       subCategory: subCategory === "All" ? undefined : subCategory,
@@ -78,6 +88,7 @@ export default function RestaurantListingPage(): React.JSX.Element {
 
     setSearchQuery(query);
     timeout = setTimeout(() => {
+      setCurrentPage(1);
       setFilters((prev) => ({
         ...prev,
         search: query || undefined,
@@ -94,6 +105,12 @@ export default function RestaurantListingPage(): React.JSX.Element {
     setSearchQuery("");
     setSelectedSubCategory("All");
     setSortBy("distance");
+    setCurrentPage(1);
+  };
+
+  const handlePageChange = (page: number): void => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   return (
@@ -248,6 +265,78 @@ export default function RestaurantListingPage(): React.JSX.Element {
                   ))
                 )}
               </div>
+
+              {/* Pagination */}
+              {paginationInfo && paginationInfo.totalPages > 1 ? <div className="px-6 py-8 max-w-5xl mx-auto">
+                  <div className="flex items-center justify-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      disabled={!paginationInfo.hasPreviousPage}
+                      className="gap-1"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                      Anterior
+                    </Button>
+
+                    <div className="flex items-center gap-1">
+                      {Array.from(
+                        { length: paginationInfo.totalPages },
+                        (_, i) => i + 1
+                      )
+                        .filter((page) => {
+                          const distance = Math.abs(page - currentPage);
+                          return (
+                            distance === 0 ||
+                            distance === 1 ||
+                            page === 1 ||
+                            page === paginationInfo?.totalPages
+                          );
+                        })
+                        .map((page, index, array) => {
+                          const prevPage = array[index - 1];
+                          const showEllipsisBefore =
+                            index > 0 &&
+                            prevPage !== undefined &&
+                            page - prevPage > 1;
+                          return (
+                            <span key={page} className="flex items-center">
+                              {showEllipsisBefore ? <span className="px-2 text-muted-foreground">
+                                  ...
+                                </span> : null}
+                              <Button
+                                variant={
+                                  currentPage === page ? "default" : "outline"
+                                }
+                                size="sm"
+                                onClick={() => handlePageChange(page)}
+                                className="min-w-10"
+                              >
+                                {page}
+                              </Button>
+                            </span>
+                          );
+                        })}
+                    </div>
+
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      disabled={!paginationInfo.hasNextPage}
+                      className="gap-1"
+                    >
+                      Siguiente
+                      <ChevronRight className="w-4 h-4" />
+                    </Button>
+                  </div>
+
+                  <p className="text-center text-sm text-muted-foreground mt-4">
+                    Página {paginationInfo.page} de {paginationInfo.totalPages}{" "}
+                    ({paginationInfo.total} restaurantes)
+                  </p>
+                </div> : null}
             </>
           )}
         </div>
