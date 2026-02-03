@@ -463,33 +463,41 @@ export function CreateStoreForm({ onClose, onSuccess }: CreateStoreFormProps) {
                 </p>
               </div>
 
-              {/* Show coordinates as read-only when auto-filled */}
-              {formData.lat && formData.lng ? (
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">
-                      Latitude (auto-filled)
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.lat}
-                      readOnly
-                      className="w-full px-4 py-2 border border-border rounded-lg bg-muted"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">
-                      Longitude (auto-filled)
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.lng}
-                      readOnly
-                      className="w-full px-4 py-2 border border-border rounded-lg bg-muted"
-                    />
-                  </div>
+              {/* Coordinates - auto-filled from address or can be entered manually */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">
+                    Latitude
+                  </label>
+                  <input
+                    type="number"
+                    name="lat"
+                    value={formData.lat || ""}
+                    onChange={handleChange}
+                    step="any"
+                    className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                    placeholder="19.4326"
+                  />
                 </div>
-              ) : null}
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">
+                    Longitude
+                  </label>
+                  <input
+                    type="number"
+                    name="lng"
+                    value={formData.lng || ""}
+                    onChange={handleChange}
+                    step="any"
+                    className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                    placeholder="-99.1332"
+                  />
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Coordinates are auto-filled when selecting from address search,
+                or enter manually
+              </p>
             </div>
 
             {/* Additional Information */}
