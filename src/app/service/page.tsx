@@ -1,6 +1,15 @@
 "use client";
 
-import { Grid3x3, Map, MapPin, Search, Star, Info } from "lucide-react";
+import {
+  Grid3x3,
+  Map,
+  MapPin,
+  Search,
+  Star,
+  Info,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
@@ -28,6 +37,8 @@ interface Service {
   availabilityText?: string;
 }
 
+const ITEMS_PER_PAGE = 12;
+
 // Note: Now using calculateAvailabilityStatus from availability-utils
 // which uses real openDays data from the backend
 
@@ -44,10 +55,15 @@ export default function ServicesPage(): React.JSX.Element {
   const [searchQuery, setSearchQuery] = useState("");
   const [_, setShowGuideModal] = useState(false);
 
-  const { data: storesResult, isLoading } = useStores(filters);
   const { user } = useAuthStore();
   const { data: myLevel } = useMyLevel();
+  const [currentPage, setCurrentPage] = useState(1);
+  const { data: storesResult, isLoading } = useStores(filters, {
+    page: currentPage,
+    first: ITEMS_PER_PAGE,
+  });
   const allStores = storesResult?.data ?? [];
+  const paginationInfo = storesResult?.paginationInfo;
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const discountPercentage =
     (user?.isPremium ? 15 : myLevel?.discountPercentage) ?? 10;
@@ -140,6 +156,7 @@ export default function ServicesPage(): React.JSX.Element {
 
     setSearchQuery(query);
     timeout = setTimeout(() => {
+      setCurrentPage(1);
       setFilters((prev) => ({
         ...prev,
         search: query || undefined,
@@ -147,9 +164,14 @@ export default function ServicesPage(): React.JSX.Element {
     }, 300);
   };
 
+  const handlePageChange = (page: number): void => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   return (
     <BasicLayout className="pb-20">
-      <div className="pt-14 pb-16">
+      <div className="pt-14">
         {/* Hero Section */}
         <div className="bg-gradient-hero p-6 pb-8">
           <div className="max-w-5xl mx-auto">
@@ -159,20 +181,9 @@ export default function ServicesPage(): React.JSX.Element {
             <p className="text-muted-foreground text-center">
               Spas, barberías y salones de belleza
             </p>
-            {/* Search Bar */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-              <Input
-                type="text"
-                placeholder="Buscar servicios..."
-                value={searchQuery}
-                onChange={(e) => handleSetSearchQuery(e.target.value)}
-                className="pl-10 h-12 bg-card border-border rounded-2xl"
-              />
-            </div>
 
             {/* View Mode Toggle */}
-            <div className="flex gap-2 justify-center mt-4">
+            <div className="flex gap-2 justify-center my-4">
               <Button
                 onClick={() => setShowGuideModal(true)}
                 variant="outline"
@@ -202,6 +213,22 @@ export default function ServicesPage(): React.JSX.Element {
               </Button>
             </div>
 
+            {/* Search Bar */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Buscar servicios..."
+                value={searchQuery}
+                onChange={(e) => handleSetSearchQuery(e.target.value)}
+                className="pl-10 h-12 bg-card border-border rounded-2xl"
+              />
+            </div>
+            <p className="text-sm text-muted-foreground pl-5 pt-5">
+              {isLoading
+                ? "Cargando..."
+                : `${paginationInfo?.total} servicios encontrados`}
+            </p>
             {/* Services Grid */}
             {isLoading ? (
               <div className="flex items-center justify-center py-12">
@@ -211,19 +238,97 @@ export default function ServicesPage(): React.JSX.Element {
                 </div>
               </div>
             ) : viewMode === "grid" ? (
-              <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {allStores.length === 0 ? (
-                  <div className="col-span-full text-center py-12">
-                    <p className="text-muted-foreground text-lg mb-4">
-                      No services found
+              <>
+                <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {allStores.length === 0 ? (
+                    <div className="col-span-full text-center py-12">
+                      <p className="text-muted-foreground text-lg mb-4">
+                        No services found
+                      </p>
+                    </div>
+                  ) : (
+                    allStores.map((store) => (
+                      <ServiceCard key={store.id} store={store} />
+                    ))
+                  )}
+                </div>
+                {/* Pagination */}
+                {paginationInfo && paginationInfo.totalPages > 1 ? (
+                  <div className="px-6 py-8 max-w-5xl mx-auto">
+                    <div className="flex items-center justify-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        disabled={!paginationInfo.hasPreviousPage}
+                        className="gap-1"
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                        Anterior
+                      </Button>
+
+                      <div className="flex items-center gap-1">
+                        {Array.from(
+                          { length: paginationInfo.totalPages },
+                          (_, i) => i + 1
+                        )
+                          .filter((page) => {
+                            const distance = Math.abs(page - currentPage);
+                            return (
+                              distance === 0 ||
+                              distance === 1 ||
+                              page === 1 ||
+                              page === paginationInfo?.totalPages
+                            );
+                          })
+                          .map((page, index, array) => {
+                            const prevPage = array[index - 1];
+                            const showEllipsisBefore =
+                              index > 0 &&
+                              prevPage !== undefined &&
+                              page - prevPage > 1;
+                            return (
+                              <span key={page} className="flex items-center">
+                                {showEllipsisBefore ? (
+                                  <span className="px-2 text-muted-foreground">
+                                    ...
+                                  </span>
+                                ) : null}
+                                <Button
+                                  variant={
+                                    currentPage === page ? "default" : "outline"
+                                  }
+                                  size="sm"
+                                  onClick={() => handlePageChange(page)}
+                                  className="min-w-10"
+                                >
+                                  {page}
+                                </Button>
+                              </span>
+                            );
+                          })}
+                      </div>
+
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        disabled={!paginationInfo.hasNextPage}
+                        className="gap-1"
+                      >
+                        Siguiente
+                        <ChevronRight className="w-4 h-4" />
+                      </Button>
+                    </div>
+
+                    <p className="text-center text-sm text-muted-foreground mt-4">
+                      Página {paginationInfo.page} de{" "}
+                      {paginationInfo.totalPages} ({paginationInfo.total}{" "}
+                      servicios)
                     </p>
                   </div>
-                ) : (
-                  allStores.map((store) => (
-                    <ServiceCard key={store.id} store={store} />
-                  ))
-                )}
-              </div>
+                ) : null}
+              </>
             ) : (
               /* Map View Placeholder */
               <div className="p-6">

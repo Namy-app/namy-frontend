@@ -119,9 +119,12 @@ export default function RestaurantListingPage(): React.JSX.Element {
   return (
     <BasicLayout>
       <div className="pt-14">
-        <div className="min-h-screen bg-gradient-hero pb-20">
+        <div className="min-h-screen bg-gradient-hero">
           {/* Header Section with Search */}
           <div className="p-6 pb-8 ">
+            <h1 className="text-3xl font-bold text-foreground text-center mb-2">
+              Promos en Servicios
+            </h1>
             <div className="max-w-5xl mx-auto">
               <div className="flex items-center h-10 justify-center mb-6">
                 <div className="flex items-center gap-1 text-muted-foreground text-sm mt-1">
@@ -203,7 +206,7 @@ export default function RestaurantListingPage(): React.JSX.Element {
               <p className="text-sm text-muted-foreground">
                 {isLoading
                   ? "Cargando..."
-                  : `${allStores.length} restaurantes encontrados`}
+                  : `${paginationInfo?.total} restaurantes encontrados`}
               </p>
               {/* <div className="flex items-center gap-2"> */}
               <div className="hidden items-center gap-2">
