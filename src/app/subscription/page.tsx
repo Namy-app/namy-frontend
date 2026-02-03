@@ -336,10 +336,10 @@ function SubscriptionContent(): React.JSX.Element {
                   <div>
                     <p className="font-semibold text-gray-900">
                       <Zap className="w-4 h-4 inline mr-1 text-yellow-500" />
-                      Generación instantánea de cupones
+                      Sin anuncios
                     </p>
                     <p className="text-sm text-gray-600">
-                      Genera cupones al instante sin esperas ni limitaciones
+                      Disfruta Ñamy sin interrupciones.
                     </p>
                   </div>
                 </div>
@@ -351,11 +351,10 @@ function SubscriptionContent(): React.JSX.Element {
                   <div>
                     <p className="font-semibold text-gray-900">
                       <Gift className="w-4 h-4 inline mr-1 text-orange-500" />
-                      Descuentos máximos disponibles
+                      Descuentos máximos
                     </p>
                     <p className="text-sm text-gray-600">
-                      Acceso al nivel más alto de descuentos en todos los
-                      restaurantes participantes
+                      Obtén siempre el descuento más alto disponible.
                     </p>
                   </div>
                 </div>
@@ -366,24 +365,24 @@ function SubscriptionContent(): React.JSX.Element {
                   </div>
                   <div>
                     <p className="font-semibold text-gray-900">
-                      Soporte prioritario
+                      Multiplicador de puntos (x1.25)
                     </p>
                     <p className="text-sm text-gray-600">
-                      Obtén ayuda más rápido con soporte premium dedicado
+                      Gana puntos más rápido y sube en el leaderboard.
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-3">
-                  <div className="flex-shrink-0 w-6 h-6 bg-green-100 rounded-full flex items-center justify-center mt-0.5">
+                  <div className="shrink-0 w-6 h-6 bg-green-100 rounded-full flex items-center justify-center mt-0.5">
                     <Check className="w-4 h-4 text-green-600" />
                   </div>
                   <div>
                     <p className="font-semibold text-gray-900">
-                      Acceso anticipado a nuevas funciones
+                      Restaurantes exclusivos
                     </p>
                     <p className="text-sm text-gray-600">
-                      Sé el primero en probar nuevos restaurantes y funciones
+                      Acceso a promociones solo para miembros Premium.
                     </p>
                   </div>
                 </div>
