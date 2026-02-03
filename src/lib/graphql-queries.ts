@@ -195,38 +195,35 @@ export const GET_ALL_STORES_QUERY = `
 export const GET_STORE_QUERY = `
   query GetStoreByID($id: String!) {
     store(id: $id) {
-      data {
-        id
-        name
-        description
-        address
-        phoneNumber
-        imageUrl
-        active
-        createdAt
-        updatedAt
-        type
-        categoryId
-        subCategory
-        averageRating
-        reviewCounter
-        city
-        lat
-        lng
-        plainPin
-      }
+      id
+      name
+      description
+      address
+      phoneNumber
+      imageUrl
+      active
+      createdAt
+      updatedAt
+      type
+      categoryId
+      subCategory
+      averageRating
+      reviewCounter
+      city
+      lat
+      lng
+      placeId
+      plainPin
     }
   }
 `;
-
-// Removed `GET_STORE_BY_ID_QUERY` — use `GET_COUPON_REDEEM_DETAILS_QUERY`
-// for redeem flows which already return `store` + `discount` nested data.
 
 export const CREATE_STORE_MUTATION = `
   mutation CreateStore($input: CreateStoreInput!) {
     createStore(input: $input) {
       store {
         id
+        placeId
         name
         description
         address
