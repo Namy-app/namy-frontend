@@ -6,14 +6,13 @@
 import {
   Search,
   MapPin,
-  Filter,
   Map,
   SlidersHorizontal,
   Info,
   ChevronLeft,
   ChevronRight,
+  Grid3x3,
 } from "lucide-react";
-import Image from "next/image";
 import { useState } from "react";
 
 import { RestaurantCard } from "@/domains/store/components/RestaurantCard";
@@ -24,6 +23,8 @@ import { BasicLayout } from "@/layouts/BasicLayout";
 import { Button } from "@/shared/components/Button";
 import { Input } from "@/shared/components/Input";
 import { useAuthStore } from "@/store/useAuthStore";
+
+import { type ViewMode } from "../service/page";
 
 // Note: Now using calculateAvailabilityStatus from availability-utils
 // which uses real openDays data from the backend
@@ -63,6 +64,8 @@ export default function RestaurantListingPage(): React.JSX.Element {
   const [selectedSubCategory, setSelectedSubCategory] = useState("All");
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [_, setShowGuideModal] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>("grid");
+
   const [sortBy, setSortBy] = useState<"distance" | "rating" | "discount">(
     "distance"
   );
@@ -96,10 +99,10 @@ export default function RestaurantListingPage(): React.JSX.Element {
     }, 300);
   };
 
-  const handleMapView = (): void => {
-    // TODO: Implement map view
-    alert("¡Vista de mapa próximamente!");
-  };
+  // const handleMapView = (): void => {
+  //   // TODO: Implement map view
+  //   alert("¡Vista de mapa próximamente!");
+  // };
 
   const clearFilters = (): void => {
     setSearchQuery("");
@@ -115,56 +118,47 @@ export default function RestaurantListingPage(): React.JSX.Element {
 
   return (
     <BasicLayout>
-      <div className="pt-14 pb-16 ">
-        <div className="min-h-screen bg-background pb-20">
+      <div className="pt-14">
+        <div className="min-h-screen bg-gradient-hero pb-20">
           {/* Header Section with Search */}
-          <div className="bg-gradient-hero p-6 pb-8 ">
+          <div className="p-6 pb-8 ">
             <div className="max-w-5xl mx-auto">
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3">
-                  <Image
-                    src="/namy-logo.webp"
-                    alt="Ñamy Logo"
-                    width={48}
-                    height={48}
-                    className="w-12 h-12 rounded-xl object-cover shadow-card"
-                  />
-                  <div>
-                    <h1 className="text-3xl font-bold text-foreground">Amy</h1>
-                    <div className="flex items-center gap-1 text-muted-foreground text-sm mt-1">
-                      <MapPin className="w-4 h-4" />
-                      <span>Cancún, Quintana Roo</span>
-                    </div>
-                  </div>
+              <div className="flex items-center h-10 justify-center mb-6">
+                <div className="flex items-center gap-1 text-muted-foreground text-sm mt-1">
+                  <MapPin className="w-4 h-4" />
+                  <span>Cancún, Quintana Roo</span>
                 </div>
+              </div>
 
-                {/* Action Buttons */}
-                <div className="flex gap-2">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="rounded-full"
-                    onClick={() => setShowGuideModal(true)}
-                  >
-                    <Info className="w-5 h-5" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="rounded-full"
-                    onClick={handleMapView}
-                  >
-                    <Map className="w-5 h-5" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="rounded-full"
-                    onClick={() => setShowFilterModal(!showFilterModal)}
-                  >
-                    <Filter className="w-5 h-5" />
-                  </Button>
-                </div>
+              {/* View Mode Toggle */}
+              <div className="flex gap-2 justify-center my-4">
+                <Button
+                  onClick={() => setShowGuideModal(true)}
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                >
+                  <Info className="w-4 h-4" />
+                  Guía
+                </Button>
+                <Button
+                  onClick={() => setViewMode("grid")}
+                  variant={viewMode === "grid" ? "default" : "outline"}
+                  size="sm"
+                  className="gap-2"
+                >
+                  <Grid3x3 className="w-4 h-4" />
+                  Grid
+                </Button>
+                <Button
+                  onClick={() => setViewMode("map")}
+                  variant={viewMode === "map" ? "default" : "outline"}
+                  size="sm"
+                  className="gap-2"
+                >
+                  <Map className="w-4 h-4" />
+                  Mapa
+                </Button>
               </div>
 
               {/* Search Bar */}
@@ -267,7 +261,8 @@ export default function RestaurantListingPage(): React.JSX.Element {
               </div>
 
               {/* Pagination */}
-              {paginationInfo && paginationInfo.totalPages > 1 ? <div className="px-6 py-8 max-w-5xl mx-auto">
+              {paginationInfo && paginationInfo.totalPages > 1 ? (
+                <div className="px-6 py-8 max-w-5xl mx-auto">
                   <div className="flex items-center justify-center gap-2">
                     <Button
                       variant="outline"
@@ -302,9 +297,11 @@ export default function RestaurantListingPage(): React.JSX.Element {
                             page - prevPage > 1;
                           return (
                             <span key={page} className="flex items-center">
-                              {showEllipsisBefore ? <span className="px-2 text-muted-foreground">
+                              {showEllipsisBefore ? (
+                                <span className="px-2 text-muted-foreground">
                                   ...
-                                </span> : null}
+                                </span>
+                              ) : null}
                               <Button
                                 variant={
                                   currentPage === page ? "default" : "outline"
@@ -336,7 +333,8 @@ export default function RestaurantListingPage(): React.JSX.Element {
                     Página {paginationInfo.page} de {paginationInfo.totalPages}{" "}
                     ({paginationInfo.total} restaurantes)
                   </p>
-                </div> : null}
+                </div>
+              ) : null}
             </>
           )}
         </div>

@@ -33,7 +33,7 @@ interface Service {
 
 // (Removed unused mock data to satisfy TypeScript noUnusedLocals)
 
-type ViewMode = "grid" | "map";
+export type ViewMode = "grid" | "map";
 
 let timeout: NodeJS.Timeout;
 
