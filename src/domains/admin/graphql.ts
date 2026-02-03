@@ -14,6 +14,7 @@ export const CREATE_STORE_MUTATION = gql`
         type
         city
         address
+        placeId
         lat
         lng
         phoneNumber
@@ -51,6 +52,7 @@ export const UPDATE_STORE_MUTATION = gql`
         type
         city
         address
+        placeId
         lat
         lng
         phoneNumber
@@ -133,6 +135,7 @@ export const GET_ALL_STORES = gql`
         type
         city
         address
+        placeId
         lat
         lng
         phoneNumber
@@ -176,6 +179,7 @@ export const GET_STORE_BY_ID = gql`
       type
       city
       address
+      placeId
       lat
       lng
       phoneNumber

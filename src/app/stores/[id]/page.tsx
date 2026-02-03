@@ -924,7 +924,7 @@ export default function StoresDetailPage(): React.JSX.Element {
                         {parsedStore.location.city}
                       </p>
 
-                      {/* NEW: Embedded Map Display */}
+                      {/* Embedded Map Display */}
                       {parsedStore.location.lat && parsedStore.location.lng ? (
                         <div className="my-3">
                           <MapDisplay
@@ -942,7 +942,7 @@ export default function StoresDetailPage(): React.JSX.Element {
                         className="text-xs"
                         onClick={handleGetDirections}
                       >
-                        Get Directions 📍
+                        Obtener indicaciones 📍
                       </Button>
                     </div>
                   </div>
@@ -1174,7 +1174,7 @@ export default function StoresDetailPage(): React.JSX.Element {
                     className="w-full bg-rose-500 hover:bg-rose-600 text-white"
                     onClick={handleGetDirections}
                   >
-                    Get directions 📍
+                    Obtener indicaciones 📍
                   </Button>
 
                   <div className="mt-4 flex flex-wrap gap-2">

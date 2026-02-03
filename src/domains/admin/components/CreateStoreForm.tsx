@@ -448,9 +448,11 @@ export function CreateStoreForm({ onClose, onSuccess }: CreateStoreFormProps) {
                     setFormData((prev) => ({
                       ...prev,
                       address,
-                      placeId: placeId || undefined,
-                      lat: lat || undefined,
-                      lng: lng || undefined,
+                      // Only update placeId/lat/lng if new values are provided (from autocomplete selection)
+                      // When typing manually, these will be null, so preserve existing values
+                      placeId: placeId !== null ? placeId : prev.placeId,
+                      lat: lat !== null ? lat : prev.lat,
+                      lng: lng !== null ? lng : prev.lng,
                     }));
                   }}
                   placeholder="Search for store address..."
@@ -462,7 +464,8 @@ export function CreateStoreForm({ onClose, onSuccess }: CreateStoreFormProps) {
               </div>
 
               {/* Show coordinates as read-only when auto-filled */}
-              {formData.lat && formData.lng ? <div className="grid grid-cols-2 gap-4">
+              {formData.lat && formData.lng ? (
+                <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-2">
                       Latitude (auto-filled)
@@ -485,7 +488,8 @@ export function CreateStoreForm({ onClose, onSuccess }: CreateStoreFormProps) {
                       className="w-full px-4 py-2 border border-border rounded-lg bg-muted"
                     />
                   </div>
-                </div> : null}
+                </div>
+              ) : null}
             </div>
 
             {/* Additional Information */}

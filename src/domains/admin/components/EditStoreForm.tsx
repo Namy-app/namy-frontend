@@ -450,9 +450,9 @@ export function EditStoreForm({
                     setFormData((prev) => ({
                       ...prev,
                       address,
-                      placeId: placeId || undefined,
-                      lat: lat || prev.lat,
-                      lng: lng || prev.lng,
+                      placeId: placeId !== null ? placeId : prev.placeId,
+                      lat: lat !== null ? lat : prev.lat,
+                      lng: lng !== null ? lng : prev.lng,
                     }));
                   }}
                   placeholder="Search for store address..."
