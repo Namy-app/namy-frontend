@@ -77,7 +77,7 @@ export default function ProfilePage(): React.JSX.Element | null {
 
   const handleCopyReferralCode = async () => {
     if (user.referralCode) {
-      const copyText = `Use my referral code "${user.referralCode}" to win 1 month free subscription!`;
+      const copyText = `¡Usa mi código de referido "${user.referralCode}" y gana $99mxn en tu billetera!`;
       await navigator.clipboard.writeText(copyText);
       setCopiedCode(true);
       setTimeout(() => setCopiedCode(false), 2000);
@@ -150,7 +150,7 @@ export default function ProfilePage(): React.JSX.Element | null {
                   <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                 ) : (
                   <span className="text-2xl font-bold text-foreground">
-                    ${walletBalance?.balance || "0"}{" "}
+                    ${((walletBalance?.balance || 0) / 100).toFixed(2)}{" "}
                     {walletBalance?.currency || "MXN"}
                   </span>
                 )}

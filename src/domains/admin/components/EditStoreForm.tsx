@@ -3,6 +3,7 @@
 import { X, Store as StoreIcon, Loader2 } from "lucide-react";
 import { useState } from "react";
 
+import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 import { DAYS_OF_WEEK_BY_INDEX } from "@/data/constants";
 import { useUpdateStore } from "@/domains/admin/hooks";
 import {
@@ -43,6 +44,7 @@ export function EditStoreForm({
     type: store.type,
     city: store.city,
     address: store.address,
+    placeId: store.placeId,
     phoneNumber: store.phoneNumber,
     email: store.email,
     price: store.price,
@@ -442,14 +444,19 @@ export function EditStoreForm({
                 <label className="block text-sm font-medium text-foreground mb-2">
                   Address <span className="text-destructive">*</span>
                 </label>
-                <input
-                  type="text"
-                  name="address"
-                  value={formData.address}
-                  onChange={handleChange}
+                <AddressAutocomplete
+                  value={formData.address || ""}
+                  onChange={(address, placeId, lat, lng) => {
+                    setFormData((prev) => ({
+                      ...prev,
+                      address,
+                      placeId: placeId !== null ? placeId : prev.placeId,
+                      lat: lat !== null ? lat : prev.lat,
+                      lng: lng !== null ? lng : prev.lng,
+                    }));
+                  }}
+                  placeholder="Search for store address..."
                   required
-                  className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder="Full street address"
                 />
               </div>
 
@@ -468,7 +475,6 @@ export function EditStoreForm({
                     placeholder="19.4326"
                   />
                 </div>
-
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-2">
                     Longitude
@@ -484,6 +490,10 @@ export function EditStoreForm({
                   />
                 </div>
               </div>
+              <p className="text-xs text-muted-foreground">
+                Coordinates are auto-filled when selecting from address search,
+                or enter manually
+              </p>
             </div>
 
             {/* Additional Information */}

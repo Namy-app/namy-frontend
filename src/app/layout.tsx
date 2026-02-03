@@ -3,6 +3,7 @@ import { Poppins } from "next/font/google";
 
 import "../styles/globals.css";
 import { GoogleAdsense } from "@/components/GoogleAdsense";
+import { GoogleMapsProvider } from "@/components/GoogleMapsProvider";
 import { ReactQueryProvider } from "@/providers/ReactQueryProvider";
 import { Toaster } from "@/shared/components/Toaster";
 
@@ -55,7 +56,7 @@ export default function RootLayout({
       </head>
       <body className={`${poppins.variable}  font-sans`}>
         <ReactQueryProvider>
-          {children}
+          <GoogleMapsProvider>{children}</GoogleMapsProvider>
           <Toaster />
         </ReactQueryProvider>
       </body>

@@ -20,6 +20,7 @@ export interface ParsedStore {
     city: string;
     lat?: number;
     lng?: number;
+    placeId?: string;
   };
   phone: string;
   images: string[];

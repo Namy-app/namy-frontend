@@ -21,6 +21,7 @@ import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 
 import { CongratulationsModal } from "@/components/CongratulationsModal";
+import { MapDisplay } from "@/components/MapDisplay";
 import { UnlockDiscountModal } from "@/components/UnlockDiscountModal";
 import { VideoAdsModal } from "@/components/VideoAdsModal";
 import { PlaceHolderTypeEnum } from "@/data/constants";
@@ -63,13 +64,13 @@ const DAY_LABELS: Record<string, string> = {
 // Get current day of the week in lowercase English
 function getCurrentDayOfWeek(): string {
   const days = [
+    "sunday",
     "monday",
     "tuesday",
     "wednesday",
     "thursday",
     "friday",
     "saturday",
-    "sunday",
   ];
   const today = new Date();
   return days[today.getDay()] || "";
@@ -292,6 +293,7 @@ export default function StoresDetailPage(): React.JSX.Element {
           city: store.city || "Ciudad no disponible",
           lat: store.lat,
           lng: store.lng,
+          placeId: store.placeId,
         },
         phone: store.phoneNumber || "Teléfono no disponible",
         images: (() => {
@@ -667,6 +669,7 @@ export default function StoresDetailPage(): React.JSX.Element {
       return;
     }
     openInGoogleMaps({
+      placeId: store?.placeId,
       ...(parsedStore.location.lat &&
         parsedStore.location.lng && {
           lat: +Number(parsedStore.location.lat).toFixed(6),
@@ -920,13 +923,26 @@ export default function StoresDetailPage(): React.JSX.Element {
                         {parsedStore.location.address},{" "}
                         {parsedStore.location.city}
                       </p>
+
+                      {/* Embedded Map Display */}
+                      {parsedStore.location.lat && parsedStore.location.lng ? (
+                        <div className="my-3">
+                          <MapDisplay
+                            lat={parsedStore.location.lat}
+                            lng={parsedStore.location.lng}
+                            storeName={parsedStore.name}
+                            height="180px"
+                          />
+                        </div>
+                      ) : null}
+
                       <Button
                         variant="outline"
                         size="sm"
                         className="text-xs"
                         onClick={handleGetDirections}
                       >
-                        View on map 📍
+                        Obtener indicaciones 📍
                       </Button>
                     </div>
                   </div>
@@ -1158,7 +1174,7 @@ export default function StoresDetailPage(): React.JSX.Element {
                     className="w-full bg-rose-500 hover:bg-rose-600 text-white"
                     onClick={handleGetDirections}
                   >
-                    Get directions 📍
+                    Obtener indicaciones 📍
                   </Button>
 
                   <div className="mt-4 flex flex-wrap gap-2">
@@ -1339,43 +1355,127 @@ export default function StoresDetailPage(): React.JSX.Element {
           )
         : null}
 
-      {/* Catalog Image Modal */}
+      {/* Catalog Image Modal with Carousel */}
       {selectedCatalogImage && typeof window !== "undefined"
         ? createPortal(
             <div
-              className="fixed inset-0 z-50 bg-black/80 overflow-y-auto"
+              className="fixed inset-0 z-50 bg-black/90 overflow-y-auto"
               onClick={() => setSelectedCatalogImage(null)}
             >
               <div className="min-h-screen flex items-center justify-center p-4">
                 <div className="relative max-w-5xl w-full">
+                  {/* Close Button */}
                   <button
                     onClick={() => setSelectedCatalogImage(null)}
                     className="sticky top-4 left-full ml-4 z-10 p-2 rounded-full bg-black/50 hover:bg-black/70 text-white transition-colors"
                     aria-label="Close"
                   >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="24"
-                      height="24"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <line x1="18" y1="6" x2="6" y2="18" />
-                      <line x1="6" y1="6" x2="18" y2="18" />
-                    </svg>
+                    <X className="w-6 h-6" />
                   </button>
-                  <div className="relative w-full">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={selectedCatalogImage}
-                      alt="Catalog image"
-                      className="w-full h-auto"
-                      onClick={(e: React.MouseEvent) => e.stopPropagation()}
-                    />
+
+                  {/* Image Container with Navigation */}
+                  <div
+                    className="relative w-full"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {(() => {
+                      // Get the catalog and its images
+                      const catalog = catalogs?.[0];
+                      if (!catalog) {
+                        return null;
+                      }
+
+                      const catalogImages = Array.from(
+                        { length: 10 },
+                        (_, i) =>
+                          catalog[`image${i + 1}Url` as keyof typeof catalog]
+                      ).filter((url): url is string => !!url);
+
+                      const currentImageIndex =
+                        catalogImages.indexOf(selectedCatalogImage);
+                      const hasMultipleImages = catalogImages.length > 1;
+
+                      return (
+                        <>
+                          {/* Main Image */}
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={selectedCatalogImage}
+                            alt="Catalog image"
+                            className="w-full h-auto rounded-lg"
+                          />
+
+                          {/* Navigation Controls */}
+                          {hasMultipleImages && currentImageIndex !== -1 ? (
+                            <>
+                              {/* Previous Button */}
+                              {currentImageIndex > 0 && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedCatalogImage(
+                                      catalogImages[currentImageIndex - 1] ||
+                                        null
+                                    );
+                                  }}
+                                  className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white p-3 rounded-full transition-all shadow-lg"
+                                  aria-label="Previous image"
+                                >
+                                  <ChevronLeft className="w-6 h-6" />
+                                </button>
+                              )}
+
+                              {/* Next Button */}
+                              {currentImageIndex < catalogImages.length - 1 && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedCatalogImage(
+                                      catalogImages[currentImageIndex + 1] ||
+                                        null
+                                    );
+                                  }}
+                                  className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white p-3 rounded-full transition-all shadow-lg"
+                                  aria-label="Next image"
+                                >
+                                  <ChevronRight className="w-6 h-6" />
+                                </button>
+                              )}
+
+                              {/* Image Counter */}
+                              <div className="absolute bottom-6 right-6 bg-black/70 text-white px-4 py-2 rounded-full text-sm font-medium shadow-lg backdrop-blur-sm">
+                                {currentImageIndex + 1} / {catalogImages.length}
+                              </div>
+
+                              {/* Thumbnail Strip */}
+                              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 bg-black/70 px-4 py-2 rounded-full max-w-[90%] overflow-x-auto backdrop-blur-sm">
+                                {catalogImages.map((imgUrl, idx) => (
+                                  <button
+                                    key={`${imgUrl}-${idx}`}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setSelectedCatalogImage(imgUrl);
+                                    }}
+                                    className={`hrink-0 w-12 h-12 rounded-lg overflow-hidden border-2 transition-all ${
+                                      idx === currentImageIndex
+                                        ? "border-white scale-110 shadow-lg"
+                                        : "border-transparent opacity-60 hover:opacity-100 hover:scale-105"
+                                    }`}
+                                  >
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img
+                                      src={imgUrl}
+                                      alt={`Thumbnail ${idx + 1}`}
+                                      className="w-full h-full object-cover"
+                                    />
+                                  </button>
+                                ))}
+                              </div>
+                            </>
+                          ) : null}
+                        </>
+                      );
+                    })()}
                   </div>
                 </div>
               </div>
@@ -1383,6 +1483,7 @@ export default function StoresDetailPage(): React.JSX.Element {
             document.body
           )
         : null}
+
       <GeneratingCouponModal
         isOpen={isGeneratingCoupon || !!quickPayError}
         isLoading={
