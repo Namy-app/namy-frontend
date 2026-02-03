@@ -293,6 +293,7 @@ export default function StoresDetailPage(): React.JSX.Element {
           city: store.city || "Ciudad no disponible",
           lat: store.lat,
           lng: store.lng,
+          placeId: store.placeId,
         },
         phone: store.phoneNumber || "Teléfono no disponible",
         images: (() => {

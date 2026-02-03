@@ -210,10 +210,10 @@ export const GET_STORE_QUERY = `
         subCategory
         averageRating
         reviewCounter
-        placeId
         city
         lat
         lng
+        placeId
         plainPin
       }
     }
