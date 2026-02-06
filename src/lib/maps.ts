@@ -2,25 +2,28 @@
  * Interface for location data
  */
 export interface LocationData {
+  placeId?: string;
   lat?: number;
   lng?: number;
   address?: string;
 }
 
 /**
- * Opens a location in Google Maps using coordinates or address
- * @param location - Object containing lat/lng coordinates and/or address
+ * Opens a location in Google Maps using placeId, coordinates, or address
+ * @param location - Object containing placeId, lat/lng coordinates and/or address
  * @returns void
  */
 export function openInGoogleMaps(location: LocationData): void {
-  let mapsUrl = "https://www.google.com/maps/search/";
+  let mapsUrl: string;
 
-  // Use coordinates if available (more precise)
-  if (location.lat && location.lng) {
-    mapsUrl += `${location.lat},${location.lng}`;
+  // Use placeId if available (most reliable for Google Maps)
+  if (location.placeId) {
+    mapsUrl = `https://www.google.com/maps/search/?api=1&query_place_id=${location.placeId}`;
+  } else if (location.lat && location.lng) {
+    mapsUrl = `https://www.google.com/maps/search/${location.lat},${location.lng}`;
   } else if (location.address) {
     // Fallback to address if coordinates aren't available
-    mapsUrl += encodeURIComponent(location.address);
+    mapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(location.address)}`;
   } else {
     console.warn("No location data provided for Google Maps");
     return;

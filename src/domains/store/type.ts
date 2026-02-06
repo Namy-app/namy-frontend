@@ -20,6 +20,7 @@ export interface ParsedStore {
     city: string;
     lat?: number;
     lng?: number;
+    placeId?: string;
   };
   phone: string;
   images: string[];
@@ -71,6 +72,7 @@ export interface StoreFilters {
   lat?: number;
   lng?: number;
   id?: string;
+  availabilityStatus?: "available" | "soon" | "unavailable";
 }
 
 export interface PaginationInput {

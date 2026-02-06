@@ -50,6 +50,7 @@ export interface Store {
   type: StoreType;
   city: string;
   address: string;
+  placeId?: string;
   lat?: number;
   lng?: number;
   phoneNumber?: string;
@@ -121,6 +122,7 @@ export interface CreateStoreInput {
   type: StoreType;
   city: string;
   address: string;
+  placeId?: string;
   lat?: number;
   lng?: number;
   phoneNumber?: string;
@@ -142,6 +144,7 @@ export interface UpdateStoreInput {
   type?: StoreType;
   city?: string;
   address?: string;
+  placeId?: string;
   lat?: number;
   lng?: number;
   phoneNumber?: string;

@@ -3,6 +3,7 @@
 import { X, Store as StoreIcon, Loader2, Copy, Check } from "lucide-react";
 import { useState } from "react";
 
+import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 import { useCreateStore } from "@/domains/admin/hooks";
 import {
   type CreateStoreInput,
@@ -441,17 +442,28 @@ export function CreateStoreForm({ onClose, onSuccess }: CreateStoreFormProps) {
                 <label className="block text-sm font-medium text-foreground mb-2">
                   Address <span className="text-destructive">*</span>
                 </label>
-                <input
-                  type="text"
-                  name="address"
+                <AddressAutocomplete
                   value={formData.address}
-                  onChange={handleChange}
+                  onChange={(address, placeId, lat, lng) => {
+                    setFormData((prev) => ({
+                      ...prev,
+                      address,
+                      // Only update placeId/lat/lng if new values are provided (from autocomplete selection)
+                      // When typing manually, these will be null, so preserve existing values
+                      placeId: placeId !== null ? placeId : prev.placeId,
+                      lat: lat !== null ? lat : prev.lat,
+                      lng: lng !== null ? lng : prev.lng,
+                    }));
+                  }}
+                  placeholder="Search for store address..."
                   required
-                  className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder="Full street address"
                 />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Start typing to search for an address using Google Places
+                </p>
               </div>
 
+              {/* Coordinates - auto-filled from address or can be entered manually */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-2">
@@ -467,7 +479,6 @@ export function CreateStoreForm({ onClose, onSuccess }: CreateStoreFormProps) {
                     placeholder="19.4326"
                   />
                 </div>
-
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-2">
                     Longitude
@@ -483,6 +494,10 @@ export function CreateStoreForm({ onClose, onSuccess }: CreateStoreFormProps) {
                   />
                 </div>
               </div>
+              <p className="text-xs text-muted-foreground">
+                Coordinates are auto-filled when selecting from address search,
+                or enter manually
+              </p>
             </div>
 
             {/* Additional Information */}
