@@ -20,9 +20,20 @@ export const metadata: Metadata = {
   description:
     "Watch ads, unlock discounts, and discover amazing restaurants in Mexico. Earn rewards and climb the leaderboard!",
   authors: [{ name: "Ñamy" }],
+  manifest: "/manifest.webmanifest",
+  themeColor: "#8B5CF6",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Ñamy",
+  },
+  formatDetection: {
+    telephone: false,
+  },
   openGraph: {
-    title: "675baa49-1cbe-4559-813b-6547a81e9bdf",
-    description: "Lovable Generated Project",
+    title: "Ñamy - Unlock Restaurant Discounts",
+    description:
+      "Watch ads, unlock discounts, and discover amazing restaurants in Mexico. Earn rewards and climb the leaderboard!",
     type: "website",
     images: [
       {
@@ -36,6 +47,11 @@ export const metadata: Metadata = {
     images: [
       "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/0bebed91-2ce6-43ba-9e0e-79847b538b06/id-preview-a3dc1a57--07b63e06-4a17-4f54-a013-9463122dcb27.lovable.app-1762586437176.png",
     ],
+  },
+  viewport: {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 1,
   },
 };
 
