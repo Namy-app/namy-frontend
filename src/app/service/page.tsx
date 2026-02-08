@@ -98,7 +98,13 @@ export default function ServicesPage(): React.JSX.Element {
   } | null>(null);
   const [locationStatus, setLocationStatus] = useState<
     "loading" | "granted" | "unavailable" | "denied"
-  >("loading");
+  >(() => {
+    // Initialize based on geolocation availability
+    if (typeof navigator === "undefined" || !navigator.geolocation) {
+      return "unavailable";
+    }
+    return "loading";
+  });
   const [locationName, setLocationName] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<"distance" | "newest">("newest");
   const [availabilityFilter, setAvailabilityFilter] = useState<
@@ -107,10 +113,19 @@ export default function ServicesPage(): React.JSX.Element {
 
   const { user } = useAuthStore();
   const { data: myLevel } = useMyLevel();
-  const { data: storesResult, isLoading } = useStores(filters, {
-    page: currentPage,
-    first: ITEMS_PER_PAGE,
-  });
+
+  // Include availability filter in backend query to prevent pagination issues
+  const { data: storesResult, isLoading } = useStores(
+    {
+      ...filters,
+      availabilityStatus:
+        availabilityFilter === "available" ? "available" : undefined,
+    },
+    {
+      page: currentPage,
+      first: ITEMS_PER_PAGE,
+    }
+  );
   const paginationInfo = storesResult?.paginationInfo;
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [selectedSubCategory, setSelectedSubCategory] = useState("All");
@@ -120,9 +135,14 @@ export default function ServicesPage(): React.JSX.Element {
 
   //Fetch user location on mount
   useEffect(() => {
+    let mounted = true;
+
     const fetchLocation = async () => {
+      if (!mounted) {return;}
       setLocationStatus("loading");
       const location = await getUserLocationSafe();
+      if (!mounted) {return;}
+
       if (location) {
         setUserLocation(location);
         setLocationStatus("granted");
@@ -139,6 +159,7 @@ export default function ServicesPage(): React.JSX.Element {
             const response = await fetch(
               `https://nominatim.openstreetmap.org/reverse?format=json&lat=${location.latitude}&lon=${location.longitude}&zoom=10`
             );
+            if (!mounted) {return;}
             const data = await response.json();
             const city =
               data.address?.city ||
@@ -146,10 +167,14 @@ export default function ServicesPage(): React.JSX.Element {
               data.address?.village ||
               data.address?.state ||
               "Tu ubicación";
-            setLocationName(city);
+            if (mounted) {
+              setLocationName(city);
+            }
           } catch (error) {
             console.error("Failed to get location name:", error);
-            setLocationName("Tu ubicación");
+            if (mounted) {
+              setLocationName("Tu ubicación");
+            }
           }
         })();
       } else {
@@ -157,22 +182,20 @@ export default function ServicesPage(): React.JSX.Element {
       }
     };
 
+    // Only fetch if geolocation is available (already checked in initial state)
     if (typeof navigator !== "undefined" && navigator.geolocation) {
       void fetchLocation();
-      return undefined;
-    } else {
-      // Use setTimeout to defer state update and avoid synchronous setState in effect
-      const timeoutId = setTimeout(() => {
-        setLocationStatus("unavailable");
-      }, 0);
-      return () => clearTimeout(timeoutId);
     }
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   //calculate distances and apply client-side sorting
   const displayedStores = useMemo((): StoreWithDistance[] => {
     const allStores = storesResult?.data ?? [];
-    let stores: StoreWithDistance[] = allStores.map((store) => {
+    const stores: StoreWithDistance[] = allStores.map((store) => {
       let distance: number | undefined;
 
       if (userLocation && store.lat && store.lng) {
@@ -190,12 +213,8 @@ export default function ServicesPage(): React.JSX.Element {
       };
     });
 
-    //Apply availability filter
-    if (availabilityFilter === "available") {
-      stores = stores.filter(
-        (store) => store.discountAvailabilityStatus === "available"
-      );
-    }
+    // Note: Availability filtering now happens on backend via useStores query
+    // This prevents pagination issues where filtering reduces the page size
 
     //Apply sorting
     if (sortBy === "distance" && userLocation) {
@@ -209,7 +228,7 @@ export default function ServicesPage(): React.JSX.Element {
       });
     }
     return stores;
-  }, [storesResult?.data, userLocation, sortBy, availabilityFilter]);
+  }, [storesResult?.data, userLocation, sortBy]);
 
   // Create a component to handle individual service availability
   const ServiceCard = ({ store }: { store: StoreWithDistance }) => {
