@@ -62,7 +62,8 @@ export interface StoresResponse {
   };
 }
 
-export type StoreSortBy = "newest" | "distance";
+// GraphQL enum values must be uppercase to match backend
+export type StoreSortBy = "NEWEST" | "DISTANCE";
 
 export interface StoreFilters {
   search?: string;
