@@ -1,6 +1,13 @@
 "use client";
 
-import { Store, Users, Video, LayoutDashboard, ArrowLeft } from "lucide-react";
+import {
+  Store,
+  Users,
+  Video,
+  LayoutDashboard,
+  ArrowLeft,
+  FolderTree,
+} from "lucide-react";
 import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
@@ -114,6 +121,12 @@ export default function AdminLayout({
       icon: Users,
       href: "/admin/users",
       active: pathname?.startsWith("/admin/users"),
+    },
+    {
+      label: "Categories",
+      icon: FolderTree,
+      href: "/admin/categories",
+      active: pathname?.startsWith("/admin/categories"),
     },
   ];
 
