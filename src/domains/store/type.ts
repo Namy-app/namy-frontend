@@ -62,6 +62,8 @@ export interface StoresResponse {
   };
 }
 
+export type StoreSortBy = "newest" | "distance";
+
 export interface StoreFilters {
   search?: string;
   categoryId?: string;
@@ -73,6 +75,7 @@ export interface StoreFilters {
   lng?: number;
   id?: string;
   availabilityStatus?: "available" | "soon" | "unavailable";
+  sortBy?: StoreSortBy;
 }
 
 export interface PaginationInput {

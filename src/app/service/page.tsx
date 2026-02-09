@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 
 import { useStores } from "@/domains/store/hooks";
 import { calculateDistance } from "@/domains/store/hooks/query/useClosestStores";
@@ -47,8 +47,6 @@ const ITEMS_PER_PAGE = 12;
 
 export type ViewMode = "grid" | "map";
 
-let timeout: NodeJS.Timeout;
-
 const categories = [
   "All",
   "Spa",
@@ -64,6 +62,7 @@ interface StoreWithDistance extends Store {
 }
 
 export default function ServicesPage(): React.JSX.Element {
+  const searchTimeoutRef = useRef<NodeJS.Timeout>(undefined);
   const [filters, setFilters] = useState<StoreFilters>({
     noRestaurants: true,
   });
@@ -92,14 +91,14 @@ export default function ServicesPage(): React.JSX.Element {
   const { user } = useAuthStore();
   const { data: myLevel } = useMyLevel();
 
-  // Include availability filter and location in backend query
-  // When sortBy is "distance" and userLocation is available, backend sorts by distance
+  // Backend handles all sorting (newest and distance)
   const { data: storesResult, isLoading } = useStores(
     {
       ...filters,
       availabilityStatus:
         availabilityFilter === "available" ? "available" : undefined,
-      // Only pass lat/lng when sorting by distance to enable backend distance sorting
+      sortBy,
+      // Pass lat/lng when sorting by distance to enable backend distance calculation
       lat:
         sortBy === "distance" && userLocation
           ? userLocation.latitude
@@ -181,10 +180,10 @@ export default function ServicesPage(): React.JSX.Element {
   }, []);
 
   // Calculate distances for display purposes only
-  // Sorting is handled by the backend when lat/lng are passed in filters
+  // All sorting (newest and distance) is handled by the backend
   const displayedStores = useMemo((): StoreWithDistance[] => {
     const allStores = storesResult?.data ?? [];
-    const stores: StoreWithDistance[] = allStores.map((store) => {
+    return allStores.map((store) => {
       let distance: number | undefined;
 
       // Calculate distance for display (e.g., "2.5 km away")
@@ -202,22 +201,7 @@ export default function ServicesPage(): React.JSX.Element {
         distance,
       };
     });
-
-    // Note: Sorting by distance is now handled by the backend
-    // When sortBy === "distance", lat/lng are passed to the backend query
-    // which returns stores already sorted by distance using Haversine formula
-
-    // Only apply client-side sorting for "newest" (backend doesn't sort by this)
-    if (sortBy === "newest") {
-      stores.sort((a, b) => {
-        const dateA = new Date(a.createdAt).getTime();
-        const dateB = new Date(b.createdAt).getTime();
-        return dateB - dateA;
-      });
-    }
-
-    return stores;
-  }, [storesResult?.data, userLocation, sortBy]);
+  }, [storesResult?.data, userLocation]);
 
   // Create a component to handle individual service availability
   const ServiceCard = ({ store }: { store: StoreWithDistance }) => {
@@ -311,12 +295,12 @@ export default function ServicesPage(): React.JSX.Element {
   };
 
   const handleSetSearchQuery = (query: string): void => {
-    if (timeout) {
-      clearTimeout(timeout);
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
     }
 
     setSearchQuery(query);
-    timeout = setTimeout(() => {
+    searchTimeoutRef.current = setTimeout(() => {
       setCurrentPage(1);
       setFilters((prev) => ({
         ...prev,
@@ -324,6 +308,15 @@ export default function ServicesPage(): React.JSX.Element {
       }));
     }, 300);
   };
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handlePageChange = (page: number): void => {
     setCurrentPage(page);
