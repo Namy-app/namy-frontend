@@ -25,7 +25,7 @@ export interface UseClosestStoresResult {
  * @param lng2 - Second longitude
  * @returns Distance in kilometers
  */
-export function calculateDistance(
+function calculateDistance(
   lat1: number,
   lng1: number,
   lat2: number,

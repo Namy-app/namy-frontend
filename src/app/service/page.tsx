@@ -114,22 +114,12 @@ export default function ServicesPage(): React.JSX.Element {
   const { user } = useAuthStore();
   const { data: myLevel } = useMyLevel();
 
-  // Include availability filter and location in backend query
-  // When sortBy is "distance" and userLocation is available, backend sorts by distance
+  // Include availability filter in backend query to prevent pagination issues
   const { data: storesResult, isLoading } = useStores(
     {
       ...filters,
       availabilityStatus:
         availabilityFilter === "available" ? "available" : undefined,
-      // Only pass lat/lng when sorting by distance to enable backend distance sorting
-      lat:
-        sortBy === "distance" && userLocation
-          ? userLocation.latitude
-          : undefined,
-      lng:
-        sortBy === "distance" && userLocation
-          ? userLocation.longitude
-          : undefined,
     },
     {
       page: currentPage,
@@ -148,18 +138,20 @@ export default function ServicesPage(): React.JSX.Element {
     let mounted = true;
 
     const fetchLocation = async () => {
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) {return;}
       setLocationStatus("loading");
       const location = await getUserLocationSafe();
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) {return;}
 
       if (location) {
         setUserLocation(location);
         setLocationStatus("granted");
+        //Update filters with location for backend sorting
+        setFilters((prev) => ({
+          ...prev,
+          lat: location.latitude,
+          lng: location.longitude,
+        }));
 
         // Reverse geocode to get location name
         void (async () => {
@@ -167,9 +159,7 @@ export default function ServicesPage(): React.JSX.Element {
             const response = await fetch(
               `https://nominatim.openstreetmap.org/reverse?format=json&lat=${location.latitude}&lon=${location.longitude}&zoom=10`
             );
-            if (!mounted) {
-              return;
-            }
+            if (!mounted) {return;}
             const data = await response.json();
             const city =
               data.address?.city ||
@@ -202,14 +192,12 @@ export default function ServicesPage(): React.JSX.Element {
     };
   }, []);
 
-  // Calculate distances for display purposes only
-  // Sorting is handled by the backend when lat/lng are passed in filters
+  //calculate distances and apply client-side sorting
   const displayedStores = useMemo((): StoreWithDistance[] => {
     const allStores = storesResult?.data ?? [];
     const stores: StoreWithDistance[] = allStores.map((store) => {
       let distance: number | undefined;
 
-      // Calculate distance for display (e.g., "2.5 km away")
       if (userLocation && store.lat && store.lng) {
         distance = calculateDistance(
           userLocation.latitude,
@@ -225,19 +213,20 @@ export default function ServicesPage(): React.JSX.Element {
       };
     });
 
-    // Note: Sorting by distance is now handled by the backend
-    // When sortBy === "distance", lat/lng are passed to the backend query
-    // which returns stores already sorted by distance using Haversine formula
+    // Note: Availability filtering now happens on backend via useStores query
+    // This prevents pagination issues where filtering reduces the page size
 
-    // Only apply client-side sorting for "newest" (backend doesn't sort by this)
-    if (sortBy === "newest") {
+    //Apply sorting
+    if (sortBy === "distance" && userLocation) {
+      stores.sort((a, b) => (a.distance ?? 999999) - (b.distance ?? 999999));
+    } else if (sortBy === "newest") {
+      // Sort by Newest first (descending order by createdAt)
       stores.sort((a, b) => {
         const dateA = new Date(a.createdAt).getTime();
         const dateB = new Date(b.createdAt).getTime();
         return dateB - dateA;
       });
     }
-
     return stores;
   }, [storesResult?.data, userLocation, sortBy]);
 
@@ -377,9 +366,11 @@ export default function ServicesPage(): React.JSX.Element {
     setSortBy("newest");
     setAvailabilityFilter("all");
     setCurrentPage(1);
-    setFilters({
+    setFilters((prev) => ({
       noRestaurants: true,
-    });
+      lat: prev.lat,
+      lng: prev.lng,
+    }));
   };
 
   const requestLocation = async () => {
@@ -390,6 +381,11 @@ export default function ServicesPage(): React.JSX.Element {
       if (location) {
         setUserLocation(location);
         setLocationStatus("granted");
+        setFilters((prev) => ({
+          ...prev,
+          lat: location.latitude,
+          lng: location.longitude,
+        }));
 
         // Reverse geocode to get location name
         void (async () => {
