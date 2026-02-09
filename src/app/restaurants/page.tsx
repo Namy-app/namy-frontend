@@ -19,6 +19,7 @@ import { useState, useEffect, useMemo } from "react";
 
 import { RestaurantCard } from "@/domains/store/components/RestaurantCard";
 import { useStores } from "@/domains/store/hooks";
+import { calculateDistance } from "@/domains/store/hooks/query/useClosestStores";
 import { type StoreFilters } from "@/domains/store/type";
 import { useMyLevel } from "@/domains/user/hooks/query/useMyLevel";
 import { BasicLayout } from "@/layouts/BasicLayout";
@@ -51,29 +52,6 @@ const categories = [
 let timeout: NodeJS.Timeout;
 
 const ITEMS_PER_PAGE = 12;
-
-//Haversine formula for distance calculation
-function calculateDistance(
-  lat1: number,
-  lng1: number,
-  lat2: number,
-  lng2: number
-): number {
-  const R = 6371; //earth's radius in km
-  const dLat = (lat2 - lat1) * (Math.PI / 180);
-  const dLng = (lng2 - lng1) * (Math.PI / 180);
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(lat1 * (Math.PI / 180)) *
-      Math.cos(lat2 * (Math.PI / 180)) *
-      Math.sin(dLng / 2) *
-      Math.sin(dLng / 2);
-
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  const distance = R * c;
-
-  return distance;
-}
 
 interface StoreWithDistance extends Store {
   distance?: number;
@@ -111,12 +89,22 @@ export default function RestaurantListingPage(): React.JSX.Element {
     "all" | "available"
   >("all");
 
-  // Include availability filter in backend query to prevent pagination issues
+  // Include availability filter and location in backend query
+  // When sortBy is "distance" and userLocation is available, backend sorts by distance
   const { data: storesResult, isLoading } = useStores(
     {
       ...filters,
       availabilityStatus:
         availabilityFilter === "available" ? "available" : undefined,
+      // Only pass lat/lng when sorting by distance to enable backend distance sorting
+      lat:
+        sortBy === "distance" && userLocation
+          ? userLocation.latitude
+          : undefined,
+      lng:
+        sortBy === "distance" && userLocation
+          ? userLocation.longitude
+          : undefined,
     },
     {
       page: currentPage,
@@ -135,20 +123,18 @@ export default function RestaurantListingPage(): React.JSX.Element {
     let mounted = true;
 
     const fetchLocation = async () => {
-      if (!mounted) {return;}
+      if (!mounted) {
+        return;
+      }
       setLocationStatus("loading");
       const location = await getUserLocationSafe();
-      if (!mounted) {return;}
+      if (!mounted) {
+        return;
+      }
 
       if (location) {
         setUserLocation(location);
         setLocationStatus("granted");
-        //Update filters with location for backend sorting
-        setFilters((prev) => ({
-          ...prev,
-          lat: location.latitude,
-          lng: location.longitude,
-        }));
 
         // Reverse geocode to get location name
         void (async () => {
@@ -156,7 +142,9 @@ export default function RestaurantListingPage(): React.JSX.Element {
             const response = await fetch(
               `https://nominatim.openstreetmap.org/reverse?format=json&lat=${location.latitude}&lon=${location.longitude}&zoom=10`
             );
-            if (!mounted) {return;}
+            if (!mounted) {
+              return;
+            }
             const data = await response.json();
             const city =
               data.address?.city ||
@@ -189,12 +177,14 @@ export default function RestaurantListingPage(): React.JSX.Element {
     };
   }, []);
 
-  //calculate distances and apply client-side sorting
+  // Calculate distances for display purposes only
+  // Sorting is handled by the backend when lat/lng are passed in filters
   const displayedStores = useMemo((): StoreWithDistance[] => {
     const allStores = storesResult?.data ?? [];
     const stores: StoreWithDistance[] = allStores.map((store) => {
       let distance: number | undefined;
 
+      // Calculate distance for display (e.g., "2.5 km away")
       if (userLocation && store.lat && store.lng) {
         distance = calculateDistance(
           userLocation.latitude,
@@ -210,20 +200,19 @@ export default function RestaurantListingPage(): React.JSX.Element {
       };
     });
 
-    // Note: Availability filtering now happens on backend via useStores query
-    // This prevents pagination issues where filtering reduces the page size
+    // Note: Sorting by distance is now handled by the backend
+    // When sortBy === "distance", lat/lng are passed to the backend query
+    // which returns stores already sorted by distance using Haversine formula
 
-    //Apply sorting
-    if (sortBy === "distance" && userLocation) {
-      stores.sort((a, b) => (a.distance ?? 999999) - (b.distance ?? 999999));
-    } else if (sortBy === "newest") {
-      // Sort by Newest first (descending order by createdAt)
+    // Only apply client-side sorting for "newest" (backend doesn't sort by this)
+    if (sortBy === "newest") {
       stores.sort((a, b) => {
         const dateA = new Date(a.createdAt).getTime();
         const dateB = new Date(b.createdAt).getTime();
         return dateB - dateA;
       });
     }
+
     return stores;
   }, [storesResult?.data, userLocation, sortBy]);
 
@@ -272,11 +261,9 @@ export default function RestaurantListingPage(): React.JSX.Element {
     setSortBy("newest");
     setAvailabilityFilter("all");
     setCurrentPage(1);
-    setFilters((prev) => ({
+    setFilters({
       categoryId: "restaurant",
-      lat: prev.lat,
-      lng: prev.lng,
-    }));
+    });
   };
 
   const handlePageChange = (page: number): void => {
@@ -293,11 +280,6 @@ export default function RestaurantListingPage(): React.JSX.Element {
       if (location) {
         setUserLocation(location);
         setLocationStatus("granted");
-        setFilters((prev) => ({
-          ...prev,
-          lat: location.latitude,
-          lng: location.longitude,
-        }));
 
         // Reverse geocode to get location name
         void (async () => {
