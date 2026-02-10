@@ -4,6 +4,8 @@ import { X, Store as StoreIcon, Loader2 } from "lucide-react";
 import { useState } from "react";
 
 import { AddressAutocomplete } from "@/components/AddressAutocomplete";
+import { CategoryAutocomplete } from "@/components/CategoryAutocomplete";
+import { SubCategoryAutocomplete } from "@/components/SubCategoryAutocomplete";
 import { DAYS_OF_WEEK_BY_INDEX } from "@/data/constants";
 import { useUpdateStore } from "@/domains/admin/hooks";
 import {
@@ -11,7 +13,6 @@ import {
   type UpdateStoreInput,
   type OpenDay,
   StoreType,
-  CategoryType,
 } from "@/domains/admin/types";
 import { StoreHoursEditor } from "@/domains/store/components/StoreHoursEditor";
 import { useToast } from "@/hooks/use-toast";
@@ -31,16 +32,16 @@ export function EditStoreForm({
   const { toast } = useToast();
   const updateStore = useUpdateStore();
 
-  const [categoryType, setCategoryType] = useState<CategoryType>(
-    store.categoryId === CategoryType.RESTAURANT
-      ? CategoryType.RESTAURANT
-      : CategoryType.OTHER
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>(
+    store.categoryId || ""
   );
+  const [selectedSubCategoryId, setSelectedSubCategoryId] = useState<string>(
+    store.subCategoryId || ""
+  );
+
   const [formData, setFormData] = useState<UpdateStoreInput>({
     name: store.name,
     description: store.description,
-    categoryId: store.categoryId,
-    subCategory: store.subCategory,
     type: store.type,
     city: store.city,
     address: store.address,
@@ -106,47 +107,6 @@ export function EditStoreForm({
         ...prev,
         [name]: value ? parseFloat(value) : undefined,
       }));
-    } else if (name === "categoryType") {
-      setCategoryType(value as CategoryType);
-      // Reset category fields when switching types
-      setFormData((prev) => ({
-        ...prev,
-        categoryId: "",
-        subCategory: "",
-      }));
-    } else {
-      setFormData((prev) => ({
-        ...prev,
-        [name]: value || undefined,
-      }));
-    }
-  };
-
-  const handleCategoryTypeChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >
-  ) => {
-    const { name, value, type } = e.target;
-
-    if (type === "checkbox") {
-      setFormData((prev) => ({
-        ...prev,
-        [name]: (e.target as HTMLInputElement).checked,
-      }));
-    } else if (name === "lat" || name === "lng") {
-      setFormData((prev) => ({
-        ...prev,
-        [name]: value ? Number.parseFloat(value) : undefined,
-      }));
-    } else if (name === "categoryType") {
-      const typeValue = value as CategoryType;
-      setCategoryType(typeValue);
-      // Reset category fields when switching types
-      setFormData((prev) => ({
-        ...prev,
-        categoryId: typeValue === CategoryType.RESTAURANT ? "restaurant" : "",
-      }));
     } else {
       setFormData((prev) => ({
         ...prev,
@@ -159,12 +119,7 @@ export function EditStoreForm({
     e.preventDefault();
 
     // Validation
-    if (
-      !formData.name ||
-      !formData.categoryId ||
-      !formData.city ||
-      !formData.address
-    ) {
+    if (!formData.name || !formData.city || !formData.address) {
       toast({
         title: "Validation Error",
         description: "Please fill in all required fields",
@@ -173,9 +128,20 @@ export function EditStoreForm({
       return;
     }
 
+    if (!selectedCategoryId) {
+      toast({
+        title: "Validation Error",
+        description: "Please select a category",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       const updateInput: UpdateStoreInput = {
         ...formData,
+        categoryId: selectedCategoryId || undefined,
+        subCategoryId: selectedSubCategoryId || undefined,
         openDays:
           openHours.length > 0 ? { availableDays: openHours } : undefined,
       };
@@ -292,100 +258,40 @@ export function EditStoreForm({
                 Category
               </h3>
 
-              <div className="grid grid-cols-2 gap-4">
-                {/* <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    Category ID <span className="text-destructive">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="categoryId"
-                    value={formData.categoryId}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                    placeholder="e.g., cafe-restaurant"
-                  />
-                </div> */}
-                <div>
-                  <label
-                    className="block text-sm font-medium text-foreground mb-2"
-                    htmlFor="categoryType"
-                  >
-                    Store Category <span className="text-destructive">*</span>
-                  </label>
-                  <select
-                    name="categoryType"
-                    value={categoryType}
-                    onChange={handleCategoryTypeChange}
-                    className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  >
-                    <option value={CategoryType.RESTAURANT}>Restaurant</option>
-                    <option value={CategoryType.OTHER}>Others</option>
-                  </select>
-                </div>
-                {categoryType === CategoryType.RESTAURANT ? (
-                  <div>
-                    <label
-                      className="block text-sm font-medium text-foreground mb-2"
-                      htmlFor="subCategory"
-                    >
-                      Sub Category <span className="text-destructive">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      name="subCategory"
-                      value={formData.subCategory ?? ""}
-                      onChange={handleChange}
-                      className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                      placeholder="e.g., coffee-shop, pizza-restaurant, sushi-bar"
-                    />
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 col-span-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-foreground mb-2">
-                        Category <span className="text-destructive">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        name="categoryId"
-                        value={formData.categoryId ?? ""}
-                        onChange={handleChange}
-                        className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                        placeholder="e.g., grocery, retail"
-                      />
-                    </div>
+              {/* Category Autocomplete */}
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Category <span className="text-destructive">*</span>
+                </label>
+                <CategoryAutocomplete
+                  value={selectedCategoryId}
+                  onChange={(categoryId) => {
+                    setSelectedCategoryId(categoryId);
+                    setSelectedSubCategoryId(""); // Reset subcategory when category changes
+                  }}
+                  placeholder="Search or create category..."
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Type to search existing categories or create a new one
+                </p>
+              </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-foreground mb-2">
-                        Sub Category <span className="text-destructive">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        name="subCategory"
-                        value={formData.subCategory ?? ""}
-                        onChange={handleChange}
-                        className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                        placeholder="e.g., organic, convenience"
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {/* <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    Sub Category
-                  </label>
-                  <input
-                    type="text"
-                    name="subCategory"
-                    value={formData.subCategory || ""}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                    placeholder="e.g., coffee-shop"
-                  />
-                </div> */}
+              {/* SubCategory Autocomplete */}
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Subcategory
+                </label>
+                <SubCategoryAutocomplete
+                  value={selectedSubCategoryId}
+                  categoryId={selectedCategoryId}
+                  onChange={(subCategoryId) =>
+                    setSelectedSubCategoryId(subCategoryId)
+                  }
+                  placeholder="Search or create subcategory..."
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Type to search existing subcategories or create a new one
+                </p>
               </div>
             </div>
 

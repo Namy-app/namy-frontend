@@ -27,7 +27,7 @@ interface CreateStoreInput {
   lng?: number;
   type: StoreType;
   price: PriceRange;
-  subCategory?: string;
+  subCategoryId?: string;
   tags?: string;
   url?: string;
   active?: boolean;

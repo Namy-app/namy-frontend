@@ -5,7 +5,11 @@ export const GET_CATEGORIES = gql`
     categories(filters: $filters) {
       id
       name
-      subcategory
+      subcategories {
+        id
+        name
+        createdAt
+      }
       createdAt
     }
   }
@@ -16,7 +20,6 @@ export const CREATE_CATEGORY = gql`
     createCategory(input: $input) {
       id
       name
-      subcategory
       createdAt
     }
   }
@@ -27,7 +30,6 @@ export const UPDATE_CATEGORY = gql`
     updateCategory(id: $id, input: $input) {
       id
       name
-      subcategory
       createdAt
     }
   }

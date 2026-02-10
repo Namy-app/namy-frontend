@@ -4,6 +4,8 @@ import { X, Store as StoreIcon, Loader2, Copy, Check } from "lucide-react";
 import { useState } from "react";
 
 import { AddressAutocomplete } from "@/components/AddressAutocomplete";
+import { CategoryAutocomplete } from "@/components/CategoryAutocomplete";
+import { SubCategoryAutocomplete } from "@/components/SubCategoryAutocomplete";
 import { useCreateStore } from "@/domains/admin/hooks";
 import {
   type CreateStoreInput,
@@ -26,11 +28,13 @@ export function CreateStoreForm({ onClose, onSuccess }: CreateStoreFormProps) {
   const [copiedPin, setCopiedPin] = useState(false);
   const [generatedPin, setGeneratedPin] = useState<string | null>(null);
 
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>("");
+  const [selectedSubCategoryId, setSelectedSubCategoryId] =
+    useState<string>("");
+
   const [formData, setFormData] = useState<CreateStoreInput>({
     name: "",
     description: "",
-    categoryId: "",
-    subCategory: "",
     type: StoreType.PRODUCT,
     city: "",
     address: "",
@@ -42,10 +46,6 @@ export function CreateStoreForm({ onClose, onSuccess }: CreateStoreFormProps) {
     tags: "",
     restrictions: "",
   });
-
-  const [categoryType, setCategoryType] = useState<"restaurant" | "others">(
-    "restaurant"
-  );
 
   const [openHours, setOpenHours] = useState<OpenDay[]>([]);
 
@@ -65,14 +65,6 @@ export function CreateStoreForm({ onClose, onSuccess }: CreateStoreFormProps) {
       setFormData((prev) => ({
         ...prev,
         [name]: value ? parseFloat(value) : undefined,
-      }));
-    } else if (name === "categoryType") {
-      setCategoryType(value as "restaurant" | "others");
-      // Reset category fields when switching types
-      setFormData((prev) => ({
-        ...prev,
-        categoryId: "",
-        subCategory: "",
       }));
     } else {
       setFormData((prev) => ({
@@ -95,32 +87,21 @@ export function CreateStoreForm({ onClose, onSuccess }: CreateStoreFormProps) {
       return;
     }
 
-    // Validate category requirements based on type
-    if (categoryType === "restaurant") {
-      if (!formData.subCategory) {
-        toast({
-          title: "Validation Error",
-          description: "Please enter a Sub-Category for restaurant",
-          variant: "destructive",
-        });
-        return;
-      }
-    } else if (categoryType === "others") {
-      if (!formData.categoryId || !formData.subCategory) {
-        toast({
-          title: "Validation Error",
-          description: "Please enter both Category and Sub-Category",
-          variant: "destructive",
-        });
-        return;
-      }
+    // Validate category is selected
+    if (!selectedCategoryId) {
+      toast({
+        title: "Validation Error",
+        description: "Please select a category",
+        variant: "destructive",
+      });
+      return;
     }
 
-    // Set categoryId based on categoryType
+    // Prepare form data with UUIDs
     const finalFormData: CreateStoreInput = {
       ...formData,
-      categoryId:
-        categoryType === "restaurant" ? "restaurant" : formData.categoryId,
+      categoryId: selectedCategoryId,
+      subCategoryId: selectedSubCategoryId || undefined,
       openDays: openHours.length > 0 ? { availableDays: openHours } : undefined,
     };
 
@@ -319,72 +300,41 @@ export function CreateStoreForm({ onClose, onSuccess }: CreateStoreFormProps) {
                 Category
               </h3>
 
+              {/* Category Autocomplete */}
               <div>
-                <label
-                  className="block text-sm font-medium text-foreground mb-2"
-                  htmlFor="categoryType"
-                >
-                  Store Category <span className="text-destructive">*</span>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Category <span className="text-destructive">*</span>
                 </label>
-                <select
-                  name="categoryType"
-                  value={categoryType}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                >
-                  <option value="restaurant">Restaurant</option>
-                  <option value="others">Others</option>
-                </select>
+                <CategoryAutocomplete
+                  value={selectedCategoryId}
+                  onChange={(categoryId) => {
+                    setSelectedCategoryId(categoryId);
+                    setSelectedSubCategoryId(""); // Reset subcategory when category changes
+                  }}
+                  placeholder="Search or create category..."
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Type to search existing categories or create a new one
+                </p>
               </div>
 
-              {categoryType === "restaurant" ? (
-                <div>
-                  <label
-                    className="block text-sm font-medium text-foreground mb-2"
-                    htmlFor="subCategory"
-                  >
-                    Sub Category <span className="text-destructive">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="subCategory"
-                    value={formData.subCategory || ""}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                    placeholder="e.g., coffee-shop, pizza-restaurant, sushi-bar"
-                  />
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">
-                      Category <span className="text-destructive">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      name="categoryId"
-                      value={formData.categoryId}
-                      onChange={handleChange}
-                      className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                      placeholder="e.g., grocery, retail"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">
-                      Sub Category <span className="text-destructive">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      name="subCategory"
-                      value={formData.subCategory || ""}
-                      onChange={handleChange}
-                      className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                      placeholder="e.g., organic, convenience"
-                    />
-                  </div>
-                </div>
-              )}
+              {/* SubCategory Autocomplete */}
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Subcategory
+                </label>
+                <SubCategoryAutocomplete
+                  value={selectedSubCategoryId}
+                  categoryId={selectedCategoryId}
+                  onChange={(subCategoryId) =>
+                    setSelectedSubCategoryId(subCategoryId)
+                  }
+                  placeholder="Search or create subcategory..."
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Type to search existing subcategories or create a new one
+                </p>
+              </div>
             </div>
 
             {/* Location */}

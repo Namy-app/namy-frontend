@@ -172,7 +172,11 @@ export const GET_ALL_STORES_QUERY = `
         updatedAt
         type
         categoryId
-        subCategory
+        subCategoryId
+        subCategory {
+          id
+          name
+        }
         averageRating
         reviewCounter
         city
@@ -206,7 +210,11 @@ export const GET_STORE_QUERY = `
       updatedAt
       type
       categoryId
-      subCategory
+      subCategoryId
+      subCategory {
+        id
+        name
+      }
       averageRating
       reviewCounter
       city
@@ -234,7 +242,11 @@ export const CREATE_STORE_MUTATION = `
         updatedAt
         type
         categoryId
-        subCategory
+        subCategoryId
+        subCategory {
+          id
+          name
+        }
         city
         lat
         lng

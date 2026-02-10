@@ -64,7 +64,11 @@ export interface Store {
   updatedAt: string;
   type?: "PRODUCT" | "SERVICE";
   categoryId?: string;
-  subCategory?: string;
+  subCategoryId?: string;
+  subCategory?: {
+    id: string;
+    name: string;
+  };
   averageRating?: number;
   reviewCounter?: number;
   url?: string;

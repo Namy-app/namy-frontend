@@ -20,7 +20,7 @@ export const RestaurantCard = ({
     id: store.id,
     slug: store.id,
     name: store.name,
-    category: store.subCategory || "Restaurant",
+    category: store.subCategory?.name || "Restaurant",
     rating: store.averageRating ?? 4.5,
     image:
       store.imageUrl ||

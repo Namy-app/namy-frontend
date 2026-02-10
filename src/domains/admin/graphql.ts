@@ -10,7 +10,11 @@ export const CREATE_STORE_MUTATION = gql`
         name
         description
         categoryId
-        subCategory
+        subCategoryId
+        subCategory {
+          id
+          name
+        }
         type
         city
         address
@@ -48,7 +52,11 @@ export const UPDATE_STORE_MUTATION = gql`
         name
         description
         categoryId
-        subCategory
+        subCategoryId
+        subCategory {
+          id
+          name
+        }
         type
         city
         address
@@ -131,7 +139,11 @@ export const GET_ALL_STORES = gql`
         image2Url
         image3Url
         categoryId
-        subCategory
+        subCategoryId
+        subCategory {
+          id
+          name
+        }
         type
         city
         address
@@ -175,7 +187,11 @@ export const GET_STORE_BY_ID = gql`
       image2Url
       image3Url
       categoryId
-      subCategory
+      subCategoryId
+      subCategory {
+        id
+        name
+      }
       type
       city
       address

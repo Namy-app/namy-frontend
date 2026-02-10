@@ -250,7 +250,7 @@ export default function ServicesPage(): React.JSX.Element {
       image:
         store.imageUrl ||
         "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=800&auto=format&fit=crop",
-      category: store.subCategory || "Service",
+      category: store.subCategory?.name || "Service",
       discount: discountPercentage,
       rating: store.averageRating ?? 4.7,
       distance:
@@ -357,7 +357,7 @@ export default function ServicesPage(): React.JSX.Element {
     setCurrentPage(1);
     setFilters((prev) => ({
       ...prev,
-      subCategory: subCategory === "All" ? undefined : subCategory,
+      subCategoryId: subCategory === "All" ? undefined : subCategory,
     }));
   };
 

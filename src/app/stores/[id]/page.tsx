@@ -156,7 +156,7 @@ export default function StoresDetailPage(): React.JSX.Element {
     ? {
         id: store.id,
         name: store.name,
-        category: store.categoryId || store.subCategory || "Restaurant",
+        category: store.categoryId || store.subCategory?.name || "Restaurant",
         emoji: store.type === StoreType.PRODUCT ? "🍽️" : "🔧",
         rating: store.averageRating ?? 4.5,
         reviewCount: store.reviewCounter ?? 0,

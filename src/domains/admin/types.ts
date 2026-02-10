@@ -36,6 +36,9 @@ export interface OpenDaysStructure {
   availableDays: OpenDay[];
 }
 
+import type { Category } from "../category/types";
+import type { SubCategory } from "../subcategory/types";
+
 export interface Store {
   id: string;
   name: string;
@@ -45,8 +48,10 @@ export interface Store {
   image2Url?: string;
   image3Url?: string;
   images?: string[]; // Dynamic array of image URLs
-  categoryId: string;
-  subCategory?: string;
+  categoryId?: string;
+  subCategoryId?: string;
+  category?: Category;
+  subCategory?: SubCategory;
   type: StoreType;
   city: string;
   address: string;
@@ -117,8 +122,8 @@ export interface StoresResponse {
 export interface CreateStoreInput {
   name: string;
   description?: string;
-  categoryId: string;
-  subCategory?: string;
+  categoryId?: string;
+  subCategoryId?: string;
   type: StoreType;
   city: string;
   address: string;
@@ -140,7 +145,7 @@ export interface UpdateStoreInput {
   name?: string;
   description?: string;
   categoryId?: string;
-  subCategory?: string;
+  subCategoryId?: string;
   type?: StoreType;
   city?: string;
   address?: string;
@@ -164,7 +169,7 @@ export interface StoreFiltersInput {
   name?: string;
   city?: string;
   categoryId?: string;
-  subCategory?: string;
+  subCategoryId?: string;
   type?: StoreType;
   price?: PriceRange;
   active?: boolean | null;

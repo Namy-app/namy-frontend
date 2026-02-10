@@ -110,7 +110,7 @@ export default function StoreDetailPage() {
           name: store.name,
           description: store.description,
           categoryId: store.categoryId,
-          subCategory: store.subCategory,
+          subCategoryId: store.subCategoryId,
           type: store.type,
           city: store.city,
           address: store.address,

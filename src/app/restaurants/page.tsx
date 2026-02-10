@@ -221,7 +221,7 @@ export default function RestaurantListingPage(): React.JSX.Element {
     setCurrentPage(1);
     setFilters((prev) => ({
       ...prev,
-      subCategory: subCategory === "All" ? undefined : subCategory,
+      subCategoryId: subCategory === "All" ? undefined : subCategory,
     }));
   };
 

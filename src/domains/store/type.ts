@@ -65,7 +65,7 @@ export interface StoresResponse {
 export interface StoreFilters {
   search?: string;
   categoryId?: string;
-  subCategory?: string;
+  subCategoryId?: string;
   city?: string;
   active?: boolean;
   noRestaurants?: boolean;
