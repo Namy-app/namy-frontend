@@ -79,7 +79,7 @@ export function FeaturedCarousel({
                       ) : (
                         <Image
                           src={
-                            item.categoryId?.toLowerCase() === "restaurant"
+                            item.category?.name?.toLowerCase() === "restaurant"
                               ? PlaceHolderTypeEnum.RESTAURANT
                               : PlaceHolderTypeEnum.SHOP
                           }

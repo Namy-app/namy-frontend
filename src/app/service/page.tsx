@@ -97,7 +97,6 @@ export default function ServicesPage(): React.JSX.Element {
       ...filters,
       availabilityStatus:
         availabilityFilter === "available" ? "available" : undefined,
-      sortBy,
       // Pass lat/lng when sorting by distance to enable backend distance calculation
       lat:
         sortBy === "DISTANCE" && userLocation

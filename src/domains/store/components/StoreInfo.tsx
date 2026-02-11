@@ -297,10 +297,10 @@ export const StoreInfo = ({
           </div>
           <div>
             <p className="text-sm font-medium text-muted-foreground">
-              ID de Categoría
+              Categoría
             </p>
-            <p className="text-foreground text-sm font-mono">
-              {store.categoryId}
+            <p className="text-foreground text-sm">
+              {store.category?.name || "N/A"}
             </p>
           </div>
           <div>

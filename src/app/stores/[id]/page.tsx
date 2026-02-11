@@ -139,7 +139,7 @@ export default function StoresDetailPage(): React.JSX.Element {
 
   // Get the first active discount for this store
   const firstActiveDiscount = discountsData?.data?.find((d) => d.active);
-  const isRestaurant = store?.categoryId?.toLowerCase() === "restaurant";
+  const isRestaurant = store?.category?.name?.toLowerCase() === "restaurant";
   const storeCategoryType = isRestaurant ? "Restaurant" : "Store";
 
   // Use optimized countdown hook
@@ -156,7 +156,8 @@ export default function StoresDetailPage(): React.JSX.Element {
     ? {
         id: store.id,
         name: store.name,
-        category: store.categoryId || store.subCategory || "Restaurant",
+        category:
+          store.category?.name || store.subcategory?.name || "Restaurant",
         emoji: store.type === StoreType.PRODUCT ? "🍽️" : "🔧",
         rating: store.averageRating ?? 4.5,
         reviewCount: store.reviewCounter ?? 0,

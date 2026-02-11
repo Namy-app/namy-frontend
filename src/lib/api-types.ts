@@ -65,6 +65,10 @@ export interface Store {
   type?: "PRODUCT" | "SERVICE";
   categoryId?: string;
   subCategory?: string;
+  catId?: string;
+  subCatId?: string;
+  category?: { id: string; name: string };
+  subcategory?: { id: string; name: string };
   averageRating?: number;
   reviewCounter?: number;
   url?: string;

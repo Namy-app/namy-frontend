@@ -173,6 +173,16 @@ export const GET_ALL_STORES_QUERY = `
         type
         categoryId
         subCategory
+        catId
+        subCatId
+        category {
+          id
+          name
+        }
+        subcategory {
+          id
+          name
+        }
         averageRating
         reviewCounter
         city
@@ -207,6 +217,16 @@ export const GET_STORE_QUERY = `
       type
       categoryId
       subCategory
+      catId
+      subCatId
+      category {
+        id
+        name
+      }
+      subcategory {
+        id
+        name
+      }
       averageRating
       reviewCounter
       city
@@ -235,6 +255,8 @@ export const CREATE_STORE_MUTATION = `
         type
         categoryId
         subCategory
+        catId
+        subCatId
         city
         lat
         lng
@@ -262,6 +284,8 @@ export const UPDATE_STORE_MUTATION = `
     $logo: String
     $coverImage: String
     $isActive: Boolean
+    $catId: String
+    $subCatId: String
   ) {
     updateStore(
       id: $id
@@ -273,11 +297,15 @@ export const UPDATE_STORE_MUTATION = `
       logo: $logo
       coverImage: $coverImage
       isActive: $isActive
+      catId: $catId
+      subCatId: $subCatId
     ) {
       id
       name
       description
       isActive
+      catId
+      subCatId
       updatedAt
     }
   }
@@ -288,6 +316,78 @@ export const DELETE_STORE_MUTATION = `
     deleteStore(id: $id) {
       id
       name
+    }
+  }
+`;
+
+// ============ CATEGORY ============
+export const GET_ALL_CATEGORIES_QUERY = `
+  query GetAllCategories {
+    categories {
+      id
+      name
+      iconUrl
+      isActive
+      createdAt
+    }
+  }
+`;
+
+export const GET_CATEGORIES_BY_NAME_QUERY = `
+  query GetCategoriesByName($name: String!) {
+    categories(filters: { name: $name }) {
+      id
+      name
+      isActive
+    }
+  }
+`;
+
+export const GET_CATEGORY_BY_ID_QUERY = `
+  query GetCategoryById($id: String!) {
+    category(id: $id) {
+      id
+      name
+      iconUrl
+      isActive
+    }
+  }
+`;
+
+// ============ SUBCATEGORY ============
+export const GET_ALL_SUBCATEGORIES_QUERY = `
+  query GetAllSubcategories {
+    subcategories {
+      id
+      name
+      categoryId
+      iconUrl
+      isActive
+      createdAt
+    }
+  }
+`;
+
+export const GET_SUBCATEGORIES_BY_CATEGORY_QUERY = `
+  query GetSubcategoriesByCategory($categoryId: String!) {
+    subcategories(filters: { categoryId: $categoryId }) {
+      id
+      name
+      categoryId
+      iconUrl
+      isActive
+    }
+  }
+`;
+
+export const GET_SUBCATEGORY_BY_ID_QUERY = `
+  query GetSubcategoryById($id: String!) {
+    subcategory(id: $id) {
+      id
+      name
+      categoryId
+      iconUrl
+      isActive
     }
   }
 `;
@@ -394,6 +494,16 @@ export const GET_COUPON_REDEEM_DETAILS_QUERY = `
         address
         city
         phoneNumber
+        catId
+        subCatId
+        category {
+          id
+          name
+        }
+        subcategory {
+          id
+          name
+        }
         averageRating
         reviewCounter
       }
@@ -447,6 +557,16 @@ export const GENERATE_COUPON_MUTATION = `
         address
         city
         phoneNumber
+        catId
+        subCatId
+        category {
+          id
+          name
+        }
+        subcategory {
+          id
+          name
+        }
         averageRating
         reviewCounter
       }
@@ -479,6 +599,16 @@ export const QUICK_PAY_FOR_DISCOUNT_MUTATION = `
         address
         city
         phoneNumber
+        catId
+        subCatId
+        category {
+          id
+          name
+        }
+        subcategory {
+          id
+          name
+        }
         averageRating
         reviewCounter
       }
@@ -564,7 +694,17 @@ export const COUPONS_QUERY = `
         name
         address
         city
-          restrictions
+        catId
+        subCatId
+        category {
+          id
+          name
+        }
+        subcategory {
+          id
+          name
+        }
+        restrictions
       }
     }
   }
