@@ -68,7 +68,9 @@ export type StoreSortBy = "NEWEST" | "DISTANCE";
 export interface StoreFilters {
   search?: string;
   categoryId?: string;
+  categoryName?: string;
   subCategoryId?: string;
+  subCategoryName?: string;
   city?: string;
   active?: boolean;
   noRestaurants?: boolean;
