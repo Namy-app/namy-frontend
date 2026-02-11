@@ -15,7 +15,7 @@ import {
   Clock,
   Navigation,
 } from "lucide-react";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 
 import { RestaurantCard } from "@/domains/store/components/RestaurantCard";
 import { useStores } from "@/domains/store/hooks";
@@ -49,8 +49,6 @@ const categories = [
   "Steakhouse",
 ];
 
-let timeout: NodeJS.Timeout;
-
 const ITEMS_PER_PAGE = 12;
 
 interface StoreWithDistance extends Store {
@@ -58,6 +56,7 @@ interface StoreWithDistance extends Store {
 }
 
 export default function RestaurantListingPage(): React.JSX.Element {
+  const searchTimeoutRef = useRef<NodeJS.Timeout>(undefined);
   const [filters, setFilters] = useState<StoreFilters>({
     categoryId: "restaurant",
   });
@@ -83,14 +82,13 @@ export default function RestaurantListingPage(): React.JSX.Element {
   const [_, setShowGuideModal] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
 
-  const [sortBy, setSortBy] = useState<"distance" | "newest">("newest");
+  const [sortBy, setSortBy] = useState<"DISTANCE" | "NEWEST">("NEWEST");
 
   const [availabilityFilter, setAvailabilityFilter] = useState<
     "all" | "available"
   >("all");
 
-  // Include availability filter and location in backend query
-  // When sortBy is "distance" and userLocation is available, backend sorts by distance
+  // Backend handles all sorting (newest and distance)
   const { data: storesResult, isLoading } = useStores(
     {
       ...filters,
@@ -98,11 +96,11 @@ export default function RestaurantListingPage(): React.JSX.Element {
         availabilityFilter === "available" ? "available" : undefined,
       // Only pass lat/lng when sorting by distance to enable backend distance sorting
       lat:
-        sortBy === "distance" && userLocation
+        sortBy === "DISTANCE" && userLocation
           ? userLocation.latitude
           : undefined,
       lng:
-        sortBy === "distance" && userLocation
+        sortBy === "DISTANCE" && userLocation
           ? userLocation.longitude
           : undefined,
     },
@@ -181,7 +179,7 @@ export default function RestaurantListingPage(): React.JSX.Element {
   // Sorting is handled by the backend when lat/lng are passed in filters
   const displayedStores = useMemo((): StoreWithDistance[] => {
     const allStores = storesResult?.data ?? [];
-    const stores: StoreWithDistance[] = allStores.map((store) => {
+    return allStores.map((store) => {
       let distance: number | undefined;
 
       // Calculate distance for display (e.g., "2.5 km away")
@@ -199,22 +197,7 @@ export default function RestaurantListingPage(): React.JSX.Element {
         distance,
       };
     });
-
-    // Note: Sorting by distance is now handled by the backend
-    // When sortBy === "distance", lat/lng are passed to the backend query
-    // which returns stores already sorted by distance using Haversine formula
-
-    // Only apply client-side sorting for "newest" (backend doesn't sort by this)
-    if (sortBy === "newest") {
-      stores.sort((a, b) => {
-        const dateA = new Date(a.createdAt).getTime();
-        const dateB = new Date(b.createdAt).getTime();
-        return dateB - dateA;
-      });
-    }
-
-    return stores;
-  }, [storesResult?.data, userLocation, sortBy]);
+  }, [storesResult?.data, userLocation]);
 
   const handleCategoryClick = (subCategory: string): void => {
     setSelectedSubCategory(subCategory);
@@ -226,12 +209,12 @@ export default function RestaurantListingPage(): React.JSX.Element {
   };
 
   const handleSetSearchQuery = (query: string): void => {
-    if (timeout) {
-      clearTimeout(timeout);
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
     }
 
     setSearchQuery(query);
-    timeout = setTimeout(() => {
+    searchTimeoutRef.current = setTimeout(() => {
       setCurrentPage(1);
       setFilters((prev) => ({
         ...prev,
@@ -240,7 +223,16 @@ export default function RestaurantListingPage(): React.JSX.Element {
     }, 300);
   };
 
-  const handleSortChange = (newSort: "distance" | "newest") => {
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const handleSortChange = (newSort: "DISTANCE" | "NEWEST") => {
     setSortBy(newSort);
     setShowFilterModal(false);
   };
@@ -258,14 +250,12 @@ export default function RestaurantListingPage(): React.JSX.Element {
   const clearFilters = (): void => {
     setSearchQuery("");
     setSelectedSubCategory("All");
-    setSortBy("newest");
+    setSortBy("NEWEST");
     setAvailabilityFilter("all");
     setCurrentPage(1);
-    setFilters((prev) => ({
+    setFilters({
       categoryId: "restaurant",
-      lat: prev.lat,
-      lng: prev.lng,
-    }));
+    });
   };
 
   const handlePageChange = (page: number): void => {
@@ -282,11 +272,6 @@ export default function RestaurantListingPage(): React.JSX.Element {
       if (location) {
         setUserLocation(location);
         setLocationStatus("granted");
-        setFilters((prev) => ({
-          ...prev,
-          lat: location.latitude,
-          lng: location.longitude,
-        }));
 
         // Reverse geocode to get location name
         void (async () => {
@@ -468,7 +453,7 @@ export default function RestaurantListingPage(): React.JSX.Element {
                   <Clock className="w-4 h-4" />
                   Disponible ahora
                 </Button>
-                {sortBy === "distance" && locationStatus === "granted" && (
+                {sortBy === "DISTANCE" && locationStatus === "granted" && (
                   <Button
                     variant="outline"
                     size="sm"
@@ -493,12 +478,12 @@ export default function RestaurantListingPage(): React.JSX.Element {
                   <select
                     value={sortBy}
                     onChange={(e) =>
-                      handleSortChange(e.target.value as "distance" | "newest")
+                      handleSortChange(e.target.value as "DISTANCE" | "NEWEST")
                     }
                     className="text-sm bg-transparent text-foreground border border-border rounded-lg px-2 py-1 focus:outline-none cursor-pointer"
                   >
-                    <option value="newest">Más recientes</option>
-                    <option value="distance">Más cercano</option>
+                    <option value="NEWEST">Más recientes</option>
+                    <option value="DISTANCE">Más cercano</option>
                   </select>
                 </div>
               </div>
@@ -649,13 +634,13 @@ export default function RestaurantListingPage(): React.JSX.Element {
                 </label>
                 <div className="space-y-2">
                   {[
-                    { value: "newest", label: "Más recientes" },
-                    { value: "distance", label: "Más cercano" },
+                    { value: "NEWEST", label: "Más recientes" },
+                    { value: "DISTANCE", label: "Más cercano" },
                   ].map((option) => (
                     <button
                       key={option.value}
                       onClick={() =>
-                        handleSortChange(option.value as "distance" | "newest")
+                        handleSortChange(option.value as "DISTANCE" | "NEWEST")
                       }
                       className={`w-full text-left px-4 py-3 rounded-xl transition-colors ${
                         sortBy === option.value

@@ -19,6 +19,7 @@
     "prepare": "husky"
   },
   "dependencies": {
+    "@novu/nextjs": "^3.13.0",
     "@radix-ui/react-accordion": "^1.2.12",
     "@radix-ui/react-slot": "^1.2.4",
     "@radix-ui/react-tabs": "^1.1.13",
