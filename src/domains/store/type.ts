@@ -77,7 +77,7 @@ export interface StoreFilters {
   subCategory?: string;
   city?: string;
   active?: boolean;
-  noRestaurants?: boolean;
+  isRestaurant?: boolean;
   lat?: number;
   lng?: number;
   id?: string;

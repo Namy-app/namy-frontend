@@ -58,7 +58,7 @@ interface StoreWithDistance extends Store {
 export default function RestaurantListingPage(): React.JSX.Element {
   const searchTimeoutRef = useRef<NodeJS.Timeout>(undefined);
   const [filters, setFilters] = useState<StoreFilters>({
-    categoryId: "restaurant",
+    isRestaurant: true,
   });
   const [currentPage, setCurrentPage] = useState(1);
   const [userLocation, setUserLocation] = useState<{
@@ -254,7 +254,7 @@ export default function RestaurantListingPage(): React.JSX.Element {
     setAvailabilityFilter("all");
     setCurrentPage(1);
     setFilters({
-      categoryId: "restaurant",
+      isRestaurant: true,
     });
   };
 
