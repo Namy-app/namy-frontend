@@ -17,13 +17,14 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect, useMemo, useRef } from "react";
 
-import { useStores } from "@/domains/store/hooks";
+import { useGetSubCategoryByCatId, useStores } from "@/domains/store/hooks";
 import { calculateDistance } from "@/domains/store/hooks/query/useClosestStores";
 import { type StoreFilters } from "@/domains/store/type";
 import { useMyLevel } from "@/domains/user/hooks/query/useMyLevel";
 import { BasicLayout } from "@/layouts/BasicLayout";
 import type { Store } from "@/lib/api-types";
 import { getUserLocationSafe } from "@/lib/utils";
+import { useRestaurantId } from "@/providers/RestaurantIdProvider";
 import { Button } from "@/shared/components/Button";
 import { Card } from "@/shared/components/Card";
 import { Input } from "@/shared/components/Input";
@@ -47,24 +48,20 @@ const ITEMS_PER_PAGE = 12;
 
 export type ViewMode = "grid" | "map";
 
-const categories = [
-  "All",
-  "Spa",
-  "Barbería",
-  "Salón de belleza",
-  "Masajes",
-  "Estética",
-  "Peluquería",
-];
-
 interface StoreWithDistance extends Store {
   distance?: number;
 }
 
 export default function ServicesPage(): React.JSX.Element {
+  const { restaurantId, isLoading: restaurantLoading } = useRestaurantId();
+  const { data: subcategoriesData, isLoading: subCategoryLoading } =
+    useGetSubCategoryByCatId(restaurantId ?? undefined, true);
+
+  const subcategories = subcategoriesData ?? [];
+
   const searchTimeoutRef = useRef<NodeJS.Timeout>(undefined);
   const [filters, setFilters] = useState<StoreFilters>({
-    noRestaurants: true,
+    isRestaurant: false,
   });
   const [searchQuery, setSearchQuery] = useState("");
   const [_, setShowGuideModal] = useState(false);
@@ -110,7 +107,8 @@ export default function ServicesPage(): React.JSX.Element {
     {
       page: currentPage,
       first: ITEMS_PER_PAGE,
-    }
+    },
+    !restaurantLoading && !!restaurantId
   );
   const paginationInfo = storesResult?.paginationInfo;
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
@@ -118,6 +116,8 @@ export default function ServicesPage(): React.JSX.Element {
   const [showFilterModal, setShowFilterModal] = useState(false);
   const discountPercentage =
     (user?.isPremium ? 15 : myLevel?.discountPercentage) ?? 10;
+
+  const loading = isLoading || restaurantLoading;
 
   //Fetch user location on mount
   useEffect(() => {
@@ -322,12 +322,12 @@ export default function ServicesPage(): React.JSX.Element {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const handleCategoryClick = (subCategory: string): void => {
-    setSelectedSubCategory(subCategory);
+  const handleSubCategoryClick = (subCategoryId: string): void => {
+    setSelectedSubCategory(subCategoryId);
     setCurrentPage(1);
     setFilters((prev) => ({
       ...prev,
-      subCategory: subCategory === "All" ? undefined : subCategory,
+      subCatId: subCategoryId === "All" ? undefined : subCategoryId,
     }));
   };
 
@@ -348,7 +348,7 @@ export default function ServicesPage(): React.JSX.Element {
     setAvailabilityFilter("all");
     setCurrentPage(1);
     setFilters({
-      noRestaurants: true,
+      isRestaurant: false,
     });
   };
 
@@ -492,26 +492,49 @@ export default function ServicesPage(): React.JSX.Element {
             </div>
           </div>
 
-          {/* Category Filter Pills */}
-          <div className="px-6 -mt-4 mb-4 max-w-5xl mx-auto">
-            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide justify-center">
-              {categories.map((category) => (
-                <Button
-                  key={category}
-                  onClick={() => handleCategoryClick(category)}
-                  className={`rounded-full whitespace-nowrap ${
-                    selectedSubCategory === category
-                      ? "bg-primary text-primary-foreground shadow-glow"
-                      : "bg-card border-border hover:border-primary"
-                  }`}
-                  variant={
-                    selectedSubCategory === category ? "default" : "outline"
-                  }
-                >
-                  {category}
-                </Button>
-              ))}
-            </div>
+          {/* SubCategory Filter Pills */}
+          {/* Only show if we have subcategories for services */}
+          <div className="-mt-4 mb-4 max-w-5xl mx-auto">
+            {subCategoryLoading ? (
+              <div className="px-6">Loading subcategories...</div>
+            ) : (
+              <div className="overflow-x-auto pb-2 scrollbar-hide">
+                <div className="flex gap-2 px-6 min-w-max">
+                  <Button
+                    key="all"
+                    onClick={() => handleSubCategoryClick("All")}
+                    className={`rounded-full whitespace-nowrap ${
+                      selectedSubCategory === "All"
+                        ? "bg-primary text-primary-foreground shadow-glow"
+                        : "bg-card border-border hover:border-primary"
+                    }`}
+                    variant={
+                      selectedSubCategory === "All" ? "default" : "outline"
+                    }
+                  >
+                    Todos
+                  </Button>
+                  {subcategories.map((subcategory) => (
+                    <Button
+                      key={subcategory.id}
+                      onClick={() => handleSubCategoryClick(subcategory.id)}
+                      className={`rounded-full whitespace-nowrap capitalize ${
+                        selectedSubCategory === subcategory.id
+                          ? "bg-primary text-primary-foreground shadow-glow"
+                          : "bg-card border-border hover:border-primary"
+                      }`}
+                      variant={
+                        selectedSubCategory === subcategory.id
+                          ? "default"
+                          : "outline"
+                      }
+                    >
+                      {subcategory.name}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Availability Filter + Sort Options */}
@@ -549,7 +572,7 @@ export default function ServicesPage(): React.JSX.Element {
 
               <div className="flex items-center gap-4">
                 <p className="text-sm text-muted-foreground">
-                  {isLoading
+                  {loading
                     ? "Cargando..."
                     : `${displayedStores.length} servicios`}
                 </p>
@@ -572,7 +595,7 @@ export default function ServicesPage(): React.JSX.Element {
           </div>
 
           {/* Loading State */}
-          {isLoading ? (
+          {loading ? (
             <div className="flex items-center justify-center py-12 max-w-5xl mx-auto">
               <div className="text-center">
                 <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />

@@ -171,8 +171,8 @@ export const GET_ALL_STORES_QUERY = `
         createdAt
         updatedAt
         type
-        categoryId
         subCategory
+        isRestaurant
         catId
         subCatId
         category {
@@ -215,7 +215,6 @@ export const GET_STORE_QUERY = `
       createdAt
       updatedAt
       type
-      categoryId
       subCategory
       catId
       subCatId
@@ -227,6 +226,7 @@ export const GET_STORE_QUERY = `
         id
         name
       }
+      isRestaurant
       averageRating
       reviewCounter
       city
@@ -253,7 +253,7 @@ export const CREATE_STORE_MUTATION = `
         createdAt
         updatedAt
         type
-        categoryId
+        category
         subCategory
         catId
         subCatId
@@ -267,6 +267,7 @@ export const CREATE_STORE_MUTATION = `
         openDays
         tags
         url
+        isRestaurant
       }
       plainPin
     }
@@ -286,6 +287,7 @@ export const UPDATE_STORE_MUTATION = `
     $isActive: Boolean
     $catId: String
     $subCatId: String
+    $isRestaurant: Boolean
   ) {
     updateStore(
       id: $id
@@ -299,6 +301,7 @@ export const UPDATE_STORE_MUTATION = `
       isActive: $isActive
       catId: $catId
       subCatId: $subCatId
+      isRestaurant: $isRestaurant
     ) {
       id
       name
@@ -306,6 +309,7 @@ export const UPDATE_STORE_MUTATION = `
       isActive
       catId
       subCatId
+      isRestaurant
       updatedAt
     }
   }
@@ -354,28 +358,58 @@ export const GET_CATEGORY_BY_ID_QUERY = `
   }
 `;
 
-// ============ SUBCATEGORY ============
-export const GET_ALL_SUBCATEGORIES_QUERY = `
-  query GetAllSubcategories {
-    subcategories {
+export const GET_CATEGORY_BY_NAME_QUERY = `
+  query GetCategoryByName($name: String!) {
+    categoryByName(name: $name) {
       id
       name
-      categoryId
       iconUrl
       isActive
-      createdAt
+    }
+  }
+`;
+
+// ============ SUBCATEGORY ============
+export const GET_ALL_SUBCATEGORIES_QUERY = `
+  query GetAllSubcategories($exclude: Boolean) {
+    subcategories(filters: { exclude: $exclude }) {
+      data {
+        id
+        name
+        categoryId
+        iconUrl
+        isActive
+      }
+      paginationInfo {
+        total
+        page
+        pageSize
+        totalPages
+        hasNextPage
+        hasPreviousPage
+      }
     }
   }
 `;
 
 export const GET_SUBCATEGORIES_BY_CATEGORY_QUERY = `
-  query GetSubcategoriesByCategory($categoryId: String!) {
-    subcategories(filters: { categoryId: $categoryId }) {
-      id
-      name
-      categoryId
-      iconUrl
-      isActive
+  query GetSubcategoriesByCategory($categoryId: String!, $exclude: Boolean) {
+    subcategories(filters: { categoryId: $categoryId, exclude: $exclude }) {
+      data {
+        id
+        name
+        categoryId
+        iconUrl
+        isActive
+      }
+      paginationInfo {
+        total
+        page
+        pageSize
+        totalPages
+        hasNextPage
+        hasPreviousPage
+      }
     }
   }
 `;
@@ -417,7 +451,7 @@ export const GET_ALL_DISCOUNTS_QUERY = `
       paginationInfo {
         total
         page
-        limit
+        first
         totalPages
         hasNextPage
         hasPreviousPage
@@ -448,7 +482,7 @@ export const GET_DISCOUNT_BY_CODE_QUERY = `
       paginationInfo {
         total
         page
-        limit
+        first
         totalPages
         hasNextPage
         hasPreviousPage
@@ -494,16 +528,6 @@ export const GET_COUPON_REDEEM_DETAILS_QUERY = `
         address
         city
         phoneNumber
-        catId
-        subCatId
-        category {
-          id
-          name
-        }
-        subcategory {
-          id
-          name
-        }
         averageRating
         reviewCounter
       }
@@ -557,16 +581,6 @@ export const GENERATE_COUPON_MUTATION = `
         address
         city
         phoneNumber
-        catId
-        subCatId
-        category {
-          id
-          name
-        }
-        subcategory {
-          id
-          name
-        }
         averageRating
         reviewCounter
       }
@@ -599,16 +613,6 @@ export const QUICK_PAY_FOR_DISCOUNT_MUTATION = `
         address
         city
         phoneNumber
-        catId
-        subCatId
-        category {
-          id
-          name
-        }
-        subcategory {
-          id
-          name
-        }
         averageRating
         reviewCounter
       }
@@ -694,16 +698,6 @@ export const COUPONS_QUERY = `
         name
         address
         city
-        catId
-        subCatId
-        category {
-          id
-          name
-        }
-        subcategory {
-          id
-          name
-        }
         restrictions
       }
     }

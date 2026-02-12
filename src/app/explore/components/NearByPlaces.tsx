@@ -22,7 +22,7 @@ export function NearbyPlaces({
     return (
       <div className="grid grid-cols-1 gap-4">
         {[1, 2, 3].map((n) => (
-          <div key={n} className="h-24 bg-card rounded-lg animate-pulse" />
+          <div key={n} className="h-24 bg-gray-300 rounded-lg animate-pulse" />
         ))}
       </div>
     );

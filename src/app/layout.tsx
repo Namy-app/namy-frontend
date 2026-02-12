@@ -5,6 +5,7 @@ import "../styles/globals.css";
 import { GoogleAdsense } from "@/components/GoogleAdsense";
 import { GoogleMapsProvider } from "@/components/GoogleMapsProvider";
 import { ReactQueryProvider } from "@/providers/ReactQueryProvider";
+import { RestaurantIdProvider } from "@/providers/RestaurantIdProvider";
 import { Toaster } from "@/shared/components/Toaster";
 
 const poppins = Poppins({
@@ -72,7 +73,9 @@ export default function RootLayout({
       </head>
       <body className={`${poppins.variable}  font-sans`}>
         <ReactQueryProvider>
-          <GoogleMapsProvider>{children}</GoogleMapsProvider>
+          <RestaurantIdProvider>
+            <GoogleMapsProvider>{children}</GoogleMapsProvider>
+          </RestaurantIdProvider>
           <Toaster />
         </ReactQueryProvider>
       </body>

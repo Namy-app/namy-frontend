@@ -42,7 +42,7 @@ export function FeaturedCarousel({
         <h2 className="text-xl font-bold mb-4 text-foreground">
           🌟 Destacados
         </h2>
-        <div className="h-64 bg-card rounded-lg animate-pulse" />
+        <div className="h-64 bg-gray-300 rounded-lg animate-pulse" />
       </div>
     );
   }

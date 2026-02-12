@@ -73,16 +73,19 @@ export type StoreSortBy = "NEWEST" | "DISTANCE";
 
 export interface StoreFilters {
   search?: string;
-  categoryId?: string;
+  catId?: string;
+  subCatId?: string;
+  category?: string;
   subCategory?: string;
   city?: string;
   active?: boolean;
-  noRestaurants?: boolean;
+  isRestaurant?: boolean;
   lat?: number;
   lng?: number;
   id?: string;
   availabilityStatus?: "available" | "soon" | "unavailable";
   sortBy?: StoreSortBy;
+  excludeCategoryId?: string;
 }
 
 export interface PaginationInput {

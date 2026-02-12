@@ -54,7 +54,7 @@ export function AddressAutocomplete({
       onLoad={onLoad}
       onPlaceChanged={onPlaceChanged}
       options={{
-        componentRestrictions: { country: "mx" }, // Restrict to Mexico
+        // componentRestrictions: { country: "mx" }, // Restrict to Mexico
         types: ["address"],
       }}
     >
