@@ -12,7 +12,8 @@ import type {
 
 export function useStores(
   filters?: StoreFilters,
-  pagination?: PaginationInput
+  pagination?: PaginationInput,
+  enabled: boolean = true
 ): UseQueryResult<UseStoresResult, Error> {
   const paginationParams = {
     page: pagination?.page ?? 1,
@@ -22,9 +23,19 @@ export function useStores(
   return useQuery({
     queryKey: ["stores", filters, paginationParams],
     queryFn: async () => {
+      // Only include filters with actual values
+      const cleanedFilters = filters
+        ? Object.fromEntries(
+            Object.entries(filters).filter(
+              ([, value]) =>
+                value !== undefined && value !== null && value !== ""
+            )
+          )
+        : {};
+
       const data = await graphqlRequest<StoresResponse>(GET_ALL_STORES_QUERY, {
         pagination: paginationParams,
-        filters: filters ?? {},
+        filters: cleanedFilters,
       });
       return {
         data: data.stores?.data ?? [],
@@ -39,5 +50,6 @@ export function useStores(
       };
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
+    enabled,
   });
 }

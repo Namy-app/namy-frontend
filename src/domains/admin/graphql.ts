@@ -9,17 +9,25 @@ export const CREATE_STORE_MUTATION = gql`
         id
         name
         description
-        categoryId
-        subCategory
+        category {
+          id
+          name
+        }
+        subcategory {
+          id
+          name
+        }
         type
         city
         address
+        placeId
         lat
         lng
         phoneNumber
         email
         price
         active
+        isRestaurant
         url
         openDays
         tags
@@ -46,17 +54,25 @@ export const UPDATE_STORE_MUTATION = gql`
         id
         name
         description
-        categoryId
-        subCategory
+        category {
+          id
+          name
+        }
+        subcategory {
+          id
+          name
+        }
         type
         city
         address
+        placeId
         lat
         lng
         phoneNumber
         email
         price
         active
+        isRestaurant
         url
         openDays
         tags
@@ -128,14 +144,24 @@ export const GET_ALL_STORES = gql`
         image1Url
         image2Url
         image3Url
-        categoryId
-        subCategory
         type
         city
         address
+        placeId
         lat
         lng
         phoneNumber
+        catId
+        subCatId
+        category {
+          id
+          name
+        }
+        subcategory {
+          id
+          name
+        }
+        isRestaurant
         email
         price
         active
@@ -171,19 +197,29 @@ export const GET_STORE_BY_ID = gql`
       image1Url
       image2Url
       image3Url
-      categoryId
-      subCategory
       type
       city
       address
+      placeId
       lat
       lng
       phoneNumber
+      isRestaurant
       email
       price
       active
       url
       openDays
+      catId
+      subCatId
+      category {
+        id
+        name
+      }
+      subcategory {
+        id
+        name
+      }
       tags
       restrictions
       pin
@@ -563,5 +599,55 @@ export const GET_USER_DETAILS_WITH_ACTIVITY = gql`
 export const RESEND_STORE_PIN_EMAIL = `
   mutation ResendStorePinEmail($id: String!, $email: String!) {
     resendStorePinEmail(id: $id, email: $email)
+  }
+`;
+
+// ==================== Category Queries ====================
+
+export const GET_CATEGORIES_BY_NAME_QUERY = gql`
+  query GetCategoriesByName($name: String!, $pagination: PaginationInput) {
+    categories(filters: { name: $name }, pagination: $pagination) {
+      data {
+        id
+        name
+        isActive
+      }
+      paginationInfo {
+        total
+        page
+        pageSize
+        totalPages
+        hasNextPage
+        hasPreviousPage
+      }
+    }
+  }
+`;
+
+export const GET_SUBCATEGORIES_BY_CATEGORY_QUERY = gql`
+  query GetSubcategoriesByCategory(
+    $categoryId: String
+    $name: String
+    $pagination: PaginationInput
+  ) {
+    subcategories(
+      filters: { categoryId: $categoryId, name: $name }
+      pagination: $pagination
+    ) {
+      data {
+        id
+        name
+        categoryId
+        isActive
+      }
+      paginationInfo {
+        total
+        page
+        pageSize
+        totalPages
+        hasNextPage
+        hasPreviousPage
+      }
+    }
   }
 `;

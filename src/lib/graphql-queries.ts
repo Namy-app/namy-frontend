@@ -171,8 +171,18 @@ export const GET_ALL_STORES_QUERY = `
         createdAt
         updatedAt
         type
-        categoryId
         subCategory
+        isRestaurant
+        catId
+        subCatId
+        category {
+          id
+          name
+        }
+        subcategory {
+          id
+          name
+        }
         averageRating
         reviewCounter
         city
@@ -195,38 +205,45 @@ export const GET_ALL_STORES_QUERY = `
 export const GET_STORE_QUERY = `
   query GetStoreByID($id: String!) {
     store(id: $id) {
-      data {
+      id
+      name
+      description
+      address
+      phoneNumber
+      imageUrl
+      active
+      createdAt
+      updatedAt
+      type
+      subCategory
+      catId
+      subCatId
+      category {
         id
         name
-        description
-        address
-        phoneNumber
-        imageUrl
-        active
-        createdAt
-        updatedAt
-        type
-        categoryId
-        subCategory
-        averageRating
-        reviewCounter
-        city
-        lat
-        lng
-        plainPin
       }
+      subcategory {
+        id
+        name
+      }
+      isRestaurant
+      averageRating
+      reviewCounter
+      city
+      lat
+      lng
+      placeId
+      plainPin
     }
   }
 `;
-
-// Removed `GET_STORE_BY_ID_QUERY` — use `GET_COUPON_REDEEM_DETAILS_QUERY`
-// for redeem flows which already return `store` + `discount` nested data.
 
 export const CREATE_STORE_MUTATION = `
   mutation CreateStore($input: CreateStoreInput!) {
     createStore(input: $input) {
       store {
         id
+        placeId
         name
         description
         address
@@ -236,8 +253,16 @@ export const CREATE_STORE_MUTATION = `
         createdAt
         updatedAt
         type
-        categoryId
-        subCategory
+        category {
+          id
+          name
+        }
+        subCategory {
+          id
+          name
+        }
+        catId
+        subCatId
         city
         lat
         lng
@@ -248,6 +273,7 @@ export const CREATE_STORE_MUTATION = `
         openDays
         tags
         url
+        isRestaurant
       }
       plainPin
     }
@@ -265,6 +291,9 @@ export const UPDATE_STORE_MUTATION = `
     $logo: String
     $coverImage: String
     $isActive: Boolean
+    $catId: String
+    $subCatId: String
+    $isRestaurant: Boolean
   ) {
     updateStore(
       id: $id
@@ -276,11 +305,17 @@ export const UPDATE_STORE_MUTATION = `
       logo: $logo
       coverImage: $coverImage
       isActive: $isActive
+      catId: $catId
+      subCatId: $subCatId
+      isRestaurant: $isRestaurant
     ) {
       id
       name
       description
       isActive
+      catId
+      subCatId
+      isRestaurant
       updatedAt
     }
   }
@@ -291,6 +326,108 @@ export const DELETE_STORE_MUTATION = `
     deleteStore(id: $id) {
       id
       name
+    }
+  }
+`;
+
+// ============ CATEGORY ============
+export const GET_ALL_CATEGORIES_QUERY = `
+  query GetAllCategories {
+    categories {
+      id
+      name
+      iconUrl
+      isActive
+      createdAt
+    }
+  }
+`;
+
+export const GET_CATEGORIES_BY_NAME_QUERY = `
+  query GetCategoriesByName($name: String!) {
+    categories(filters: { name: $name }) {
+      id
+      name
+      isActive
+    }
+  }
+`;
+
+export const GET_CATEGORY_BY_ID_QUERY = `
+  query GetCategoryById($id: String!) {
+    category(id: $id) {
+      id
+      name
+      iconUrl
+      isActive
+    }
+  }
+`;
+
+export const GET_CATEGORY_BY_NAME_QUERY = `
+  query GetCategoryByName($name: String!) {
+    categoryByName(name: $name) {
+      id
+      name
+      iconUrl
+      isActive
+    }
+  }
+`;
+
+// ============ SUBCATEGORY ============
+export const GET_ALL_SUBCATEGORIES_QUERY = `
+  query GetAllSubcategories($exclude: Boolean) {
+    subcategories(filters: { exclude: $exclude }) {
+      data {
+        id
+        name
+        categoryId
+        iconUrl
+        isActive
+      }
+      paginationInfo {
+        total
+        page
+        pageSize
+        totalPages
+        hasNextPage
+        hasPreviousPage
+      }
+    }
+  }
+`;
+
+export const GET_SUBCATEGORIES_BY_CATEGORY_QUERY = `
+  query GetSubcategoriesByCategory($categoryId: String!, $exclude: Boolean) {
+    subcategories(filters: { categoryId: $categoryId, exclude: $exclude }) {
+      data {
+        id
+        name
+        categoryId
+        iconUrl
+        isActive
+      }
+      paginationInfo {
+        total
+        page
+        pageSize
+        totalPages
+        hasNextPage
+        hasPreviousPage
+      }
+    }
+  }
+`;
+
+export const GET_SUBCATEGORY_BY_ID_QUERY = `
+  query GetSubcategoryById($id: String!) {
+    subcategory(id: $id) {
+      id
+      name
+      categoryId
+      iconUrl
+      isActive
     }
   }
 `;
@@ -320,7 +457,7 @@ export const GET_ALL_DISCOUNTS_QUERY = `
       paginationInfo {
         total
         page
-        limit
+        first
         totalPages
         hasNextPage
         hasPreviousPage
@@ -351,7 +488,7 @@ export const GET_DISCOUNT_BY_CODE_QUERY = `
       paginationInfo {
         total
         page
-        limit
+        first
         totalPages
         hasNextPage
         hasPreviousPage
@@ -567,7 +704,7 @@ export const COUPONS_QUERY = `
         name
         address
         city
-          restrictions
+        restrictions
       }
     }
   }

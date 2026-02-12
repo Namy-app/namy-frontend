@@ -21,6 +21,7 @@ import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 
 import { CongratulationsModal } from "@/components/CongratulationsModal";
+import { MapDisplay } from "@/components/MapDisplay";
 import { UnlockDiscountModal } from "@/components/UnlockDiscountModal";
 import { VideoAdsModal } from "@/components/VideoAdsModal";
 import { PlaceHolderTypeEnum } from "@/data/constants";
@@ -138,7 +139,7 @@ export default function StoresDetailPage(): React.JSX.Element {
 
   // Get the first active discount for this store
   const firstActiveDiscount = discountsData?.data?.find((d) => d.active);
-  const isRestaurant = store?.categoryId?.toLowerCase() === "restaurant";
+  const isRestaurant = store?.category?.name?.toLowerCase() === "restaurant";
   const storeCategoryType = isRestaurant ? "Restaurant" : "Store";
 
   // Use optimized countdown hook
@@ -155,7 +156,8 @@ export default function StoresDetailPage(): React.JSX.Element {
     ? {
         id: store.id,
         name: store.name,
-        category: store.categoryId || store.subCategory || "Restaurant",
+        category:
+          store.category?.name || store.subcategory?.name || "Restaurant",
         emoji: store.type === StoreType.PRODUCT ? "🍽️" : "🔧",
         rating: store.averageRating ?? 4.5,
         reviewCount: store.reviewCounter ?? 0,
@@ -292,6 +294,7 @@ export default function StoresDetailPage(): React.JSX.Element {
           city: store.city || "Ciudad no disponible",
           lat: store.lat,
           lng: store.lng,
+          placeId: store.placeId,
         },
         phone: store.phoneNumber || "Teléfono no disponible",
         images: (() => {
@@ -667,6 +670,7 @@ export default function StoresDetailPage(): React.JSX.Element {
       return;
     }
     openInGoogleMaps({
+      placeId: store?.placeId,
       ...(parsedStore.location.lat &&
         parsedStore.location.lng && {
           lat: +Number(parsedStore.location.lat).toFixed(6),
@@ -920,13 +924,26 @@ export default function StoresDetailPage(): React.JSX.Element {
                         {parsedStore.location.address},{" "}
                         {parsedStore.location.city}
                       </p>
+
+                      {/* Embedded Map Display */}
+                      {parsedStore.location.lat && parsedStore.location.lng ? (
+                        <div className="my-3">
+                          <MapDisplay
+                            lat={parsedStore.location.lat}
+                            lng={parsedStore.location.lng}
+                            storeName={parsedStore.name}
+                            height="180px"
+                          />
+                        </div>
+                      ) : null}
+
                       <Button
                         variant="outline"
                         size="sm"
                         className="text-xs"
                         onClick={handleGetDirections}
                       >
-                        View on map 📍
+                        Obtener indicaciones 📍
                       </Button>
                     </div>
                   </div>
@@ -1158,7 +1175,7 @@ export default function StoresDetailPage(): React.JSX.Element {
                     className="w-full bg-rose-500 hover:bg-rose-600 text-white"
                     onClick={handleGetDirections}
                   >
-                    Get directions 📍
+                    Obtener indicaciones 📍
                   </Button>
 
                   <div className="mt-4 flex flex-wrap gap-2">

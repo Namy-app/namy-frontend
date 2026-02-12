@@ -1,4 +1,4 @@
-import { Star } from "lucide-react";
+import { Star, MapPin, Clock } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -10,9 +10,11 @@ import type { Restaurant } from "../type";
 export const RestaurantCard = ({
   discountPercentage,
   store,
+  distance,
 }: {
   discountPercentage: number;
   store: Store;
+  distance?: number;
 }) => {
   const restaurant: Restaurant = {
     id: store.id,
@@ -24,9 +26,30 @@ export const RestaurantCard = ({
       store.imageUrl ||
       "https://images.unsplash.com/photo-1565299507177-b0ac66763828?w=800&auto=format&fit=crop",
     discount: discountPercentage,
-    distance: "N/A",
+    distance: distance !== undefined ? `${distance.toFixed(1)} km` : "N/A",
     availabilityStatus: store.discountAvailabilityStatus ?? "unavailable",
     availabilityText: store.discountAvailabilityText,
+  };
+
+  const getAvailabilityBadge = () => {
+    switch (restaurant.availabilityStatus) {
+      case "available":
+        return (
+          <div className="absolute top-3 left-3 bg-green-500 text-white px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1">
+            <Clock className="w-3 h-3" />
+            Disponible
+          </div>
+        );
+      case "soon":
+        return (
+          <div className="absolute top-3 left-3 bg-yellow-500 text-white px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1">
+            <Clock className="w-3 h-3" />
+            En {restaurant.availabilityText}
+          </div>
+        );
+      default:
+        return null;
+    }
   };
 
   return (
@@ -57,10 +80,7 @@ export const RestaurantCard = ({
           </div>
 
           {/* Availability Indicator */}
-          {/* <AvailabilityStatusBadge
-            className="absolute top-3 left-3 flex items-center gap-2 max-w-30 md:max-w-none"
-            status={restaurant.availabilityStatus}
-          /> */}
+          {getAvailabilityBadge()}
         </div>
 
         {/* Restaurant Info */}
@@ -77,11 +97,13 @@ export const RestaurantCard = ({
               </span>
               <span>• {restaurant.category}</span>
             </div>
-            {/* Availability Indicator */}
-            {/* <AvailabilityStatusBadge
-              className="flex items-center gap-2 max-w-30 md:max-w-none"
-              status={restaurant.availabilityStatus}
-            /> */}
+            {/* Distance */}
+            {restaurant.distance !== "N/A" && (
+              <div className="flex items-center gap-1 text-muted-foreground">
+                <MapPin className="w-3 h-3" />
+                <span className="text-xs">{restaurant.distance}</span>
+              </div>
+            )}
           </div>
         </div>
       </Card>

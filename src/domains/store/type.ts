@@ -4,6 +4,9 @@ export interface ParsedStore {
   id: string;
   name: string;
   category: string;
+  catId?: string;
+  subCatId?: string;
+  subcategory?: { id: string; name: string };
   emoji: string;
   rating: number;
   reviewCount: number;
@@ -20,6 +23,7 @@ export interface ParsedStore {
     city: string;
     lat?: number;
     lng?: number;
+    placeId?: string;
   };
   phone: string;
   images: string[];
@@ -39,6 +43,9 @@ export interface Restaurant {
   slug: string;
   name: string;
   category: string;
+  catId?: string;
+  subCatId?: string;
+  subcategory?: { id: string; name: string };
   rating: number;
   image: string;
   discount: number;
@@ -61,16 +68,24 @@ export interface StoresResponse {
   };
 }
 
+// GraphQL enum values must be uppercase to match backend
+export type StoreSortBy = "NEWEST" | "DISTANCE";
+
 export interface StoreFilters {
   search?: string;
-  categoryId?: string;
+  catId?: string;
+  subCatId?: string;
+  category?: string;
   subCategory?: string;
   city?: string;
   active?: boolean;
-  noRestaurants?: boolean;
+  isRestaurant?: boolean;
   lat?: number;
   lng?: number;
   id?: string;
+  availabilityStatus?: "available" | "soon" | "unavailable";
+  sortBy?: StoreSortBy;
+  excludeCategoryId?: string;
 }
 
 export interface PaginationInput {

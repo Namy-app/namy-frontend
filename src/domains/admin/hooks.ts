@@ -21,6 +21,8 @@ import {
   CREATE_CATALOG,
   UPDATE_CATALOG,
   GET_STORE_CATALOGS,
+  GET_CATEGORIES_BY_NAME_QUERY,
+  GET_SUBCATEGORIES_BY_CATEGORY_QUERY,
 } from "./graphql";
 import {
   type CreateStoreInput,
@@ -32,6 +34,7 @@ import {
   type Store,
   type StoreFiltersInput,
   type PaginationInput,
+  type PaginationInfo,
   type Discount,
   type DiscountsResponse,
   type CreateDiscountInput,
@@ -440,5 +443,94 @@ export function useResendStorePinEmail() {
         variables
       );
     },
+  });
+}
+
+// ==================== Category Queries ====================
+
+interface Category {
+  id: string;
+  name: string;
+  isActive: boolean;
+}
+
+interface Subcategory {
+  id: string;
+  name: string;
+  categoryId: string;
+  isActive: boolean;
+}
+export function useGetCategoriesByName({
+  query = "",
+  enabled = true,
+  pagination,
+}: {
+  query: string;
+  enabled?: boolean;
+  pagination?: PaginationInput;
+}) {
+  return useQuery<{ data: Category[]; paginationInfo: PaginationInfo }, Error>({
+    queryKey: ["categories-by-name", query, pagination],
+    queryFn: async () => {
+      if (!query.trim()) {
+        return {
+          data: [],
+          paginationInfo: {
+            total: 0,
+            page: 1,
+            pageSize: 20,
+            totalPages: 0,
+            hasNextPage: false,
+            hasPreviousPage: false,
+          },
+        };
+      }
+      const data = await graphqlClient.request<{
+        categories: { data: Category[]; paginationInfo: PaginationInfo };
+      }>(GET_CATEGORIES_BY_NAME_QUERY, { name: query, pagination });
+      return data.categories;
+    },
+    enabled: enabled && query.trim().length > 0,
+  });
+}
+
+export function useGetSubcategoriesByCategory({
+  categoryId,
+  name,
+  enabled = true,
+  pagination,
+}: {
+  categoryId?: string;
+  name?: string;
+  enabled?: boolean;
+  pagination?: PaginationInput;
+}) {
+  return useQuery<
+    { data: Subcategory[]; paginationInfo: PaginationInfo },
+    Error
+  >({
+    queryKey: ["subcategories-by-category", categoryId, name, pagination],
+    queryFn: async () => {
+      const queryParams: {
+        categoryId?: string;
+        name?: string;
+        pagination?: PaginationInput;
+      } = {};
+      if (categoryId) {
+        queryParams.categoryId = categoryId;
+      }
+      if (name) {
+        queryParams.name = name;
+      }
+      if (pagination) {
+        queryParams.pagination = pagination;
+      }
+
+      const data = await graphqlClient.request<{
+        subcategories: { data: Subcategory[]; paginationInfo: PaginationInfo };
+      }>(GET_SUBCATEGORIES_BY_CATEGORY_QUERY, queryParams);
+      return data.subcategories;
+    },
+    enabled: enabled,
   });
 }

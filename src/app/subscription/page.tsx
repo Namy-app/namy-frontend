@@ -78,9 +78,9 @@ function SubscriptionContent(): React.JSX.Element {
 
     if (success === "true") {
       toast({
-        title: "🎉 Welcome to Premium!",
+        title: "🎉 ¡Bienvenido a Premium!",
         description:
-          "Your subscription is now active. Enjoy instant coupon generation and maximum discounts!",
+          "Tu suscripción está activa. ¡Disfruta de generación instantánea de cupones y descuentos máximos!",
         duration: 5000,
       });
 
@@ -90,8 +90,9 @@ function SubscriptionContent(): React.JSX.Element {
       }, 2000);
     } else if (canceled === "true") {
       toast({
-        title: "Subscription Canceled",
-        description: "You can subscribe anytime to unlock premium benefits.",
+        title: "Suscripción cancelada",
+        description:
+          "Puedes suscribirte en cualquier momento para desbloquear beneficios premium.",
         variant: "default",
       });
       // Remove query params from URL
@@ -112,8 +113,8 @@ function SubscriptionContent(): React.JSX.Element {
       });
 
       toast({
-        title: "Redirecting to checkout...",
-        description: "You'll be redirected to complete your subscription.",
+        title: "Redirigiendo al pago...",
+        description: "Serás redirigido para completar tu suscripción.",
       });
 
       // Redirect to Stripe checkout
@@ -121,7 +122,8 @@ function SubscriptionContent(): React.JSX.Element {
     } catch (_error) {
       toast({
         title: "Error",
-        description: "Failed to start subscription process. Please try again.",
+        description:
+          "No se pudo iniciar el proceso de suscripción. Por favor intenta de nuevo.",
         variant: "destructive",
       });
     } finally {
@@ -132,7 +134,7 @@ function SubscriptionContent(): React.JSX.Element {
   const handleCancelSubscription = async () => {
     if (
       !confirm(
-        "Your subscription will remain active until the end of the current billing period. Continue?"
+        "Tu suscripción permanecerá activa hasta el final del período de facturación actual. ¿Continuar?"
       )
     ) {
       return;
@@ -141,16 +143,15 @@ function SubscriptionContent(): React.JSX.Element {
     try {
       await cancelSubscription.mutateAsync();
       toast({
-        title: "Subscription Cancelled",
-        description:
-          "Your subscription will end at the end of the current period.",
+        title: "Suscripción cancelada",
+        description: "Tu suscripción terminará al final del período actual.",
       });
     } catch (_error) {
       toast({
         title: "Error",
         description:
           extractErrorMessage(_error) ??
-          "Failed to cancel subscription. Please try again.",
+          "No se pudo cancelar la suscripción. Por favor intenta de nuevo.",
         variant: "destructive",
       });
     }
@@ -161,17 +162,19 @@ function SubscriptionContent(): React.JSX.Element {
       const newEnabled = !autoRenewEnabled;
       await toggleAutoRenew.mutateAsync(newEnabled);
       toast({
-        title: newEnabled ? "Auto-renew Enabled" : "Auto-renew Disabled",
+        title: newEnabled
+          ? "Renovación automática activada"
+          : "Renovación automática desactivada",
         description: newEnabled
-          ? "Your subscription will renew automatically."
-          : "Your subscription will not renew automatically.",
+          ? "Tu suscripción se renovará automáticamente."
+          : "Tu suscripción no se renovará automáticamente.",
       });
     } catch (_error) {
       toast({
         title: "Error",
         description:
           extractErrorMessage(_error) ??
-          "Failed to update auto-renew setting. Please try again.",
+          "No se pudo actualizar la configuración. Por favor intenta de nuevo.",
         variant: "destructive",
       });
     }
@@ -180,8 +183,8 @@ function SubscriptionContent(): React.JSX.Element {
   const handleWalletPayment = async () => {
     if (!hasEnoughBalance) {
       toast({
-        title: "Insufficient Balance",
-        description: `You need ${formatAmount(premiumCost)} in your wallet. Current balance: ${formatAmount(walletBalance)}`,
+        title: "Saldo insuficiente",
+        description: `Necesitas ${formatAmount(premiumCost)} en tu billetera. Saldo actual: ${formatAmount(walletBalance)}`,
         variant: "destructive",
       });
       return;
@@ -205,7 +208,7 @@ function SubscriptionContent(): React.JSX.Element {
       });
 
       toast({
-        title: "🎉 Welcome to Premium!",
+        title: "🎉 ¡Bienvenido a Premium!",
         description: result.message,
         duration: 5000,
       });
@@ -216,10 +219,10 @@ function SubscriptionContent(): React.JSX.Element {
       }, 1500);
     } catch (error: unknown) {
       toast({
-        title: "Payment Failed",
+        title: "Pago fallido",
         description:
           extractErrorMessage(error) ??
-          "Failed to process wallet payment. Please try again.",
+          "No se pudo procesar el pago. Por favor intenta de nuevo.",
         variant: "destructive",
       });
     } finally {
@@ -242,7 +245,7 @@ function SubscriptionContent(): React.JSX.Element {
                 Ñamy Premium
               </h1>
               <p className="text-muted-foreground">
-                Unlock instant discounts and maximum savings
+                Desbloquea descuentos instantáneos y máximos ahorros
               </p>
             </div>
 
@@ -254,11 +257,11 @@ function SubscriptionContent(): React.JSX.Element {
                     <div className="flex items-center gap-2 mb-2">
                       <Crown className="w-5 h-5 text-yellow-500" />
                       <h2 className="text-xl font-semibold text-gray-900">
-                        Active Subscription
+                        Suscripción activa
                       </h2>
                     </div>
                     <p className="text-sm text-gray-600">
-                      Next billing date:{" "}
+                      Próxima fecha de facturación:{" "}
                       {subscriptionEndDate
                         ? new Date(subscriptionEndDate).toLocaleDateString()
                         : "N/A"}
@@ -266,7 +269,7 @@ function SubscriptionContent(): React.JSX.Element {
                   </div>
                   <div className="text-right">
                     <p className="text-2xl font-bold text-gray-900">$ 99 MXN</p>
-                    <p className="text-sm text-gray-600">per month</p>
+                    <p className="text-sm text-gray-600">por mes</p>
                   </div>
                 </div>
 
@@ -283,7 +286,7 @@ function SubscriptionContent(): React.JSX.Element {
                       htmlFor="auto-renew"
                       className="text-sm text-gray-700 cursor-pointer"
                     >
-                      Auto-renew subscription
+                      Renovar suscripción automáticamente
                     </label>
                   </div>
 
@@ -291,7 +294,7 @@ function SubscriptionContent(): React.JSX.Element {
                     onClick={() => void handleCancelSubscription()}
                     className="px-4 py-2 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors text-sm font-medium"
                   >
-                    Cancel Subscription
+                    Cancelar suscripción
                   </button>
                 </div>
               </div>
@@ -305,7 +308,7 @@ function SubscriptionContent(): React.JSX.Element {
                   <div className="text-center">
                     <div className="w-12 h-12 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
                     <p className="text-sm text-gray-600 font-medium">
-                      Loading subscription details...
+                      Cargando detalles de suscripción...
                     </p>
                   </div>
                 </div>
@@ -313,15 +316,15 @@ function SubscriptionContent(): React.JSX.Element {
 
               <div className="text-center mb-6">
                 <div className="inline-block bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-4 py-1 rounded-full text-sm font-semibold mb-4">
-                  ⚡ BEST VALUE
+                  ⚡ MEJOR VALOR
                 </div>
                 <h2 className="text-4xl font-bold text-gray-900 mb-2">
                   $ 99 MXN
                   <span className="text-xl font-normal text-gray-600">
-                    /month
+                    /mes
                   </span>
                 </h2>
-                <p className="text-gray-600">Cancel anytime</p>
+                <p className="text-gray-600">Cancela cuando quieras</p>
               </div>
 
               {/* Features */}
@@ -333,10 +336,10 @@ function SubscriptionContent(): React.JSX.Element {
                   <div>
                     <p className="font-semibold text-gray-900">
                       <Zap className="w-4 h-4 inline mr-1 text-yellow-500" />
-                      Instant Coupon Generation
+                      Sin anuncios
                     </p>
                     <p className="text-sm text-gray-600">
-                      Generate coupons instantly without waiting or limitations
+                      Disfruta Ñamy sin interrupciones.
                     </p>
                   </div>
                 </div>
@@ -348,11 +351,10 @@ function SubscriptionContent(): React.JSX.Element {
                   <div>
                     <p className="font-semibold text-gray-900">
                       <Gift className="w-4 h-4 inline mr-1 text-orange-500" />
-                      Maximum Discounts Available
+                      Descuentos máximos
                     </p>
                     <p className="text-sm text-gray-600">
-                      Access to the highest discount tier at all participating
-                      restaurants
+                      Obtén siempre el descuento más alto disponible.
                     </p>
                   </div>
                 </div>
@@ -363,24 +365,24 @@ function SubscriptionContent(): React.JSX.Element {
                   </div>
                   <div>
                     <p className="font-semibold text-gray-900">
-                      Priority Support
+                      Multiplicador de puntos (x1.25)
                     </p>
                     <p className="text-sm text-gray-600">
-                      Get help faster with dedicated premium support
+                      Gana puntos más rápido y sube en el leaderboard.
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-3">
-                  <div className="flex-shrink-0 w-6 h-6 bg-green-100 rounded-full flex items-center justify-center mt-0.5">
+                  <div className="shrink-0 w-6 h-6 bg-green-100 rounded-full flex items-center justify-center mt-0.5">
                     <Check className="w-4 h-4 text-green-600" />
                   </div>
                   <div>
                     <p className="font-semibold text-gray-900">
-                      Early Access to New Features
+                      Restaurantes exclusivos
                     </p>
                     <p className="text-sm text-gray-600">
-                      Be the first to try new restaurants and features
+                      Acceso a promociones solo para miembros Premium.
                     </p>
                   </div>
                 </div>
@@ -389,16 +391,18 @@ function SubscriptionContent(): React.JSX.Element {
               {/* Free Features Comparison */}
               <div className="border-t border-gray-200 pt-6 mb-8">
                 <p className="text-sm font-semibold text-gray-700 mb-3">
-                  Free Plan Limitations:
+                  Limitaciones del plan gratuito:
                 </p>
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 text-sm text-gray-600">
                     <X className="w-4 h-4 text-red-500" />
-                    <span>Limited coupon generation (cooldown periods)</span>
+                    <span>
+                      Generación limitada de cupones (períodos de espera)
+                    </span>
                   </div>
                   <div className="flex items-center gap-2 text-sm text-gray-600">
                     <X className="w-4 h-4 text-red-500" />
-                    <span>Lower discount tiers</span>
+                    <span>Niveles de descuento más bajos</span>
                   </div>
                 </div>
               </div>
@@ -413,7 +417,7 @@ function SubscriptionContent(): React.JSX.Element {
                         <div className="flex items-center gap-2">
                           <Wallet className="w-5 h-5 text-gray-600" />
                           <span className="text-sm font-medium text-gray-700">
-                            Wallet Balance
+                            Saldo de billetera
                           </span>
                         </div>
                         <span className="text-lg font-bold text-gray-900">
@@ -422,8 +426,8 @@ function SubscriptionContent(): React.JSX.Element {
                       </div>
                       {!hasEnoughBalance ? (
                         <p className="text-xs text-red-600 mt-2">
-                          Insufficient balance. Need {formatAmount(premiumCost)}{" "}
-                          to pay with wallet.
+                          Saldo insuficiente. Necesitas{" "}
+                          {formatAmount(premiumCost)} para pagar con billetera.
                         </p>
                       ) : null}
                     </div>
@@ -439,7 +443,7 @@ function SubscriptionContent(): React.JSX.Element {
                           : "text-gray-600 hover:text-gray-900"
                       }`}
                     >
-                      💳 Card Payment
+                      💳 Pago con tarjeta
                     </button>
                     <button
                       onClick={() => setPaymentMethod("wallet")}
@@ -452,7 +456,7 @@ function SubscriptionContent(): React.JSX.Element {
                           : "text-gray-600 hover:text-gray-900"
                       } disabled:opacity-50 disabled:cursor-not-allowed`}
                     >
-                      💰 Wallet Payment
+                      💰 Pago con billetera
                     </button>
                   </div>
 
@@ -466,12 +470,12 @@ function SubscriptionContent(): React.JSX.Element {
                       {isProcessing ? (
                         <span className="flex items-center justify-center gap-2">
                           <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                          Processing...
+                          Procesando...
                         </span>
                       ) : (
                         <>
                           <Crown className="w-5 h-5 inline mr-2" />
-                          Pay with Card - {formatAmount(premiumCost)}
+                          Pagar con tarjeta - {formatAmount(premiumCost)}
                         </>
                       )}
                     </button>
@@ -479,17 +483,17 @@ function SubscriptionContent(): React.JSX.Element {
                     <button
                       onClick={() => void handleWalletPayment()}
                       disabled={isProcessing || !hasEnoughBalance}
-                      className="w-full py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold rounded-lg hover:from-green-600 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl text-lg"
+                      className="w-full py-4 bg-linear-to-r from-green-500 to-emerald-600 text-white font-bold rounded-lg hover:from-green-600 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl text-lg"
                     >
                       {isProcessing ? (
                         <span className="flex items-center justify-center gap-2">
                           <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                          Processing...
+                          Procesando...
                         </span>
                       ) : (
                         <>
                           <Wallet className="w-5 h-5 inline mr-2" />
-                          Pay from Wallet - {formatAmount(premiumCost)}
+                          Pagar con billetera - {formatAmount(premiumCost)}
                         </>
                       )}
                     </button>
@@ -497,14 +501,14 @@ function SubscriptionContent(): React.JSX.Element {
 
                   <p className="text-xs text-gray-500 text-center">
                     {paymentMethod === "stripe"
-                      ? "Secure payment powered by Stripe. Cancel anytime."
-                      : "Instant activation. No auto-renewal for wallet payments."}
+                      ? "Pago seguro con Stripe. Cancela cuando quieras."
+                      : "Activación instantánea. Sin renovación automática para pagos con billetera."}
                   </p>
                 </div>
               ) : (
                 <div className="text-center py-4 bg-green-50 rounded-lg">
                   <p className="text-green-700 font-semibold">
-                    ✓ You&apos;re a Premium Member!
+                    ✓ ¡Eres miembro Premium!
                   </p>
                 </div>
               )}
@@ -513,35 +517,35 @@ function SubscriptionContent(): React.JSX.Element {
             {/* FAQ Section */}
             <div className="bg-white rounded-lg shadow p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                Frequently Asked Questions
+                Preguntas frecuentes
               </h3>
               <div className="space-y-4">
                 <div>
                   <p className="font-semibold text-gray-900 mb-1">
-                    Can I cancel anytime?
+                    ¿Puedo cancelar en cualquier momento?
                   </p>
                   <p className="text-sm text-gray-600">
-                    Yes! You can cancel your subscription at any time. Your
-                    premium access will continue until the end of your current
-                    billing period.
+                    ¡Sí! Puedes cancelar tu suscripción en cualquier momento. Tu
+                    acceso premium continuará hasta el final de tu período de
+                    facturación actual.
                   </p>
                 </div>
                 <div>
                   <p className="font-semibold text-gray-900 mb-1">
-                    What payment methods do you accept?
+                    ¿Qué métodos de pago aceptan?
                   </p>
                   <p className="text-sm text-gray-600">
-                    We accept all major credit and debit cards through our
-                    secure payment partner, Stripe.
+                    Aceptamos todas las tarjetas de crédito y débito principales
+                    a través de nuestro socio de pagos seguro, Stripe.
                   </p>
                 </div>
                 <div>
                   <p className="font-semibold text-gray-900 mb-1">
-                    How does instant coupon generation work?
+                    ¿Cómo funciona la generación instantánea de cupones?
                   </p>
                   <p className="text-sm text-gray-600">
-                    With Premium, you can generate coupons instantly at any
-                    restaurant without waiting periods or daily limits.
+                    Con Premium, puedes generar cupones al instante en cualquier
+                    restaurante sin períodos de espera ni límites diarios.
                   </p>
                 </div>
               </div>

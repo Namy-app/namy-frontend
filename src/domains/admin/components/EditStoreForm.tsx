@@ -3,14 +3,22 @@
 import { X, Store as StoreIcon, Loader2 } from "lucide-react";
 import { useState } from "react";
 
+import { AddressAutocomplete } from "@/components/AddressAutocomplete";
+import {
+  Autocomplete,
+  type AutocompleteOption,
+} from "@/components/Autocomplete";
 import { DAYS_OF_WEEK_BY_INDEX } from "@/data/constants";
-import { useUpdateStore } from "@/domains/admin/hooks";
+import {
+  useUpdateStore,
+  useGetCategoriesByName,
+  useGetSubcategoriesByCategory,
+} from "@/domains/admin/hooks";
 import {
   type Store,
   type UpdateStoreInput,
   type OpenDay,
   StoreType,
-  CategoryType,
 } from "@/domains/admin/types";
 import { StoreHoursEditor } from "@/domains/store/components/StoreHoursEditor";
 import { useToast } from "@/hooks/use-toast";
@@ -30,19 +38,26 @@ export function EditStoreForm({
   const { toast } = useToast();
   const updateStore = useUpdateStore();
 
-  const [categoryType, setCategoryType] = useState<CategoryType>(
-    store.categoryId === CategoryType.RESTAURANT
-      ? CategoryType.RESTAURANT
-      : CategoryType.OTHER
+  const [categoryType, setCategoryType] = useState<"restaurant" | "others">(
+    store.isRestaurant ? "restaurant" : "others"
+  );
+  const [categoryQuery, setCategoryQuery] = useState(
+    store.category?.name || ""
+  );
+  const [subcategoryQuery, setSubcategoryQuery] = useState(
+    store.subcategory?.name || ""
   );
   const [formData, setFormData] = useState<UpdateStoreInput>({
     name: store.name,
     description: store.description,
-    categoryId: store.categoryId,
+    catId: store.catId || store.categoryId,
+    category: store.category?.name || store.categoryId,
+    subCatId: store.subCatId,
     subCategory: store.subCategory,
     type: store.type,
     city: store.city,
     address: store.address,
+    placeId: store.placeId,
     phoneNumber: store.phoneNumber,
     email: store.email,
     price: store.price,
@@ -52,6 +67,7 @@ export function EditStoreForm({
     restrictions: store.restrictions,
     lat: store.lat,
     lng: store.lng,
+    isRestaurant: store.isRestaurant,
   });
 
   // Convert openDays to availableDays array format if needed
@@ -87,6 +103,26 @@ export function EditStoreForm({
 
   const [openHours, setOpenHours] = useState<OpenDay[]>(getInitialHours());
 
+  // Fetch categories and subcategories based on queries
+  const { data: categoriesResponse, isLoading: isCategoriesLoading } =
+    useGetCategoriesByName({
+      query: categoryQuery,
+      pagination: { page: 1, first: 20 },
+      enabled: true,
+    });
+  const categories = categoriesResponse?.data ?? [];
+
+  const effectiveCategoryId =
+    categoryType === "restaurant" ? undefined : formData.catId;
+  const { data: subcategoriesResponse, isLoading: isSubcategoriesLoading } =
+    useGetSubcategoriesByCategory({
+      categoryId: effectiveCategoryId,
+      name: subcategoryQuery,
+      enabled: Boolean(effectiveCategoryId) || Boolean(subcategoryQuery),
+      pagination: { page: 1, first: 5 },
+    });
+  const subcategories = subcategoriesResponse?.data ?? [];
+
   const handleChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
@@ -105,13 +141,17 @@ export function EditStoreForm({
         [name]: value ? parseFloat(value) : undefined,
       }));
     } else if (name === "categoryType") {
-      setCategoryType(value as CategoryType);
+      setCategoryType(value as "restaurant" | "others");
       // Reset category fields when switching types
       setFormData((prev) => ({
         ...prev,
-        categoryId: "",
+        catId: "",
+        category: "",
+        subCatId: "",
         subCategory: "",
       }));
+      setCategoryQuery("");
+      setSubcategoryQuery("");
     } else {
       setFormData((prev) => ({
         ...prev,
@@ -120,62 +160,85 @@ export function EditStoreForm({
     }
   };
 
-  const handleCategoryTypeChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >
+  const handleCategorySelect = (
+    option: AutocompleteOption<{ id: string; name: string }>
   ) => {
-    const { name, value, type } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      catId: option.value.id,
+      category: option.value.name,
+      subCatId: "", // Reset subCatId when category changes
+      subCategory: "", // Reset subcategory when category changes
+    }));
+    setCategoryQuery(option.label);
+    setSubcategoryQuery("");
+  };
 
-    if (type === "checkbox") {
-      setFormData((prev) => ({
-        ...prev,
-        [name]: (e.target as HTMLInputElement).checked,
-      }));
-    } else if (name === "lat" || name === "lng") {
-      setFormData((prev) => ({
-        ...prev,
-        [name]: value ? Number.parseFloat(value) : undefined,
-      }));
-    } else if (name === "categoryType") {
-      const typeValue = value as CategoryType;
-      setCategoryType(typeValue);
-      // Reset category fields when switching types
-      setFormData((prev) => ({
-        ...prev,
-        categoryId: typeValue === CategoryType.RESTAURANT ? "restaurant" : "",
-      }));
-    } else {
-      setFormData((prev) => ({
-        ...prev,
-        [name]: value || undefined,
-      }));
-    }
+  const handleCategoryQueryUpdate = (query: string) => {
+    setCategoryQuery(query);
+  };
+
+  const handleSubcategorySelect = (
+    option: AutocompleteOption<{ id: string; name: string }>
+  ) => {
+    setFormData((prev) => ({
+      ...prev,
+      subCatId: option.value.id,
+      subCategory: option.value.name,
+    }));
+    setSubcategoryQuery(option.label);
+  };
+
+  const handleSubcategoryQueryUpdate = (query: string) => {
+    setSubcategoryQuery(query);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     // Validation
-    if (
-      !formData.name ||
-      !formData.categoryId ||
-      !formData.city ||
-      !formData.address
-    ) {
+    if (!formData.name || !formData.city || !formData.address) {
       toast({
         title: "Validation Error",
-        description: "Please fill in all required fields",
+        description: "Please fill in all required fields (Name, City, Address)",
         variant: "destructive",
       });
       return;
     }
 
+    // Validate category requirements based on type
+    if (categoryType === "restaurant") {
+      if (!formData.subCatId && !formData.subCategory && subcategoryQuery) {
+        toast({
+          title: "Validation Error",
+          description: "Please select a Sub-Category for restaurant",
+          variant: "destructive",
+        });
+        return;
+      }
+    } else if (categoryType === "others") {
+      if (
+        (!formData.catId && formData.category) ||
+        (!formData.subCatId && formData.subCategory) ||
+        !categoryQuery
+      ) {
+        toast({
+          title: "Validation Error",
+          description: "Please select both Category and Sub-Category",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
     try {
+      const isRestaurant = categoryType === "restaurant";
       const updateInput: UpdateStoreInput = {
         ...formData,
+        category: isRestaurant ? "restaurant" : categoryQuery,
         openDays:
           openHours.length > 0 ? { availableDays: openHours } : undefined,
+        isRestaurant,
       };
       await updateStore.mutateAsync({ id: store.id, input: updateInput });
 
@@ -290,100 +353,74 @@ export function EditStoreForm({
                 Category
               </h3>
 
-              <div className="grid grid-cols-2 gap-4">
-                {/* <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    Category ID <span className="text-destructive">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="categoryId"
-                    value={formData.categoryId}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                    placeholder="e.g., cafe-restaurant"
-                  />
-                </div> */}
-                <div>
-                  <label
-                    className="block text-sm font-medium text-foreground mb-2"
-                    htmlFor="categoryType"
-                  >
-                    Store Category <span className="text-destructive">*</span>
-                  </label>
-                  <select
-                    name="categoryType"
-                    value={categoryType}
-                    onChange={handleCategoryTypeChange}
-                    className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  >
-                    <option value={CategoryType.RESTAURANT}>Restaurant</option>
-                    <option value={CategoryType.OTHER}>Others</option>
-                  </select>
-                </div>
-                {categoryType === CategoryType.RESTAURANT ? (
+              <div>
+                <label
+                  className="block text-sm font-medium text-foreground mb-2"
+                  htmlFor="categoryType"
+                >
+                  Store Category <span className="text-destructive">*</span>
+                </label>
+                <select
+                  name="categoryType"
+                  value={categoryType}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                >
+                  <option value="restaurant">Restaurant</option>
+                  <option value="others">Others</option>
+                </select>
+              </div>
+
+              <div
+                className={`grid gap-4 ${
+                  categoryType === "restaurant" ? "grid-cols-1" : "grid-cols-2"
+                }`}
+              >
+                {categoryType !== "restaurant" ? (
                   <div>
-                    <label
-                      className="block text-sm font-medium text-foreground mb-2"
-                      htmlFor="subCategory"
-                    >
-                      Sub Category <span className="text-destructive">*</span>
+                    <label className="block text-sm font-medium text-foreground mb-2">
+                      Category <span className="text-destructive">*</span>
                     </label>
-                    <input
-                      type="text"
-                      name="subCategory"
-                      value={formData.subCategory ?? ""}
-                      onChange={handleChange}
+                    <Autocomplete<{ id: string; name: string }>
+                      options={categories.map((cat) => ({
+                        id: cat.id,
+                        label: cat.name,
+                        value: { id: cat.id, name: cat.name },
+                      }))}
+                      query={categoryQuery}
+                      onQueryUpdate={handleCategoryQueryUpdate}
+                      onSelect={handleCategorySelect}
+                      placeholder="Search for category..."
+                      isLoading={isCategoriesLoading}
+                      noResultsMessage="No categories found"
                       className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                      placeholder="e.g., coffee-shop, pizza-restaurant, sushi-bar"
                     />
                   </div>
-                ) : (
-                  <div className="grid grid-cols-2 col-span-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-foreground mb-2">
-                        Category <span className="text-destructive">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        name="categoryId"
-                        value={formData.categoryId ?? ""}
-                        onChange={handleChange}
-                        className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                        placeholder="e.g., grocery, retail"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-foreground mb-2">
-                        Sub Category <span className="text-destructive">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        name="subCategory"
-                        value={formData.subCategory ?? ""}
-                        onChange={handleChange}
-                        className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                        placeholder="e.g., organic, convenience"
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {/* <div>
+                ) : null}
+                <div>
                   <label className="block text-sm font-medium text-foreground mb-2">
-                    Sub Category
+                    Sub Category <span className="text-destructive">*</span>
                   </label>
-                  <input
-                    type="text"
-                    name="subCategory"
-                    value={formData.subCategory || ""}
-                    onChange={handleChange}
+                  <Autocomplete<{ id: string; name: string }>
+                    options={subcategories.map((subcat) => ({
+                      id: subcat.id,
+                      label: subcat.name,
+                      value: { id: subcat.id, name: subcat.name },
+                    }))}
+                    query={subcategoryQuery}
+                    onQueryUpdate={handleSubcategoryQueryUpdate}
+                    onSelect={handleSubcategorySelect}
+                    placeholder="Search for sub category..."
+                    isLoading={isSubcategoriesLoading}
+                    disabled={categoryType === "others" && !categoryQuery}
+                    noResultsMessage={
+                      categoryType === "others" && !categoryQuery
+                        ? "Select a category first"
+                        : "No subcategories found"
+                    }
                     className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                    placeholder="e.g., coffee-shop"
                   />
-                </div> */}
+                </div>
               </div>
             </div>
 
@@ -442,14 +479,19 @@ export function EditStoreForm({
                 <label className="block text-sm font-medium text-foreground mb-2">
                   Address <span className="text-destructive">*</span>
                 </label>
-                <input
-                  type="text"
-                  name="address"
-                  value={formData.address}
-                  onChange={handleChange}
+                <AddressAutocomplete
+                  value={formData.address || ""}
+                  onChange={(address, placeId, lat, lng) => {
+                    setFormData((prev) => ({
+                      ...prev,
+                      address,
+                      placeId: placeId !== null ? placeId : prev.placeId,
+                      lat: lat !== null ? lat : prev.lat,
+                      lng: lng !== null ? lng : prev.lng,
+                    }));
+                  }}
+                  placeholder="Search for store address..."
                   required
-                  className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder="Full street address"
                 />
               </div>
 
@@ -468,7 +510,6 @@ export function EditStoreForm({
                     placeholder="19.4326"
                   />
                 </div>
-
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-2">
                     Longitude
@@ -484,6 +525,10 @@ export function EditStoreForm({
                   />
                 </div>
               </div>
+              <p className="text-xs text-muted-foreground">
+                Coordinates are auto-filled when selecting from address search,
+                or enter manually
+              </p>
             </div>
 
             {/* Additional Information */}
