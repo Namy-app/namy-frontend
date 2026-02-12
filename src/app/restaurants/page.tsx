@@ -87,8 +87,8 @@ export default function RestaurantListingPage(): React.JSX.Element {
   const { data: storesResult, isLoading } = useStores(
     {
       ...filters,
-      availabilityStatus:
-        availabilityFilter === "available" ? "available" : undefined,
+      // availabilityStatus:
+      //   availabilityFilter === "available" ? "available" : undefined,
       // Pass lat/lng when sorting by distance to enable backend distance calculation
       lat:
         sortBy === "DISTANCE" && userLocation
