@@ -16,7 +16,10 @@ export default function ExplorePage(): React.JSX.Element {
   const { user } = useAuthStore();
   const { data: closestStores, isLoading: isLoadingClosestStores } =
     useClosestStores();
-  const { data: storesResult, isLoading: isLoadingStores } = useStores();
+  const { data: storesResult, isLoading: isLoadingStores } = useStores(
+    {},
+    { page: 1, first: 7 }
+  );
   const { data: myLevel } = useMyLevel();
 
   // For guests, show 0% discount (no user-specific discounts)
