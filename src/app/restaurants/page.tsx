@@ -413,7 +413,7 @@ export default function RestaurantListingPage(): React.JSX.Element {
           {/* Only show if we have subcategories for this restaurant type */}
           <div className="-mt-4 mb-4 max-w-5xl mx-auto">
             {subCategoryLoading ? (
-              <div className="px-6">Loading subtitles...</div>
+              <div className="px-6">Cargando subcategorías...</div>
             ) : (
               <div className="overflow-x-auto pb-2 scrollbar-hide">
                 <div className="flex gap-2 px-6 min-w-max">

@@ -80,7 +80,7 @@ export function CreateStoreForm({ onClose, onSuccess }: CreateStoreFormProps) {
     useGetSubcategoriesByCategory({
       categoryId: effectiveCategoryId,
       name: subcategoryQuery,
-      enabled: true,
+      enabled: Boolean(effectiveCategoryId) || Boolean(subcategoryQuery),
       pagination: { page: 1, first: 5 },
     });
   const subcategories = subcategoriesResponse?.data ?? [];

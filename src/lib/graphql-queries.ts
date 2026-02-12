@@ -253,8 +253,14 @@ export const CREATE_STORE_MUTATION = `
         createdAt
         updatedAt
         type
-        category
-        subCategory
+        category {
+          id
+          name
+        }
+        subCategory {
+          id
+          name
+        }
         catId
         subCatId
         city
