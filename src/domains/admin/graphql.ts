@@ -139,6 +139,16 @@ export const GET_ALL_STORES = gql`
         lat
         lng
         phoneNumber
+        catId
+        subCatId
+        category {
+          id
+          name
+        }
+        subcategory {
+          id
+          name
+        }
         email
         price
         active
@@ -188,6 +198,16 @@ export const GET_STORE_BY_ID = gql`
       active
       url
       openDays
+      catId
+      subCatId
+      category {
+        id
+        name
+      }
+      subcategory {
+        id
+        name
+      }
       tags
       restrictions
       pin
