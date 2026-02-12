@@ -171,7 +171,7 @@ export const GET_ALL_STORES_QUERY = `
         createdAt
         updatedAt
         type
-        categoryId
+        category
         subCategory
         isRestaurant
         catId
@@ -216,7 +216,7 @@ export const GET_STORE_QUERY = `
       createdAt
       updatedAt
       type
-      categoryId
+      category
       subCategory
       catId
       subCatId
@@ -255,7 +255,7 @@ export const CREATE_STORE_MUTATION = `
         createdAt
         updatedAt
         type
-        categoryId
+        category
         subCategory
         catId
         subCatId
