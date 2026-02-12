@@ -13,7 +13,7 @@ export const CREATE_STORE_MUTATION = gql`
           id
           name
         }
-        subCategory {
+        subcategory {
           id
           name
         }
@@ -58,7 +58,7 @@ export const UPDATE_STORE_MUTATION = gql`
           id
           name
         }
-        subCategory {
+        subcategory {
           id
           name
         }
