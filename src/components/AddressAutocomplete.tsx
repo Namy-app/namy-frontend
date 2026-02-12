@@ -53,10 +53,11 @@ export function AddressAutocomplete({
     <Autocomplete
       onLoad={onLoad}
       onPlaceChanged={onPlaceChanged}
-      options={{
-        componentRestrictions: { country: "mx" }, // Restrict to Mexico
-        types: ["address"],
-      }}
+      options={
+        {
+          // No componentRestrictions or types — allow any location
+        }
+      }
     >
       <input
         ref={inputRef}

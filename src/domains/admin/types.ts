@@ -45,8 +45,12 @@ export interface Store {
   image2Url?: string;
   image3Url?: string;
   images?: string[]; // Dynamic array of image URLs
-  categoryId: string;
+  categoryId?: string;
   subCategory?: string;
+  catId?: string;
+  subCatId?: string;
+  category?: { id: string; name: string };
+  subcategory?: { id: string; name: string };
   type: StoreType;
   city: string;
   address: string;
@@ -57,6 +61,7 @@ export interface Store {
   email?: string;
   price: PriceRange;
   active: boolean;
+  isRestaurant: boolean;
   url?: string;
   pin: boolean; // Indicates whether a PIN has been set
   plainPin?: string;
@@ -117,7 +122,9 @@ export interface StoresResponse {
 export interface CreateStoreInput {
   name: string;
   description?: string;
-  categoryId: string;
+  catId?: string;
+  subCatId?: string;
+  category?: string;
   subCategory?: string;
   type: StoreType;
   city: string;
@@ -133,13 +140,16 @@ export interface CreateStoreInput {
   openDays?: OpenDaysStructure;
   tags?: string;
   restrictions?: string;
+  isRestaurant?: boolean;
   additionalInfo?: Record<string, unknown>;
 }
 
 export interface UpdateStoreInput {
   name?: string;
   description?: string;
-  categoryId?: string;
+  catId?: string;
+  subCatId?: string;
+  category?: string;
   subCategory?: string;
   type?: StoreType;
   city?: string;
@@ -156,6 +166,7 @@ export interface UpdateStoreInput {
   openDays?: OpenDaysStructure;
   tags?: string;
   restrictions?: string;
+  isRestaurant?: boolean;
   additionalInfo?: Record<string, unknown>;
   regeneratePin?: boolean;
 }
@@ -165,6 +176,7 @@ export interface StoreFiltersInput {
   city?: string;
   categoryId?: string;
   subCategory?: string;
+  isRestaurant?: boolean;
   type?: StoreType;
   price?: PriceRange;
   active?: boolean | null;

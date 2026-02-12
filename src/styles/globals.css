@@ -21,6 +21,7 @@
   :root {
     /* Base colors */
     --background: 0 0% 100%;
+    --white-background: #ffffff;
     --foreground: 24 45% 15%;
     --card: 0 0% 100%;
     --card-foreground: 24 45% 15%;
@@ -131,7 +132,7 @@
 @layer utilities {
   /* Custom gradient - Ñamy hero background */
   .bg-gradient-hero {
-    background-image: var(--gradient-hero);
+    background-image: var(--white-background);
   }
 
   .bg-gradient-primary {
