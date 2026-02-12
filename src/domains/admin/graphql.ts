@@ -9,8 +9,14 @@ export const CREATE_STORE_MUTATION = gql`
         id
         name
         description
-        category
-        subCategory
+        category {
+          id
+          name
+        }
+        subcategory {
+          id
+          name
+        }
         type
         city
         address
@@ -48,8 +54,14 @@ export const UPDATE_STORE_MUTATION = gql`
         id
         name
         description
-        category
-        subCategory
+        category {
+          id
+          name
+        }
+        subcategory {
+          id
+          name
+        }
         type
         city
         address

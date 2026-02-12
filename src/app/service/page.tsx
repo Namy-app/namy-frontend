@@ -107,12 +107,11 @@ export default function ServicesPage(): React.JSX.Element {
     {
       page: currentPage,
       first: ITEMS_PER_PAGE,
-    },
-    !restaurantLoading && !!restaurantId
+    }
   );
   const paginationInfo = storesResult?.paginationInfo;
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
-  const [selectedSubCategory, setSelectedSubCategory] = useState("All");
+  const [selectedSubCategory, setSelectedSubCategory] = useState("all");
   const [showFilterModal, setShowFilterModal] = useState(false);
   const discountPercentage =
     (user?.isPremium ? 15 : myLevel?.discountPercentage) ?? 10;
@@ -327,7 +326,7 @@ export default function ServicesPage(): React.JSX.Element {
     setCurrentPage(1);
     setFilters((prev) => ({
       ...prev,
-      subCatId: subCategoryId === "All" ? undefined : subCategoryId,
+      subCatId: subCategoryId === "all" ? undefined : subCategoryId,
     }));
   };
 
@@ -343,7 +342,7 @@ export default function ServicesPage(): React.JSX.Element {
 
   const clearFilters = (): void => {
     setSearchQuery("");
-    setSelectedSubCategory("All");
+    setSelectedSubCategory("all");
     setSortBy("NEWEST");
     setAvailabilityFilter("all");
     setCurrentPage(1);
@@ -502,14 +501,14 @@ export default function ServicesPage(): React.JSX.Element {
                 <div className="flex gap-2 px-6 min-w-max">
                   <Button
                     key="all"
-                    onClick={() => handleSubCategoryClick("All")}
+                    onClick={() => handleSubCategoryClick("all")}
                     className={`rounded-full whitespace-nowrap ${
-                      selectedSubCategory === "All"
+                      selectedSubCategory === "all"
                         ? "bg-primary text-primary-foreground shadow-glow"
                         : "bg-card border-border hover:border-primary"
                     }`}
                     variant={
-                      selectedSubCategory === "All" ? "default" : "outline"
+                      selectedSubCategory === "all" ? "default" : "outline"
                     }
                   >
                     Todos
