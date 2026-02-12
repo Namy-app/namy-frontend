@@ -171,7 +171,6 @@ export const GET_ALL_STORES_QUERY = `
         createdAt
         updatedAt
         type
-        category
         subCategory
         isRestaurant
         catId
@@ -216,7 +215,6 @@ export const GET_STORE_QUERY = `
       createdAt
       updatedAt
       type
-      category
       subCategory
       catId
       subCatId
@@ -360,28 +358,58 @@ export const GET_CATEGORY_BY_ID_QUERY = `
   }
 `;
 
-// ============ SUBCATEGORY ============
-export const GET_ALL_SUBCATEGORIES_QUERY = `
-  query GetAllSubcategories {
-    subcategories {
+export const GET_CATEGORY_BY_NAME_QUERY = `
+  query GetCategoryByName($name: String!) {
+    categoryByName(name: $name) {
       id
       name
-      categoryId
       iconUrl
       isActive
-      createdAt
+    }
+  }
+`;
+
+// ============ SUBCATEGORY ============
+export const GET_ALL_SUBCATEGORIES_QUERY = `
+  query GetAllSubcategories($exclude: Boolean) {
+    subcategories(filters: { exclude: $exclude }) {
+      data {
+        id
+        name
+        categoryId
+        iconUrl
+        isActive
+      }
+      paginationInfo {
+        total
+        page
+        pageSize
+        totalPages
+        hasNextPage
+        hasPreviousPage
+      }
     }
   }
 `;
 
 export const GET_SUBCATEGORIES_BY_CATEGORY_QUERY = `
-  query GetSubcategoriesByCategory($categoryId: String!) {
-    subcategories(filters: { categoryId: $categoryId }) {
-      id
-      name
-      categoryId
-      iconUrl
-      isActive
+  query GetSubcategoriesByCategory($categoryId: String!, $exclude: Boolean) {
+    subcategories(filters: { categoryId: $categoryId, exclude: $exclude }) {
+      data {
+        id
+        name
+        categoryId
+        iconUrl
+        isActive
+      }
+      paginationInfo {
+        total
+        page
+        pageSize
+        totalPages
+        hasNextPage
+        hasPreviousPage
+      }
     }
   }
 `;

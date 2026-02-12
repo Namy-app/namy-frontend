@@ -132,8 +132,6 @@ export const GET_ALL_STORES = gql`
         image1Url
         image2Url
         image3Url
-        category
-        subCategory
         type
         city
         address
@@ -187,8 +185,6 @@ export const GET_STORE_BY_ID = gql`
       image1Url
       image2Url
       image3Url
-      category
-      subcategory
       type
       city
       address
