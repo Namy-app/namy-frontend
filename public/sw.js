@@ -30,6 +30,17 @@ self.addEventListener("activate", (event) => {
 
 // Fetch event - serve from cache, fallback to network
 self.addEventListener("fetch", (event) => {
+  const url = new URL(event.request.url);
+
+  // Skip caching for external APIs (Google Maps, Google Ads, etc.)
+  if (
+    url.hostname.includes("googleapis.com") ||
+    url.hostname.includes("googlesyndication.com") ||
+    url.hostname.includes("gstatic.com")
+  ) {
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request).then((response) => {
       // Cache hit - return response
