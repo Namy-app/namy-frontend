@@ -47,6 +47,7 @@ export default function StoreMap({
 }: StoreMapProps) {
   const [selectedStore, setSelectedStore] = useState<Store | null>(null);
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
+  const [isLoadingLocation, setIsLoadingLocation] = useState(!center);
 
   const { isLoaded, loadError } = useJsApiLoader({
     googleMapsApiKey: env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "",
@@ -59,6 +60,7 @@ export default function StoreMap({
         if (location) {
           setUserLocation(location);
         }
+        setIsLoadingLocation(false);
       });
     }
   }, [center]);
@@ -97,12 +99,30 @@ export default function StoreMap({
     );
   }
 
+  // Map options to hide map type controls (satellite/map toggle)
+  const mapOptions: google.maps.MapOptions = {
+    mapTypeControl: false,
+    streetViewControl: false,
+    fullscreenControl: true,
+    zoomControl: true,
+  };
+
   return (
     <div className={`relative w-full ${height}`}>
+      {/* Loading overlay while fetching user location */}
+      {isLoadingLocation ? <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/80 backdrop-blur-sm">
+          <div className="flex flex-col items-center gap-3">
+            <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+            <p className="text-sm text-muted-foreground">
+              Getting your location...
+            </p>
+          </div>
+        </div> : null}
       <GoogleMap
         mapContainerStyle={mapContainerStyle}
         center={mapCenter}
         zoom={zoom}
+        options={mapOptions}
       >
         {stores
           .filter((store) => store.lat && store.lng)
@@ -116,7 +136,8 @@ export default function StoreMap({
           ))}
 
         {/* InfoWindow appears near the selected marker */}
-        {selectedStore && selectedStore.lat && selectedStore.lng ? <InfoWindow
+        {selectedStore && selectedStore.lat && selectedStore.lng ? (
+          <InfoWindow
             position={{
               lat: selectedStore.lat,
               lng: selectedStore.lng,
@@ -142,7 +163,8 @@ export default function StoreMap({
                 View Store
               </Link>
             </div>
-          </InfoWindow> : null}
+          </InfoWindow>
+        ) : null}
       </GoogleMap>
     </div>
   );
