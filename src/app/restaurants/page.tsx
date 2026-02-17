@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { useState, useEffect, useMemo, useRef } from "react";
 
+import StoreMap from "@/components/store-map";
 import { RestaurantCard } from "@/domains/store/components/RestaurantCard";
 import { useGetSubCategoryByCatId, useStores } from "@/domains/store/hooks";
 import { calculateDistance } from "@/domains/store/hooks/query/useClosestStores";
@@ -520,6 +521,22 @@ export default function RestaurantListingPage(): React.JSX.Element {
                   Cargando restaurantes...
                 </p>
               </div>
+            </div>
+          ) : viewMode === "map" ? (
+            /* Map View */
+            <div className="px-6 max-w-5xl mx-auto">
+              <StoreMap
+                stores={displayedStores}
+                height="h-[500px]"
+                center={
+                  userLocation
+                    ? {
+                        lat: userLocation.latitude,
+                        lng: userLocation.longitude,
+                      }
+                    : undefined
+                }
+              />
             </div>
           ) : (
             <>

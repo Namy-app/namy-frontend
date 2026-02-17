@@ -17,6 +17,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect, useMemo, useRef } from "react";
 
+import StoreMap from "@/components/store-map";
 import { useGetSubCategoryByCatId, useStores } from "@/domains/store/hooks";
 import { calculateDistance } from "@/domains/store/hooks/query/useClosestStores";
 import { type StoreFilters } from "@/domains/store/type";
@@ -600,6 +601,22 @@ export default function ServicesPage(): React.JSX.Element {
                 <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
                 <p className="text-muted-foreground">Cargando servicios...</p>
               </div>
+            </div>
+          ) : viewMode === "map" ? (
+            /* Map View */
+            <div className="px-6 max-w-5xl mx-auto">
+              <StoreMap
+                stores={displayedStores}
+                height="h-[500px]"
+                center={
+                  userLocation
+                    ? {
+                        lat: userLocation.latitude,
+                        lng: userLocation.longitude,
+                      }
+                    : undefined
+                }
+              />
             </div>
           ) : (
             <>

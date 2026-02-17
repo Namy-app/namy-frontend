@@ -74,7 +74,8 @@ const nextConfig = {
           },
           {
             key: "Content-Security-Policy",
-            value: "default-src 'self'; script-src 'self'",
+            value:
+              "default-src 'self'; script-src 'self'; connect-src 'self' https://maps.googleapis.com https://*.googleapis.com https://pagead2.googlesyndication.com",
           },
         ],
       },
