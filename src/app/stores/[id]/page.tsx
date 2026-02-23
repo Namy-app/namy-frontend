@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { useRouter, useParams } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 
 import { CongratulationsModal } from "@/components/CongratulationsModal";
@@ -31,6 +31,7 @@ import { GeneratingCouponModal } from "@/domains/coupons/GeneratingCouponModal";
 import { useWallet } from "@/domains/payment/hooks";
 import { CatalogCarousel } from "@/domains/store/components/CatalogCarousel";
 import { useStore } from "@/domains/store/hooks";
+import { useStoreReviews } from "@/domains/store/hooks/query/useStoreReviews";
 import type { ParsedStore } from "@/domains/store/type";
 import { getDiscountRestrictions } from "@/domains/store/utils";
 import { useMyLevel } from "@/domains/user/hooks/query/useMyLevel";
@@ -43,6 +44,8 @@ import {
   GENERATE_COUPON_MUTATION,
   QUICK_PAY_FOR_DISCOUNT_MUTATION,
   EXCHANGE_UNLOCK_MUTATION,
+  CREATE_REVIEW_MUTATION,
+  CREATE_MURAL_POST_MUTATION,
 } from "@/lib/graphql-queries";
 import { contentfulImageLoader } from "@/lib/image-utils";
 import { openInGoogleMaps } from "@/lib/maps";
@@ -79,7 +82,7 @@ function getCurrentDayOfWeek(): string {
 export default function StoresDetailPage(): React.JSX.Element {
   const router = useRouter();
   const params = useParams();
-  const { isAuthenticated, user } = useAuthStore();
+  const { isAuthenticated, user, accessToken } = useAuthStore();
   const { data: userLevel } = useMyLevel();
 
   const { toast } = useToast();
@@ -107,6 +110,21 @@ export default function StoresDetailPage(): React.JSX.Element {
   const [selectedCatalogImage, setSelectedCatalogImage] = useState<
     string | null
   >(null);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [reviewRating, setReviewRating] = useState(0);
+  const [reviewHover, setReviewHover] = useState(0);
+  const [reviewTitle, setReviewTitle] = useState("");
+  const [reviewText, setReviewText] = useState("");
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+  const [reviewPhotoUrl, setReviewPhotoUrl] = useState<string | null>(null);
+  const [reviewPhotoPreview, setReviewPhotoPreview] = useState<string | null>(
+    null
+  );
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [uploadPhotoError, setUploadPhotoError] = useState<string | null>(null);
+  const [isPostingToMural, setIsPostingToMural] = useState(false);
+  const [muralPostDone, setMuralPostDone] = useState(false);
+  const reviewPhotoRef = useRef<HTMLInputElement>(null);
 
   // Prevent body scroll when modal is open
   useEffect(() => {
@@ -136,6 +154,9 @@ export default function StoresDetailPage(): React.JSX.Element {
 
   // Fetch catalogs for this store
   const { data: catalogs = [] } = useStoreCatalogs(storeId || "");
+
+  // Fetch reviews for this store
+  const { data: reviewsData } = useStoreReviews(storeId, { first: 3 });
 
   // Get the first active discount for this store
   const firstActiveDiscount = discountsData?.data?.find((d) => d.active);
@@ -1115,53 +1136,73 @@ export default function StoresDetailPage(): React.JSX.Element {
                   </ul>
                 </Card>
 
-                {parsedStore.reviews.length > 0 ? (
-                  <div>
-                    <h2 className="text-2xl font-bold text-foreground mb-4">
-                      ⭐ Reviews
-                    </h2>
-                    <div className="space-y-3 mb-4">
-                      {parsedStore.reviews.map((review) => (
-                        <div
-                          key={review.id}
-                          className="p-4 bg-white border border-[#f1e9e6] rounded-xl shadow-sm"
-                        >
-                          <div className="flex items-start gap-4">
-                            <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center text-2xl">
-                              {review.avatar}
-                            </div>
-                            <div className="flex-1">
-                              <div className="flex items-center justify-between mb-1">
-                                <p className="font-semibold text-foreground">
-                                  {review.name}
-                                </p>
-                                <div className="flex items-center gap-1">
-                                  {[...Array(review.rating)].map((_, i) => (
-                                    <Star
-                                      key={i}
-                                      className="w-4 h-4 fill-yellow-400 text-yellow-400"
-                                    />
-                                  ))}
-                                </div>
-                              </div>
-                              <p className="text-sm text-muted-foreground">
-                                {review.comment}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                {/* ── Opiniones ── */}
+                <div>
+                  <h2 className="text-xl font-bold text-foreground mb-3">
+                    ⭐ Opiniones
+                  </h2>
 
-                    <Button variant="outline" className="w-full mb-2">
-                      See all reviews
-                    </Button>
-                    <Button className="w-full bg-rose-500 hover:bg-rose-600 text-white">
-                      Write your review 🍽️{" "}
-                      <span className="ml-2 text-xs">+50 pts 📸</span>
-                    </Button>
-                  </div>
-                ) : null}
+                  {(reviewsData?.data?.length ?? 0) > 0 ? (
+                    <>
+                      <div className="space-y-3 mb-3">
+                        {reviewsData!.data.map((review) => {
+                          const initials = review.userId
+                            .slice(0, 2)
+                            .toUpperCase();
+                          return (
+                            <div
+                              key={review.id}
+                              className="flex items-start gap-3 bg-white border border-[#f1e9e6] rounded-2xl px-4 py-3 shadow-sm"
+                            >
+                              {/* Avatar */}
+                              <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-base font-bold text-orange-500 shrink-0">
+                                {initials}
+                              </div>
+                              {/* Content */}
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-bold text-gray-800 truncate">
+                                  {review.title}
+                                </p>
+                                {review.description ? (
+                                  <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">
+                                    {review.description}
+                                  </p>
+                                ) : null}
+                              </div>
+                              {/* Stars */}
+                              <div className="flex gap-0.5 shrink-0">
+                                {[1, 2, 3, 4, 5].map((s) => (
+                                  <Star
+                                    key={s}
+                                    className={`w-3.5 h-3.5 ${s <= review.rating ? "fill-yellow-400 text-yellow-400" : "text-gray-200"}`}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {reviewsData!.paginationInfo.total > 3 && (
+                        <button className="w-full border border-gray-300 rounded-2xl py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors mb-3">
+                          Ver todas las reseñas (
+                          {reviewsData!.paginationInfo.total})
+                        </button>
+                      )}
+                    </>
+                  ) : null}
+
+                  <button
+                    onClick={() => setShowReviewModal(true)}
+                    className="w-full bg-rose-400 hover:bg-rose-500 text-white font-bold rounded-2xl py-3 text-sm transition-colors flex items-center justify-center gap-2"
+                  >
+                    <span>Escribe tu reseña</span>
+                    <span>🍽️</span>
+                    <span className="text-xs font-semibold opacity-90">
+                      +50 pts 📸
+                    </span>
+                  </button>
+                </div>
               </div>
 
               <aside className="space-y-6">
@@ -1506,6 +1547,321 @@ export default function StoresDetailPage(): React.JSX.Element {
             : undefined
         }
       />
+
+      {/* Review Modal */}
+      {showReviewModal && typeof window !== "undefined"
+        ? createPortal(
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
+              onClick={() => {
+                setShowReviewModal(false);
+                setReviewPhotoUrl(null);
+                setReviewPhotoPreview(null);
+                setUploadPhotoError(null);
+                setMuralPostDone(false);
+              }}
+            >
+              <div
+                className="bg-white rounded-3xl w-full max-w-sm p-6 shadow-2xl"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Header */}
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-black text-gray-900">
+                    Leave your review
+                  </h2>
+                  <button
+                    onClick={() => {
+                      setShowReviewModal(false);
+                      setReviewPhotoUrl(null);
+                      setReviewPhotoPreview(null);
+                      setUploadPhotoError(null);
+                      setMuralPostDone(false);
+                    }}
+                    className="text-gray-400 hover:text-gray-600 text-xl font-bold leading-none"
+                  >
+                    ×
+                  </button>
+                </div>
+
+                {/* Store name prompt */}
+                <p className="text-sm text-gray-500 mb-4">
+                  ¿Cómo fue tu experiencia en{" "}
+                  <span className="font-bold text-gray-800">
+                    {parsedStore?.name}
+                  </span>
+                  ?
+                </p>
+
+                {/* Star rating */}
+                <div className="flex justify-center gap-2 mb-5">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      onClick={() => setReviewRating(star)}
+                      onMouseEnter={() => setReviewHover(star)}
+                      onMouseLeave={() => setReviewHover(0)}
+                      className="text-3xl transition-transform active:scale-110"
+                    >
+                      <Star
+                        className={`w-8 h-8 transition-colors ${
+                          star <= (reviewHover || reviewRating)
+                            ? "fill-yellow-400 text-yellow-400"
+                            : "text-gray-300"
+                        }`}
+                      />
+                    </button>
+                  ))}
+                </div>
+
+                {/* Title input */}
+                <div className="mb-3">
+                  <input
+                    value={reviewTitle}
+                    onChange={(e) => setReviewTitle(e.target.value)}
+                    placeholder="Título de tu reseña (mínimo 3 caracteres)"
+                    maxLength={100}
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-rose-300"
+                  />
+                </div>
+
+                {/* Text area */}
+                <div className="mb-4">
+                  <textarea
+                    value={reviewText}
+                    onChange={(e) => setReviewText(e.target.value)}
+                    placeholder="Cuéntanos más (opcional)..."
+                    rows={3}
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-700 placeholder-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-rose-300"
+                  />
+                </div>
+
+                {/* Post to Mural — independent of review */}
+                <div className="mb-3 border border-gray-200 rounded-xl p-3 space-y-2">
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                    Post to City Mural
+                  </p>
+                  {reviewPhotoPreview ? (
+                    <div className="relative w-full rounded-xl overflow-hidden border border-gray-200">
+                      <img
+                        src={reviewPhotoPreview}
+                        alt="Preview"
+                        className="w-full object-cover max-h-40"
+                      />
+                      {!!isUploadingPhoto && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                          <Loader2 className="w-6 h-6 text-white animate-spin" />
+                        </div>
+                      )}
+                      {!isUploadingPhoto && !muralPostDone && (
+                        <button
+                          onClick={() => {
+                            setReviewPhotoUrl(null);
+                            setReviewPhotoPreview(null);
+                            setUploadPhotoError(null);
+                          }}
+                          className="absolute top-2 right-2 bg-black/50 text-white rounded-full p-1"
+                          aria-label="Remove photo"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      )}
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => reviewPhotoRef.current?.click()}
+                      className="w-full flex items-center justify-center gap-2 border border-dashed border-gray-300 rounded-xl py-3 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
+                    >
+                      <span>📷</span>
+                      Add photo
+                      <span className="text-xs text-rose-400 font-bold">
+                        +50 pts 📸
+                      </span>
+                    </button>
+                  )}
+                  <input
+                    ref={reviewPhotoRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    className="hidden"
+                    onChange={(e) => {
+                      void (async () => {
+                        const file = e.target.files?.[0];
+                        if (!file) {
+                          return;
+                        }
+                        if (
+                          !["image/jpeg", "image/png", "image/webp"].includes(
+                            file.type
+                          )
+                        ) {
+                          setUploadPhotoError(
+                            "Only JPG, PNG, and WebP are allowed."
+                          );
+                          return;
+                        }
+                        if (file.size > 5 * 1024 * 1024) {
+                          setUploadPhotoError("Image must be under 5MB.");
+                          return;
+                        }
+                        setUploadPhotoError(null);
+                        setMuralPostDone(false);
+                        setReviewPhotoPreview(URL.createObjectURL(file));
+                        setIsUploadingPhoto(true);
+                        try {
+                          const baseUrl = (
+                            process.env.NEXT_PUBLIC_API_URL ??
+                            "http://localhost:4000/graphql"
+                          ).replace("/graphql", "");
+                          const formData = new FormData();
+                          formData.append("file", file);
+                          const res = await fetch(
+                            `${baseUrl}/upload/mural-image`,
+                            {
+                              method: "POST",
+                              headers: {
+                                Authorization: `Bearer ${accessToken}`,
+                              },
+                              body: formData,
+                            }
+                          );
+                          if (!res.ok) {
+                            throw new Error("Upload failed");
+                          }
+                          const json = (await res.json()) as { url: string };
+                          setReviewPhotoUrl(json.url);
+                        } catch {
+                          setUploadPhotoError(
+                            "Failed to upload. Please try again."
+                          );
+                          setReviewPhotoPreview(null);
+                        } finally {
+                          setIsUploadingPhoto(false);
+                        }
+                      })();
+                    }}
+                  />
+                  {!!uploadPhotoError && (
+                    <p className="text-xs text-red-500">{uploadPhotoError}</p>
+                  )}
+                  {!!reviewPhotoUrl && !muralPostDone && (
+                    <button
+                      type="button"
+                      disabled={isPostingToMural}
+                      onClick={() => {
+                        void (async () => {
+                          if (!storeId || !reviewPhotoUrl) {
+                            return;
+                          }
+                          setIsPostingToMural(true);
+                          try {
+                            await graphqlRequest(CREATE_MURAL_POST_MUTATION, {
+                              input: { storeId, imageUrl: reviewPhotoUrl },
+                            });
+                            setMuralPostDone(true);
+                            toast({
+                              title: "Photo submitted!",
+                              description:
+                                "Your photo will appear on the mural after review.",
+                            });
+                          } catch (err) {
+                            toast({
+                              variant: "destructive",
+                              title: "Error",
+                              description:
+                                err instanceof Error
+                                  ? err.message
+                                  : "Try again.",
+                            });
+                          } finally {
+                            setIsPostingToMural(false);
+                          }
+                        })();
+                      }}
+                      className="w-full flex items-center justify-center gap-2 bg-gray-900 text-white rounded-xl py-2.5 text-sm font-semibold disabled:opacity-50 transition-opacity"
+                    >
+                      {isPostingToMural ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <>🏙️ Post to City Mural</>
+                      )}
+                    </button>
+                  )}
+                  {!!muralPostDone && (
+                    <p className="text-xs text-center text-green-600 font-medium">
+                      ✓ Submitted to mural — pending review
+                    </p>
+                  )}
+                </div>
+
+                {/* Publish review */}
+                <Button
+                  disabled={
+                    reviewRating === 0 ||
+                    reviewTitle.trim().length < 3 ||
+                    isSubmittingReview
+                  }
+                  onClick={() => {
+                    void (async () => {
+                      if (!storeId) {
+                        return;
+                      }
+                      setIsSubmittingReview(true);
+                      try {
+                        await graphqlRequest(CREATE_REVIEW_MUTATION, {
+                          input: {
+                            storeId,
+                            title: reviewTitle.trim(),
+                            description: reviewText.trim() || undefined,
+                            rating: reviewRating,
+                          },
+                        });
+                        void queryClient.invalidateQueries({
+                          queryKey: ["storeReviews", storeId],
+                        });
+                        setShowReviewModal(false);
+                        setReviewRating(0);
+                        setReviewTitle("");
+                        setReviewText("");
+                        setReviewPhotoUrl(null);
+                        setReviewPhotoPreview(null);
+                        setUploadPhotoError(null);
+                        setMuralPostDone(false);
+                        toast({
+                          title: "Reseña publicada",
+                          description: "¡Gracias por tu reseña!",
+                        });
+                      } catch (err) {
+                        toast({
+                          variant: "destructive",
+                          title: "Error al publicar",
+                          description:
+                            err instanceof Error
+                              ? err.message
+                              : "Intenta de nuevo.",
+                        });
+                      } finally {
+                        setIsSubmittingReview(false);
+                      }
+                    })();
+                  }}
+                  className="w-full bg-rose-400 hover:bg-rose-500 text-white font-bold rounded-xl py-3 disabled:opacity-50"
+                >
+                  {isSubmittingReview ? (
+                    "Publicando..."
+                  ) : (
+                    <>
+                      Publicar reseña{" "}
+                      <span className="ml-1 text-xs">+10 pts Yummy</span>
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>,
+            document.body
+          )
+        : null}
     </BasicLayout>
   );
 }

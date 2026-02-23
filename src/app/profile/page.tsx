@@ -17,10 +17,14 @@ import {
   Copy,
   CheckCircle,
   MessageCircle,
+  Camera,
+  X,
 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { useWallet, useWalletBalance } from "@/domains/payment/hooks";
@@ -29,12 +33,205 @@ import { useLogout, useCurrentUser } from "@/domains/user/hooks";
 import { useMyLevel } from "@/domains/user/hooks/query/useMyLevel";
 import { useToast } from "@/hooks/use-toast";
 import { BasicLayout } from "@/layouts/BasicLayout";
+import { graphqlRequest } from "@/lib/graphql-client";
+import {
+  UPDATE_ME_MUTATION,
+  REQUEST_AVATAR_UPLOAD_MUTATION,
+} from "@/lib/graphql-queries";
 import { getInitials, getUserLevelTitle } from "@/lib/user.lib";
 import { extractErrorMessage } from "@/lib/utils";
 import CrispProvider from "@/providers/CrispProvider";
 import { Button } from "@/shared/components/Button";
 import { Card } from "@/shared/components/Card";
 import { useAuthStore } from "@/store/useAuthStore";
+
+const EMOJI_AVATARS = [
+  "🐶",
+  "🐱",
+  "🦊",
+  "🐻",
+  "🐼",
+  "🐨",
+  "🦁",
+  "🐯",
+  "🦋",
+  "🐙",
+  "🦄",
+  "🐸",
+  "🐧",
+  "🦉",
+  "🐺",
+  "🦊",
+  "🐷",
+  "🐮",
+  "🐵",
+  "🦖",
+];
+
+type AvatarModalProps = {
+  currentAvatarUrl?: string | null;
+  displayName?: string | null;
+  onClose: () => void;
+  onSave: (avatarUrl: string) => Promise<void>;
+};
+
+function AvatarPickerModal({
+  currentAvatarUrl,
+  displayName,
+  onClose,
+  onSave,
+}: AvatarModalProps) {
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [preview, setPreview] = useState<string | null>(
+    currentAvatarUrl ?? null
+  );
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) {return;}
+    setSelectedFile(file);
+    // Only for local preview — not stored as base64
+    const reader = new FileReader();
+    reader.onload = () => setPreview(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const handleEmoji = (emoji: string) => {
+    setSelectedFile(null);
+    setPreview(emoji);
+  };
+
+  const handleSave = async () => {
+    if (!preview) {return;}
+    setSaving(true);
+    try {
+      if (selectedFile) {
+        // Get presigned URL from backend
+        const result = await graphqlRequest<{
+          requestAvatarUpload: { uploadUrl: string; publicUrl: string };
+        }>(REQUEST_AVATAR_UPLOAD_MUTATION, { fileName: selectedFile.name });
+        const { uploadUrl, publicUrl } = result.requestAvatarUpload;
+        // Upload directly to S3
+        await fetch(uploadUrl, {
+          method: "PUT",
+          body: selectedFile,
+          headers: { "Content-Type": selectedFile.type },
+        });
+        await onSave(publicUrl);
+      } else {
+        // Emoji avatar — save as-is
+        await onSave(preview);
+      }
+    } finally {
+      setSaving(false);
+      onClose();
+    }
+  };
+
+  const isEmoji =
+    preview && !preview.startsWith("data:") && !preview.startsWith("http");
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 sm:items-center px-4"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-3xl w-full max-w-sm p-6 shadow-2xl mb-4 sm:mb-0"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="text-base font-black text-gray-900">
+            Editar foto de perfil
+          </h2>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Preview */}
+        <div className="flex justify-center mb-5">
+          <div className="w-24 h-24 rounded-full bg-orange-100 flex items-center justify-center overflow-hidden shadow-md ring-4 ring-orange-200">
+            {preview ? (
+              isEmoji ? (
+                <span className="text-5xl">{preview}</span>
+              ) : (
+                <Image
+                  src={preview}
+                  alt="preview"
+                  width={96}
+                  height={96}
+                  className="w-full h-full object-cover"
+                  unoptimized
+                />
+              )
+            ) : (
+              <span className="text-3xl font-black text-orange-500">
+                {getInitials(displayName ?? "")}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Upload button */}
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleFile}
+        />
+        <button
+          onClick={() => fileRef.current?.click()}
+          className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-orange-300 rounded-2xl py-3 text-sm font-semibold text-orange-500 hover:bg-orange-50 transition-colors mb-4"
+        >
+          <Camera className="w-4 h-4" />
+          Subir foto
+        </button>
+
+        {/* Emoji grid */}
+        <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">
+          O elige un avatar
+        </p>
+        <div className="grid grid-cols-10 gap-1 mb-5">
+          {EMOJI_AVATARS.map((emoji) => (
+            <button
+              key={emoji}
+              onClick={() => handleEmoji(emoji)}
+              className={`text-xl rounded-lg p-1 transition-transform active:scale-90 ${preview === emoji ? "bg-orange-100 ring-2 ring-orange-400" : "hover:bg-gray-100"}`}
+            >
+              {emoji}
+            </button>
+          ))}
+        </div>
+
+        {/* Actions */}
+        <div className="flex gap-2">
+          <button
+            onClick={onClose}
+            className="flex-1 py-3 rounded-2xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={() => void handleSave()}
+            disabled={!preview || saving}
+            className="flex-1 py-3 rounded-2xl bg-orange-500 text-white text-sm font-bold disabled:opacity-50 hover:bg-orange-600 transition-colors"
+          >
+            {saving ? "Guardando..." : "Guardar"}
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
 
 export default function ProfilePage(): React.JSX.Element | null {
   const router = useRouter();
@@ -45,6 +242,21 @@ export default function ProfilePage(): React.JSX.Element | null {
   const logoutMutation = useLogout();
   const [expandPoints, setExpandPoints] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
+  const [showAvatarModal, setShowAvatarModal] = useState(false);
+
+  const handleSaveAvatar = async (avatarUrl: string): Promise<void> => {
+    try {
+      await graphqlRequest(UPDATE_ME_MUTATION, { input: { avatarUrl } });
+      updateUser({ avatarUrl });
+      toast({ title: "Avatar actualizado" });
+    } catch (err) {
+      toast({
+        variant: "destructive",
+        title: "Error al guardar",
+        description: err instanceof Error ? err.message : "Intenta de nuevo.",
+      });
+    }
+  };
 
   // Sync current user data with auth store
   useEffect(() => {
@@ -120,9 +332,42 @@ export default function ProfilePage(): React.JSX.Element | null {
         {/* Hero Section */}
         <div className="bg-linear-to-b from-gradient-primary to-transparent p-6 pb-8 pt-20">
           <div className="text-center max-w-5xl mx-auto">
-            <div className="w-24 h-24 mx-auto mb-4 rounded-full bg-gradient-primary flex items-center justify-center shadow-glow">
-              <div className="text-4xl">{getInitials(user.displayName)}</div>
-            </div>
+            {/* Avatar — tap to edit */}
+            <button
+              onClick={() => setShowAvatarModal(true)}
+              className="relative w-24 h-24 mx-auto mb-4 rounded-full bg-orange-100 flex items-center justify-center shadow-glow ring-4 ring-orange-200 overflow-hidden group"
+            >
+              {user.avatarUrl ? (
+                user.avatarUrl.startsWith("data:") ||
+                user.avatarUrl.startsWith("http") ? (
+                  <Image
+                    src={user.avatarUrl}
+                    alt="avatar"
+                    width={96}
+                    height={96}
+                    className="w-full h-full object-cover"
+                    unoptimized
+                  />
+                ) : (
+                  <span className="text-5xl">{user.avatarUrl}</span>
+                )
+              ) : (
+                <span className="text-3xl font-black text-orange-500">
+                  {getInitials(user.displayName)}
+                </span>
+              )}
+              {/* Edit overlay */}
+              <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <Camera className="w-6 h-6 text-white" />
+              </div>
+            </button>
+
+            {showAvatarModal ? <AvatarPickerModal
+                currentAvatarUrl={user.avatarUrl}
+                displayName={user.displayName}
+                onClose={() => setShowAvatarModal(false)}
+                onSave={handleSaveAvatar}
+              /> : null}
             <h1 className="text-2xl font-bold text-foreground mb-1">
               {user.displayName || user.email}
             </h1>
@@ -240,31 +485,32 @@ export default function ProfilePage(): React.JSX.Element | null {
         <div className="px-6 space-y-6 max-w-5xl mx-auto w-full">
           {/* Daily Streak Card */}
           <Card className="p-6 bg-gradient-primary text-white border-0 shadow-glow">
-            <div className="flex items-start justify-between mb-4">
-              <div>
-                <h3 className="text-xl font-bold mb-1">
-                  🔥 Level {myLevel?.level} -{" "}
-                  {getUserLevelTitle(myLevel?.level ?? 1)}
-                </h3>
-                <p className="text-white/90 text-sm">
-                  <b className="text-base">{myLevel?.usesUntilNextLevel}</b>{" "}
-                  {(myLevel?.level ?? 1) < 3
-                    ? "usos más para el siguiente nivel"
-                    : "Para mantener su estatus de nivel 3"}
-                </p>
+            <Link href="/level">
+              <div className="flex items-start justify-between mb-4">
+                <div>
+                  <h3 className="text-xl font-bold mb-1">
+                    🔥 Level {myLevel?.level} -{" "}
+                    {getUserLevelTitle(myLevel?.level ?? 1)}
+                  </h3>
+                  <p className="text-white/90 text-sm">
+                    <b className="text-base">{myLevel?.usesUntilNextLevel}</b>{" "}
+                    {(myLevel?.level ?? 1) < 3
+                      ? "usos más para el siguiente nivel"
+                      : "Para mantener su estatus de nivel 3"}
+                  </p>
+                </div>
               </div>
-            </div>
-            <div className="h-2 bg-white/20 rounded-full overflow-hidden mb-4">
-              <div
-                className="h-full bg-white rounded-full transition-all"
-                style={{
-                  width: `${((myLevel?.monthlyUsageCount ?? 0) / getTotalForLevel(myLevel?.level)) * 100}%`,
-                }}
-              />
-            </div>
-            {/* TODO: Hide until leadership is implemented */}
-            {/* <div className="flex items-start justify-between mb-4"> */}
-            {/* <div className="items-start justify-between mb-4">
+              <div className="h-2 bg-white/20 rounded-full overflow-hidden mb-4">
+                <div
+                  className="h-full bg-white rounded-full transition-all"
+                  style={{
+                    width: `${((myLevel?.monthlyUsageCount ?? 0) / getTotalForLevel(myLevel?.level)) * 100}%`,
+                  }}
+                />
+              </div>
+              {/* TODO: Hide until leadership is implemented */}
+              {/* <div className="flex items-start justify-between mb-4"> */}
+              {/* <div className="items-start justify-between mb-4">
               <div>
                 <h3 className="text-xl font-bold mb-1">
                   🔥 Daily Ñamy Streak: 5 Days
@@ -280,21 +526,24 @@ export default function ProfilePage(): React.JSX.Element | null {
                 style={{ width: "71.4286%" }}
               />
             </div> */}
-            <div className="hidden pt-4 border-t border-white/20">
-              <div className="flex items-center justify-between mb-2">
-                <h4 className="text-lg font-bold text-white">
-                  Level 8 – Savory Explorer 🍝
-                </h4>
-                <span className="text-white/90 text-sm">65%</span>
+              <div className="hidden pt-4 border-t border-white/20">
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="text-lg font-bold text-white">
+                    Level 8 – Savory Explorer 🍝
+                  </h4>
+                  <span className="text-white/90 text-sm">65%</span>
+                </div>
+                <div className="h-2 bg-white/20 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-white rounded-full transition-all"
+                    style={{ width: "65%" }}
+                  />
+                </div>
+                <p className="text-white/80 text-xs mt-2">
+                  350 XP to next level
+                </p>
               </div>
-              <div className="h-2 bg-white/20 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-white rounded-full transition-all"
-                  style={{ width: "65%" }}
-                />
-              </div>
-              <p className="text-white/80 text-xs mt-2">350 XP to next level</p>
-            </div>
+            </Link>
           </Card>
 
           {/* Points Breakdown */}

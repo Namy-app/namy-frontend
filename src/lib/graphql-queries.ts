@@ -728,6 +728,7 @@ export const REDEEM_COUPON_BY_STAFF_MUTATION = `
       newLevel
       oldLevel
       message
+      pointsEarned
     }
   }
 `;
@@ -1008,5 +1009,205 @@ export const WATCH_VIDEO_AD_MUTATION = `
       token
       adsWatched
     }
+  }
+`;
+
+// ============ USER PROFILE ============
+export const UPDATE_ME_MUTATION = `
+  mutation UpdateMe($input: UpdateMeInput!) {
+    updateMe(input: $input) {
+      id
+      displayName
+      avatarUrl
+      email
+    }
+  }
+`;
+
+export const REQUEST_AVATAR_UPLOAD_MUTATION = `
+  mutation RequestAvatarUpload($fileName: String!) {
+    requestAvatarUpload(fileName: $fileName) {
+      uploadUrl
+      publicUrl
+    }
+  }
+`;
+
+// ============ REVIEWS ============
+export const GET_STORE_REVIEWS_QUERY = `
+  query GetStoreReviews($storeId: String!, $pagination: ReviewPaginationInput) {
+    storeReviews(storeId: $storeId, pagination: $pagination) {
+      data {
+        id
+        storeId
+        userId
+        title
+        description
+        rating
+        createdAt
+      }
+      paginationInfo {
+        total
+        page
+        totalPages
+        hasNextPage
+        hasPreviousPage
+      }
+    }
+  }
+`;
+
+export const CREATE_REVIEW_MUTATION = `
+  mutation CreateReview($input: CreateReviewInput!) {
+    createReview(input: $input) {
+      id
+      storeId
+      userId
+      title
+      description
+      rating
+      createdAt
+      pointsAwarded
+    }
+  }
+`;
+
+// ============ MURAL ============
+
+const MURAL_POST_FIELDS = `
+  id
+  userId
+  storeId
+  imageUrl
+  badge
+  likes
+  points
+  status
+  rejectionNote
+  createdAt
+  updatedAt
+  user {
+    id
+    displayName
+    avatarUrl
+  }
+  store {
+    id
+    name
+    address
+  }
+  commentsCount
+  isLikedByMe
+`;
+
+export const GET_MURAL_FEED_QUERY = `
+  query MuralFeed($input: MuralFeedInput) {
+    muralFeed(input: $input) {
+      posts {
+        ${MURAL_POST_FIELDS}
+      }
+      total
+      page
+      hasMore
+    }
+  }
+`;
+
+export const GET_MY_MURAL_POSTS_QUERY = `
+  query MyMuralPosts($page: Int, $pageSize: Int) {
+    myMuralPosts(page: $page, pageSize: $pageSize) {
+      posts {
+        ${MURAL_POST_FIELDS}
+      }
+      total
+      page
+      hasMore
+    }
+  }
+`;
+
+export const GET_MURAL_POST_QUERY = `
+  query MuralPost($id: ID!) {
+    muralPost(id: $id) {
+      ${MURAL_POST_FIELDS}
+    }
+  }
+`;
+
+export const GET_MURAL_POST_COMMENTS_QUERY = `
+  query MuralPostComments($postId: ID!, $page: Int, $pageSize: Int) {
+    muralPostComments(postId: $postId, page: $page, pageSize: $pageSize) {
+      comments {
+        id
+        postId
+        userId
+        content
+        createdAt
+        updatedAt
+        user {
+          id
+          displayName
+          avatarUrl
+        }
+      }
+      total
+      page
+      hasMore
+    }
+  }
+`;
+
+export const CREATE_MURAL_POST_MUTATION = `
+  mutation CreateMuralPost($input: CreateMuralPostInput!) {
+    createMuralPost(input: $input) {
+      ${MURAL_POST_FIELDS}
+    }
+  }
+`;
+
+export const DELETE_MURAL_POST_MUTATION = `
+  mutation DeleteMuralPost($id: ID!) {
+    deleteMuralPost(id: $id)
+  }
+`;
+
+export const LIKE_MURAL_POST_MUTATION = `
+  mutation LikeMuralPost($id: ID!) {
+    likeMuralPost(id: $id) {
+      id
+      likes
+    }
+  }
+`;
+
+export const UNLIKE_MURAL_POST_MUTATION = `
+  mutation UnlikeMuralPost($id: ID!) {
+    unlikeMuralPost(id: $id) {
+      id
+      likes
+    }
+  }
+`;
+
+export const CREATE_MURAL_COMMENT_MUTATION = `
+  mutation CreateMuralComment($input: CreateMuralCommentInput!) {
+    createMuralComment(input: $input) {
+      id
+      postId
+      userId
+      content
+      createdAt
+      user {
+        id
+        displayName
+        avatarUrl
+      }
+    }
+  }
+`;
+
+export const DELETE_MURAL_COMMENT_MUTATION = `
+  mutation DeleteMuralComment($id: ID!) {
+    deleteMuralComment(id: $id)
   }
 `;
