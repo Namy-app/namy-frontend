@@ -408,7 +408,7 @@ export default function ProfilePage(): React.JSX.Element | null {
                         {store.name}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {store.category?.name || "Restaurant"} •{" "}
+                        {store.type === "RESTAURANT" ? "Restaurant" : "Store"} •{" "}
                         {store.city || "Location"}
                       </p>
                     </div>

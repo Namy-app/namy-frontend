@@ -22,7 +22,7 @@ import {
   UPDATE_CATALOG,
   GET_STORE_CATALOGS,
   GET_CATEGORIES_BY_NAME_QUERY,
-  GET_SUBCATEGORIES_BY_CATEGORY_QUERY,
+  GET_CATEGORIES_BY_STORE_TYPE_QUERY,
 } from "./graphql";
 import {
   type CreateStoreInput,
@@ -49,6 +49,8 @@ import {
   type CreateCatalogItemInput,
   type UsersResponse,
   type UserDetailsWithActivity,
+  type Category,
+  type CategoriesResponse,
 } from "./types";
 
 // ==================== Store Mutations ====================
@@ -448,18 +450,6 @@ export function useResendStorePinEmail() {
 
 // ==================== Category Queries ====================
 
-interface Category {
-  id: string;
-  name: string;
-  isActive: boolean;
-}
-
-interface Subcategory {
-  id: string;
-  name: string;
-  categoryId: string;
-  isActive: boolean;
-}
 export function useGetCategoriesByName({
   query = "",
   enabled = true,
@@ -494,43 +484,29 @@ export function useGetCategoriesByName({
   });
 }
 
-export function useGetSubcategoriesByCategory({
-  categoryId,
+export function useGetCategoriesByStoreType({
+  storeType,
   name,
   enabled = true,
-  pagination,
+  pagination = { page: 1, first: 50 },
 }: {
-  categoryId?: string;
+  storeType?: string;
   name?: string;
   enabled?: boolean;
   pagination?: PaginationInput;
 }) {
-  return useQuery<
-    { data: Subcategory[]; paginationInfo: PaginationInfo },
-    Error
-  >({
-    queryKey: ["subcategories-by-category", categoryId, name, pagination],
+  return useQuery<CategoriesResponse, Error>({
+    queryKey: ["categories-by-store-type", storeType, name, pagination],
     queryFn: async () => {
-      const queryParams: {
-        categoryId?: string;
-        name?: string;
-        pagination?: PaginationInput;
-      } = {};
-      if (categoryId) {
-        queryParams.categoryId = categoryId;
-      }
-      if (name) {
-        queryParams.name = name;
-      }
-      if (pagination) {
-        queryParams.pagination = pagination;
-      }
-
       const data = await graphqlClient.request<{
-        subcategories: { data: Subcategory[]; paginationInfo: PaginationInfo };
-      }>(GET_SUBCATEGORIES_BY_CATEGORY_QUERY, queryParams);
-      return data.subcategories;
+        categories: CategoriesResponse;
+      }>(GET_CATEGORIES_BY_STORE_TYPE_QUERY, {
+        storeType: storeType ?? null,
+        name: name ?? null,
+        pagination,
+      });
+      return data.categories;
     },
-    enabled: enabled,
+    enabled,
   });
 }

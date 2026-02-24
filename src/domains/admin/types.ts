@@ -7,6 +7,7 @@ export enum CategoryType {
 
 export enum StoreType {
   PRODUCT = "PRODUCT",
+  RESTAURANT = "RESTAURANT",
   SERVICE = "SERVICE",
 }
 
@@ -24,6 +25,20 @@ export enum UserRole {
 }
 
 // ==================== Interfaces ====================
+
+export interface Category {
+  id: string;
+  name: string;
+  iconUrl?: string;
+  storeType?: string;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface CategoriesResponse {
+  data: Category[];
+  paginationInfo: PaginationInfo;
+}
 
 export interface OpenDay {
   day: string;
@@ -45,12 +60,7 @@ export interface Store {
   image2Url?: string;
   image3Url?: string;
   images?: string[]; // Dynamic array of image URLs
-  categoryId?: string;
-  subCategory?: string;
-  catId?: string;
-  subCatId?: string;
-  category?: { id: string; name: string };
-  subcategory?: { id: string; name: string };
+  categoryIds: string[];
   type: StoreType;
   city: string;
   address: string;
@@ -93,6 +103,7 @@ export interface StoreStatistics {
   inactive: number;
   byType: {
     product: number;
+    restaurant: number;
     service: number;
   };
   byPriceRange: {
@@ -122,10 +133,7 @@ export interface StoresResponse {
 export interface CreateStoreInput {
   name: string;
   description?: string;
-  catId?: string;
-  subCatId?: string;
-  category?: string;
-  subCategory?: string;
+  categoryIds: string[];
   type: StoreType;
   city: string;
   address: string;
@@ -147,10 +155,7 @@ export interface CreateStoreInput {
 export interface UpdateStoreInput {
   name?: string;
   description?: string;
-  catId?: string;
-  subCatId?: string;
-  category?: string;
-  subCategory?: string;
+  categoryIds?: string[];
   type?: StoreType;
   city?: string;
   address?: string;
@@ -174,8 +179,7 @@ export interface UpdateStoreInput {
 export interface StoreFiltersInput {
   name?: string;
   city?: string;
-  categoryId?: string;
-  subCategory?: string;
+  categoryIds?: string[];
   isRestaurant?: boolean;
   type?: StoreType;
   price?: PriceRange;
