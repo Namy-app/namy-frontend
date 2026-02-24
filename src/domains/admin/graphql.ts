@@ -9,14 +9,7 @@ export const CREATE_STORE_MUTATION = gql`
         id
         name
         description
-        category {
-          id
-          name
-        }
-        subcategory {
-          id
-          name
-        }
+        categoryIds
         type
         city
         address
@@ -54,14 +47,7 @@ export const UPDATE_STORE_MUTATION = gql`
         id
         name
         description
-        category {
-          id
-          name
-        }
-        subcategory {
-          id
-          name
-        }
+        categoryIds
         type
         city
         address
@@ -151,16 +137,7 @@ export const GET_ALL_STORES = gql`
         lat
         lng
         phoneNumber
-        catId
-        subCatId
-        category {
-          id
-          name
-        }
-        subcategory {
-          id
-          name
-        }
+        categoryIds
         isRestaurant
         email
         price
@@ -210,16 +187,7 @@ export const GET_STORE_BY_ID = gql`
       active
       url
       openDays
-      catId
-      subCatId
-      category {
-        id
-        name
-      }
-      subcategory {
-        id
-        name
-      }
+      categoryIds
       tags
       restrictions
       pin
@@ -624,20 +592,21 @@ export const GET_CATEGORIES_BY_NAME_QUERY = gql`
   }
 `;
 
-export const GET_SUBCATEGORIES_BY_CATEGORY_QUERY = gql`
-  query GetSubcategoriesByCategory(
-    $categoryId: String
+export const GET_CATEGORIES_BY_STORE_TYPE_QUERY = gql`
+  query GetCategoriesByStoreType(
+    $storeType: String
     $name: String
     $pagination: PaginationInput
   ) {
-    subcategories(
-      filters: { categoryId: $categoryId, name: $name }
+    categories(
+      filters: { storeType: $storeType, name: $name }
       pagination: $pagination
     ) {
       data {
         id
         name
-        categoryId
+        iconUrl
+        storeType
         isActive
       }
       paginationInfo {

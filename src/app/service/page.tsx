@@ -18,14 +18,13 @@ import Link from "next/link";
 import { useState, useEffect, useMemo, useRef } from "react";
 
 import StoreMap from "@/components/store-map";
-import { useGetSubCategoryByCatId, useStores } from "@/domains/store/hooks";
+import { useCategoriesByStoreType, useStores } from "@/domains/store/hooks";
 import { calculateDistance } from "@/domains/store/hooks/query/useClosestStores";
 import { type StoreFilters } from "@/domains/store/type";
 import { useMyLevel } from "@/domains/user/hooks/query/useMyLevel";
 import { BasicLayout } from "@/layouts/BasicLayout";
 import type { Store } from "@/lib/api-types";
 import { getUserLocationSafe } from "@/lib/utils";
-import { useRestaurantId } from "@/providers/RestaurantIdProvider";
 import { Button } from "@/shared/components/Button";
 import { Card } from "@/shared/components/Card";
 import { Input } from "@/shared/components/Input";
@@ -54,16 +53,16 @@ interface StoreWithDistance extends Store {
 }
 
 export default function ServicesPage(): React.JSX.Element {
-  const { restaurantId, isLoading: restaurantLoading } = useRestaurantId();
-  const { data: subcategoriesData, isLoading: subCategoryLoading } =
-    useGetSubCategoryByCatId(restaurantId ?? undefined, true);
+  const { data: categoriesData, isLoading: categoriesLoading } =
+    useCategoriesByStoreType("service");
 
-  const subcategories = subcategoriesData ?? [];
+  const categories = categoriesData ?? [];
 
   const searchTimeoutRef = useRef<NodeJS.Timeout>(undefined);
   const [filters, setFilters] = useState<StoreFilters>({
     isRestaurant: false,
   });
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [_, setShowGuideModal] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -93,9 +92,8 @@ export default function ServicesPage(): React.JSX.Element {
   const { data: storesResult, isLoading } = useStores(
     {
       ...filters,
-      // availabilityStatus:
-      //   availabilityFilter === "available" ? "available" : undefined,
-      // Pass lat/lng when sorting by distance to enable backend distance calculation
+      categoryIds:
+        selectedCategoryIds.length > 0 ? selectedCategoryIds : undefined,
       lat:
         sortBy === "DISTANCE" && userLocation
           ? userLocation.latitude
@@ -112,12 +110,11 @@ export default function ServicesPage(): React.JSX.Element {
   );
   const paginationInfo = storesResult?.paginationInfo;
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
-  const [selectedSubCategory, setSelectedSubCategory] = useState("all");
   const [showFilterModal, setShowFilterModal] = useState(false);
   const discountPercentage =
     (user?.isPremium ? 15 : myLevel?.discountPercentage) ?? 10;
 
-  const loading = isLoading || restaurantLoading;
+  const loading = isLoading || categoriesLoading;
 
   //Fetch user location on mount
   useEffect(() => {
@@ -211,7 +208,7 @@ export default function ServicesPage(): React.JSX.Element {
       image:
         store.imageUrl ||
         "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=800&auto=format&fit=crop",
-      category: store.subCategory || "Service",
+      category: "Service",
       discount: discountPercentage,
       rating: store.averageRating ?? 4.7,
       distance:
@@ -322,13 +319,17 @@ export default function ServicesPage(): React.JSX.Element {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const handleSubCategoryClick = (subCategoryId: string): void => {
-    setSelectedSubCategory(subCategoryId);
+  const handleCategoryClick = (categoryId: string): void => {
     setCurrentPage(1);
-    setFilters((prev) => ({
-      ...prev,
-      subCatId: subCategoryId === "all" ? undefined : subCategoryId,
-    }));
+    if (categoryId === "all") {
+      setSelectedCategoryIds([]);
+    } else {
+      setSelectedCategoryIds((prev) =>
+        prev.includes(categoryId)
+          ? prev.filter((id) => id !== categoryId)
+          : [...prev, categoryId]
+      );
+    }
   };
 
   const handleSortChange = (newSort: "DISTANCE" | "NEWEST") => {
@@ -343,7 +344,7 @@ export default function ServicesPage(): React.JSX.Element {
 
   const clearFilters = (): void => {
     setSearchQuery("");
-    setSelectedSubCategory("all");
+    setSelectedCategoryIds([]);
     setSortBy("NEWEST");
     setAvailabilityFilter("all");
     setCurrentPage(1);
@@ -492,44 +493,43 @@ export default function ServicesPage(): React.JSX.Element {
             </div>
           </div>
 
-          {/* SubCategory Filter Pills */}
-          {/* Only show if we have subcategories for services */}
+          {/* Category Filter Pills */}
           <div className="-mt-4 mb-4 max-w-5xl mx-auto">
-            {subCategoryLoading ? (
-              <div className="px-6">Loading subcategories...</div>
+            {categoriesLoading ? (
+              <div className="px-6">Loading categories...</div>
             ) : (
               <div className="overflow-x-auto pb-2 scrollbar-hide">
                 <div className="flex gap-2 px-6 min-w-max">
                   <Button
                     key="all"
-                    onClick={() => handleSubCategoryClick("all")}
+                    onClick={() => handleCategoryClick("all")}
                     className={`rounded-full whitespace-nowrap ${
-                      selectedSubCategory === "all"
+                      selectedCategoryIds.length === 0
                         ? "bg-primary text-primary-foreground shadow-glow"
                         : "bg-card border-border hover:border-primary"
                     }`}
                     variant={
-                      selectedSubCategory === "all" ? "default" : "outline"
+                      selectedCategoryIds.length === 0 ? "default" : "outline"
                     }
                   >
                     Todos
                   </Button>
-                  {subcategories.map((subcategory) => (
+                  {categories.map((category) => (
                     <Button
-                      key={subcategory.id}
-                      onClick={() => handleSubCategoryClick(subcategory.id)}
+                      key={category.id}
+                      onClick={() => handleCategoryClick(category.id)}
                       className={`rounded-full whitespace-nowrap capitalize ${
-                        selectedSubCategory === subcategory.id
+                        selectedCategoryIds.includes(category.id)
                           ? "bg-primary text-primary-foreground shadow-glow"
                           : "bg-card border-border hover:border-primary"
                       }`}
                       variant={
-                        selectedSubCategory === subcategory.id
+                        selectedCategoryIds.includes(category.id)
                           ? "default"
                           : "outline"
                       }
                     >
-                      {subcategory.name}
+                      {category.name}
                     </Button>
                   ))}
                 </div>

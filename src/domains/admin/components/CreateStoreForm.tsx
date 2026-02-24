@@ -1,6 +1,5 @@
 "use client";
 
-import clsx from "clsx";
 import { X, Store as StoreIcon, Loader2, Copy, Check } from "lucide-react";
 import { useState } from "react";
 
@@ -11,8 +10,7 @@ import {
 } from "@/components/Autocomplete";
 import {
   useCreateStore,
-  useGetCategoriesByName,
-  useGetSubcategoriesByCategory,
+  useGetCategoriesByStoreType,
 } from "@/domains/admin/hooks";
 import {
   type CreateStoreInput,
@@ -35,18 +33,13 @@ export function CreateStoreForm({ onClose, onSuccess }: CreateStoreFormProps) {
   const [copiedPin, setCopiedPin] = useState(false);
   const [generatedPin, setGeneratedPin] = useState<string | null>(null);
 
-  // Category and subcategory search states
   const [categoryQuery, setCategoryQuery] = useState("");
-  const [subcategoryQuery, setSubcategoryQuery] = useState("");
 
   const [formData, setFormData] = useState<CreateStoreInput>({
     name: "",
     description: "",
-    category: "",
-    catId: "",
-    subCatId: "",
-    subCategory: "",
-    type: StoreType.PRODUCT,
+    categoryIds: [],
+    type: StoreType.RESTAURANT,
     city: "",
     address: "",
     phoneNumber: "",
@@ -59,31 +52,18 @@ export function CreateStoreForm({ onClose, onSuccess }: CreateStoreFormProps) {
     isRestaurant: true,
   });
 
-  const [categoryType, setCategoryType] = useState<"restaurant" | "others">(
-    "restaurant"
-  );
-
   const [openHours, setOpenHours] = useState<OpenDay[]>([]);
 
-  // Fetch categories and subcategories based on queries
+  const storeTypeFilter =
+    formData.type === StoreType.RESTAURANT ? "restaurant" : "service";
   const { data: categoriesResponse, isLoading: isCategoriesLoading } =
-    useGetCategoriesByName({
-      query: categoryQuery,
-      pagination: { page: 1, first: 20 },
+    useGetCategoriesByStoreType({
+      storeType: storeTypeFilter,
+      name: categoryQuery || undefined,
       enabled: true,
+      pagination: { page: 1, first: 50 },
     });
   const categories = categoriesResponse?.data ?? [];
-
-  const effectiveCategoryId =
-    categoryType === "restaurant" ? undefined : formData.catId;
-  const { data: subcategoriesResponse, isLoading: isSubcategoriesLoading } =
-    useGetSubcategoriesByCategory({
-      categoryId: effectiveCategoryId,
-      name: subcategoryQuery,
-      enabled: Boolean(effectiveCategoryId) || Boolean(subcategoryQuery),
-      pagination: { page: 1, first: 5 },
-    });
-  const subcategories = subcategoriesResponse?.data ?? [];
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -102,18 +82,13 @@ export function CreateStoreForm({ onClose, onSuccess }: CreateStoreFormProps) {
         ...prev,
         [name]: value ? parseFloat(value) : undefined,
       }));
-    } else if (name === "categoryType") {
-      setCategoryType(value as "restaurant" | "others");
-      // Reset category fields when switching types
+    } else if (name === "type") {
       setFormData((prev) => ({
         ...prev,
-        catId: "",
-        category: "",
-        subCatId: "",
-        subCategory: "",
+        type: value as StoreType,
+        categoryIds: [], // Reset categories when type changes
       }));
       setCategoryQuery("");
-      setSubcategoryQuery("");
     } else {
       setFormData((prev) => ({
         ...prev,
@@ -122,37 +97,28 @@ export function CreateStoreForm({ onClose, onSuccess }: CreateStoreFormProps) {
     }
   };
 
-  const handleCategorySelect = (
+  const handleAddCategory = (
     option: AutocompleteOption<{ id: string; name: string }>
   ) => {
+    if (formData.categoryIds.includes(option.value.id)) {
+      return;
+    }
     setFormData((prev) => ({
       ...prev,
-      catId: option.value.id,
-      category: option.value.name,
-      subCatId: "", // Reset subCatId when category changes
-      subCategory: "", // Reset subcategory when category changes
+      categoryIds: [...prev.categoryIds, option.value.id],
     }));
-    setCategoryQuery(option.label);
-    setSubcategoryQuery("");
+    setCategoryQuery("");
+  };
+
+  const handleRemoveCategory = (id: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      categoryIds: prev.categoryIds.filter((cid) => cid !== id),
+    }));
   };
 
   const handleCategoryQueryUpdate = (query: string) => {
     setCategoryQuery(query);
-  };
-
-  const handleSubcategorySelect = (
-    option: AutocompleteOption<{ id: string; name: string }>
-  ) => {
-    setFormData((prev) => ({
-      ...prev,
-      subCatId: option.value.id,
-      subCategory: option.value.name,
-    }));
-    setSubcategoryQuery(option.label);
-  };
-
-  const handleSubcategoryQueryUpdate = (query: string) => {
-    setSubcategoryQuery(query);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -168,43 +134,21 @@ export function CreateStoreForm({ onClose, onSuccess }: CreateStoreFormProps) {
       return;
     }
 
-    // Validate category requirements based on type
-    if (categoryType === "restaurant") {
-      if (!formData.subCatId && !formData.subCategory && subcategoryQuery) {
-        toast({
-          title: "Validation Error",
-          description: "Please enter a Sub-Category for restaurant",
-          variant: "destructive",
-        });
-        return;
-      }
-    } else if (categoryType === "others") {
-      if (
-        (!formData.catId && formData.category) ||
-        (!formData.subCatId && formData.subCategory) ||
-        !categoryQuery
-      ) {
-        toast({
-          title: "Validation Error",
-          description: "Please enter both Category and Sub-Category",
-          variant: "destructive",
-        });
-        return;
-      }
+    if (!formData.categoryIds?.length) {
+      toast({
+        title: "Validation Error",
+        description: "Please select at least one category",
+        variant: "destructive",
+      });
+      return;
     }
 
-    const isRestaurant = categoryType === "restaurant";
-    // Set categoryId based on categoryType
     const finalFormData: CreateStoreInput = {
       ...formData,
-      category: isRestaurant ? "restaurant" : categoryQuery,
+      categoryIds: formData.categoryIds,
       openDays: openHours.length > 0 ? { availableDays: openHours } : undefined,
-      isRestaurant,
+      isRestaurant: formData.type === StoreType.RESTAURANT,
     };
-
-    if (!finalFormData.catId && formData.category) {
-      finalFormData.category = categoryQuery;
-    }
 
     try {
       const result = await createStore.mutateAsync(finalFormData);
@@ -390,86 +334,61 @@ export function CreateStoreForm({ onClose, onSuccess }: CreateStoreFormProps) {
                   className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                 >
                   <option value={StoreType.PRODUCT}>Product</option>
+                  <option value={StoreType.RESTAURANT}>Restaurant</option>
                   <option value={StoreType.SERVICE}>Service</option>
                 </select>
               </div>
             </div>
 
-            {/* Category */}
+            {/* Categories (multi-select) */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-foreground">
-                Category
+                Categories
               </h3>
-
               <div>
-                <label
-                  className="block text-sm font-medium text-foreground mb-2"
-                  htmlFor="categoryType"
-                >
-                  Store Category <span className="text-destructive">*</span>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Select at least one category{" "}
+                  <span className="text-destructive">*</span>
                 </label>
-                <select
-                  name="categoryType"
-                  value={categoryType}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                >
-                  <option value="restaurant">Restaurant</option>
-                  <option value="others">Others</option>
-                </select>
-              </div>
-
-              <div
-                className={clsx(
-                  "grid gap-4",
-                  categoryType === "restaurant" ? "grid-cols-1" : "grid-cols-2"
-                )}
-              >
-                {categoryType !== "restaurant" ? (
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">
-                      Category <span className="text-destructive">*</span>
-                    </label>
-                    <Autocomplete<{ id: string; name: string }>
-                      options={categories.map((cat) => ({
-                        id: cat.id,
-                        label: cat.name,
-                        value: { id: cat.id, name: cat.name },
-                      }))}
-                      query={categoryQuery}
-                      onQueryUpdate={handleCategoryQueryUpdate}
-                      onSelect={handleCategorySelect}
-                      placeholder="Search for category..."
-                      isLoading={isCategoriesLoading}
-                      noResultsMessage="No categories found"
-                      className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                    />
+                {formData.categoryIds.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {formData.categoryIds.map((id) => {
+                      const cat = categories.find((c) => c.id === id);
+                      return (
+                        <span
+                          key={id}
+                          className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm"
+                        >
+                          {cat?.name ?? id}
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveCategory(id)}
+                            className="hover:bg-primary/20 rounded p-0.5"
+                            aria-label="Remove category"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </span>
+                      );
+                    })}
                   </div>
-                ) : null}
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    Sub Category <span className="text-destructive">*</span>
-                  </label>
-                  <Autocomplete<{ id: string; name: string }>
-                    options={subcategories.map((subcat) => ({
-                      id: subcat.id,
-                      label: subcat.name,
-                      value: { id: subcat.id, name: subcat.name },
+                )}
+                <Autocomplete<{ id: string; name: string }>
+                  options={categories
+                    .filter((c) => !formData.categoryIds.includes(c.id))
+                    .map((cat) => ({
+                      id: cat.id,
+                      label: cat.name,
+                      value: { id: cat.id, name: cat.name },
                     }))}
-                    query={subcategoryQuery}
-                    onQueryUpdate={handleSubcategoryQueryUpdate}
-                    onSelect={handleSubcategorySelect}
-                    placeholder="Search for sub category..."
-                    isLoading={isSubcategoriesLoading}
-                    disabled={categoryType === "others" && !categoryQuery}
-                    noResultsMessage={
-                      categoryType === "others" && !categoryQuery
-                        ? "Select a category first"
-                        : "No subcategories found"
-                    }
-                    className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  />
-                </div>
+                  query={categoryQuery}
+                  onQueryUpdate={handleCategoryQueryUpdate}
+                  onSelect={handleAddCategory}
+                  placeholder="Search to add category..."
+                  isLoading={isCategoriesLoading}
+                  noResultsMessage="No categories found"
+                  className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                />
               </div>
             </div>
 
