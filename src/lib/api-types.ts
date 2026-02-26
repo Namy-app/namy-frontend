@@ -98,3 +98,81 @@ export interface ApiError {
   statusCode?: number;
   error?: string;
 }
+
+// ============ MURAL ============
+
+export type PostBadge = "top_poster" | "mas_likes";
+export type MuralPostStatus = "pending" | "approved" | "rejected";
+
+export interface MuralPostUser {
+  id: string;
+  displayName?: string;
+  avatarUrl?: string;
+}
+
+export interface MuralPostStore {
+  id: string;
+  name: string;
+  address?: string;
+}
+
+export interface MuralPost {
+  id: string;
+  userId: string;
+  storeId: string;
+  imageUrl: string;
+  badge?: PostBadge;
+  likes: number;
+  points: number;
+  status: MuralPostStatus;
+  rejectionNote?: string;
+  createdAt: string;
+  updatedAt: string;
+  user?: MuralPostUser;
+  store?: MuralPostStore;
+  commentsCount?: number;
+  isLikedByMe?: boolean;
+}
+
+export interface MuralComment {
+  id: string;
+  postId: string;
+  userId: string;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+  user?: MuralPostUser;
+}
+
+export interface MuralFeedResponse {
+  posts: MuralPost[];
+  total: number;
+  page: number;
+  hasMore: boolean;
+}
+
+export interface MuralCommentsResponse {
+  comments: MuralComment[];
+  total: number;
+  page: number;
+  hasMore: boolean;
+}
+
+export interface MuralFeedInput {
+  page?: number;
+  pageSize?: number;
+  storeId?: string;
+  userId?: string;
+  city?: string;
+  search?: string;
+}
+
+export interface CreateMuralPostInput {
+  storeId: string;
+  imageUrl: string;
+}
+
+export interface CreateMuralCommentInput {
+  postId: string;
+  content: string;
+}

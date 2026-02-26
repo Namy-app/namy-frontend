@@ -37,6 +37,7 @@ type RedemptionResult = {
   newLevel?: number | null;
   oldLevel?: number | null;
   message?: string | null;
+  pointsEarned?: number | null;
 };
 
 export default function RedeemDetail({
@@ -240,6 +241,19 @@ export default function RedeemDetail({
               "The coupon has been successfully redeemed"}
           </p>
         </div>
+
+        {/* Points Earned Notification */}
+        {redemptionResult.pointsEarned ? (
+          <div className="bg-linear-to-r from-yellow-500 to-orange-500 p-4 text-center">
+            <div className="flex items-center justify-center gap-2">
+              <Sparkles className="w-6 h-6 text-white" />
+              <span className="text-xl font-bold text-white">
+                +{redemptionResult.pointsEarned} Puntos
+              </span>
+              <Sparkles className="w-6 h-6 text-white" />
+            </div>
+          </div>
+        ) : null}
 
         {/* Level Up Notification */}
         {redemptionResult.leveledUp ? (
