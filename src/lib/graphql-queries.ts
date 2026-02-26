@@ -1211,3 +1211,81 @@ export const DELETE_MURAL_COMMENT_MUTATION = `
     deleteMuralComment(id: $id)
   }
 `;
+
+// ============ MURAL MODERATION ============
+export const MURAL_MODERATION_QUEUE_QUERY = `
+  query MuralModerationQueue($input: MuralModerationQueueInput) {
+    muralModerationQueue(input: $input) {
+      posts {
+        id
+        userId
+        storeId
+        imageUrl
+        status
+        rejectionNote
+        likes
+        createdAt
+        user {
+          id
+          displayName
+          avatarUrl
+          email
+        }
+        store {
+          id
+          name
+          city
+        }
+      }
+      total
+      page
+      hasMore
+    }
+  }
+`;
+
+export const MODERATE_MURAL_POST_MUTATION = `
+  mutation ModerateMuralPost($id: ID!, $input: ModerateMuralPostInput!) {
+    moderateMuralPost(id: $id, input: $input) {
+      id
+      status
+      rejectionNote
+    }
+  }
+`;
+
+// ============ CHALLENGES ============
+export const MY_CHALLENGES_QUERY = `
+  query MyChallenges($status: String) {
+    myChallenges(status: $status) {
+      id
+      challengeId
+      status
+      count
+      challenge {
+        id
+        name
+        entityType
+        count
+        points
+        isActive
+        expiresAt
+      }
+    }
+  }
+`;
+
+// ============ LEADERBOARD ============
+export const CITY_LEADERBOARD_QUERY = `
+  query CityLeaderboard($limit: Int) {
+    cityLeaderboard(limit: $limit) {
+      rank
+      userId
+      displayName
+      avatarUrl
+      city
+      balance
+      isCurrentUser
+    }
+  }
+`;

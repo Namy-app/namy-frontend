@@ -181,3 +181,31 @@ export interface CreateMuralCommentInput {
   postId: string;
   content: string;
 }
+
+export interface ChallengeInfo {
+  id: string;
+  name: string;
+  entityType: string;
+  count: number;
+  points: number;
+  isActive: boolean;
+  expiresAt?: string;
+}
+
+export interface UserChallenge {
+  id: string;
+  challengeId: string;
+  status: "on-going" | "awarded" | "expired" | "failed";
+  count: number;
+  challenge?: ChallengeInfo;
+}
+
+export interface LeaderboardEntry {
+  rank: number;
+  userId: string;
+  displayName: string;
+  avatarUrl?: string;
+  city?: string;
+  balance: number;
+  isCurrentUser: boolean;
+}

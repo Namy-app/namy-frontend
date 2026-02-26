@@ -651,3 +651,141 @@ export const GET_SUBCATEGORIES_BY_CATEGORY_QUERY = gql`
     }
   }
 `;
+
+// ==================== Challenge Queries & Mutations ====================
+
+const CHALLENGE_FRAGMENT = `
+  id
+  name
+  entityType
+  entityId
+  count
+  points
+  isActive
+  expiresAt
+  createdAt
+  updatedAt
+`;
+
+export const GET_CHALLENGES_QUERY = gql`
+  query GetChallenges($isActive: Boolean, $entityType: String) {
+    challenges(isActive: $isActive, entityType: $entityType) {
+      ${CHALLENGE_FRAGMENT}
+    }
+  }
+`;
+
+export const GET_CHALLENGE_BY_ID_QUERY = gql`
+  query GetChallenge($id: String!) {
+    challenge(id: $id) {
+      ${CHALLENGE_FRAGMENT}
+    }
+  }
+`;
+
+export const CREATE_CHALLENGE_MUTATION = gql`
+  mutation CreateChallenge($input: CreateChallengeInput!) {
+    createChallenge(input: $input) {
+      ${CHALLENGE_FRAGMENT}
+    }
+  }
+`;
+
+export const UPDATE_CHALLENGE_MUTATION = gql`
+  mutation UpdateChallenge($id: String!, $input: UpdateChallengeInput!) {
+    updateChallenge(id: $id, input: $input) {
+      ${CHALLENGE_FRAGMENT}
+    }
+  }
+`;
+
+export const DELETE_CHALLENGE_MUTATION = gql`
+  mutation DeleteChallenge($id: String!) {
+    deleteChallenge(id: $id) {
+      message
+    }
+  }
+`;
+
+// ==================== Mural Moderation ====================
+
+const MURAL_POST_FRAGMENT = `
+  id
+  userId
+  storeId
+  imageUrl
+  status
+  rejectionNote
+  likes
+  createdAt
+  user {
+    id
+    displayName
+    avatarUrl
+    email
+  }
+  store {
+    id
+    name
+    city
+  }
+`;
+
+export const GET_MURAL_MODERATION_QUEUE = gql`
+  query MuralModerationQueue($input: MuralModerationQueueInput) {
+    muralModerationQueue(input: $input) {
+      posts {
+        ${MURAL_POST_FRAGMENT}
+      }
+      total
+      page
+      hasMore
+    }
+  }
+`;
+
+export const MODERATE_MURAL_POST_MUTATION = gql`
+  mutation ModerateMuralPost($id: ID!, $input: ModerateMuralPostInput!) {
+    moderateMuralPost(id: $id, input: $input) {
+      id
+      status
+      rejectionNote
+    }
+  }
+`;
+
+// ==================== Review Queries & Mutations ====================
+
+export const GET_ADMIN_REVIEWS = gql`
+  query GetAdminReviews(
+    $filters: ReviewFiltersInput
+    $pagination: ReviewPaginationInput
+  ) {
+    reviews(filters: $filters, pagination: $pagination) {
+      data {
+        id
+        storeId
+        userId
+        title
+        description
+        rating
+        createdAt
+        updatedAt
+      }
+      paginationInfo {
+        total
+        page
+        pageSize
+        totalPages
+        hasNextPage
+        hasPreviousPage
+      }
+    }
+  }
+`;
+
+export const ADMIN_DELETE_REVIEW_MUTATION = gql`
+  mutation AdminDeleteReview($id: String!) {
+    adminDeleteReview(id: $id)
+  }
+`;
