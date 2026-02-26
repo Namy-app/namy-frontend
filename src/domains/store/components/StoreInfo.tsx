@@ -300,7 +300,7 @@ export const StoreInfo = ({
               Categoría
             </p>
             <p className="text-foreground text-sm">
-              {store.category?.name || "N/A"}
+              {store.categoryIds?.length ? "—" : "N/A"}
             </p>
           </div>
           <div>

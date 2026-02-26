@@ -58,7 +58,7 @@ export function NearbyPlaces({
                       <div className="w-full h-full bg-gray-200 text-3xl tracking-widest flex items-center justify-center text-gray-400">
                         <Image
                           src={
-                            place.category?.name?.toLowerCase() === "restaurant"
+                            place.type?.toLowerCase() === "restaurant"
                               ? PlaceHolderTypeEnum.RESTAURANT
                               : PlaceHolderTypeEnum.SHOP
                           }

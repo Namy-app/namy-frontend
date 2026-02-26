@@ -25,7 +25,6 @@ import { MapDisplay } from "@/components/MapDisplay";
 import { UnlockDiscountModal } from "@/components/UnlockDiscountModal";
 import { VideoAdsModal } from "@/components/VideoAdsModal";
 import { PlaceHolderTypeEnum } from "@/data/constants";
-import { StoreType } from "@/domains/admin";
 import { useStoreDiscounts, useStoreCatalogs } from "@/domains/admin/hooks";
 import { GeneratingCouponModal } from "@/domains/coupons/GeneratingCouponModal";
 import { useWallet } from "@/domains/payment/hooks";
@@ -160,7 +159,8 @@ export default function StoresDetailPage(): React.JSX.Element {
 
   // Get the first active discount for this store
   const firstActiveDiscount = discountsData?.data?.find((d) => d.active);
-  const isRestaurant = store?.category?.name?.toLowerCase() === "restaurant";
+  const isRestaurant =
+    store?.type === "RESTAURANT" || store?.type === "PRODUCT";
   const storeCategoryType = isRestaurant ? "Restaurant" : "Store";
 
   // Use optimized countdown hook
@@ -177,9 +177,15 @@ export default function StoresDetailPage(): React.JSX.Element {
     ? {
         id: store.id,
         name: store.name,
-        category:
-          store.category?.name || store.subcategory?.name || "Restaurant",
-        emoji: store.type === StoreType.PRODUCT ? "🍽️" : "🔧",
+        categoryIds: store.categoryIds ?? [],
+        categoryLabel:
+          store.type === "RESTAURANT"
+            ? "Restaurant"
+            : store.type === "SERVICE"
+              ? "Service"
+              : "Store",
+        emoji:
+          store.type === "RESTAURANT" || store.type === "PRODUCT" ? "🍽️" : "🔧",
         rating: store.averageRating ?? 4.5,
         reviewCount: store.reviewCounter ?? 0,
         isAdPartner: false,
@@ -816,7 +822,9 @@ export default function StoresDetailPage(): React.JSX.Element {
                 <div className="mt-2 flex items-center gap-4 text-sm md:text-base text-white/90">
                   <div className="inline-flex items-center gap-2">
                     <span>{parsedStore.emoji}</span>
-                    <span className="font-medium">{parsedStore.category}</span>
+                    <span className="font-medium">
+                      {parsedStore.categoryLabel ?? "Store"}
+                    </span>
                   </div>
                   <div className="inline-flex items-center gap-2">
                     <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />

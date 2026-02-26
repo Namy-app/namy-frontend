@@ -171,18 +171,8 @@ export const GET_ALL_STORES_QUERY = `
         createdAt
         updatedAt
         type
-        subCategory
+        categoryIds
         isRestaurant
-        catId
-        subCatId
-        category {
-          id
-          name
-        }
-        subcategory {
-          id
-          name
-        }
         averageRating
         reviewCounter
         city
@@ -420,14 +410,24 @@ export const GET_SUBCATEGORIES_BY_CATEGORY_QUERY = `
   }
 `;
 
-export const GET_SUBCATEGORY_BY_ID_QUERY = `
-  query GetSubcategoryById($id: String!) {
-    subcategory(id: $id) {
-      id
-      name
-      categoryId
-      iconUrl
-      isActive
+export const GET_CATEGORIES_BY_STORE_TYPE_QUERY = `
+  query GetCategoriesByStoreType($storeType: String, $name: String, $pagination: PaginationInput) {
+    categories(filters: { storeType: $storeType, name: $name }, pagination: $pagination) {
+      data {
+        id
+        name
+        iconUrl
+        storeType
+        isActive
+      }
+      paginationInfo {
+        total
+        page
+        pageSize
+        totalPages
+        hasNextPage
+        hasPreviousPage
+      }
     }
   }
 `;
