@@ -30,7 +30,7 @@ export interface Category {
   id: string;
   name: string;
   iconUrl?: string;
-  storeType?: string;
+  storeType?: StoreType;
   isActive: boolean;
   createdAt: string;
 }
@@ -38,6 +38,27 @@ export interface Category {
 export interface CategoriesResponse {
   data: Category[];
   paginationInfo: PaginationInfo;
+}
+
+export interface CategoryFiltersInput {
+  name?: string;
+  id?: string;
+  isActive?: boolean;
+  storeType?: StoreType;
+}
+
+export interface CreateCategoryInput {
+  name: string;
+  iconUrl?: string;
+  storeType?: StoreType;
+  isActive?: boolean;
+}
+
+export interface UpdateCategoryInput {
+  name?: string;
+  iconUrl?: string;
+  storeType?: StoreType;
+  isActive?: boolean;
 }
 
 export interface OpenDay {
