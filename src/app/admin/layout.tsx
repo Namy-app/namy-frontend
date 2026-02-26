@@ -7,6 +7,9 @@ import {
   LayoutDashboard,
   ArrowLeft,
   FolderTree,
+  Trophy,
+  Images,
+  Star,
 } from "lucide-react";
 import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
@@ -127,6 +130,24 @@ export default function AdminLayout({
       icon: Users,
       href: "/admin/users",
       active: pathname?.startsWith("/admin/users"),
+    },
+    {
+      label: "Challenges",
+      icon: Trophy,
+      href: "/admin/challenges",
+      active: pathname?.startsWith("/admin/challenges"),
+    },
+    {
+      label: "Mural",
+      icon: Images,
+      href: "/admin/mural",
+      active: pathname?.startsWith("/admin/mural"),
+    },
+    {
+      label: "Reviews",
+      icon: Star,
+      href: "/admin/reviews",
+      active: pathname?.startsWith("/admin/reviews"),
     },
   ];
 

@@ -22,6 +22,14 @@ import {
   UPDATE_CATALOG,
   GET_STORE_CATALOGS,
   GET_CATEGORIES_BY_NAME_QUERY,
+  GET_CHALLENGES_QUERY,
+  CREATE_CHALLENGE_MUTATION,
+  UPDATE_CHALLENGE_MUTATION,
+  DELETE_CHALLENGE_MUTATION,
+  GET_MURAL_MODERATION_QUEUE,
+  MODERATE_MURAL_POST_MUTATION,
+  GET_ADMIN_REVIEWS,
+  ADMIN_DELETE_REVIEW_MUTATION,
   GET_CATEGORIES_BY_STORE_TYPE_QUERY,
   GET_CATEGORIES_QUERY,
   GET_CATEGORY_BY_ID_QUERY,
@@ -53,6 +61,14 @@ import {
   type CreateCatalogItemInput,
   type UsersResponse,
   type UserDetailsWithActivity,
+  type Challenge,
+  type CreateChallengeInput,
+  type UpdateChallengeInput,
+  type EntityType,
+  type MuralModerationQueueResponse,
+  type ModerateMuralPostInput,
+  type MuralPostStatus,
+  type AdminReviewsResponse,
   type Category,
   type CategoriesResponse,
   type CategoryFiltersInput,
@@ -218,7 +234,8 @@ export function useStorePin(id: string, enabled = false) {
 
 export function useStoreDiscounts(
   filters?: DiscountFiltersInput,
-  pagination?: PaginationInput
+  pagination?: PaginationInput,
+  options?: { enabled?: boolean }
 ) {
   return useQuery<DiscountsResponse>({
     queryKey: ["discounts", filters, pagination],
@@ -228,6 +245,7 @@ export function useStoreDiscounts(
       }>(GET_STORE_DISCOUNTS, { filters, pagination });
       return data.discounts;
     },
+    enabled: options?.enabled !== false,
   });
 }
 
@@ -594,5 +612,172 @@ export function useGetCategoriesByStoreType({
       return data.categories;
     },
     enabled,
+  });
+}
+
+// ==================== Challenge Hooks ====================
+
+export function useChallenges(params?: {
+  isActive?: boolean;
+  entityType?: EntityType;
+}) {
+  return useQuery<Challenge[]>({
+    queryKey: ["challenges", params],
+    queryFn: async () => {
+      const data = await graphqlClient.request<{ challenges: Challenge[] }>(
+        GET_CHALLENGES_QUERY,
+        params
+      );
+      return data.challenges;
+    },
+  });
+}
+
+export function useCreateChallenge() {
+  const queryClient = useQueryClient();
+
+  return useMutation<Challenge, Error, CreateChallengeInput>({
+    mutationFn: async (input) => {
+      const data = await graphqlClient.request<{
+        createChallenge: Challenge;
+      }>(CREATE_CHALLENGE_MUTATION, { input });
+      return data.createChallenge;
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["challenges"] });
+    },
+  });
+}
+
+export function useUpdateChallenge() {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    Challenge,
+    Error,
+    { id: string; input: UpdateChallengeInput }
+  >({
+    mutationFn: async ({ id, input }) => {
+      const data = await graphqlClient.request<{
+        updateChallenge: Challenge;
+      }>(UPDATE_CHALLENGE_MUTATION, { id, input });
+      return data.updateChallenge;
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["challenges"] });
+    },
+  });
+}
+
+export function useDeleteChallenge() {
+  const queryClient = useQueryClient();
+
+  return useMutation<{ message: string }, Error, string>({
+    mutationFn: async (id) => {
+      const data = await graphqlClient.request<{
+        deleteChallenge: { message: string };
+      }>(DELETE_CHALLENGE_MUTATION, { id });
+      return data.deleteChallenge;
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["challenges"] });
+    },
+  });
+}
+
+// ==================== Mural Moderation ====================
+
+export function useMuralModerationQueue(params: {
+  status?: MuralPostStatus;
+  page?: number;
+  pageSize?: number;
+}) {
+  return useQuery<MuralModerationQueueResponse>({
+    queryKey: ["muralModerationQueue", params],
+    queryFn: async () => {
+      const data = await graphqlClient.request<{
+        muralModerationQueue: MuralModerationQueueResponse;
+      }>(GET_MURAL_MODERATION_QUEUE, { input: params });
+      return data.muralModerationQueue;
+    },
+    staleTime: 30 * 1000,
+  });
+}
+
+export function useModerateMuralPost() {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    { id: string; status: MuralPostStatus; rejectionNote?: string },
+    Error,
+    { id: string; input: ModerateMuralPostInput }
+  >({
+    mutationFn: async ({ id, input }) => {
+      const data = await graphqlClient.request<{
+        moderateMuralPost: {
+          id: string;
+          status: MuralPostStatus;
+          rejectionNote?: string;
+        };
+      }>(MODERATE_MURAL_POST_MUTATION, { id, input });
+      return data.moderateMuralPost;
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: ["muralModerationQueue"],
+      });
+    },
+  });
+}
+
+// ==================== Reviews ====================
+
+export function useAdminReviews(params: {
+  storeId?: string;
+  userId?: string;
+  search?: string;
+  page?: number;
+  pageSize?: number;
+}) {
+  return useQuery<AdminReviewsResponse>({
+    queryKey: ["adminReviews", params],
+    queryFn: async () => {
+      const filters: Record<string, unknown> = {};
+      if (params.storeId) {
+        filters.storeId = params.storeId;
+      }
+      if (params.userId) {
+        filters.userId = params.userId;
+      }
+
+      const data = await graphqlClient.request<{
+        reviews: AdminReviewsResponse;
+      }>(GET_ADMIN_REVIEWS, {
+        filters: Object.keys(filters).length ? filters : undefined,
+        pagination: {
+          page: params.page ?? 1,
+          first: params.pageSize ?? 20,
+        },
+      });
+      return data.reviews;
+    },
+    staleTime: 30 * 1000,
+  });
+}
+
+export function useAdminDeleteReview() {
+  const queryClient = useQueryClient();
+
+  return useMutation<boolean, Error, { id: string }>({
+    mutationFn: async ({ id }) => {
+      const data = await graphqlClient.request<{ adminDeleteReview: boolean }>(
+        ADMIN_DELETE_REVIEW_MUTATION,
+        { id }
+      );
+      return data.adminDeleteReview;
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["adminReviews"] });
+    },
   });
 }

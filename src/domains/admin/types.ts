@@ -524,3 +524,118 @@ export interface UserDetailsWithActivity {
   totalCoupons: number;
   totalRedemptions: number;
 }
+
+// ==================== Challenges ====================
+
+export enum EntityType {
+  STORES = "STORES",
+  DISCOUNTS = "DISCOUNTS",
+  REVIEWS = "REVIEWS",
+  LOGIN_STREAKS = "LOGIN_STREAKS",
+  FIRST_VISIT_COUPON_REDEMPTION = "FIRST_VISIT_COUPON_REDEMPTION",
+  MURAL_POSTS = "MURAL_POSTS",
+  REFERRALS = "REFERRALS",
+}
+
+export interface Challenge {
+  id: string;
+  name: string;
+  entityType: EntityType;
+  entityId?: string;
+  count: number;
+  points: number;
+  isActive: boolean;
+  expiresAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateChallengeInput {
+  name: string;
+  entityType: EntityType;
+  entityId?: string;
+  count: number;
+  points: number;
+  expiresAt?: string;
+}
+
+export interface UpdateChallengeInput {
+  name?: string;
+  entityType?: EntityType;
+  entityId?: string;
+  count?: number;
+  points?: number;
+  isActive?: boolean;
+  expiresAt?: string;
+}
+
+// ==================== Mural Moderation ====================
+
+export enum MuralPostStatus {
+  PENDING = "PENDING",
+  APPROVED = "APPROVED",
+  REJECTED = "REJECTED",
+}
+
+export interface MuralPostUser {
+  id: string;
+  displayName?: string;
+  avatarUrl?: string;
+  email: string;
+}
+
+export interface MuralPostStore {
+  id: string;
+  name: string;
+  city?: string;
+}
+
+export interface AdminMuralPost {
+  id: string;
+  userId: string;
+  storeId: string;
+  imageUrl: string;
+  status: MuralPostStatus;
+  rejectionNote?: string;
+  likes: number;
+  createdAt: string;
+  user?: MuralPostUser;
+  store?: MuralPostStore;
+}
+
+export interface MuralModerationQueueResponse {
+  posts: AdminMuralPost[];
+  total: number;
+  page: number;
+  hasMore: boolean;
+}
+
+export interface ModerateMuralPostInput {
+  status: MuralPostStatus;
+  rejectionNote?: string;
+}
+
+// ==================== Reviews ====================
+
+export interface AdminReview {
+  id: string;
+  storeId: string;
+  userId: string;
+  title: string;
+  description?: string;
+  rating: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdminReviewsResponse {
+  data: AdminReview[];
+  paginationInfo: {
+    total: number;
+    page: number;
+    pageSize: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+  };
+}

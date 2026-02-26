@@ -140,7 +140,9 @@ export function EditStoreForm({
   const handleAddCategory = (
     option: AutocompleteOption<{ id: string; name: string }>
   ) => {
-    if (currentCategoryIds.includes(option.value.id)) {return;}
+    if (currentCategoryIds.includes(option.value.id)) {
+      return;
+    }
     setFormData((prev) => ({
       ...prev,
       categoryIds: [...(prev.categoryIds ?? []), option.value.id],

@@ -10,6 +10,7 @@ import {
   ArrowRight,
   Activity,
   Video,
+  Trophy,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -112,6 +113,17 @@ export default function AdminDashboardPage() {
 
   // Add remaining sections
   adminSections.push(
+    {
+      title: "Challenges",
+      description: "Create and manage gamification challenges",
+      icon: Trophy,
+      color: "from-yellow-400 to-orange-500",
+      href: "/admin/challenges",
+      stats: [
+        { label: "Total", value: "-" },
+        { label: "Active", value: "-" },
+      ],
+    },
     {
       title: "Coupons & Discounts",
       description: "Monitor coupon usage and redemptions",
@@ -290,7 +302,7 @@ export default function AdminDashboardPage() {
           <h2 className="text-2xl font-bold text-foreground mb-6">
             Quick Actions
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <button
               onClick={() => router.push("/admin/stores")}
               className="p-4 bg-card rounded-lg shadow hover:shadow-lg transition-all text-left group"
@@ -324,6 +336,25 @@ export default function AdminDashboardPage() {
                   </p>
                   <p className="text-sm text-muted-foreground">
                     Manage user accounts
+                  </p>
+                </div>
+              </div>
+            </button>
+
+            <button
+              onClick={() => router.push("/admin/challenges")}
+              className="p-4 bg-card rounded-lg shadow hover:shadow-lg transition-all text-left group"
+            >
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-yellow-400/10 rounded-lg">
+                  <Trophy className="w-5 h-5 text-yellow-500" />
+                </div>
+                <div>
+                  <p className="font-semibold text-foreground group-hover:text-yellow-500 transition-colors">
+                    Manage Challenges
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Gamification challenges
                   </p>
                 </div>
               </div>
