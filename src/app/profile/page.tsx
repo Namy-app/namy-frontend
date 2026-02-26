@@ -90,7 +90,9 @@ function AvatarPickerModal({
 
   const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) {return;}
+    if (!file) {
+      return;
+    }
     setSelectedFile(file);
     // Only for local preview — not stored as base64
     const reader = new FileReader();
@@ -104,7 +106,9 @@ function AvatarPickerModal({
   };
 
   const handleSave = async () => {
-    if (!preview) {return;}
+    if (!preview) {
+      return;
+    }
     setSaving(true);
     try {
       if (selectedFile) {
@@ -362,12 +366,14 @@ export default function ProfilePage(): React.JSX.Element | null {
               </div>
             </button>
 
-            {showAvatarModal ? <AvatarPickerModal
+            {showAvatarModal ? (
+              <AvatarPickerModal
                 currentAvatarUrl={user.avatarUrl}
                 displayName={user.displayName}
                 onClose={() => setShowAvatarModal(false)}
                 onSave={handleSaveAvatar}
-              /> : null}
+              />
+            ) : null}
             <h1 className="text-2xl font-bold text-foreground mb-1">
               {user.displayName || user.email}
             </h1>

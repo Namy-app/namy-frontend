@@ -1200,16 +1200,22 @@ export default function StoresDetailPage(): React.JSX.Element {
                     </>
                   ) : null}
 
-                  <button
-                    onClick={() => setShowReviewModal(true)}
-                    className="w-full bg-rose-400 hover:bg-rose-500 text-white font-bold rounded-2xl py-3 text-sm transition-colors flex items-center justify-center gap-2"
-                  >
-                    <span>Escribe tu reseña</span>
-                    <span>🍽️</span>
-                    <span className="text-xs font-semibold opacity-90">
-                      +50 pts 📸
-                    </span>
-                  </button>
+                  {reviewsData?.data?.some((r) => r.userId === user?.id) ? (
+                    <p className="w-full text-center text-sm font-semibold text-gray-400 py-3">
+                      ✓ Ya dejaste una reseña aquí
+                    </p>
+                  ) : (
+                    <button
+                      onClick={() => setShowReviewModal(true)}
+                      className="w-full bg-rose-400 hover:bg-rose-500 text-white font-bold rounded-2xl py-3 text-sm transition-colors flex items-center justify-center gap-2"
+                    >
+                      <span>Escribe tu reseña</span>
+                      <span>🍽️</span>
+                      <span className="text-xs font-semibold opacity-90">
+                        +50 pts 📸
+                      </span>
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -1841,13 +1847,18 @@ export default function StoresDetailPage(): React.JSX.Element {
                           description: "¡Gracias por tu reseña!",
                         });
                       } catch (err) {
+                        const msg = err instanceof Error ? err.message : "";
+                        const isDuplicate =
+                          msg.includes("already reviewed") ||
+                          msg.includes("409");
                         toast({
                           variant: "destructive",
-                          title: "Error al publicar",
-                          description:
-                            err instanceof Error
-                              ? err.message
-                              : "Intenta de nuevo.",
+                          title: isDuplicate
+                            ? "Ya dejaste una reseña"
+                            : "Error al publicar",
+                          description: isDuplicate
+                            ? "Solo puedes dejar una reseña por lugar."
+                            : "Intenta de nuevo.",
                         });
                       } finally {
                         setIsSubmittingReview(false);
