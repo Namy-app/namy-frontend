@@ -22,7 +22,20 @@ import {
   UPDATE_CATALOG,
   GET_STORE_CATALOGS,
   GET_CATEGORIES_BY_NAME_QUERY,
-  GET_SUBCATEGORIES_BY_CATEGORY_QUERY,
+  GET_CHALLENGES_QUERY,
+  CREATE_CHALLENGE_MUTATION,
+  UPDATE_CHALLENGE_MUTATION,
+  DELETE_CHALLENGE_MUTATION,
+  GET_MURAL_MODERATION_QUEUE,
+  MODERATE_MURAL_POST_MUTATION,
+  GET_ADMIN_REVIEWS,
+  ADMIN_DELETE_REVIEW_MUTATION,
+  GET_CATEGORIES_BY_STORE_TYPE_QUERY,
+  GET_CATEGORIES_QUERY,
+  GET_CATEGORY_BY_ID_QUERY,
+  CREATE_CATEGORY_MUTATION,
+  UPDATE_CATEGORY_MUTATION,
+  DELETE_CATEGORY_MUTATION,
 } from "./graphql";
 import {
   type CreateStoreInput,
@@ -49,6 +62,20 @@ import {
   type CreateCatalogItemInput,
   type UsersResponse,
   type UserDetailsWithActivity,
+  type Challenge,
+  type CreateChallengeInput,
+  type UpdateChallengeInput,
+  type EntityType,
+  type MuralModerationQueueResponse,
+  type ModerateMuralPostInput,
+  type MuralPostStatus,
+  type AdminReviewsResponse,
+  type Category,
+  type CategoriesResponse,
+  type CategoryFiltersInput,
+  type CreateCategoryInput,
+  type UpdateCategoryInput,
+  type StoreType,
 } from "./types";
 
 // ==================== Store Mutations ====================
@@ -208,7 +235,8 @@ export function useStorePin(id: string, enabled = false) {
 
 export function useStoreDiscounts(
   filters?: DiscountFiltersInput,
-  pagination?: PaginationInput
+  pagination?: PaginationInput,
+  options?: { enabled?: boolean }
 ) {
   return useQuery<DiscountsResponse>({
     queryKey: ["discounts", filters, pagination],
@@ -218,6 +246,7 @@ export function useStoreDiscounts(
       }>(GET_STORE_DISCOUNTS, { filters, pagination });
       return data.discounts;
     },
+    enabled: options?.enabled !== false,
   });
 }
 
@@ -446,20 +475,106 @@ export function useResendStorePinEmail() {
   });
 }
 
-// ==================== Category Queries ====================
+// ==================== Category Queries & Mutations (Admin CRUD) ====================
 
-interface Category {
-  id: string;
-  name: string;
-  isActive: boolean;
+export function useCategories(
+  filters?: CategoryFiltersInput,
+  pagination?: PaginationInput
+) {
+  return useQuery<CategoriesResponse>({
+    queryKey: ["categories", filters, pagination],
+    queryFn: async () => {
+      const data = await graphqlClient.request<{
+        categories: CategoriesResponse;
+      }>(GET_CATEGORIES_QUERY, { filters, pagination });
+      return data.categories;
+    },
+  });
 }
 
-interface Subcategory {
-  id: string;
-  name: string;
-  categoryId: string;
-  isActive: boolean;
+export function useCategory(id: string) {
+  return useQuery<Category>({
+    queryKey: ["category", id],
+    queryFn: async () => {
+      const data = await graphqlClient.request<{ category: Category }>(
+        GET_CATEGORY_BY_ID_QUERY,
+        { id }
+      );
+      return data.category;
+    },
+    enabled: !!id,
+  });
 }
+
+export function useCreateCategory() {
+  const queryClient = useQueryClient();
+
+  return useMutation<Category, Error, CreateCategoryInput>({
+    mutationFn: async (input: CreateCategoryInput) => {
+      const data = await graphqlClient.request<{
+        createCategory: Category;
+      }>(CREATE_CATEGORY_MUTATION, { input });
+      return data.createCategory;
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["categories"] });
+      void queryClient.invalidateQueries({ queryKey: ["categories-by-name"] });
+      void queryClient.invalidateQueries({
+        queryKey: ["categories-by-store-type"],
+      });
+    },
+  });
+}
+
+export function useUpdateCategory() {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    Category,
+    Error,
+    { id: string; input: UpdateCategoryInput }
+  >({
+    mutationFn: async ({ id, input }) => {
+      const data = await graphqlClient.request<{
+        updateCategory: Category;
+      }>(UPDATE_CATEGORY_MUTATION, { id, input });
+      return data.updateCategory;
+    },
+    onSuccess: (_, variables) => {
+      void queryClient.invalidateQueries({ queryKey: ["categories"] });
+      void queryClient.invalidateQueries({
+        queryKey: ["category", variables.id],
+      });
+      void queryClient.invalidateQueries({ queryKey: ["categories-by-name"] });
+      void queryClient.invalidateQueries({
+        queryKey: ["categories-by-store-type"],
+      });
+    },
+  });
+}
+
+export function useDeleteCategory() {
+  const queryClient = useQueryClient();
+
+  return useMutation<boolean, Error, string>({
+    mutationFn: async (id: string) => {
+      const data = await graphqlClient.request<{
+        deleteCategory: boolean;
+      }>(DELETE_CATEGORY_MUTATION, { id });
+      return data.deleteCategory;
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["categories"] });
+      void queryClient.invalidateQueries({ queryKey: ["categories-by-name"] });
+      void queryClient.invalidateQueries({
+        queryKey: ["categories-by-store-type"],
+      });
+    },
+  });
+}
+
+// ==================== Category Queries (by name / store type) ====================
+
 export function useGetCategoriesByName({
   query = "",
   enabled = true,
@@ -494,43 +609,196 @@ export function useGetCategoriesByName({
   });
 }
 
-export function useGetSubcategoriesByCategory({
-  categoryId,
+export function useGetCategoriesByStoreType({
+  storeType,
   name,
   enabled = true,
-  pagination,
+  pagination = { page: 1, first: 50 },
 }: {
-  categoryId?: string;
+  storeType?: StoreType | string;
   name?: string;
   enabled?: boolean;
   pagination?: PaginationInput;
 }) {
-  return useQuery<
-    { data: Subcategory[]; paginationInfo: PaginationInfo },
-    Error
-  >({
-    queryKey: ["subcategories-by-category", categoryId, name, pagination],
+  return useQuery<CategoriesResponse, Error>({
+    queryKey: ["categories-by-store-type", storeType, name, pagination],
     queryFn: async () => {
-      const queryParams: {
-        categoryId?: string;
-        name?: string;
-        pagination?: PaginationInput;
-      } = {};
-      if (categoryId) {
-        queryParams.categoryId = categoryId;
+      const data = await graphqlClient.request<{
+        categories: CategoriesResponse;
+      }>(GET_CATEGORIES_BY_STORE_TYPE_QUERY, {
+        storeType: storeType ?? null,
+        name: name ?? null,
+        pagination,
+      });
+      return data.categories;
+    },
+    enabled,
+  });
+}
+
+// ==================== Challenge Hooks ====================
+
+export function useChallenges(params?: {
+  isActive?: boolean;
+  entityType?: EntityType;
+}) {
+  return useQuery<Challenge[]>({
+    queryKey: ["challenges", params],
+    queryFn: async () => {
+      const data = await graphqlClient.request<{ challenges: Challenge[] }>(
+        GET_CHALLENGES_QUERY,
+        params
+      );
+      return data.challenges;
+    },
+  });
+}
+
+export function useCreateChallenge() {
+  const queryClient = useQueryClient();
+
+  return useMutation<Challenge, Error, CreateChallengeInput>({
+    mutationFn: async (input) => {
+      const data = await graphqlClient.request<{
+        createChallenge: Challenge;
+      }>(CREATE_CHALLENGE_MUTATION, { input });
+      return data.createChallenge;
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["challenges"] });
+    },
+  });
+}
+
+export function useUpdateChallenge() {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    Challenge,
+    Error,
+    { id: string; input: UpdateChallengeInput }
+  >({
+    mutationFn: async ({ id, input }) => {
+      const data = await graphqlClient.request<{
+        updateChallenge: Challenge;
+      }>(UPDATE_CHALLENGE_MUTATION, { id, input });
+      return data.updateChallenge;
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["challenges"] });
+    },
+  });
+}
+
+export function useDeleteChallenge() {
+  const queryClient = useQueryClient();
+
+  return useMutation<{ message: string }, Error, string>({
+    mutationFn: async (id) => {
+      const data = await graphqlClient.request<{
+        deleteChallenge: { message: string };
+      }>(DELETE_CHALLENGE_MUTATION, { id });
+      return data.deleteChallenge;
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["challenges"] });
+    },
+  });
+}
+
+// ==================== Mural Moderation ====================
+
+export function useMuralModerationQueue(params: {
+  status?: MuralPostStatus;
+  page?: number;
+  pageSize?: number;
+}) {
+  return useQuery<MuralModerationQueueResponse>({
+    queryKey: ["muralModerationQueue", params],
+    queryFn: async () => {
+      const data = await graphqlClient.request<{
+        muralModerationQueue: MuralModerationQueueResponse;
+      }>(GET_MURAL_MODERATION_QUEUE, { input: params });
+      return data.muralModerationQueue;
+    },
+    staleTime: 30 * 1000,
+  });
+}
+
+export function useModerateMuralPost() {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    { id: string; status: MuralPostStatus; rejectionNote?: string },
+    Error,
+    { id: string; input: ModerateMuralPostInput }
+  >({
+    mutationFn: async ({ id, input }) => {
+      const data = await graphqlClient.request<{
+        moderateMuralPost: {
+          id: string;
+          status: MuralPostStatus;
+          rejectionNote?: string;
+        };
+      }>(MODERATE_MURAL_POST_MUTATION, { id, input });
+      return data.moderateMuralPost;
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: ["muralModerationQueue"],
+      });
+    },
+  });
+}
+
+// ==================== Reviews ====================
+
+export function useAdminReviews(params: {
+  storeId?: string;
+  userId?: string;
+  search?: string;
+  page?: number;
+  pageSize?: number;
+}) {
+  return useQuery<AdminReviewsResponse>({
+    queryKey: ["adminReviews", params],
+    queryFn: async () => {
+      const filters: Record<string, unknown> = {};
+      if (params.storeId) {
+        filters.storeId = params.storeId;
       }
-      if (name) {
-        queryParams.name = name;
-      }
-      if (pagination) {
-        queryParams.pagination = pagination;
+      if (params.userId) {
+        filters.userId = params.userId;
       }
 
       const data = await graphqlClient.request<{
-        subcategories: { data: Subcategory[]; paginationInfo: PaginationInfo };
-      }>(GET_SUBCATEGORIES_BY_CATEGORY_QUERY, queryParams);
-      return data.subcategories;
+        reviews: AdminReviewsResponse;
+      }>(GET_ADMIN_REVIEWS, {
+        filters: Object.keys(filters).length ? filters : undefined,
+        pagination: {
+          page: params.page ?? 1,
+          first: params.pageSize ?? 20,
+        },
+      });
+      return data.reviews;
     },
-    enabled: enabled,
+    staleTime: 30 * 1000,
+  });
+}
+
+export function useAdminDeleteReview() {
+  const queryClient = useQueryClient();
+
+  return useMutation<boolean, Error, { id: string }>({
+    mutationFn: async ({ id }) => {
+      const data = await graphqlClient.request<{ adminDeleteReview: boolean }>(
+        ADMIN_DELETE_REVIEW_MUTATION,
+        { id }
+      );
+      return data.adminDeleteReview;
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["adminReviews"] });
+    },
   });
 }

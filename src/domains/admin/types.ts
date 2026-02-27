@@ -7,6 +7,7 @@ export enum CategoryType {
 
 export enum StoreType {
   PRODUCT = "PRODUCT",
+  RESTAURANT = "RESTAURANT",
   SERVICE = "SERVICE",
 }
 
@@ -24,6 +25,41 @@ export enum UserRole {
 }
 
 // ==================== Interfaces ====================
+
+export interface Category {
+  id: string;
+  name: string;
+  iconUrl?: string;
+  storeType?: StoreType;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface CategoriesResponse {
+  data: Category[];
+  paginationInfo: PaginationInfo;
+}
+
+export interface CategoryFiltersInput {
+  name?: string;
+  id?: string;
+  isActive?: boolean;
+  storeType?: StoreType;
+}
+
+export interface CreateCategoryInput {
+  name: string;
+  iconUrl?: string;
+  storeType?: StoreType;
+  isActive?: boolean;
+}
+
+export interface UpdateCategoryInput {
+  name?: string;
+  iconUrl?: string;
+  storeType?: StoreType;
+  isActive?: boolean;
+}
 
 export interface OpenDay {
   day: string;
@@ -45,12 +81,7 @@ export interface Store {
   image2Url?: string;
   image3Url?: string;
   images?: string[]; // Dynamic array of image URLs
-  categoryId?: string;
-  subCategory?: string;
-  catId?: string;
-  subCatId?: string;
-  category?: { id: string; name: string };
-  subcategory?: { id: string; name: string };
+  categoryIds: string[];
   type: StoreType;
   city: string;
   address: string;
@@ -92,7 +123,7 @@ export interface StoreStatistics {
   active: number;
   inactive: number;
   byType: {
-    product: number;
+    restaurant: number;
     service: number;
   };
   byPriceRange: {
@@ -122,10 +153,7 @@ export interface StoresResponse {
 export interface CreateStoreInput {
   name: string;
   description?: string;
-  catId?: string;
-  subCatId?: string;
-  category?: string;
-  subCategory?: string;
+  categoryIds: string[];
   type: StoreType;
   city: string;
   address: string;
@@ -147,10 +175,7 @@ export interface CreateStoreInput {
 export interface UpdateStoreInput {
   name?: string;
   description?: string;
-  catId?: string;
-  subCatId?: string;
-  category?: string;
-  subCategory?: string;
+  categoryIds?: string[];
   type?: StoreType;
   city?: string;
   address?: string;
@@ -174,8 +199,7 @@ export interface UpdateStoreInput {
 export interface StoreFiltersInput {
   name?: string;
   city?: string;
-  categoryId?: string;
-  subCategory?: string;
+  categoryIds?: string[];
   isRestaurant?: boolean;
   type?: StoreType;
   price?: PriceRange;
@@ -498,4 +522,119 @@ export interface UserDetailsWithActivity {
   redemptions: CouponRedemption[];
   totalCoupons: number;
   totalRedemptions: number;
+}
+
+// ==================== Challenges ====================
+
+export enum EntityType {
+  STORES = "STORES",
+  DISCOUNTS = "DISCOUNTS",
+  REVIEWS = "REVIEWS",
+  LOGIN_STREAKS = "LOGIN_STREAKS",
+  FIRST_VISIT_COUPON_REDEMPTION = "FIRST_VISIT_COUPON_REDEMPTION",
+  MURAL_POSTS = "MURAL_POSTS",
+  REFERRALS = "REFERRALS",
+}
+
+export interface Challenge {
+  id: string;
+  name: string;
+  entityType: EntityType;
+  entityId?: string;
+  count: number;
+  points: number;
+  isActive: boolean;
+  expiresAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateChallengeInput {
+  name: string;
+  entityType: EntityType;
+  entityId?: string;
+  count: number;
+  points: number;
+  expiresAt?: string;
+}
+
+export interface UpdateChallengeInput {
+  name?: string;
+  entityType?: EntityType;
+  entityId?: string;
+  count?: number;
+  points?: number;
+  isActive?: boolean;
+  expiresAt?: string;
+}
+
+// ==================== Mural Moderation ====================
+
+export enum MuralPostStatus {
+  PENDING = "PENDING",
+  APPROVED = "APPROVED",
+  REJECTED = "REJECTED",
+}
+
+export interface MuralPostUser {
+  id: string;
+  displayName?: string;
+  avatarUrl?: string;
+  email: string;
+}
+
+export interface MuralPostStore {
+  id: string;
+  name: string;
+  city?: string;
+}
+
+export interface AdminMuralPost {
+  id: string;
+  userId: string;
+  storeId: string;
+  imageUrl: string;
+  status: MuralPostStatus;
+  rejectionNote?: string;
+  likes: number;
+  createdAt: string;
+  user?: MuralPostUser;
+  store?: MuralPostStore;
+}
+
+export interface MuralModerationQueueResponse {
+  posts: AdminMuralPost[];
+  total: number;
+  page: number;
+  hasMore: boolean;
+}
+
+export interface ModerateMuralPostInput {
+  status: MuralPostStatus;
+  rejectionNote?: string;
+}
+
+// ==================== Reviews ====================
+
+export interface AdminReview {
+  id: string;
+  storeId: string;
+  userId: string;
+  title: string;
+  description?: string;
+  rating: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdminReviewsResponse {
+  data: AdminReview[];
+  paginationInfo: {
+    total: number;
+    page: number;
+    pageSize: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+  };
 }

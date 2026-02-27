@@ -13,7 +13,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import { CreateStoreForm } from "@/domains/admin/components/CreateStoreForm";
 import { EditStoreForm } from "@/domains/admin/components/EditStoreForm";
@@ -22,6 +22,7 @@ import {
   useStores,
   useDeleteStore,
   useToggleStoreActive,
+  useCategories,
 } from "@/domains/admin/hooks";
 import { type Store } from "@/domains/admin/types";
 import { useToast } from "@/hooks/use-toast";
@@ -42,11 +43,22 @@ export default function AdminStoresPage() {
     { includeAll: true },
     { first: itemsPerPage, page: currentPage }
   );
+  const { data: categoriesData, isLoading: isCategoriesLoading } =
+    useCategories(undefined, { page: 1, first: 100 });
   const deleteStore = useDeleteStore();
   const toggleStoreActive = useToggleStoreActive();
 
   const stores = storesData?.data ?? [];
   const paginationInfo = storesData?.paginationInfo;
+  const allCategories = categoriesData?.data ?? [];
+
+  const categoryIdToName = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const c of allCategories) {
+      map.set(c.id, c.name);
+    }
+    return map;
+  }, [allCategories]);
 
   // Handle delete store
   const handleDeleteStore = async () => {
@@ -154,11 +166,11 @@ export default function AdminStoresPage() {
             </p>
           </div>
 
-          {/* Product Stores */}
+          {/* Restaurant Stores */}
           <div className="bg-card rounded-lg shadow-card p-6">
             <div className="flex items-center justify-between mb-2">
               <p className="text-sm font-medium text-muted-foreground">
-                Product Stores
+                Restaurant Stores
               </p>
               <div className="p-2 bg-secondary/20 rounded-lg">
                 <Package className="w-5 h-5 text-secondary-foreground" />
@@ -168,11 +180,11 @@ export default function AdminStoresPage() {
               {statsLoading ? (
                 <span className="inline-block animate-pulse w-16 h-8 bg-gray-300 rounded-md" />
               ) : (
-                stats?.byType.product || 0
+                stats?.byType.restaurant || 0
               )}
             </p>
             <p className="text-sm text-muted-foreground mt-2">
-              Product-based businesses
+              Restaurant stores
             </p>
           </div>
 
@@ -203,209 +215,237 @@ export default function AdminStoresPage() {
             </h3>
           </div>
 
-          {storesLoading ? (
-            <div className="p-8 text-center">
-              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-              <p className="text-muted-foreground mt-2">Loading stores...</p>
-            </div>
-          ) : stores.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gradient-hero">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                      Name
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                      Type
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                      City
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                      Rating
-                    </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-card divide-y divide-border">
-                  {stores.map((store) => (
-                    <tr
-                      key={store.id}
-                      className="hover:bg-gradient-hero transition-colors"
-                    >
-                      <td
-                        className="px-6 py-4 whitespace-nowrap cursor-pointer"
-                        onClick={() => router.push(`/admin/stores/${store.id}`)}
-                      >
-                        <div className="flex items-center gap-3">
-                          <span
-                            className={`w-3 h-3 rounded-full ${
-                              store.active
-                                ? "bg-secondary-foreground"
-                                : "bg-destructive"
-                            }`}
-                            title={store.active ? "Active" : "Inactive"}
-                          />
-                          <div>
-                            <div className="text-sm font-medium text-foreground">
-                              {store.name}
-                            </div>
-                            <div className="text-sm text-muted-foreground">
-                              {store.description?.slice(0, 50)}
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-                      <td
-                        className="px-6 py-4 whitespace-nowrap cursor-pointer"
-                        onClick={() => router.push(`/admin/stores/${store.id}`)}
-                      >
-                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-primary/10 text-primary capitalize">
-                          {store.type}
-                        </span>
-                      </td>
-                      <td
-                        className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground cursor-pointer"
-                        onClick={() => router.push(`/admin/stores/${store.id}`)}
-                      >
-                        {store.city}
-                      </td>
-                      <td
-                        className="px-6 py-4 whitespace-nowrap cursor-pointer"
-                        onClick={() => router.push(`/admin/stores/${store.id}`)}
-                      >
-                        <span
-                          className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                            store.active
-                              ? "bg-secondary/20 text-secondary-foreground"
-                              : "bg-destructive/20 text-destructive"
-                          }`}
-                        >
-                          {store.active ? "Active" : "Inactive"}
-                        </span>
-                      </td>
-                      <td
-                        className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground cursor-pointer"
-                        onClick={() => router.push(`/admin/stores/${store.id}`)}
-                      >
-                        ⭐ {store.averageRating}/5 ({store.reviewCounter})
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <div className="flex items-center justify-end gap-2">
-                          <button
-                            onClick={(e) =>
-                              void handleToggleStoreActive(store, e)
-                            }
-                            className={`p-2 rounded-lg transition-colors ${
-                              store.active
-                                ? "text-green-500 hover:bg-green-500/10"
-                                : "text-secondary-foreground hover:bg-secondary/10"
-                            }`}
-                            title={
-                              store.active
-                                ? "Deactivate store"
-                                : "Activate store"
-                            }
-                            disabled={toggleStoreActive.isPending}
-                          >
-                            <Power className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={(e) => handleEditStore(store, e)}
-                            className="p-2 text-primary hover:bg-primary/10 rounded-lg transition-colors"
-                            title="Edit store"
-                          >
-                            <Pencil className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={(e) => handleDeleteClick(store, e)}
-                            className="p-2 text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
-                            title="Delete store"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-
-              {/* Pagination Controls */}
-              {paginationInfo ? (
-                <div className="flex items-center justify-between px-6 py-4 border-t border-border">
-                  <div className="text-sm text-muted-foreground">
-                    Showing {(currentPage - 1) * itemsPerPage + 1} to{" "}
-                    {Math.min(currentPage * itemsPerPage, paginationInfo.total)}{" "}
-                    of {paginationInfo.total} stores
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                      disabled={!paginationInfo.hasPreviousPage}
-                      className="flex items-center gap-1 px-3 py-2 rounded-lg border border-border hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                      title="Previous page"
-                    >
-                      <ChevronLeft className="w-4 h-4" />
-                      <span className="text-sm font-medium">Previous</span>
-                    </button>
-
-                    <div className="flex items-center gap-2 px-3 py-2">
-                      {Array.from(
-                        { length: paginationInfo.totalPages },
-                        (_, i) => i + 1
-                      ).map((page) => (
-                        <button
-                          key={page}
-                          onClick={() => setCurrentPage(page)}
-                          className={`w-8 h-8 rounded flex items-center justify-center text-sm font-medium transition-colors ${
-                            page === currentPage
-                              ? "bg-primary text-primary-foreground"
-                              : "border border-border hover:bg-muted"
-                          }`}
-                        >
-                          {page}
-                        </button>
-                      ))}
-                    </div>
-
-                    <button
-                      onClick={() => setCurrentPage((p) => p + 1)}
-                      disabled={!paginationInfo.hasNextPage}
-                      className="flex items-center gap-1 px-3 py-2 rounded-lg border border-border hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                      title="Next page"
-                    >
-                      <span className="text-sm font-medium">Next</span>
-                      <ChevronRight className="w-4 h-4" />
-                    </button>
-                  </div>
+          {(() => {
+            if (storesLoading) {
+              return (
+                <div className="p-8 text-center">
+                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+                  <p className="text-muted-foreground mt-2">
+                    Loading stores...
+                  </p>
                 </div>
-              ) : null}
-            </div>
-          ) : (
-            <div className="p-8 text-center">
-              <StoreIcon className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">No stores found</p>
-              <button
-                onClick={() => setShowCreateForm(true)}
-                className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-colors"
-              >
-                Create First Store
-              </button>
-            </div>
-          )}
+              );
+            }
+            if (stores.length > 0) {
+              return (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-gradient-hero">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                          Name
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                          Type
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                          City
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                          Status
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                          Rating
+                        </th>
+                        <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-card divide-y divide-border">
+                      {stores.map((store) => (
+                        <tr
+                          key={store.id}
+                          className="hover:bg-gradient-hero transition-colors"
+                        >
+                          <td
+                            className="px-6 py-4 whitespace-nowrap cursor-pointer"
+                            onClick={() =>
+                              router.push(`/admin/stores/${store.id}`)
+                            }
+                          >
+                            <div className="flex items-center gap-3">
+                              <span
+                                className={`w-3 h-3 rounded-full ${
+                                  store.active
+                                    ? "bg-secondary-foreground"
+                                    : "bg-destructive"
+                                }`}
+                                title={store.active ? "Active" : "Inactive"}
+                              />
+                              <div>
+                                <div className="text-sm font-medium text-foreground">
+                                  {store.name}
+                                </div>
+                                <div className="text-sm text-muted-foreground">
+                                  {store.description?.slice(0, 50)}
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                          <td
+                            className="px-6 py-4 whitespace-nowrap cursor-pointer"
+                            onClick={() =>
+                              router.push(`/admin/stores/${store.id}`)
+                            }
+                          >
+                            <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-primary/10 text-primary capitalize">
+                              {store.type}
+                            </span>
+                          </td>
+                          <td
+                            className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground cursor-pointer"
+                            onClick={() =>
+                              router.push(`/admin/stores/${store.id}`)
+                            }
+                          >
+                            {store.city}
+                          </td>
+                          <td
+                            className="px-6 py-4 whitespace-nowrap cursor-pointer"
+                            onClick={() =>
+                              router.push(`/admin/stores/${store.id}`)
+                            }
+                          >
+                            <span
+                              className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                                store.active
+                                  ? "bg-secondary/20 text-secondary-foreground"
+                                  : "bg-destructive/20 text-destructive"
+                              }`}
+                            >
+                              {store.active ? "Active" : "Inactive"}
+                            </span>
+                          </td>
+                          <td
+                            className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground cursor-pointer"
+                            onClick={() =>
+                              router.push(`/admin/stores/${store.id}`)
+                            }
+                          >
+                            ⭐ {store.averageRating}/5 ({store.reviewCounter})
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <div className="flex items-center justify-end gap-2">
+                              <button
+                                onClick={(e) =>
+                                  void handleToggleStoreActive(store, e)
+                                }
+                                className={`p-2 rounded-lg transition-colors ${
+                                  store.active
+                                    ? "text-green-500 hover:bg-green-500/10"
+                                    : "text-secondary-foreground hover:bg-secondary/10"
+                                }`}
+                                title={
+                                  store.active
+                                    ? "Deactivate store"
+                                    : "Activate store"
+                                }
+                                disabled={toggleStoreActive.isPending}
+                              >
+                                <Power className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={(e) => handleEditStore(store, e)}
+                                className="p-2 text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                                title="Edit store"
+                              >
+                                <Pencil className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={(e) => handleDeleteClick(store, e)}
+                                className="p-2 text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
+                                title="Delete store"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+
+                  {/* Pagination Controls */}
+                  {paginationInfo ? (
+                    <div className="flex items-center justify-between px-6 py-4 border-t border-border">
+                      <div className="text-sm text-muted-foreground">
+                        Showing {(currentPage - 1) * itemsPerPage + 1} to{" "}
+                        {Math.min(
+                          currentPage * itemsPerPage,
+                          paginationInfo.total
+                        )}{" "}
+                        of {paginationInfo.total} stores
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() =>
+                            setCurrentPage((p) => Math.max(1, p - 1))
+                          }
+                          disabled={!paginationInfo.hasPreviousPage}
+                          className="flex items-center gap-1 px-3 py-2 rounded-lg border border-border hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                          title="Previous page"
+                        >
+                          <ChevronLeft className="w-4 h-4" />
+                          <span className="text-sm font-medium">Previous</span>
+                        </button>
+
+                        <div className="flex items-center gap-2 px-3 py-2">
+                          {Array.from(
+                            { length: paginationInfo.totalPages },
+                            (_, i) => i + 1
+                          ).map((page) => (
+                            <button
+                              key={page}
+                              onClick={() => setCurrentPage(page)}
+                              className={`w-8 h-8 rounded flex items-center justify-center text-sm font-medium transition-colors ${
+                                page === currentPage
+                                  ? "bg-primary text-primary-foreground"
+                                  : "border border-border hover:bg-muted"
+                              }`}
+                            >
+                              {page}
+                            </button>
+                          ))}
+                        </div>
+
+                        <button
+                          onClick={() => setCurrentPage((p) => p + 1)}
+                          disabled={!paginationInfo.hasNextPage}
+                          className="flex items-center gap-1 px-3 py-2 rounded-lg border border-border hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                          title="Next page"
+                        >
+                          <span className="text-sm font-medium">Next</span>
+                          <ChevronRight className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+              );
+            }
+            return (
+              <div className="p-8 text-center">
+                <StoreIcon className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground">No stores found</p>
+                <button
+                  onClick={() => setShowCreateForm(true)}
+                  className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-colors"
+                >
+                  Create First Store
+                </button>
+              </div>
+            );
+          })()}
         </div>
       </div>
 
       {/* Create Store Modal */}
       {showCreateForm ? (
         <CreateStoreForm
+          categories={allCategories}
+          categoryIdToName={categoryIdToName}
+          isCategoriesLoading={isCategoriesLoading}
           onClose={() => setShowCreateForm(false)}
           onSuccess={() => {
             setShowCreateForm(false);
@@ -418,6 +458,9 @@ export default function AdminStoresPage() {
       {storeToEdit ? (
         <EditStoreForm
           store={storeToEdit}
+          categories={allCategories}
+          categoryIdToName={categoryIdToName}
+          isCategoriesLoading={isCategoriesLoading}
           onClose={() => setStoreToEdit(null)}
           onSuccess={() => {
             setStoreToEdit(null);

@@ -9,14 +9,7 @@ export const CREATE_STORE_MUTATION = gql`
         id
         name
         description
-        category {
-          id
-          name
-        }
-        subcategory {
-          id
-          name
-        }
+        categoryIds
         type
         city
         address
@@ -54,14 +47,7 @@ export const UPDATE_STORE_MUTATION = gql`
         id
         name
         description
-        category {
-          id
-          name
-        }
-        subcategory {
-          id
-          name
-        }
+        categoryIds
         type
         city
         address
@@ -117,7 +103,7 @@ export const GET_STORE_STATISTICS = gql`
       active
       inactive
       byType {
-        product
+        restaurant
         service
       }
       byPriceRange {
@@ -151,16 +137,7 @@ export const GET_ALL_STORES = gql`
         lat
         lng
         phoneNumber
-        catId
-        subCatId
-        category {
-          id
-          name
-        }
-        subcategory {
-          id
-          name
-        }
+        categoryIds
         isRestaurant
         email
         price
@@ -210,16 +187,7 @@ export const GET_STORE_BY_ID = gql`
       active
       url
       openDays
-      catId
-      subCatId
-      category {
-        id
-        name
-      }
-      subcategory {
-        id
-        name
-      }
+      categoryIds
       tags
       restrictions
       pin
@@ -624,20 +592,21 @@ export const GET_CATEGORIES_BY_NAME_QUERY = gql`
   }
 `;
 
-export const GET_SUBCATEGORIES_BY_CATEGORY_QUERY = gql`
-  query GetSubcategoriesByCategory(
-    $categoryId: String
+export const GET_CATEGORIES_BY_STORE_TYPE_QUERY = gql`
+  query GetCategoriesByStoreType(
+    $storeType: String
     $name: String
     $pagination: PaginationInput
   ) {
-    subcategories(
-      filters: { categoryId: $categoryId, name: $name }
+    categories(
+      filters: { storeType: $storeType, name: $name }
       pagination: $pagination
     ) {
       data {
         id
         name
-        categoryId
+        iconUrl
+        storeType
         isActive
       }
       paginationInfo {
@@ -649,5 +618,215 @@ export const GET_SUBCATEGORIES_BY_CATEGORY_QUERY = gql`
         hasPreviousPage
       }
     }
+  }
+`;
+
+// ==================== Admin Category CRUD ====================
+
+export const GET_CATEGORIES_QUERY = gql`
+  query GetCategories(
+    $filters: CategoryFiltersInput
+    $pagination: PaginationInput
+  ) {
+    categories(filters: $filters, pagination: $pagination) {
+      data {
+        id
+        name
+        iconUrl
+        storeType
+        isActive
+        createdAt
+      }
+      paginationInfo {
+        total
+        page
+        pageSize
+        totalPages
+        hasNextPage
+        hasPreviousPage
+      }
+    }
+  }
+`;
+// ==================== Challenge Queries & Mutations ====================
+
+const CHALLENGE_FRAGMENT = `
+  id
+  name
+  entityType
+  entityId
+  count
+  points
+  isActive
+  expiresAt
+  createdAt
+  updatedAt
+`;
+
+export const GET_CHALLENGES_QUERY = gql`
+  query GetChallenges($isActive: Boolean, $entityType: String) {
+    challenges(isActive: $isActive, entityType: $entityType) {
+      ${CHALLENGE_FRAGMENT}
+    }
+  }
+`;
+
+export const GET_CHALLENGE_BY_ID_QUERY = gql`
+  query GetChallenge($id: String!) {
+    challenge(id: $id) {
+      ${CHALLENGE_FRAGMENT}
+    }
+  }
+`;
+
+export const CREATE_CHALLENGE_MUTATION = gql`
+  mutation CreateChallenge($input: CreateChallengeInput!) {
+    createChallenge(input: $input) {
+      ${CHALLENGE_FRAGMENT}
+    }
+  }
+`;
+
+export const UPDATE_CHALLENGE_MUTATION = gql`
+  mutation UpdateChallenge($id: String!, $input: UpdateChallengeInput!) {
+    updateChallenge(id: $id, input: $input) {
+      ${CHALLENGE_FRAGMENT}
+    }
+  }
+`;
+
+export const DELETE_CHALLENGE_MUTATION = gql`
+  mutation DeleteChallenge($id: String!) {
+    deleteChallenge(id: $id) {
+      message
+    }
+  }
+`;
+
+// ==================== Mural Moderation ====================
+
+const MURAL_POST_FRAGMENT = `
+  id
+  userId
+  storeId
+  imageUrl
+  status
+  rejectionNote
+  likes
+  createdAt
+  user {
+    id
+    displayName
+    avatarUrl
+    email
+  }
+  store {
+    id
+    name
+    city
+  }
+`;
+
+export const GET_MURAL_MODERATION_QUEUE = gql`
+  query MuralModerationQueue($input: MuralModerationQueueInput) {
+    muralModerationQueue(input: $input) {
+      posts {
+        ${MURAL_POST_FRAGMENT}
+      }
+      total
+      page
+      hasMore
+    }
+  }
+`;
+
+export const MODERATE_MURAL_POST_MUTATION = gql`
+  mutation ModerateMuralPost($id: ID!, $input: ModerateMuralPostInput!) {
+    moderateMuralPost(id: $id, input: $input) {
+      id
+      status
+      rejectionNote
+    }
+  }
+`;
+
+// ==================== Review Queries & Mutations ====================
+
+export const GET_ADMIN_REVIEWS = gql`
+  query GetAdminReviews(
+    $filters: ReviewFiltersInput
+    $pagination: ReviewPaginationInput
+  ) {
+    reviews(filters: $filters, pagination: $pagination) {
+      data {
+        id
+        storeId
+        userId
+        title
+        description
+        rating
+        createdAt
+        updatedAt
+      }
+      paginationInfo {
+        total
+        page
+        pageSize
+        totalPages
+        hasNextPage
+        hasPreviousPage
+      }
+    }
+  }
+`;
+
+export const GET_CATEGORY_BY_ID_QUERY = gql`
+  query GetCategoryById($id: String!) {
+    category(id: $id) {
+      id
+      name
+      iconUrl
+      storeType
+      isActive
+      createdAt
+    }
+  }
+`;
+
+export const CREATE_CATEGORY_MUTATION = gql`
+  mutation CreateCategory($input: CreateCategoryInput!) {
+    createCategory(input: $input) {
+      id
+      name
+      iconUrl
+      storeType
+      isActive
+      createdAt
+    }
+  }
+`;
+
+export const UPDATE_CATEGORY_MUTATION = gql`
+  mutation UpdateCategory($id: String!, $input: UpdateCategoryInput!) {
+    updateCategory(id: $id, input: $input) {
+      id
+      name
+      iconUrl
+      storeType
+      isActive
+      createdAt
+    }
+  }
+`;
+
+export const DELETE_CATEGORY_MUTATION = gql`
+  mutation DeleteCategory($id: String!) {
+    deleteCategory(id: $id)
+  }
+`;
+
+export const ADMIN_DELETE_REVIEW_MUTATION = gql`
+  mutation AdminDeleteReview($id: String!) {
+    adminDeleteReview(id: $id)
   }
 `;

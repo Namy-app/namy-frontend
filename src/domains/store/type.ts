@@ -1,12 +1,12 @@
+import type { StoreType } from "@/domains/admin/types";
 import type { Store } from "@/lib/api-types";
 
 export interface ParsedStore {
   id: string;
   name: string;
-  category: string;
-  catId?: string;
-  subCatId?: string;
-  subcategory?: { id: string; name: string };
+  categoryIds: string[];
+  /** Display label for category (e.g. "Restaurant") when names are not resolved */
+  categoryLabel?: string;
   emoji: string;
   rating: number;
   reviewCount: number;
@@ -42,10 +42,9 @@ export interface Restaurant {
   id: string;
   slug: string;
   name: string;
-  category: string;
-  catId?: string;
-  subCatId?: string;
-  subcategory?: { id: string; name: string };
+  categoryIds: string[];
+  /** Display label for category when names are not resolved */
+  categoryLabel?: string;
   rating: number;
   image: string;
   discount: number;
@@ -73,19 +72,17 @@ export type StoreSortBy = "NEWEST" | "DISTANCE";
 
 export interface StoreFilters {
   search?: string;
-  catId?: string;
-  subCatId?: string;
-  category?: string;
-  subCategory?: string;
+  categoryIds?: string[];
   city?: string;
   active?: boolean;
   isRestaurant?: boolean;
+  /** Filter by store type (e.g. RESTAURANT, SERVICE). Maps to GraphQL StoreFiltersInput.type */
+  type?: StoreType;
   lat?: number;
   lng?: number;
   id?: string;
   availabilityStatus?: "available" | "soon" | "unavailable";
   sortBy?: StoreSortBy;
-  excludeCategoryId?: string;
 }
 
 export interface PaginationInput {

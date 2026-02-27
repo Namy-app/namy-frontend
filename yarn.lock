@@ -696,7 +696,7 @@
 
 "@novu/nextjs@^3.13.0":
   version "3.13.0"
-  resolved "https://registry.yarnpkg.com/@novu/nextjs/-/nextjs-3.13.0.tgz#e6c4c9578343783af3536cd4627b40d50a6759b5"
+  resolved "https://registry.npmjs.org/@novu/nextjs/-/nextjs-3.13.0.tgz"
   integrity sha512-L6as6uMgvpo4TF7qX7FKWVNHKYyIXp0jOZketLPeBxknFcftfw3SKPV/J6H87e9SEjCWam+J4+Nv5KAOtk6YTg==
   dependencies:
     "@novu/react" "3.13.0"
@@ -1807,6 +1807,11 @@ data-view-byte-offset@^1.0.1:
     call-bound "^1.0.2"
     es-errors "^1.3.0"
     is-data-view "^1.0.1"
+
+date-fns@^4.1.0:
+  version "4.1.0"
+  resolved "https://registry.npmjs.org/date-fns/-/date-fns-4.1.0.tgz"
+  integrity sha512-Ukq0owbQXxa/U3EGtsdVBkR1w7KOQ5gIBqdH2hkvknzZPYvBxb/aa6E8L7tmjFtkwZBu3UXBbjIgPo/Ez4xaNg==
 
 debug@^3.2.7:
   version "3.2.7"

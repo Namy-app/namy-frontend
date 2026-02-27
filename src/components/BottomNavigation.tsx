@@ -4,160 +4,159 @@ import { useRouter, usePathname } from "next/navigation";
 
 import { useAuthStore } from "@/store/useAuthStore";
 
+const ExploreIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="m16.24 7.76-1.804 5.411a2 2 0 0 1-1.265 1.265L7.76 16.24l1.804-5.411a2 2 0 0 1 1.265-1.265z" />
+    <circle cx="12" cy="12" r="10" />
+  </svg>
+);
+
+const MuralIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M3 9a2 2 0 0 1 2-2h1" />
+    <path d="M3 15v1a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-1" />
+    <path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+    <circle cx="12" cy="13" r="2" />
+    <path d="M12 11v-1" />
+    <line x1="9" y1="7" x2="15" y2="7" />
+  </svg>
+);
+
+const LeagueIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <rect x="3" y="12" width="4" height="9" rx="1" />
+    <rect x="10" y="7" width="4" height="14" rx="1" />
+    <rect x="17" y="3" width="4" height="18" rx="1" />
+  </svg>
+);
+
+const CouponsIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z" />
+    <path d="M13 5v2" />
+    <path d="M13 17v2" />
+    <path d="M13 11v2" />
+  </svg>
+);
+
+const ProfileIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+    <circle cx="12" cy="7" r="4" />
+  </svg>
+);
+
+interface NavItem {
+  label: string;
+  path: string;
+  icon: React.ReactNode;
+  requiresAuth?: boolean;
+}
+
 export function BottomNavigation(): React.JSX.Element {
   const router = useRouter();
   const pathname = usePathname();
   const { isAuthenticated } = useAuthStore();
 
-  const isActive = (path: string) => pathname === path;
+  const navItems: NavItem[] = [
+    { label: "Explorar", path: "/explore", icon: <ExploreIcon /> },
+    { label: "Mural", path: "/mural", icon: <MuralIcon />, requiresAuth: true },
+    {
+      label: "Liga",
+      path: "/league",
+      icon: <LeagueIcon />,
+      requiresAuth: true,
+    },
+    {
+      label: "Cupones",
+      path: "/my-coupons",
+      icon: <CouponsIcon />,
+      requiresAuth: true,
+    },
+    {
+      label: "Perfil",
+      path: "/profile",
+      icon: <ProfileIcon />,
+      requiresAuth: true,
+    },
+  ];
+
+  const visibleItems = navItems.filter(
+    (item) => !item.requiresAuth || isAuthenticated
+  );
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-linear-to-t from-card/95 to-card/90 backdrop-blur-sm bg-white/90 border-t border-border shadow-lg z-50">
-      <div className="flex justify-around items-center h-16 max-w-5xl mx-auto">
-        <button
-          onClick={() => router.push("/explore")}
-          className={`flex flex-col items-center justify-center gap-1 md:px-6  py-2 transition-all rounded-lg ${isActive("/explore") ? "text-primary scale-105" : "text-muted-foreground hover:text-foreground hover:scale-105"}`}
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="w-6 h-6"
-          >
-            <path d="m16.24 7.76-1.804 5.411a2 2 0 0 1-1.265 1.265L7.76 16.24l1.804-5.411a2 2 0 0 1 1.265-1.265z" />
-            <circle cx="12" cy="12" r="10" />
-          </svg>
-          <span className="text-xs font-medium">Explorar</span>
-        </button>
-
-        {isAuthenticated ? (
-          <button
-            onClick={() => router.push("/my-coupons")}
-            className={`flex flex-col items-center justify-center gap-1 md:px-6  py-2 transition-all rounded-lg ${isActive("/my-coupons") ? "text-primary scale-105" : "text-muted-foreground hover:text-foreground hover:scale-105"}`}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="w-6 h-6"
+    <nav className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-sm border-t border-gray-100 shadow-lg z-50">
+      <div className="flex justify-around items-center h-16 max-w-5xl mx-auto px-2">
+        {visibleItems.map((item) => {
+          const active = pathname === item.path;
+          return (
+            <button
+              key={item.path}
+              onClick={() => router.push(item.path)}
+              className="flex items-center justify-center transition-all"
             >
-              <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z" />
-              <path d="M13 5v2" />
-              <path d="M13 17v2" />
-              <path d="M13 11v2" />
-            </svg>
-            <span className="text-xs font-medium">Cupones</span>
-          </button>
-        ) : (
-          <button
-            onClick={() => router.push("/coming-soon?feature=Top Ñamy")}
-            // className="flex flex-col items-center justify-center gap-1 md:px-6  py-2 transition-all rounded-lg text-muted-foreground hover:text-foreground hover:scale-105"
-            className="hidden flex-col items-center justify-center gap-1 md:px-6  py-2 transition-all rounded-lg text-muted-foreground hover:text-foreground hover:scale-105"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="w-6 h-6"
-            >
-              <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
-              <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
-              <path d="M4 22h16" />
-              <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" />
-              <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" />
-              <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
-            </svg>
-            <span className="text-xs font-medium">Top Ñamy</span>
-          </button>
-        )}
-
-        {isAuthenticated ? (
-          <button
-            onClick={() => router.push("/profile")}
-            className={`flex flex-col items-center justify-center gap-1 md:px-6  py-2 transition-all rounded-lg ${isActive("/profile") ? "text-primary scale-105" : "text-muted-foreground hover:text-foreground hover:scale-105"}`}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="w-6 h-6"
-            >
-              <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
-              <circle cx="12" cy="7" r="4" />
-            </svg>
-            <span className="text-xs font-medium">Perfil</span>
-          </button>
-        ) : (
-          <button
-            onClick={() => router.push("/coming-soon?feature=Mural")}
-            className="hidden flex-col items-center justify-center gap-1 md:px-6  py-2 transition-all rounded-lg text-muted-foreground hover:text-foreground hover:scale-105"
-            // className="flex flex-col items-center justify-center gap-1 md:px-6  py-2 transition-all rounded-lg text-muted-foreground hover:text-foreground hover:scale-105"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="w-6 h-6"
-            >
-              <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
-              <circle cx="9" cy="9" r="2" />
-              <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
-            </svg>
-            <span className="text-xs font-medium">Mural</span>
-          </button>
-        )}
-
-        <button
-          onClick={() => router.push("/wallet")}
-          className={`flex flex-col items-center justify-center gap-1 md:px-6  py-2 transition-all rounded-lg relative ${isActive("/wallet") ? "text-primary scale-105" : "text-muted-foreground hover:text-foreground hover:scale-105"}`}
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="w-6 h-6"
-          >
-            <path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1" />
-            <path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4" />
-          </svg>
-          <span className="text-xs font-medium">Billetera</span>
-        </button>
+              {active ? (
+                <span className="flex items-center gap-1.5 bg-orange-500 text-white rounded-full px-4 py-2 font-bold text-sm">
+                  {item.icon}
+                  {item.label}
+                </span>
+              ) : (
+                <span className="text-orange-400 p-2">{item.icon}</span>
+              )}
+            </button>
+          );
+        })}
       </div>
     </nav>
   );

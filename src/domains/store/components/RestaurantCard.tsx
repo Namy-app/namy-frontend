@@ -20,7 +20,8 @@ export const RestaurantCard = ({
     id: store.id,
     slug: store.id,
     name: store.name,
-    category: store.subCategory || "Restaurant",
+    categoryIds: store.categoryIds ?? [],
+    categoryLabel: "Restaurant",
     rating: store.averageRating ?? 4.5,
     image:
       store.imageUrl ||
@@ -95,7 +96,7 @@ export const RestaurantCard = ({
               <span className="font-medium text-foreground">
                 {restaurant.rating}
               </span>
-              <span>• {restaurant.category}</span>
+              <span>• {restaurant.categoryLabel ?? "Restaurant"}</span>
             </div>
             {/* Distance */}
             {restaurant.distance !== "N/A" && (

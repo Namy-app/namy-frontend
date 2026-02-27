@@ -23,13 +23,22 @@ export function useStores(
   return useQuery({
     queryKey: ["stores", filters, paginationParams],
     queryFn: async () => {
-      // Only include filters with actual values
+      // Only include filters with actual values (exclude empty array for categoryIds)
       const cleanedFilters = filters
         ? Object.fromEntries(
-            Object.entries(filters).filter(
-              ([, value]) =>
-                value !== undefined && value !== null && value !== ""
-            )
+            Object.entries(filters).filter(([key, value]) => {
+              if (value === undefined || value === null || value === "") {
+                return false;
+              }
+              if (
+                key === "categoryIds" &&
+                Array.isArray(value) &&
+                value.length === 0
+              ) {
+                return false;
+              }
+              return true;
+            })
           )
         : {};
 
