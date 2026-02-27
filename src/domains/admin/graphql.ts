@@ -103,7 +103,7 @@ export const GET_STORE_STATISTICS = gql`
       active
       inactive
       byType {
-        product
+        restaurant
         service
       }
       byPriceRange {
@@ -816,6 +816,12 @@ export const UPDATE_CATEGORY_MUTATION = gql`
       isActive
       createdAt
     }
+  }
+`;
+
+export const DELETE_CATEGORY_MUTATION = gql`
+  mutation DeleteCategory($id: String!) {
+    deleteCategory(id: $id)
   }
 `;
 

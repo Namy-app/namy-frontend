@@ -182,8 +182,8 @@ export default function AdminDashboardPage() {
       label: "Store Types",
       value: storeStatsLoading
         ? "..."
-        : `${storeStats?.byType.product ?? 0}P / ${storeStats?.byType.service ?? 0}S`,
-      change: "Products/Services",
+        : `${storeStats?.byType.restaurant ?? 0}R / ${storeStats?.byType.service ?? 0}S`,
+      change: "Restaurants/Services",
       icon: ShoppingBag,
       color: "text-orange-600",
     },

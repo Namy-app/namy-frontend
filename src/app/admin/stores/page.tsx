@@ -166,11 +166,11 @@ export default function AdminStoresPage() {
             </p>
           </div>
 
-          {/* Product Stores */}
+          {/* Restaurant Stores */}
           <div className="bg-card rounded-lg shadow-card p-6">
             <div className="flex items-center justify-between mb-2">
               <p className="text-sm font-medium text-muted-foreground">
-                Product Stores
+                Restaurant Stores
               </p>
               <div className="p-2 bg-secondary/20 rounded-lg">
                 <Package className="w-5 h-5 text-secondary-foreground" />
@@ -180,11 +180,11 @@ export default function AdminStoresPage() {
               {statsLoading ? (
                 <span className="inline-block animate-pulse w-16 h-8 bg-gray-300 rounded-md" />
               ) : (
-                stats?.byType.product || 0
+                stats?.byType.restaurant || 0
               )}
             </p>
             <p className="text-sm text-muted-foreground mt-2">
-              Product-based businesses
+              Restaurant stores
             </p>
           </div>
 

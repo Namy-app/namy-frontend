@@ -123,7 +123,6 @@ export interface StoreStatistics {
   active: number;
   inactive: number;
   byType: {
-    product: number;
     restaurant: number;
     service: number;
   };

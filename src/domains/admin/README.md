@@ -150,7 +150,7 @@ query GetStoreStatistics($filters: StoreFiltersInput) {
     active
     inactive
     byType {
-      product
+      restaurant
       service
     }
     byPriceRange {

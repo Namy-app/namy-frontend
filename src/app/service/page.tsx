@@ -55,7 +55,7 @@ interface StoreWithDistance extends Store {
 
 export default function ServicesPage(): React.JSX.Element {
   const { data: categoriesData, isLoading: categoriesLoading } =
-    useCategoriesByStoreType("service");
+    useCategoriesByStoreType(StoreType.SERVICE);
 
   const categories = categoriesData ?? [];
 

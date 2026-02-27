@@ -3,6 +3,7 @@
 import {
   Plus,
   Pencil,
+  Trash2,
   X,
   Power,
   ChevronLeft,
@@ -15,6 +16,7 @@ import {
   useCategories,
   useCreateCategory,
   useUpdateCategory,
+  useDeleteCategory,
 } from "@/domains/admin/hooks";
 import type { Category, CreateCategoryInput } from "@/domains/admin/types";
 import { StoreType } from "@/domains/admin/types";
@@ -51,6 +53,9 @@ export default function AdminCategoriesPage() {
   const { toast } = useToast();
   const [showForm, setShowForm] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(
+    null
+  );
   const [formData, setFormData] = useState<CategoryFormState>(emptyForm);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
@@ -61,6 +66,7 @@ export default function AdminCategoriesPage() {
   });
   const createCategory = useCreateCategory();
   const updateCategory = useUpdateCategory();
+  const deleteCategory = useDeleteCategory();
 
   const categories = categoriesData?.data ?? [];
   const paginationInfo = categoriesData?.paginationInfo;
@@ -86,6 +92,31 @@ export default function AdminCategoriesPage() {
     setShowForm(false);
     setEditingCategory(null);
     setFormData(emptyForm);
+  };
+
+  const handleDeleteClick = (category: Category, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCategoryToDelete(category);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!categoryToDelete) {
+      return;
+    }
+    try {
+      await deleteCategory.mutateAsync(categoryToDelete.id);
+      toast({
+        title: "Category deleted",
+        description: `${categoryToDelete.name} has been deleted.`,
+      });
+      setCategoryToDelete(null);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: extractErrorMessage(error),
+        variant: "destructive",
+      });
+    }
   };
 
   const handleToggleActive = async (
@@ -411,6 +442,13 @@ export default function AdminCategoriesPage() {
                               >
                                 <Pencil className="w-4 h-4" />
                               </button>
+                              <button
+                                onClick={(e) => handleDeleteClick(category, e)}
+                                className="p-2 text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
+                                title="Delete category"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
                             </div>
                           </td>
                         </tr>
@@ -486,6 +524,64 @@ export default function AdminCategoriesPage() {
           );
         })()}
       </div>
+
+      {/* Delete confirmation modal */}
+      {categoryToDelete ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-card rounded-lg shadow-xl max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-foreground">
+                Delete category
+              </h2>
+              <button
+                onClick={() => setCategoryToDelete(null)}
+                className="p-2 hover:bg-muted rounded-lg transition-colors"
+                disabled={deleteCategory.isPending}
+                aria-label="Close"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="mb-6">
+              <p className="text-muted-foreground mb-4">
+                Are you sure you want to delete{" "}
+                <strong className="text-foreground">
+                  {categoryToDelete.name}
+                </strong>
+                ? This category will be removed from any stores that use it.
+              </p>
+              <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4">
+                <p className="text-sm text-destructive">
+                  This action cannot be undone.
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setCategoryToDelete(null)}
+                disabled={deleteCategory.isPending}
+                className="flex-1 px-4 py-2 border border-border text-foreground font-semibold rounded-lg hover:bg-muted transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => void handleConfirmDelete()}
+                disabled={deleteCategory.isPending}
+                className="flex-1 px-4 py-2 bg-destructive text-destructive-foreground font-semibold rounded-lg hover:opacity-90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {deleteCategory.isPending ? (
+                  <>
+                    <span className="inline-block animate-spin rounded-full h-4 w-4 border-2 border-current border-t-transparent" />{" "}
+                    Deleting...
+                  </>
+                ) : (
+                  "Delete"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

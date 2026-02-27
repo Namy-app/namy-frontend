@@ -35,6 +35,7 @@ import {
   GET_CATEGORY_BY_ID_QUERY,
   CREATE_CATEGORY_MUTATION,
   UPDATE_CATEGORY_MUTATION,
+  DELETE_CATEGORY_MUTATION,
 } from "./graphql";
 import {
   type CreateStoreInput,
@@ -544,6 +545,26 @@ export function useUpdateCategory() {
       void queryClient.invalidateQueries({
         queryKey: ["category", variables.id],
       });
+      void queryClient.invalidateQueries({ queryKey: ["categories-by-name"] });
+      void queryClient.invalidateQueries({
+        queryKey: ["categories-by-store-type"],
+      });
+    },
+  });
+}
+
+export function useDeleteCategory() {
+  const queryClient = useQueryClient();
+
+  return useMutation<boolean, Error, string>({
+    mutationFn: async (id: string) => {
+      const data = await graphqlClient.request<{
+        deleteCategory: boolean;
+      }>(DELETE_CATEGORY_MUTATION, { id });
+      return data.deleteCategory;
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["categories"] });
       void queryClient.invalidateQueries({ queryKey: ["categories-by-name"] });
       void queryClient.invalidateQueries({
         queryKey: ["categories-by-store-type"],
