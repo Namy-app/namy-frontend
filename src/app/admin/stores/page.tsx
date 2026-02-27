@@ -13,7 +13,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import { CreateStoreForm } from "@/domains/admin/components/CreateStoreForm";
 import { EditStoreForm } from "@/domains/admin/components/EditStoreForm";
@@ -22,6 +22,7 @@ import {
   useStores,
   useDeleteStore,
   useToggleStoreActive,
+  useCategories,
 } from "@/domains/admin/hooks";
 import { type Store } from "@/domains/admin/types";
 import { useToast } from "@/hooks/use-toast";
@@ -42,11 +43,22 @@ export default function AdminStoresPage() {
     { includeAll: true },
     { first: itemsPerPage, page: currentPage }
   );
+  const { data: categoriesData, isLoading: isCategoriesLoading } =
+    useCategories(undefined, { page: 1, first: 100 });
   const deleteStore = useDeleteStore();
   const toggleStoreActive = useToggleStoreActive();
 
   const stores = storesData?.data ?? [];
   const paginationInfo = storesData?.paginationInfo;
+  const allCategories = categoriesData?.data ?? [];
+
+  const categoryIdToName = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const c of allCategories) {
+      map.set(c.id, c.name);
+    }
+    return map;
+  }, [allCategories]);
 
   // Handle delete store
   const handleDeleteStore = async () => {
@@ -406,6 +418,9 @@ export default function AdminStoresPage() {
       {/* Create Store Modal */}
       {showCreateForm ? (
         <CreateStoreForm
+          categories={allCategories}
+          categoryIdToName={categoryIdToName}
+          isCategoriesLoading={isCategoriesLoading}
           onClose={() => setShowCreateForm(false)}
           onSuccess={() => {
             setShowCreateForm(false);
@@ -418,6 +433,9 @@ export default function AdminStoresPage() {
       {storeToEdit ? (
         <EditStoreForm
           store={storeToEdit}
+          categories={allCategories}
+          categoryIdToName={categoryIdToName}
+          isCategoriesLoading={isCategoriesLoading}
           onClose={() => setStoreToEdit(null)}
           onSuccess={() => {
             setStoreToEdit(null);

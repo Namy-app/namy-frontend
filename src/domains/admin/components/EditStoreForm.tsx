@@ -1,7 +1,7 @@
 "use client";
 
 import { X, Store as StoreIcon, Loader2 } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 import {
@@ -9,11 +9,9 @@ import {
   type AutocompleteOption,
 } from "@/components/Autocomplete";
 import { DAYS_OF_WEEK_BY_INDEX } from "@/data/constants";
+import { useUpdateStore } from "@/domains/admin/hooks";
 import {
-  useUpdateStore,
-  useGetCategoriesByStoreType,
-} from "@/domains/admin/hooks";
-import {
+  type Category,
   type Store,
   type UpdateStoreInput,
   type OpenDay,
@@ -25,12 +23,18 @@ import { extractErrorMessage } from "@/lib/utils";
 
 interface EditStoreFormProps {
   store: Store;
+  categories: Category[];
+  categoryIdToName: Map<string, string>;
+  isCategoriesLoading: boolean;
   onClose: () => void;
   onSuccess?: () => void;
 }
 
 export function EditStoreForm({
   store,
+  categories,
+  categoryIdToName,
+  isCategoriesLoading,
   onClose,
   onSuccess,
 }: EditStoreFormProps) {
@@ -92,16 +96,11 @@ export function EditStoreForm({
 
   const [openHours, setOpenHours] = useState<OpenDay[]>(getInitialHours());
 
-  const storeTypeFilter =
-    formData.type === StoreType.RESTAURANT ? "restaurant" : "service";
-  const { data: categoriesResponse, isLoading: isCategoriesLoading } =
-    useGetCategoriesByStoreType({
-      storeType: storeTypeFilter,
-      name: categoryQuery || undefined,
-      enabled: true,
-      pagination: { page: 1, first: 50 },
-    });
-  const categories = categoriesResponse?.data ?? [];
+  const categoriesForType = useMemo(
+    () =>
+      categories.filter((c) => !c.storeType || c.storeType === formData.type),
+    [categories, formData.type]
+  );
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -310,29 +309,26 @@ export function EditStoreForm({
                 </label>
                 {currentCategoryIds.length > 0 && (
                   <div className="flex flex-wrap gap-2 mb-2">
-                    {currentCategoryIds.map((id) => {
-                      const cat = categories.find((c) => c.id === id);
-                      return (
-                        <span
-                          key={id}
-                          className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm"
+                    {currentCategoryIds.map((id) => (
+                      <span
+                        key={id}
+                        className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm"
+                      >
+                        {categoryIdToName.get(id) ?? id}
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveCategory(id)}
+                          className="hover:bg-primary/20 rounded p-0.5"
+                          aria-label="Remove category"
                         >
-                          {cat?.name ?? id}
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveCategory(id)}
-                            className="hover:bg-primary/20 rounded p-0.5"
-                            aria-label="Remove category"
-                          >
-                            <X className="w-3.5 h-3.5" />
-                          </button>
-                        </span>
-                      );
-                    })}
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </span>
+                    ))}
                   </div>
                 )}
                 <Autocomplete<{ id: string; name: string }>
-                  options={categories
+                  options={categoriesForType
                     .filter((c) => !currentCategoryIds.includes(c.id))
                     .map((cat) => ({
                       id: cat.id,

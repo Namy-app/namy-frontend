@@ -1,18 +1,16 @@
 "use client";
 
 import { X, Store as StoreIcon, Loader2, Copy, Check } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 import {
   Autocomplete,
   type AutocompleteOption,
 } from "@/components/Autocomplete";
+import { useCreateStore } from "@/domains/admin/hooks";
 import {
-  useCreateStore,
-  useGetCategoriesByStoreType,
-} from "@/domains/admin/hooks";
-import {
+  type Category,
   type CreateStoreInput,
   type OpenDay,
   StoreType,
@@ -23,11 +21,20 @@ import { useToast } from "@/hooks/use-toast";
 import { extractErrorMessage } from "@/lib/utils";
 
 interface CreateStoreFormProps {
+  categories: Category[];
+  categoryIdToName: Map<string, string>;
+  isCategoriesLoading: boolean;
   onClose: () => void;
   onSuccess?: () => void;
 }
 
-export function CreateStoreForm({ onClose, onSuccess }: CreateStoreFormProps) {
+export function CreateStoreForm({
+  categories,
+  categoryIdToName,
+  isCategoriesLoading,
+  onClose,
+  onSuccess,
+}: CreateStoreFormProps) {
   const { toast } = useToast();
   const createStore = useCreateStore();
   const [copiedPin, setCopiedPin] = useState(false);
@@ -54,16 +61,11 @@ export function CreateStoreForm({ onClose, onSuccess }: CreateStoreFormProps) {
 
   const [openHours, setOpenHours] = useState<OpenDay[]>([]);
 
-  const storeTypeFilter =
-    formData.type === StoreType.RESTAURANT ? "restaurant" : "service";
-  const { data: categoriesResponse, isLoading: isCategoriesLoading } =
-    useGetCategoriesByStoreType({
-      storeType: storeTypeFilter,
-      name: categoryQuery || undefined,
-      enabled: true,
-      pagination: { page: 1, first: 50 },
-    });
-  const categories = categoriesResponse?.data ?? [];
+  const categoriesForType = useMemo(
+    () =>
+      categories.filter((c) => !c.storeType || c.storeType === formData.type),
+    [categories, formData.type]
+  );
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -352,29 +354,26 @@ export function CreateStoreForm({ onClose, onSuccess }: CreateStoreFormProps) {
                 </label>
                 {formData.categoryIds.length > 0 && (
                   <div className="flex flex-wrap gap-2 mb-2">
-                    {formData.categoryIds.map((id) => {
-                      const cat = categories.find((c) => c.id === id);
-                      return (
-                        <span
-                          key={id}
-                          className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm"
+                    {formData.categoryIds.map((id) => (
+                      <span
+                        key={id}
+                        className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm"
+                      >
+                        {categoryIdToName.get(id) ?? id}
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveCategory(id)}
+                          className="hover:bg-primary/20 rounded p-0.5"
+                          aria-label="Remove category"
                         >
-                          {cat?.name ?? id}
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveCategory(id)}
-                            className="hover:bg-primary/20 rounded p-0.5"
-                            aria-label="Remove category"
-                          >
-                            <X className="w-3.5 h-3.5" />
-                          </button>
-                        </span>
-                      );
-                    })}
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </span>
+                    ))}
                   </div>
                 )}
                 <Autocomplete<{ id: string; name: string }>
-                  options={categories
+                  options={categoriesForType
                     .filter((c) => !formData.categoryIds.includes(c.id))
                     .map((cat) => ({
                       id: cat.id,
