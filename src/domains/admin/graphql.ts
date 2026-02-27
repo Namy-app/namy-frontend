@@ -621,6 +621,33 @@ export const GET_CATEGORIES_BY_STORE_TYPE_QUERY = gql`
   }
 `;
 
+// ==================== Admin Category CRUD ====================
+
+export const GET_CATEGORIES_QUERY = gql`
+  query GetCategories(
+    $filters: CategoryFiltersInput
+    $pagination: PaginationInput
+  ) {
+    categories(filters: $filters, pagination: $pagination) {
+      data {
+        id
+        name
+        iconUrl
+        storeType
+        isActive
+        createdAt
+      }
+      paginationInfo {
+        total
+        page
+        pageSize
+        totalPages
+        hasNextPage
+        hasPreviousPage
+      }
+    }
+  }
+`;
 // ==================== Challenge Queries & Mutations ====================
 
 const CHALLENGE_FRAGMENT = `
@@ -749,6 +776,45 @@ export const GET_ADMIN_REVIEWS = gql`
         hasNextPage
         hasPreviousPage
       }
+    }
+  }
+`;
+
+export const GET_CATEGORY_BY_ID_QUERY = gql`
+  query GetCategoryById($id: String!) {
+    category(id: $id) {
+      id
+      name
+      iconUrl
+      storeType
+      isActive
+      createdAt
+    }
+  }
+`;
+
+export const CREATE_CATEGORY_MUTATION = gql`
+  mutation CreateCategory($input: CreateCategoryInput!) {
+    createCategory(input: $input) {
+      id
+      name
+      iconUrl
+      storeType
+      isActive
+      createdAt
+    }
+  }
+`;
+
+export const UPDATE_CATEGORY_MUTATION = gql`
+  mutation UpdateCategory($id: String!, $input: UpdateCategoryInput!) {
+    updateCategory(id: $id, input: $input) {
+      id
+      name
+      iconUrl
+      storeType
+      isActive
+      createdAt
     }
   }
 `;

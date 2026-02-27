@@ -18,6 +18,7 @@ import Link from "next/link";
 import { useState, useEffect, useMemo, useRef } from "react";
 
 import StoreMap from "@/components/store-map";
+import { StoreType } from "@/domains/admin/types";
 import { useCategoriesByStoreType, useStores } from "@/domains/store/hooks";
 import { calculateDistance } from "@/domains/store/hooks/query/useClosestStores";
 import { type StoreFilters } from "@/domains/store/type";
@@ -92,6 +93,7 @@ export default function ServicesPage(): React.JSX.Element {
   const { data: storesResult, isLoading } = useStores(
     {
       ...filters,
+      type: StoreType.SERVICE,
       categoryIds:
         selectedCategoryIds.length > 0 ? selectedCategoryIds : undefined,
       lat:

@@ -31,6 +31,10 @@ import {
   GET_ADMIN_REVIEWS,
   ADMIN_DELETE_REVIEW_MUTATION,
   GET_CATEGORIES_BY_STORE_TYPE_QUERY,
+  GET_CATEGORIES_QUERY,
+  GET_CATEGORY_BY_ID_QUERY,
+  CREATE_CATEGORY_MUTATION,
+  UPDATE_CATEGORY_MUTATION,
 } from "./graphql";
 import {
   type CreateStoreInput,
@@ -67,6 +71,10 @@ import {
   type AdminReviewsResponse,
   type Category,
   type CategoriesResponse,
+  type CategoryFiltersInput,
+  type CreateCategoryInput,
+  type UpdateCategoryInput,
+  type StoreType,
 } from "./types";
 
 // ==================== Store Mutations ====================
@@ -466,7 +474,85 @@ export function useResendStorePinEmail() {
   });
 }
 
-// ==================== Category Queries ====================
+// ==================== Category Queries & Mutations (Admin CRUD) ====================
+
+export function useCategories(
+  filters?: CategoryFiltersInput,
+  pagination?: PaginationInput
+) {
+  return useQuery<CategoriesResponse>({
+    queryKey: ["categories", filters, pagination],
+    queryFn: async () => {
+      const data = await graphqlClient.request<{
+        categories: CategoriesResponse;
+      }>(GET_CATEGORIES_QUERY, { filters, pagination });
+      return data.categories;
+    },
+  });
+}
+
+export function useCategory(id: string) {
+  return useQuery<Category>({
+    queryKey: ["category", id],
+    queryFn: async () => {
+      const data = await graphqlClient.request<{ category: Category }>(
+        GET_CATEGORY_BY_ID_QUERY,
+        { id }
+      );
+      return data.category;
+    },
+    enabled: !!id,
+  });
+}
+
+export function useCreateCategory() {
+  const queryClient = useQueryClient();
+
+  return useMutation<Category, Error, CreateCategoryInput>({
+    mutationFn: async (input: CreateCategoryInput) => {
+      const data = await graphqlClient.request<{
+        createCategory: Category;
+      }>(CREATE_CATEGORY_MUTATION, { input });
+      return data.createCategory;
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["categories"] });
+      void queryClient.invalidateQueries({ queryKey: ["categories-by-name"] });
+      void queryClient.invalidateQueries({
+        queryKey: ["categories-by-store-type"],
+      });
+    },
+  });
+}
+
+export function useUpdateCategory() {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    Category,
+    Error,
+    { id: string; input: UpdateCategoryInput }
+  >({
+    mutationFn: async ({ id, input }) => {
+      const data = await graphqlClient.request<{
+        updateCategory: Category;
+      }>(UPDATE_CATEGORY_MUTATION, { id, input });
+      return data.updateCategory;
+    },
+    onSuccess: (_, variables) => {
+      void queryClient.invalidateQueries({ queryKey: ["categories"] });
+      void queryClient.invalidateQueries({
+        queryKey: ["category", variables.id],
+      });
+      void queryClient.invalidateQueries({ queryKey: ["categories-by-name"] });
+      void queryClient.invalidateQueries({
+        queryKey: ["categories-by-store-type"],
+      });
+    },
+  });
+}
+
+// ==================== Category Queries (by name / store type) ====================
 
 export function useGetCategoriesByName({
   query = "",
@@ -508,7 +594,7 @@ export function useGetCategoriesByStoreType({
   enabled = true,
   pagination = { page: 1, first: 50 },
 }: {
-  storeType?: string;
+  storeType?: StoreType | string;
   name?: string;
   enabled?: boolean;
   pagination?: PaginationInput;

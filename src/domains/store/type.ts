@@ -1,3 +1,4 @@
+import type { StoreType } from "@/domains/admin/types";
 import type { Store } from "@/lib/api-types";
 
 export interface ParsedStore {
@@ -75,6 +76,8 @@ export interface StoreFilters {
   city?: string;
   active?: boolean;
   isRestaurant?: boolean;
+  /** Filter by store type (e.g. RESTAURANT, SERVICE). Maps to GraphQL StoreFiltersInput.type */
+  type?: StoreType;
   lat?: number;
   lng?: number;
   id?: string;

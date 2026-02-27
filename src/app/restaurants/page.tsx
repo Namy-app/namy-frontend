@@ -18,6 +18,7 @@ import {
 import { useState, useEffect, useMemo, useRef } from "react";
 
 import StoreMap from "@/components/store-map";
+import { StoreType } from "@/domains/admin/types";
 import { RestaurantCard } from "@/domains/store/components/RestaurantCard";
 import { useCategoriesByStoreType, useStores } from "@/domains/store/hooks";
 import { calculateDistance } from "@/domains/store/hooks/query/useClosestStores";
@@ -86,6 +87,7 @@ export default function RestaurantListingPage(): React.JSX.Element {
   const { data: storesResult, isLoading } = useStores(
     {
       ...filters,
+      type: StoreType.RESTAURANT,
       categoryIds:
         selectedCategoryIds.length > 0 ? selectedCategoryIds : undefined,
       lat:

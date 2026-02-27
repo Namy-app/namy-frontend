@@ -6,6 +6,7 @@ import {
   Video,
   LayoutDashboard,
   ArrowLeft,
+  FolderTree,
   Trophy,
   Images,
   Star,
@@ -117,6 +118,12 @@ export default function AdminLayout({
       icon: Store,
       href: "/admin/stores",
       active: pathname?.startsWith("/admin/stores"),
+    },
+    {
+      label: "Categories",
+      icon: FolderTree,
+      href: "/admin/categories",
+      active: pathname?.startsWith("/admin/categories"),
     },
     {
       label: "Users",
