@@ -56,7 +56,6 @@ export function CreateStoreForm({
     url: "",
     tags: "",
     restrictions: "",
-    isRestaurant: true,
   });
 
   const [openHours, setOpenHours] = useState<OpenDay[]>([]);
@@ -149,7 +148,6 @@ export function CreateStoreForm({
       ...formData,
       categoryIds: formData.categoryIds,
       openDays: openHours.length > 0 ? { availableDays: openHours } : undefined,
-      isRestaurant: formData.type === StoreType.RESTAURANT,
     };
 
     try {

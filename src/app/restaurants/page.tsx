@@ -52,7 +52,7 @@ export default function RestaurantListingPage(): React.JSX.Element {
 
   const searchTimeoutRef = useRef<NodeJS.Timeout>(undefined);
   const [filters, setFilters] = useState<StoreFilters>({
-    isRestaurant: true,
+    type: StoreType.RESTAURANT,
     categoryIds: undefined,
   });
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
@@ -256,7 +256,7 @@ export default function RestaurantListingPage(): React.JSX.Element {
     setAvailabilityFilter("all");
     setCurrentPage(1);
     setFilters({
-      isRestaurant: true,
+      type: StoreType.RESTAURANT,
     });
   };
 

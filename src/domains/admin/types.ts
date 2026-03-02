@@ -92,7 +92,6 @@ export interface Store {
   email?: string;
   price: PriceRange;
   active: boolean;
-  isRestaurant: boolean;
   url?: string;
   pin: boolean; // Indicates whether a PIN has been set
   plainPin?: string;
@@ -168,7 +167,6 @@ export interface CreateStoreInput {
   openDays?: OpenDaysStructure;
   tags?: string;
   restrictions?: string;
-  isRestaurant?: boolean;
   additionalInfo?: Record<string, unknown>;
 }
 
@@ -191,7 +189,6 @@ export interface UpdateStoreInput {
   openDays?: OpenDaysStructure;
   tags?: string;
   restrictions?: string;
-  isRestaurant?: boolean;
   additionalInfo?: Record<string, unknown>;
   regeneratePin?: boolean;
 }
@@ -200,7 +197,6 @@ export interface StoreFiltersInput {
   name?: string;
   city?: string;
   categoryIds?: string[];
-  isRestaurant?: boolean;
   type?: StoreType;
   price?: PriceRange;
   active?: boolean | null;
