@@ -75,7 +75,6 @@ export interface StoreFilters {
   categoryIds?: string[];
   city?: string;
   active?: boolean;
-  isRestaurant?: boolean;
   /** Filter by store type (e.g. RESTAURANT, SERVICE). Maps to GraphQL StoreFiltersInput.type */
   type?: StoreType;
   lat?: number;
