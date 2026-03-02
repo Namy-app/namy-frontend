@@ -60,7 +60,6 @@ export function EditStoreForm({
     restrictions: store.restrictions,
     lat: store.lat,
     lng: store.lng,
-    isRestaurant: store.isRestaurant,
   });
 
   // Convert openDays to availableDays array format if needed
