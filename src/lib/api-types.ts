@@ -195,6 +195,15 @@ export interface UserChallenge {
   challenge?: ChallengeInfo;
 }
 
+export interface PointTransaction {
+  id: string;
+  pointsAmount: number;
+  description: string;
+  transactionType: string;
+  timestamp: string;
+  challenge?: ChallengeInfo;
+}
+
 export interface LeaderboardEntry {
   rank: number;
   userId: string;

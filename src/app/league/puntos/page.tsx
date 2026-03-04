@@ -1,5 +1,6 @@
 "use client";
 
+import { DEFAULT_CHALLENGES } from "@/data/default-challenges.data";
 import { useMyActiveChallenges } from "@/domains/gamification/hooks";
 import type { UserChallenge } from "@/lib/api-types";
 
@@ -15,16 +16,48 @@ interface PointAction {
 
 // ─── Static data ───────────────────────────────────────────────────────────────
 
+const ENTITY_TYPE_TO_ICON: Record<string, string> = {
+  discounts: "🎟️",
+  reviews: "⭐",
+  mural_posts: "📸",
+  first_visit_coupon_redemption: "🏪",
+  referrals: "👥",
+  login_streaks: "🔥",
+};
+
+const ENTITY_TYPE_TO_LABEL: Record<string, string> = {
+  discounts: "Usar cupón",
+  reviews: "Dejar una reseña",
+  mural_posts: "Subir post (1 vez por semana)",
+  first_visit_coupon_redemption: "Usar cupón en un lugar nuevo",
+  referrals: "Invita un amigo a Ñamy",
+};
+
+// For login_streaks there are multiple entries (1-day and 7-day) so we handle them individually
+const LOGIN_STREAK_LABELS: Record<number, { icon: string; label: string }> = {
+  1: { icon: "🔥", label: "Entra a Ñamy cada dia" },
+  7: { icon: "📅", label: "Entra a Ñamy 7 dias seguidos" },
+};
+
 const POINT_ACTIONS: PointAction[] = [
-  { id: 1, icon: "🎟️", label: "Usar cupón", pts: "+100 pts" },
-  { id: 2, icon: "⭐", label: "Dejar una reseña", pts: "+40 pts" },
-  { id: 3, icon: "📸", label: "Subir post (1 vez por semana)", pts: "+50 pts" },
-  { id: 4, icon: "🏪", label: "Usar cupón en un lugar nuevo", pts: "+25 pts" },
-  { id: 5, icon: "👥", label: "Invita un amigo a Ñamy", pts: "+75 pts" },
-  { id: 6, icon: "🔥", label: "Entra a Ñamy cada dia", pts: "+5 pts" },
-  { id: 7, icon: "📅", label: "Entra a Ñamy 7 dias seguidos", pts: "+40 pts" },
+  ...DEFAULT_CHALLENGES.filter((c) => c.entityType !== "login_streaks").map(
+    (c, i) => ({
+      id: i + 1,
+      icon: ENTITY_TYPE_TO_ICON[c.entityType] ?? "🎯",
+      label: ENTITY_TYPE_TO_LABEL[c.entityType] ?? c.name,
+      pts: `+${c.points} pts`,
+    })
+  ),
+  ...DEFAULT_CHALLENGES.filter((c) => c.entityType === "login_streaks").map(
+    (c, i) => ({
+      id: 100 + i,
+      icon: LOGIN_STREAK_LABELS[c.count]?.icon ?? "🔥",
+      label: LOGIN_STREAK_LABELS[c.count]?.label ?? c.name,
+      pts: `+${c.points} pts`,
+    })
+  ),
   {
-    id: 8,
+    id: 999,
     icon: "👑",
     label: "Ñamy Premium",
     pts: "x1.25 pts",

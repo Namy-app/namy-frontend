@@ -25,6 +25,7 @@ import { MapDisplay } from "@/components/MapDisplay";
 import { UnlockDiscountModal } from "@/components/UnlockDiscountModal";
 import { VideoAdsModal } from "@/components/VideoAdsModal";
 import { PlaceHolderTypeEnum } from "@/data/constants";
+import { getDefaultChallenge } from "@/data/default-challenges.data";
 import { useStoreDiscounts, useStoreCatalogs } from "@/domains/admin/hooks";
 import { GeneratingCouponModal } from "@/domains/coupons/GeneratingCouponModal";
 import { useWallet } from "@/domains/payment/hooks";
@@ -78,6 +79,9 @@ function getCurrentDayOfWeek(): string {
   return days[today.getDay()] || "";
 }
 
+const muralPts = getDefaultChallenge("mural_posts")?.points ?? 50;
+const reviewPts = getDefaultChallenge("reviews")?.points ?? 40;
+
 export default function StoresDetailPage(): React.JSX.Element {
   const router = useRouter();
   const params = useParams();
@@ -121,7 +125,6 @@ export default function StoresDetailPage(): React.JSX.Element {
   );
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [uploadPhotoError, setUploadPhotoError] = useState<string | null>(null);
-  const [isPostingToMural, setIsPostingToMural] = useState(false);
   const [muralPostDone, setMuralPostDone] = useState(false);
   const reviewPhotoRef = useRef<HTMLInputElement>(null);
 
@@ -1212,7 +1215,7 @@ export default function StoresDetailPage(): React.JSX.Element {
                       <span>Escribe tu reseña</span>
                       <span>🍽️</span>
                       <span className="text-xs font-semibold opacity-90">
-                        +50 pts 📸
+                        +{reviewPts} pts ⭐
                       </span>
                     </button>
                   )}
@@ -1690,7 +1693,7 @@ export default function StoresDetailPage(): React.JSX.Element {
                       <span>📷</span>
                       Add photo
                       <span className="text-xs text-rose-400 font-bold">
-                        +50 pts 📸
+                        +{muralPts} pts 📸
                       </span>
                     </button>
                   )}
@@ -1759,123 +1762,158 @@ export default function StoresDetailPage(): React.JSX.Element {
                   {!!uploadPhotoError && (
                     <p className="text-xs text-red-500">{uploadPhotoError}</p>
                   )}
-                  {!!reviewPhotoUrl && !muralPostDone && (
-                    <button
-                      type="button"
-                      disabled={isPostingToMural}
+                </div>
+
+                {/* Publish review + mural post */}
+                {(() => {
+                  const hasReview =
+                    reviewRating > 0 && reviewTitle.trim().length >= 3;
+                  const hasMural = !!reviewPhotoUrl;
+                  const canSubmit =
+                    (hasReview || hasMural) &&
+                    !isUploadingPhoto &&
+                    !isSubmittingReview;
+
+                  return (
+                    <Button
+                      disabled={!canSubmit}
                       onClick={() => {
                         void (async () => {
-                          if (!storeId || !reviewPhotoUrl) {
+                          if (!storeId) {
                             return;
                           }
-                          setIsPostingToMural(true);
+                          setIsSubmittingReview(true);
                           try {
-                            await graphqlRequest(CREATE_MURAL_POST_MUTATION, {
-                              input: { storeId, imageUrl: reviewPhotoUrl },
-                            });
-                            setMuralPostDone(true);
-                            toast({
-                              title: "Photo submitted!",
-                              description:
-                                "Your photo will appear on the mural after review.",
-                            });
-                          } catch (err) {
-                            toast({
-                              variant: "destructive",
-                              title: "Error",
-                              description:
-                                err instanceof Error
-                                  ? err.message
-                                  : "Try again.",
-                            });
+                            const tasks: Promise<unknown>[] = [];
+                            if (hasReview) {
+                              tasks.push(
+                                graphqlRequest(CREATE_REVIEW_MUTATION, {
+                                  input: {
+                                    storeId,
+                                    title: reviewTitle.trim(),
+                                    description: reviewText.trim() || undefined,
+                                    rating: reviewRating,
+                                  },
+                                })
+                              );
+                            }
+                            if (hasMural) {
+                              tasks.push(
+                                graphqlRequest(CREATE_MURAL_POST_MUTATION, {
+                                  input: { storeId, imageUrl: reviewPhotoUrl },
+                                })
+                              );
+                            }
+
+                            const results = await Promise.allSettled(tasks);
+                            const reviewResult = hasReview ? results[0] : null;
+                            const muralResult = hasMural
+                              ? results[hasReview ? 1 : 0]
+                              : null;
+
+                            if (reviewResult?.status === "rejected") {
+                              const msg =
+                                reviewResult.reason instanceof Error
+                                  ? reviewResult.reason.message
+                                  : "";
+                              const isDuplicate =
+                                msg.includes("already reviewed") ||
+                                msg.includes("409");
+                              toast({
+                                variant: "destructive",
+                                title: isDuplicate
+                                  ? "Ya dejaste una reseña"
+                                  : "Error al publicar reseña",
+                                description: isDuplicate
+                                  ? "Solo puedes dejar una reseña por lugar."
+                                  : "Intenta de nuevo.",
+                              });
+                            }
+
+                            if (muralResult?.status === "rejected") {
+                              toast({
+                                variant: "destructive",
+                                title: "Error al publicar foto",
+                                description:
+                                  "La foto no pudo subirse al mural.",
+                              });
+                            }
+
+                            if (
+                              reviewResult?.status !== "rejected" &&
+                              muralResult?.status !== "rejected"
+                            ) {
+                              toast({
+                                title:
+                                  hasReview && hasMural
+                                    ? "¡Reseña y foto publicadas!"
+                                    : hasReview
+                                      ? "Reseña publicada"
+                                      : "Foto publicada en el mural",
+                                description: "¡Gracias por tu aportación!",
+                              });
+                            }
+
+                            if (hasReview) {
+                              void queryClient.invalidateQueries({
+                                queryKey: ["storeReviews", storeId],
+                              });
+                            }
+
+                            setShowReviewModal(false);
+                            setReviewRating(0);
+                            setReviewTitle("");
+                            setReviewText("");
+                            setReviewPhotoUrl(null);
+                            setReviewPhotoPreview(null);
+                            setUploadPhotoError(null);
+                            setMuralPostDone(false);
                           } finally {
-                            setIsPostingToMural(false);
+                            setIsSubmittingReview(false);
                           }
                         })();
                       }}
-                      className="w-full flex items-center justify-center gap-2 bg-gray-900 text-white rounded-xl py-2.5 text-sm font-semibold disabled:opacity-50 transition-opacity"
+                      className="w-full bg-rose-400 hover:bg-rose-500 text-white font-bold rounded-xl py-3 disabled:opacity-50"
                     >
-                      {isPostingToMural ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
+                      {isSubmittingReview ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                          Publicando...
+                        </>
                       ) : (
-                        <>🏙️ Post to City Mural</>
+                        <>
+                          {hasReview && hasMural ? (
+                            <>
+                              Publicar reseña y foto{" "}
+                              <span className="ml-1 text-xs">+60 pts 📸</span>
+                            </>
+                          ) : hasReview ? (
+                            <>
+                              Publicar reseña{" "}
+                              <span className="ml-1 text-xs">
+                                +10 pts Yummy
+                              </span>
+                            </>
+                          ) : hasMural ? (
+                            <>
+                              Publicar foto al mural{" "}
+                              <span className="ml-1 text-xs">
+                                +{muralPts} pts 📸
+                              </span>
+                            </>
+                          ) : (
+                            <>
+                              Publicar reseña{" "}
+                              <span className="ml-1 text-xs">
+                                +10 pts Yummy
+                              </span>
+                            </>
+                          )}
+                        </>
                       )}
-                    </button>
-                  )}
-                  {!!muralPostDone && (
-                    <p className="text-xs text-center text-green-600 font-medium">
-                      ✓ Submitted to mural — pending review
-                    </p>
-                  )}
-                </div>
-
-                {/* Publish review */}
-                <Button
-                  disabled={
-                    reviewRating === 0 ||
-                    reviewTitle.trim().length < 3 ||
-                    isSubmittingReview
-                  }
-                  onClick={() => {
-                    void (async () => {
-                      if (!storeId) {
-                        return;
-                      }
-                      setIsSubmittingReview(true);
-                      try {
-                        await graphqlRequest(CREATE_REVIEW_MUTATION, {
-                          input: {
-                            storeId,
-                            title: reviewTitle.trim(),
-                            description: reviewText.trim() || undefined,
-                            rating: reviewRating,
-                          },
-                        });
-                        void queryClient.invalidateQueries({
-                          queryKey: ["storeReviews", storeId],
-                        });
-                        setShowReviewModal(false);
-                        setReviewRating(0);
-                        setReviewTitle("");
-                        setReviewText("");
-                        setReviewPhotoUrl(null);
-                        setReviewPhotoPreview(null);
-                        setUploadPhotoError(null);
-                        setMuralPostDone(false);
-                        toast({
-                          title: "Reseña publicada",
-                          description: "¡Gracias por tu reseña!",
-                        });
-                      } catch (err) {
-                        const msg = err instanceof Error ? err.message : "";
-                        const isDuplicate =
-                          msg.includes("already reviewed") ||
-                          msg.includes("409");
-                        toast({
-                          variant: "destructive",
-                          title: isDuplicate
-                            ? "Ya dejaste una reseña"
-                            : "Error al publicar",
-                          description: isDuplicate
-                            ? "Solo puedes dejar una reseña por lugar."
-                            : "Intenta de nuevo.",
-                        });
-                      } finally {
-                        setIsSubmittingReview(false);
-                      }
-                    })();
-                  }}
-                  className="w-full bg-rose-400 hover:bg-rose-500 text-white font-bold rounded-xl py-3 disabled:opacity-50"
-                >
-                  {isSubmittingReview ? (
-                    "Publicando..."
-                  ) : (
-                    <>
-                      Publicar reseña{" "}
-                      <span className="ml-1 text-xs">+10 pts Yummy</span>
-                    </>
-                  )}
-                </Button>
+                    </Button>
+                  );
+                })()}
               </div>
             </div>,
             document.body

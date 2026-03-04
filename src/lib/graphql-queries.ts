@@ -702,7 +702,7 @@ export const REDEEM_COUPON_BY_STAFF_MUTATION = `
       newLevel
       oldLevel
       message
-      pointsEarned
+      challengeProgress
     }
   }
 `;
@@ -1244,6 +1244,26 @@ export const MY_CHALLENGES_QUERY = `
         points
         isActive
         expiresAt
+      }
+    }
+  }
+`;
+
+export const MY_POINTS_HISTORY_QUERY = `
+  query MyPointsHistory($limit: Int) {
+    myPointsHistory(limit: $limit) {
+      id
+      pointsAmount
+      description
+      transactionType
+      timestamp
+      challenge {
+        id
+        name
+        entityType
+        count
+        points
+        isActive
       }
     }
   }
