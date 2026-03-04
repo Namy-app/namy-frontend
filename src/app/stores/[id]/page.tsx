@@ -25,6 +25,7 @@ import { MapDisplay } from "@/components/MapDisplay";
 import { UnlockDiscountModal } from "@/components/UnlockDiscountModal";
 import { VideoAdsModal } from "@/components/VideoAdsModal";
 import { PlaceHolderTypeEnum } from "@/data/constants";
+import { getDefaultChallenge } from "@/data/default-challenges.data";
 import { useStoreDiscounts, useStoreCatalogs } from "@/domains/admin/hooks";
 import { GeneratingCouponModal } from "@/domains/coupons/GeneratingCouponModal";
 import { useWallet } from "@/domains/payment/hooks";
@@ -77,6 +78,9 @@ function getCurrentDayOfWeek(): string {
   const today = new Date();
   return days[today.getDay()] || "";
 }
+
+const muralPts = getDefaultChallenge("mural_posts")?.points ?? 50;
+const reviewPts = getDefaultChallenge("reviews")?.points ?? 40;
 
 export default function StoresDetailPage(): React.JSX.Element {
   const router = useRouter();
@@ -1211,7 +1215,7 @@ export default function StoresDetailPage(): React.JSX.Element {
                       <span>Escribe tu reseña</span>
                       <span>🍽️</span>
                       <span className="text-xs font-semibold opacity-90">
-                        +50 pts 📸
+                        +{reviewPts} pts ⭐
                       </span>
                     </button>
                   )}
@@ -1689,7 +1693,7 @@ export default function StoresDetailPage(): React.JSX.Element {
                       <span>📷</span>
                       Add photo
                       <span className="text-xs text-rose-400 font-bold">
-                        +50 pts 📸
+                        +{muralPts} pts 📸
                       </span>
                     </button>
                   )}
@@ -1775,7 +1779,9 @@ export default function StoresDetailPage(): React.JSX.Element {
                       disabled={!canSubmit}
                       onClick={() => {
                         void (async () => {
-                          if (!storeId) {return;}
+                          if (!storeId) {
+                            return;
+                          }
                           setIsSubmittingReview(true);
                           try {
                             const tasks: Promise<unknown>[] = [];
@@ -1891,7 +1897,9 @@ export default function StoresDetailPage(): React.JSX.Element {
                           ) : hasMural ? (
                             <>
                               Publicar foto al mural{" "}
-                              <span className="ml-1 text-xs">+50 pts 📸</span>
+                              <span className="ml-1 text-xs">
+                                +{muralPts} pts 📸
+                              </span>
                             </>
                           ) : (
                             <>
