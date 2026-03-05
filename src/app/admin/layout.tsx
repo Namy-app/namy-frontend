@@ -5,15 +5,16 @@ import {
   Users,
   Video,
   LayoutDashboard,
-  ArrowLeft,
   FolderTree,
   Trophy,
   Images,
   Star,
+  Menu,
+  X,
 } from "lucide-react";
 import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 import { UserRole } from "@/domains/admin/types";
 import { contentfulImageLoader } from "@/lib/image-utils";
@@ -28,6 +29,22 @@ export default function AdminLayout({
   const pathname = usePathname();
   const { user } = useAuthStore();
   const [isHydrated, setIsHydrated] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    if (!menuOpen) {
+      return;
+    }
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [menuOpen]);
 
   // Wait for client-side hydration
   useEffect(() => {
@@ -161,10 +178,6 @@ export default function AdminLayout({
     });
   }
 
-  const handleBackToDashboard = () => {
-    router.push("/explore");
-  };
-
   return (
     <div className="min-h-screen bg-gradient-hero">
       {/* Top Navigation Bar */}
@@ -188,8 +201,8 @@ export default function AdminLayout({
               />
             </button>
 
-            {/* Center: Navigation Links */}
-            <nav className="flex items-center gap-1">
+            {/* Center: Navigation Links — hidden on small screens */}
+            <nav className="hidden xl:flex items-center gap-1">
               {navItems.map((item) => (
                 <button
                   key={item.href}
@@ -206,9 +219,9 @@ export default function AdminLayout({
               ))}
             </nav>
 
-            {/* Right: User Info & Back Button */}
-            <div className="flex items-center gap-4">
-              <div className="text-right">
+            {/* Right: User Info, Back Button & Menu dropdown (small screens) */}
+            <div className="flex items-center gap-4" ref={menuRef}>
+              <div className="hidden sm:block text-right">
                 <p className="text-sm font-medium text-foreground">
                   {user.displayName || user.email}
                 </p>
@@ -216,13 +229,53 @@ export default function AdminLayout({
                   {user.role.replace("_", " ")}
                 </p>
               </div>
-              <button
-                onClick={handleBackToDashboard}
-                className="flex items-center gap-2 px-3 py-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
-                title="Back to Dashboard"
-              >
-                <ArrowLeft className="w-4 h-4" />
-              </button>
+              {/* Menu icon — visible below xl; toggles dropdown */}
+              <div className="relative xl:hidden">
+                <button
+                  onClick={() => setMenuOpen((o) => !o)}
+                  className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                  aria-label={menuOpen ? "Close menu" : "Open menu"}
+                  aria-expanded={menuOpen}
+                >
+                  {menuOpen ? (
+                    <X className="w-5 h-5" />
+                  ) : (
+                    <Menu className="w-5 h-5" />
+                  )}
+                </button>
+                {/* Dropdown panel */}
+                {menuOpen ? (
+                  <div className="absolute right-0 top-full mt-2 w-56 py-1 bg-card border border-border rounded-lg shadow-xl z-50">
+                    <div className="px-3 py-2 border-b border-border sm:hidden">
+                      <p className="text-sm font-semibold text-foreground truncate">
+                        {user.displayName || user.email}
+                      </p>
+                      <p className="text-xs text-muted-foreground capitalize">
+                        {user.role.replace("_", " ")}
+                      </p>
+                    </div>
+                    <nav className="py-1 max-h-[70vh] overflow-y-auto">
+                      {navItems.map((item) => (
+                        <button
+                          key={item.href}
+                          onClick={() => {
+                            router.push(item.href);
+                            setMenuOpen(false);
+                          }}
+                          className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-none transition-colors text-left text-sm ${
+                            item.active
+                              ? "bg-primary text-primary-foreground"
+                              : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                          }`}
+                        >
+                          <item.icon className="w-4 h-4 shrink-0" />
+                          <span className="font-medium">{item.label}</span>
+                        </button>
+                      ))}
+                    </nav>
+                  </div>
+                ) : null}
+              </div>
             </div>
           </div>
         </div>

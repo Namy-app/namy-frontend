@@ -61,7 +61,7 @@ export default function ServicesPage(): React.JSX.Element {
 
   const searchTimeoutRef = useRef<NodeJS.Timeout>(undefined);
   const [filters, setFilters] = useState<StoreFilters>({
-    isRestaurant: false,
+    type: StoreType.SERVICE,
   });
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -351,7 +351,7 @@ export default function ServicesPage(): React.JSX.Element {
     setAvailabilityFilter("all");
     setCurrentPage(1);
     setFilters({
-      isRestaurant: false,
+      type: StoreType.SERVICE,
     });
   };
 

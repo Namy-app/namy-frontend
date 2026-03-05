@@ -37,7 +37,7 @@ type RedemptionResult = {
   newLevel?: number | null;
   oldLevel?: number | null;
   message?: string | null;
-  pointsEarned?: number | null;
+  challengeProgress?: string | null;
 };
 
 export default function RedeemDetail({
@@ -242,13 +242,13 @@ export default function RedeemDetail({
           </p>
         </div>
 
-        {/* Points Earned Notification */}
-        {redemptionResult.pointsEarned ? (
+        {/* Challenge Progress Notification */}
+        {redemptionResult.challengeProgress ? (
           <div className="bg-linear-to-r from-yellow-500 to-orange-500 p-4 text-center">
             <div className="flex items-center justify-center gap-2">
               <Sparkles className="w-6 h-6 text-white" />
               <span className="text-xl font-bold text-white">
-                +{redemptionResult.pointsEarned} Puntos
+                {redemptionResult.challengeProgress}
               </span>
               <Sparkles className="w-6 h-6 text-white" />
             </div>

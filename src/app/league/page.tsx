@@ -4,9 +4,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 
-import { useCityLeaderboard } from "@/domains/gamification/hooks";
+import {
+  useCityLeaderboard,
+  useMyPointsHistory,
+} from "@/domains/gamification/hooks";
 import { BasicLayout } from "@/layouts/BasicLayout";
-import type { LeaderboardEntry } from "@/lib/api-types";
+import type { LeaderboardEntry, PointTransaction } from "@/lib/api-types";
 import { useAuthStore } from "@/store/useAuthStore";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -151,11 +154,87 @@ function Avatar({
 
 // ─── Player modal ──────────────────────────────────────────────────────────────
 
+const DESC_ICON: Array<{ match: RegExp; icon: string }> = [
+  { match: /streak|racha|every day|cada dia/i, icon: "🔥" },
+  { match: /coupon|cupón|discount|new place|nuevo lugar/i, icon: "🎟️" },
+  { match: /review|reseña/i, icon: "⭐" },
+  { match: /mural|post|photo|foto/i, icon: "📸" },
+  { match: /referr|invit|amigo/i, icon: "👥" },
+  { match: /first.visit|primera.visita/i, icon: "🏪" },
+];
+
+function descIcon(description: string): string {
+  return DESC_ICON.find((d) => d.match.test(description))?.icon ?? "🎯";
+}
+
+function cleanDescription(description: string): string {
+  return description
+    .replace(
+      /^(Challenge completed:|Login streak challenge completed:|Review challenge completed:)\s*/i,
+      ""
+    )
+    .replace(/\s*\(\d+-day streak\)\s*$/i, "")
+    .trim();
+}
+
+interface GroupedTx {
+  key: string;
+  label: string;
+  icon: string;
+  totalPts: number;
+  count: number;
+}
+
+function groupHistory(history: PointTransaction[]): GroupedTx[] {
+  const map = new Map<string, GroupedTx>();
+  for (const tx of history) {
+    const label = cleanDescription(tx.description);
+    const key = label.toLowerCase();
+    const existing = map.get(key);
+    if (existing) {
+      existing.totalPts += tx.pointsAmount;
+      existing.count += 1;
+    } else {
+      map.set(key, {
+        key,
+        label,
+        icon: descIcon(tx.description),
+        totalPts: tx.pointsAmount,
+        count: 1,
+      });
+    }
+  }
+  return Array.from(map.values());
+}
+
+function TransactionRow({ group }: { group: GroupedTx }) {
+  return (
+    <div className="flex items-center gap-3 py-2.5 border-b border-gray-100 last:border-0">
+      <span className="text-base">{group.icon}</span>
+      <span className="flex-1 text-sm font-bold text-gray-800">
+        {group.label}
+      </span>
+      <div className="flex flex-col items-end">
+        <span className="text-xs font-black text-orange-500">
+          +{group.totalPts} pts
+        </span>
+        {group.count > 1 && (
+          <span className="text-[10px] text-gray-400 font-semibold">
+            {group.count}×
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function PlayerModal({
   player,
+  history,
   onClose,
 }: {
   player: Player;
+  history?: PointTransaction[];
   onClose: () => void;
 }) {
   return (
@@ -164,11 +243,11 @@ function PlayerModal({
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-3xl w-full max-w-sm p-6 shadow-2xl"
+        className="bg-white rounded-3xl w-full max-w-sm shadow-2xl max-h-[85vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between px-6 pt-6 pb-4">
           <div className="flex items-center gap-2">
             <Avatar
               name={player.name}
@@ -189,21 +268,29 @@ function PlayerModal({
         </div>
 
         {/* Total points */}
-        <div className="text-center mb-5">
+        <div className="text-center pb-4 px-6">
           <p className="text-4xl font-black text-orange-500">
             {player.pts.toLocaleString()}
           </p>
           <p className="text-sm text-gray-400 font-semibold mt-0.5">
             Puntos Totales
           </p>
-        </div>
-
-        {/* City */}
-        {player.city ? (
-          <div className="text-center">
-            <p className="text-sm text-gray-500 font-semibold">
+          {player.city ? (
+            <p className="text-xs text-gray-400 font-semibold mt-1">
               📍 {player.city}
             </p>
+          ) : null}
+        </div>
+
+        {/* Points history */}
+        {history && history.length > 0 ? (
+          <div className="flex flex-col px-6 pb-6 overflow-y-auto">
+            <p className="text-xs font-black text-gray-400 uppercase tracking-wide mb-1">
+              Cómo ganaste tus puntos
+            </p>
+            {groupHistory(history).map((group) => (
+              <TransactionRow key={group.key} group={group} />
+            ))}
           </div>
         ) : null}
       </div>
@@ -322,6 +409,7 @@ export default function League() {
   const [selected, setSelected] = useState<Player | null>(null);
   const { user: authUser } = useAuthStore();
   const { data: entries, isLoading } = useCityLeaderboard(20);
+  const { data: myHistory } = useMyPointsHistory(200);
 
   const players: Player[] = (entries ?? []).map(toPlayer);
 
@@ -423,7 +511,11 @@ export default function League() {
 
         {/* Modal */}
         {selected ? (
-          <PlayerModal player={selected} onClose={() => setSelected(null)} />
+          <PlayerModal
+            player={selected}
+            history={selected.isCurrentUser ? myHistory : undefined}
+            onClose={() => setSelected(null)}
+          />
         ) : null}
       </div>
     </BasicLayout>

@@ -20,7 +20,6 @@ export const CREATE_STORE_MUTATION = gql`
         email
         price
         active
-        isRestaurant
         url
         openDays
         tags
@@ -58,7 +57,6 @@ export const UPDATE_STORE_MUTATION = gql`
         email
         price
         active
-        isRestaurant
         url
         openDays
         tags
@@ -138,7 +136,6 @@ export const GET_ALL_STORES = gql`
         lng
         phoneNumber
         categoryIds
-        isRestaurant
         email
         price
         active
@@ -181,7 +178,6 @@ export const GET_STORE_BY_ID = gql`
       lat
       lng
       phoneNumber
-      isRestaurant
       email
       price
       active

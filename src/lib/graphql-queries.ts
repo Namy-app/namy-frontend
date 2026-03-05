@@ -172,7 +172,6 @@ export const GET_ALL_STORES_QUERY = `
         updatedAt
         type
         categoryIds
-        isRestaurant
         averageRating
         reviewCounter
         city
@@ -205,18 +204,7 @@ export const GET_STORE_QUERY = `
       createdAt
       updatedAt
       type
-      subCategory
-      catId
-      subCatId
-      category {
-        id
-        name
-      }
-      subcategory {
-        id
-        name
-      }
-      isRestaurant
+      categoryIds
       averageRating
       reviewCounter
       city
@@ -243,16 +231,7 @@ export const CREATE_STORE_MUTATION = `
         createdAt
         updatedAt
         type
-        category {
-          id
-          name
-        }
-        subCategory {
-          id
-          name
-        }
-        catId
-        subCatId
+        categoryIds
         city
         lat
         lng
@@ -263,7 +242,6 @@ export const CREATE_STORE_MUTATION = `
         openDays
         tags
         url
-        isRestaurant
       }
       plainPin
     }
@@ -271,42 +249,38 @@ export const CREATE_STORE_MUTATION = `
 `;
 
 export const UPDATE_STORE_MUTATION = `
-  mutation UpdateStore(
-    $id: String!
-    $name: String
-    $description: String
-    $address: String
-    $phoneNumber: String
-    $email: String
-    $logo: String
-    $coverImage: String
-    $isActive: Boolean
-    $catId: String
-    $subCatId: String
-    $isRestaurant: Boolean
-  ) {
-    updateStore(
-      id: $id
-      name: $name
-      description: $description
-      address: $address
-      phoneNumber: $phoneNumber
-      email: $email
-      logo: $logo
-      coverImage: $coverImage
-      isActive: $isActive
-      catId: $catId
-      subCatId: $subCatId
-      isRestaurant: $isRestaurant
-    ) {
-      id
-      name
-      description
-      isActive
-      catId
-      subCatId
-      isRestaurant
-      updatedAt
+  mutation UpdateStore($id: String!, $input: UpdateStoreInput!) {
+    updateStore(id: $id, input: $input) {
+      store {
+        id
+        name
+        description
+        categoryIds
+        type
+        city
+        address
+        placeId
+        lat
+        lng
+        phoneNumber
+        email
+        price
+        active
+        url
+        openDays
+        tags
+        restrictions
+        averageRating
+        reviewCounter
+        additionalInfo
+        imageUrl
+        image1Url
+        image2Url
+        image3Url
+        createdAt
+        updatedAt
+      }
+      newPin
     }
   }
 `;
@@ -728,7 +702,7 @@ export const REDEEM_COUPON_BY_STAFF_MUTATION = `
       newLevel
       oldLevel
       message
-      pointsEarned
+      challengeProgress
     }
   }
 `;
@@ -1270,6 +1244,26 @@ export const MY_CHALLENGES_QUERY = `
         points
         isActive
         expiresAt
+      }
+    }
+  }
+`;
+
+export const MY_POINTS_HISTORY_QUERY = `
+  query MyPointsHistory($limit: Int) {
+    myPointsHistory(limit: $limit) {
+      id
+      pointsAmount
+      description
+      transactionType
+      timestamp
+      challenge {
+        id
+        name
+        entityType
+        count
+        points
+        isActive
       }
     }
   }

@@ -1,22 +1,37 @@
 import Image from "next/image";
 
+import { type UserLevelInfo } from "@/domains/user/hooks/query/useMyLevel";
+
 import { type Level, type LevelProgress } from "./types";
 
-export const LEVELS: Level[] = [
+// ── Static per-level config (colours, icons, copy) ──────────────────────────
+
+interface LevelConfig {
+  id: number;
+  gemIcon: string;
+  borderColor: string;
+  shadowColor: string;
+  discountColor: string;
+  maxLabel: string | null;
+  benefitsTitle: string;
+  benefits: string[];
+  /** Used when usesUntilNextLevel is null (max level) */
+  maxSubtitle: string;
+  downgradeNote: string | null;
+  /** Required uses/month to reach this level (used to build progress bar) */
+  requiredUsesForLevel: number;
+  /** Required uses/month to reach next level from here */
+  requiredUsesForNext: number | null;
+}
+
+const LEVEL_CONFIGS: LevelConfig[] = [
   {
     id: 1,
     gemIcon: "/lvl1badge.svg",
-    name: "Nivel 1: Novato",
-    subtitle: "Usa 5 descuentos al mes para subir de nivel",
-    discount: "10%",
-    daysLabel: "15 Dias",
     borderColor: "border-[#FDCA50]",
     shadowColor: "shadow-amber-100",
     discountColor: "text-amber-400",
-    progress: { current: 4, total: 5, from: 1, to: 2 },
     maxLabel: null,
-    downgradeNote: null,
-    streak: 100,
     benefitsTitle: "Beneficios Novato:",
     benefits: [
       "10% de descuento en todos los lugares",
@@ -25,21 +40,18 @@ export const LEVELS: Level[] = [
       "Dejar reseñas",
       "Participar en retos semanales",
     ],
+    maxSubtitle: "Usa 5 descuentos al mes para subir de nivel",
+    downgradeNote: null,
+    requiredUsesForLevel: 0,
+    requiredUsesForNext: 5,
   },
   {
     id: 2,
     gemIcon: "/lvl2badge.png",
-    name: "Nivel 2: Explorador",
-    subtitle: "Usa 10 descuentos al mes para subir de nivel",
-    discount: "12%",
-    daysLabel: "20 Dias",
     borderColor: "border-blue-400",
     shadowColor: "shadow-blue-100",
     discountColor: "text-blue-400",
-    progress: { current: 8, total: 10, from: 2, to: 3 },
     maxLabel: null,
-    downgradeNote: "Si no usas mínimo 1 descuento al mes bajas de nivel",
-    streak: 50,
     benefitsTitle: "Beneficios Explorador:",
     benefits: [
       "12% de descuento en todos los lugares",
@@ -47,21 +59,18 @@ export const LEVELS: Level[] = [
       "Acceso a retos mensuales",
       "Recompensas sorpresa ocasionales",
     ],
+    maxSubtitle: "Usa 10 descuentos al mes para subir de nivel",
+    downgradeNote: "Si no usas mínimo 1 descuento al mes bajas de nivel",
+    requiredUsesForLevel: 5,
+    requiredUsesForNext: 10,
   },
   {
     id: 3,
     gemIcon: "/lvl3badge.svg",
-    name: "Nivel 3: Maestro Local",
-    subtitle: "Yujuu! Has desbloqueado el nivel mas alto de Ñamy",
-    discount: "15%",
-    daysLabel: "5 Dias",
     borderColor: "border-red-400",
     shadowColor: "shadow-red-100",
     discountColor: "text-red-400",
-    progress: null,
     maxLabel: "Nivel Maximo",
-    downgradeNote: "Si no usas mínimo 2 descuentos al mes bajas de nivel",
-    streak: 1100,
     benefitsTitle: "Beneficios Maestro Local:",
     benefits: [
       "15% de descuento en todos los lugares",
@@ -70,21 +79,18 @@ export const LEVELS: Level[] = [
       "Acceso anticipado a funciones nuevas",
       "Invitaciones a experiencias especiales",
     ],
+    maxSubtitle: "¡Yujuu! Has desbloqueado el nivel más alto de Ñamy",
+    downgradeNote: "Si no usas mínimo 2 descuentos al mes bajas de nivel",
+    requiredUsesForLevel: 10,
+    requiredUsesForNext: null,
   },
   {
     id: 4,
     gemIcon: "/premiumbadge.png",
-    name: "Ñamy Premium",
-    subtitle: "Siente el poder. Sin anuncios. Sin límites.",
-    discount: "15%",
-    daysLabel: "5 Dias",
     borderColor: "border-fuchsia-500",
     shadowColor: "shadow-fuchsia-100",
     discountColor: "text-fuchsia-500",
-    progress: null,
     maxLabel: "Estado Premium",
-    downgradeNote: "Mientras otros esperan anuncios, tú ya estas comiendo.",
-    streak: 9,
     benefitsTitle: "Con Premium obtienes:",
     benefits: [
       "Descuentos instantáneos",
@@ -92,8 +98,65 @@ export const LEVELS: Level[] = [
       "Promociones exclusivas Premium",
       "Recompensas mensuales mayores",
     ],
+    maxSubtitle: "Siente el poder. Sin anuncios. Sin límites.",
+    downgradeNote: "Mientras otros esperan anuncios, tú ya estás comiendo.",
+    requiredUsesForLevel: 0,
+    requiredUsesForNext: null,
   },
 ];
+
+export const ALL_GEM_ICONS = LEVEL_CONFIGS.map((c) => ({
+  id: c.id,
+  icon: c.gemIcon,
+}));
+
+// ── Build a Level card from live API data ────────────────────────────────────
+
+export function buildLevel(info: UserLevelInfo): Level {
+  const levelId = info.level ?? 1;
+  // Premium is id=4; otherwise clamp to 1-3
+  const configId = levelId > 3 ? 4 : levelId;
+  const cfg = LEVEL_CONFIGS[configId - 1]!;
+
+  const discount = `${info.discountPercentage}%`;
+
+  let progress: LevelProgress | null = null;
+  if (cfg.requiredUsesForNext !== null) {
+    // current = how many uses this month toward next level
+    // total   = uses required to reach next level
+    progress = {
+      current: Math.min(info.monthlyUsageCount, cfg.requiredUsesForNext),
+      total: cfg.requiredUsesForNext,
+      from: configId,
+      to: configId + 1,
+    };
+  }
+
+  const subtitle =
+    cfg.requiredUsesForNext !== null
+      ? `Usa ${cfg.requiredUsesForNext} descuentos al mes para subir de nivel`
+      : cfg.maxSubtitle;
+
+  return {
+    id: configId,
+    gemIcon: cfg.gemIcon,
+    name: info.levelName || `Nivel ${configId}`,
+    subtitle,
+    discount,
+    daysLabel: "",
+    borderColor: cfg.borderColor,
+    shadowColor: cfg.shadowColor,
+    discountColor: cfg.discountColor,
+    progress,
+    maxLabel: cfg.maxLabel,
+    downgradeNote: cfg.downgradeNote,
+    streak: 0, // computed separately in page.tsx
+    benefitsTitle: cfg.benefitsTitle,
+    benefits: cfg.benefits,
+  };
+}
+
+// ── UI components ────────────────────────────────────────────────────────────
 
 export function Gem({ icon, active }: { icon: string; active: boolean }) {
   return (

@@ -9,8 +9,12 @@ import {
   ChevronLeft,
   ChevronRight,
   FolderTree,
+  Upload,
+  Loader2,
+  Image as ImageIcon,
 } from "lucide-react";
-import { useState } from "react";
+import Image from "next/image";
+import { useState, useRef } from "react";
 
 import {
   useCategories,
@@ -22,6 +26,7 @@ import type { Category, CreateCategoryInput } from "@/domains/admin/types";
 import { StoreType } from "@/domains/admin/types";
 import { useToast } from "@/hooks/use-toast";
 import { extractErrorMessage } from "@/lib/utils";
+import { useAuthStore } from "@/store/useAuthStore";
 
 const STORE_TYPE_OPTIONS: { value: StoreType | ""; label: string }[] = [
   { value: "", label: "Any" },
@@ -59,6 +64,10 @@ export default function AdminCategoriesPage() {
   const [formData, setFormData] = useState<CategoryFormState>(emptyForm);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+  const [iconUploading, setIconUploading] = useState(false);
+  const [iconUploadError, setIconUploadError] = useState<string | null>(null);
+  const iconFileInputRef = useRef<HTMLInputElement>(null);
+  const [categoryViewing, setCategoryViewing] = useState<Category | null>(null);
 
   const { data: categoriesData, isLoading } = useCategories(undefined, {
     page: currentPage,
@@ -92,6 +101,61 @@ export default function AdminCategoriesPage() {
     setShowForm(false);
     setEditingCategory(null);
     setFormData(emptyForm);
+    setIconUploadError(null);
+  };
+
+  const handleIconFileChange = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ): Promise<void> => {
+    const file = e.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      setIconUploadError("Only JPG, PNG, and WebP are allowed.");
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      setIconUploadError("Image must be smaller than 2MB.");
+      return;
+    }
+
+    setIconUploadError(null);
+    setIconUploading(true);
+
+    try {
+      const { accessToken } = useAuthStore.getState();
+      const baseUrl = (
+        process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"
+      ).replace("/graphql", "");
+
+      const body = new FormData();
+      body.append("file", file);
+
+      const res = await fetch(`${baseUrl}/upload/category-image`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${accessToken}` },
+        body,
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(
+          (err as { message?: string }).message ?? "Upload failed"
+        );
+      }
+
+      const data = (await res.json()) as { url: string };
+      setFormData((prev) => ({ ...prev, iconUrl: data.url }));
+    } catch (err) {
+      setIconUploadError(
+        err instanceof Error ? err.message : "Failed to upload image."
+      );
+    } finally {
+      setIconUploading(false);
+      e.target.value = "";
+    }
   };
 
   const handleDeleteClick = (category: Category, e: React.MouseEvent) => {
@@ -274,23 +338,85 @@ export default function AdminCategoriesPage() {
               </select>
             </div>
 
-            <div>
-              <label
-                htmlFor="category-icon-url"
-                className="block text-sm font-medium text-foreground mb-2"
-              >
-                Icon URL
+            <div className="sm:col-span-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
+                Category image
               </label>
-              <input
-                id="category-icon-url"
-                type="url"
-                value={formData.iconUrl}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, iconUrl: e.target.value }))
-                }
-                placeholder="https://..."
-                className="w-full px-4 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-              />
+              <div className="flex flex-col sm:flex-row gap-4 items-start">
+                <div className="flex flex-col gap-2">
+                  <button
+                    type="button"
+                    onClick={() => iconFileInputRef.current?.click()}
+                    disabled={iconUploading}
+                    className="w-32 h-32 rounded-lg border-2 border-dashed border-border bg-muted/40 hover:border-primary hover:bg-muted/70 transition-colors flex flex-col items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    {formData.iconUrl ? (
+                      <div className="relative w-full h-full rounded-lg overflow-hidden">
+                        <Image
+                          src={formData.iconUrl}
+                          alt="Category icon"
+                          fill
+                          className="object-cover"
+                          unoptimized
+                          onError={() => {}}
+                        />
+                        {iconUploading ? (
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+                            <Loader2 className="w-8 h-8 text-white animate-spin" />
+                          </div>
+                        ) : null}
+                      </div>
+                    ) : (
+                      <>
+                        {iconUploading ? (
+                          <Loader2 className="w-8 h-8 text-muted-foreground animate-spin" />
+                        ) : (
+                          <Upload className="w-8 h-8 text-muted-foreground" />
+                        )}
+                        <span className="text-xs text-muted-foreground text-center px-2">
+                          {iconUploading ? "Uploading…" : "Upload image"}
+                        </span>
+                      </>
+                    )}
+                  </button>
+                  <input
+                    ref={iconFileInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    className="hidden"
+                    onChange={(e) => void handleIconFileChange(e)}
+                  />
+                  <span className="text-xs text-muted-foreground">
+                    JPG, PNG, WebP · max 2MB
+                  </span>
+                </div>
+                <div className="flex-1 w-full min-w-0">
+                  <label
+                    htmlFor="category-icon-url"
+                    className="block text-sm text-muted-foreground mb-1"
+                  >
+                    Or paste image URL
+                  </label>
+                  <input
+                    id="category-icon-url"
+                    type="url"
+                    value={formData.iconUrl}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        iconUrl: e.target.value,
+                      }))
+                    }
+                    placeholder="https://..."
+                    className="w-full px-4 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+              </div>
+              {iconUploadError ? (
+                <p className="text-sm text-destructive mt-1">
+                  {iconUploadError}
+                </p>
+              ) : null}
             </div>
 
             <div className="sm:col-span-2 flex items-center gap-2">
@@ -392,8 +518,19 @@ export default function AdminCategoriesPage() {
                         >
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center gap-3">
-                              <div className="p-2 bg-primary/10 rounded-lg">
-                                <FolderTree className="w-4 h-4 text-primary" />
+                              <div className="p-2 bg-primary/10 rounded-lg w-10 h-10 flex items-center justify-center overflow-hidden">
+                                {category.iconUrl ? (
+                                  <Image
+                                    src={category.iconUrl}
+                                    alt=""
+                                    width={40}
+                                    height={40}
+                                    className="object-cover w-full h-full"
+                                    unoptimized
+                                  />
+                                ) : (
+                                  <FolderTree className="w-4 h-4 text-primary shrink-0" />
+                                )}
                               </div>
                               <div>
                                 <div className="text-sm font-medium text-foreground">
@@ -425,6 +562,15 @@ export default function AdminCategoriesPage() {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-right">
                             <div className="flex items-center justify-end gap-2">
+                              {category.iconUrl ? (
+                                <button
+                                  onClick={() => setCategoryViewing(category)}
+                                  className="p-2 text-muted-foreground hover:bg-muted rounded-lg transition-colors"
+                                  title="View category image"
+                                >
+                                  <ImageIcon className="w-4 h-4" />
+                                </button>
+                              ) : null}
                               <button
                                 onClick={(e) =>
                                   void handleToggleActive(category, e)
@@ -524,6 +670,45 @@ export default function AdminCategoriesPage() {
           );
         })()}
       </div>
+
+      {/* View category image modal */}
+      {categoryViewing ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+          onClick={() => setCategoryViewing(null)}
+          role="dialog"
+          aria-modal="true"
+          aria-label="View category image"
+        >
+          <div
+            className="bg-card rounded-xl shadow-xl max-w-lg w-full overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between p-4 border-b border-border">
+              <h2 className="text-lg font-semibold text-foreground">
+                {categoryViewing.name}
+              </h2>
+              <button
+                onClick={() => setCategoryViewing(null)}
+                className="p-2 hover:bg-muted rounded-lg transition-colors"
+                aria-label="Close"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-4 flex justify-center bg-muted/30">
+              <Image
+                src={categoryViewing.iconUrl!}
+                alt={categoryViewing.name}
+                width={400}
+                height={400}
+                className="object-contain max-h-[70vh] w-auto rounded-lg"
+                unoptimized
+              />
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {/* Delete confirmation modal */}
       {categoryToDelete ? (
