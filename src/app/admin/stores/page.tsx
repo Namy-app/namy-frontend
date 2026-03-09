@@ -15,6 +15,7 @@ import {
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
+import { CategoryFilterPills } from "@/components/CategoryFilterPills";
 import { CreateStoreForm } from "@/domains/admin/components/CreateStoreForm";
 import { EditStoreForm } from "@/domains/admin/components/EditStoreForm";
 import {
@@ -34,13 +35,18 @@ export default function AdminStoresPage() {
   const [storeToDelete, setStoreToDelete] = useState<Store | null>(null);
   const [storeToEdit, setStoreToEdit] = useState<Store | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
   const itemsPerPage = 10;
 
   const { data: stats, isLoading: statsLoading } = useStoreStatistics({
     active: null,
   });
   const { data: storesData, isLoading: storesLoading } = useStores(
-    { includeAll: true },
+    {
+      includeAll: true,
+      categoryIds:
+        selectedCategoryIds.length > 0 ? selectedCategoryIds : undefined,
+    },
     { first: itemsPerPage, page: currentPage }
   );
   const { data: categoriesData, isLoading: isCategoriesLoading } =
@@ -59,6 +65,19 @@ export default function AdminStoresPage() {
     }
     return map;
   }, [allCategories]);
+
+  const handleCategoryClick = (categoryId: string) => {
+    if (categoryId === "all") {
+      setSelectedCategoryIds([]);
+    } else {
+      setSelectedCategoryIds((prev) =>
+        prev.includes(categoryId)
+          ? prev.filter((id) => id !== categoryId)
+          : [...prev, categoryId]
+      );
+    }
+    setCurrentPage(1);
+  };
 
   // Handle delete store
   const handleDeleteStore = async () => {
@@ -205,6 +224,19 @@ export default function AdminStoresPage() {
               Service-based businesses
             </p>
           </div>
+        </div>
+
+        {/* Category Filter Pills */}
+        <div className="mb-6">
+          <CategoryFilterPills
+            categories={allCategories}
+            selectedCategoryIds={selectedCategoryIds}
+            onCategoryClick={handleCategoryClick}
+            isLoading={isCategoriesLoading}
+            allLabel="All"
+            loadingLabel="Loading categories..."
+            className="-mt-2"
+          />
         </div>
 
         {/* Recent Stores Table */}
