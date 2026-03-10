@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { useState, useEffect, useMemo, useRef } from "react";
 
+import { CategoryFilterPills } from "@/components/CategoryFilterPills";
 import StoreMap from "@/components/store-map";
 import { StoreType } from "@/domains/admin/types";
 import { RestaurantCard } from "@/domains/store/components/RestaurantCard";
@@ -415,46 +416,14 @@ export default function RestaurantListingPage(): React.JSX.Element {
 
           {/* Category Filter Pills */}
           <div className="-mt-4 mb-4 max-w-5xl mx-auto">
-            {categoriesLoading ? (
-              <div className="px-6">Cargando categorías...</div>
-            ) : (
-              <div className="overflow-x-auto pb-2 scrollbar-hide">
-                <div className="flex gap-2 px-6 min-w-max">
-                  <Button
-                    key="all"
-                    onClick={() => handleCategoryClick("all")}
-                    className={`rounded-full whitespace-nowrap ${
-                      selectedCategoryIds.length === 0
-                        ? "bg-primary text-primary-foreground shadow-glow"
-                        : "bg-card border-border hover:border-primary"
-                    }`}
-                    variant={
-                      selectedCategoryIds.length === 0 ? "default" : "outline"
-                    }
-                  >
-                    Todos
-                  </Button>
-                  {categories.map((category) => (
-                    <Button
-                      key={category.id}
-                      onClick={() => handleCategoryClick(category.id)}
-                      className={`rounded-full whitespace-nowrap capitalize ${
-                        selectedCategoryIds.includes(category.id)
-                          ? "bg-primary text-primary-foreground shadow-glow"
-                          : "bg-card border-border hover:border-primary"
-                      }`}
-                      variant={
-                        selectedCategoryIds.includes(category.id)
-                          ? "default"
-                          : "outline"
-                      }
-                    >
-                      {category.name}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-            )}
+            <CategoryFilterPills
+              categories={categories}
+              selectedCategoryIds={selectedCategoryIds}
+              onCategoryClick={handleCategoryClick}
+              isLoading={categoriesLoading}
+              allLabel="Todos"
+              loadingLabel="Cargando categorías..."
+            />
           </div>
 
           {/* Availability Filter + Sort Options */}
