@@ -31,7 +31,7 @@ export function RestaurantIdProvider({
   // Only fetch if we don't have an ID in localStorage
   const shouldFetch = restaurantId === null;
   const { data: category, isLoading: isCategoryLoading } = useGetCategoryByName(
-    shouldFetch ? "restaurant" : ""
+    shouldFetch ? "Restaurants" : ""
   );
 
   // Update state when category is fetched

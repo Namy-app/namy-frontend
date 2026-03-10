@@ -4,7 +4,6 @@ import {
   Store,
   Users,
   BarChart3,
-  Ticket,
   Settings,
   ShoppingBag,
   ArrowRight,
@@ -14,7 +13,11 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-import { useStoreStatistics, useUsers } from "@/domains/admin/hooks";
+import {
+  useStoreStatistics,
+  useUsers,
+  useStoreCoupons,
+} from "@/domains/admin/hooks";
 import { UserRole } from "@/domains/admin/types";
 import { useAuthStore } from "@/store/useAuthStore";
 
@@ -26,6 +29,16 @@ export default function AdminDashboardPage() {
   const { data: storeStats, isLoading: storeStatsLoading } =
     useStoreStatistics();
   const { data: usersData, isLoading: usersLoading } = useUsers(1, 1000);
+  const { data: allCouponsData, isLoading: couponsLoading } = useStoreCoupons(
+    { includeExpired: true },
+    { page: 1, first: 1 },
+    { enabled: true }
+  );
+  const { data: redeemedCouponsData } = useStoreCoupons(
+    { used: true, includeExpired: true },
+    { page: 1, first: 1 },
+    { enabled: true }
+  );
 
   // Calculate active users (users who are active)
   const activeUsersCount = usersData?.data.filter((u) => u.active).length ?? 0;
@@ -112,43 +125,17 @@ export default function AdminDashboardPage() {
   }
 
   // Add remaining sections
-  adminSections.push(
-    {
-      title: "Challenges",
-      description: "Create and manage gamification challenges",
-      icon: Trophy,
-      color: "from-yellow-400 to-orange-500",
-      href: "/admin/challenges",
-      stats: [
-        { label: "Total", value: "-" },
-        { label: "Active", value: "-" },
-      ],
-    },
-    {
-      title: "Coupons & Discounts",
-      description: "Monitor coupon usage and redemptions",
-      icon: Ticket,
-      color: "from-green-500 to-green-600",
-      href: "/admin/coupons",
-      stats: [
-        { label: "Generated", value: "-" },
-        { label: "Redeemed", value: "-" },
-      ],
-      comingSoon: true,
-    },
-    {
-      title: "Analytics",
-      description: "View platform statistics and insights",
-      icon: BarChart3,
-      color: "from-orange-500 to-orange-600",
-      href: "/admin/analytics",
-      stats: [
-        { label: "Revenue", value: "-" },
-        { label: "Growth", value: "-" },
-      ],
-      comingSoon: true,
-    }
-  );
+  adminSections.push({
+    title: "Challenges",
+    description: "Create and manage gamification challenges",
+    icon: Trophy,
+    color: "from-yellow-400 to-orange-500",
+    href: "/admin/challenges",
+    stats: [
+      { label: "Total", value: "-" },
+      { label: "Active", value: "-" },
+    ],
+  });
 
   const quickStats = [
     {
@@ -294,6 +281,104 @@ export default function AdminDashboardPage() {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+
+        {/* Analytics — Coupon Generation vs Redemption */}
+        <div className="mt-8">
+          <h2 className="text-2xl font-bold text-foreground mb-6">Analytics</h2>
+          <div className="bg-card rounded-lg shadow overflow-hidden">
+            <div className="h-2 bg-gradient-to-r from-orange-500 to-orange-600" />
+            <div className="p-6">
+              <div className="flex items-start justify-between mb-6">
+                <div className="flex items-center gap-4">
+                  <div className="p-4 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg text-white shadow-lg">
+                    <BarChart3 className="w-8 h-8" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-foreground">
+                      Cupones Generados vs Canjeados
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      Métricas globales de uso de cupones en la plataforma
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {couponsLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="h-6 w-6 rounded-full border-2 border-orange-500 border-t-transparent animate-spin" />
+                </div>
+              ) : (
+                <>
+                  {/* Numbers */}
+                  <div className="grid grid-cols-3 gap-4 mb-6">
+                    <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 text-center">
+                      <p className="text-3xl font-bold text-blue-600">
+                        {allCouponsData?.paginationInfo.total ?? 0}
+                      </p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Generados
+                      </p>
+                    </div>
+                    <div className="bg-green-50 border border-green-100 rounded-xl p-4 text-center">
+                      <p className="text-3xl font-bold text-green-600">
+                        {redeemedCouponsData?.paginationInfo.total ?? 0}
+                      </p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Canjeados
+                      </p>
+                    </div>
+                    <div className="bg-orange-50 border border-orange-100 rounded-xl p-4 text-center">
+                      <p className="text-3xl font-bold text-orange-500">
+                        {allCouponsData?.paginationInfo.total
+                          ? Math.round(
+                              ((redeemedCouponsData?.paginationInfo.total ??
+                                0) /
+                                allCouponsData.paginationInfo.total) *
+                                100
+                            )
+                          : 0}
+                        %
+                      </p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Tasa de Canje
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Visual bar */}
+                  {(allCouponsData?.paginationInfo.total ?? 0) > 0 && (
+                    <div>
+                      <div className="flex justify-between text-xs text-muted-foreground mb-1">
+                        <span>Canjeados vs Generados</span>
+                        <span>
+                          {redeemedCouponsData?.paginationInfo.total ?? 0} /{" "}
+                          {allCouponsData?.paginationInfo.total ?? 0}
+                        </span>
+                      </div>
+                      <div className="h-3 bg-muted rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-gradient-to-r from-orange-400 to-orange-600 rounded-full transition-all"
+                          style={{
+                            width: `${Math.min(
+                              100,
+                              Math.round(
+                                ((redeemedCouponsData?.paginationInfo.total ??
+                                  0) /
+                                  (allCouponsData?.paginationInfo.total ?? 1)) *
+                                  100
+                              )
+                            )}%`,
+                          }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
           </div>
         </div>
 

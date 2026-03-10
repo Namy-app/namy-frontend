@@ -127,6 +127,13 @@ export default function StoresDetailPage(): React.JSX.Element {
   const [uploadPhotoError, setUploadPhotoError] = useState<string | null>(null);
   const [muralPostDone, setMuralPostDone] = useState(false);
   const reviewPhotoRef = useRef<HTMLInputElement>(null);
+  const [selectedReview, setSelectedReview] = useState<{
+    id: string;
+    userId: string;
+    title: string;
+    description?: string | null;
+    rating: number;
+  } | null>(null);
 
   // Prevent body scroll when modal is open
   useEffect(() => {
@@ -1161,9 +1168,10 @@ export default function StoresDetailPage(): React.JSX.Element {
                             .slice(0, 2)
                             .toUpperCase();
                           return (
-                            <div
+                            <button
                               key={review.id}
-                              className="flex items-start gap-3 bg-white border border-[#f1e9e6] rounded-2xl px-4 py-3 shadow-sm"
+                              onClick={() => setSelectedReview(review)}
+                              className="w-full flex items-start gap-3 bg-white border border-[#f1e9e6] rounded-2xl px-4 py-3 shadow-sm hover:bg-orange-50 hover:border-orange-200 transition-colors text-left"
                             >
                               {/* Avatar */}
                               <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-base font-bold text-orange-500 shrink-0">
@@ -1189,7 +1197,7 @@ export default function StoresDetailPage(): React.JSX.Element {
                                   />
                                 ))}
                               </div>
-                            </div>
+                            </button>
                           );
                         })}
                       </div>
@@ -1564,6 +1572,74 @@ export default function StoresDetailPage(): React.JSX.Element {
             : undefined
         }
       />
+
+      {/* Review Detail Modal */}
+      {selectedReview && typeof window !== "undefined"
+        ? createPortal(
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
+              onClick={() => setSelectedReview(null)}
+            >
+              <div
+                className="bg-white rounded-3xl w-full max-w-sm p-6 shadow-2xl"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Header */}
+                <div className="flex items-center justify-between mb-5">
+                  <h2 className="text-lg font-black text-gray-900">Reseña</h2>
+                  <button
+                    onClick={() => setSelectedReview(null)}
+                    className="p-1.5 hover:bg-gray-100 rounded-full transition-colors"
+                    aria-label="Cerrar"
+                  >
+                    <X className="w-5 h-5 text-gray-500" />
+                  </button>
+                </div>
+
+                {/* Avatar + stars */}
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center text-lg font-bold text-orange-500 shrink-0">
+                    {selectedReview.userId.slice(0, 2).toUpperCase()}
+                  </div>
+                  <div>
+                    <div className="flex gap-0.5 mb-1">
+                      {[1, 2, 3, 4, 5].map((s) => (
+                        <Star
+                          key={s}
+                          className={`w-4 h-4 ${s <= selectedReview.rating ? "fill-yellow-400 text-yellow-400" : "text-gray-200"}`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Title */}
+                <p className="text-base font-bold text-gray-900 mb-2">
+                  {selectedReview.title}
+                </p>
+
+                {/* Description */}
+                {selectedReview.description ? (
+                  <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">
+                    {selectedReview.description}
+                  </p>
+                ) : (
+                  <p className="text-sm text-gray-400 italic">
+                    Sin descripción adicional.
+                  </p>
+                )}
+
+                <button
+                  onClick={() => setSelectedReview(null)}
+                  className="mt-6 w-full py-2.5 bg-rose-400 hover:bg-rose-500 text-white font-bold rounded-xl transition-colors text-sm"
+                >
+                  Cerrar
+                </button>
+              </div>
+            </div>,
+            document.body
+          )
+        : null}
 
       {/* Review Modal */}
       {showReviewModal && typeof window !== "undefined"

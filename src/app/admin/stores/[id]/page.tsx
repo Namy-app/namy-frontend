@@ -53,8 +53,12 @@ export default function StoreDetailPage() {
   const { data: discountsData, isLoading: discountsLoading } =
     useStoreDiscounts({ storeId }, { page: 1, first: 1 });
   const { data: couponsData, isLoading: couponsLoading } = useStoreCoupons(
-    { storeId },
+    { storeId, includeExpired: true },
     { page: 1, first: 20 }
+  );
+  const { data: redeemedData } = useStoreCoupons(
+    { storeId, used: true, includeExpired: true },
+    { page: 1, first: 1 }
   );
   const discount = discountsData?.data[0] ?? null;
 
@@ -268,7 +272,7 @@ export default function StoreDetailPage() {
                   : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
               }`}
             >
-              Cupones ({couponsData?.data.length || 0})
+              Cupones ({couponsData?.paginationInfo.total || 0})
             </button>
           </div>
         </div>
@@ -302,6 +306,8 @@ export default function StoreDetailPage() {
         {activeTab === "coupons" && (
           <CouponsTab
             coupons={couponsData?.data || []}
+            totalGenerated={couponsData?.paginationInfo.total ?? 0}
+            totalRedeemed={redeemedData?.paginationInfo.total ?? 0}
             loading={couponsLoading}
           />
         )}
@@ -330,11 +336,18 @@ export default function StoreDetailPage() {
 // Coupons Tab Component
 function CouponsTab({
   coupons,
+  totalGenerated,
+  totalRedeemed,
   loading,
 }: {
   coupons: Coupon[];
+  totalGenerated: number;
+  totalRedeemed: number;
   loading: boolean;
 }) {
+  const redemptionRate =
+    totalGenerated > 0 ? Math.round((totalRedeemed / totalGenerated) * 100) : 0;
+
   if (loading) {
     return (
       <div className="bg-card rounded-lg shadow p-8 text-center">
@@ -346,12 +359,43 @@ function CouponsTab({
 
   return (
     <div className="space-y-6">
+      {/* Analytics Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="bg-card rounded-lg shadow p-5 border-l-4 border-blue-500">
+          <p className="text-sm text-muted-foreground mb-1">Generados</p>
+          <p className="text-3xl font-bold text-foreground">{totalGenerated}</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Total de cupones creados
+          </p>
+        </div>
+        <div className="bg-card rounded-lg shadow p-5 border-l-4 border-green-500">
+          <p className="text-sm text-muted-foreground mb-1">Canjeados</p>
+          <p className="text-3xl font-bold text-foreground">{totalRedeemed}</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Cupones utilizados
+          </p>
+        </div>
+        <div className="bg-card rounded-lg shadow p-5 border-l-4 border-orange-500">
+          <p className="text-sm text-muted-foreground mb-1">Tasa de Canje</p>
+          <p className="text-3xl font-bold text-foreground">
+            {redemptionRate}%
+          </p>
+          <div className="mt-2 h-1.5 bg-muted rounded-full overflow-hidden">
+            <div
+              className="h-full bg-orange-500 rounded-full transition-all"
+              style={{ width: `${redemptionRate}%` }}
+            />
+          </div>
+        </div>
+      </div>
+
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-foreground">
           Cupones Generados
         </h2>
         <p className="text-muted-foreground">
-          Total: {coupons.length} cupón{coupons.length !== 1 ? "es" : ""}
+          Mostrando {coupons.length} de {totalGenerated} cupón
+          {totalGenerated !== 1 ? "es" : ""}
         </p>
       </div>
 
@@ -399,7 +443,7 @@ function CouponsTab({
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="text-sm text-muted-foreground font-mono">
-                        {coupon.userId.slice(0, 8)}...
+                        {coupon.userId?.slice(0, 8) ?? "—"}...
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
