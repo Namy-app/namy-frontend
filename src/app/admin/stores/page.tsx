@@ -24,6 +24,7 @@ import {
   useDeleteStore,
   useToggleStoreActive,
   useCategories,
+  useStoreCouponCounts,
 } from "@/domains/admin/hooks";
 import { type Store } from "@/domains/admin/types";
 import { useToast } from "@/hooks/use-toast";
@@ -57,6 +58,9 @@ export default function AdminStoresPage() {
   const stores = storesData?.data ?? [];
   const paginationInfo = storesData?.paginationInfo;
   const allCategories = categoriesData?.data ?? [];
+
+  const storeIds = stores.map((s) => s.id);
+  const { totalByStore, redeemedByStore } = useStoreCouponCounts(storeIds);
 
   const categoryIdToName = useMemo(() => {
     const map = new Map<string, string>();
@@ -279,6 +283,12 @@ export default function AdminStoresPage() {
                         <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                           Rating
                         </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                          Coupons
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                          Redeemed
+                        </th>
                         <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
                           Actions
                         </th>
@@ -356,6 +366,12 @@ export default function AdminStoresPage() {
                             }
                           >
                             ⭐ {store.averageRating}/5 ({store.reviewCounter})
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground font-medium">
+                            {totalByStore.get(store.id) ?? 0}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground font-medium">
+                            {redeemedByStore.get(store.id) ?? 0}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                             <div className="flex items-center justify-end gap-2">

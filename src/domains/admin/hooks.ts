@@ -16,6 +16,7 @@ import {
   UPDATE_DISCOUNT,
   DELETE_DISCOUNT,
   GET_STORE_DISCOUNTS,
+  GET_STORE_COUPONS,
   GET_USERS,
   GET_USER_DETAILS_WITH_ACTIVITY,
   CREATE_CATALOG,
@@ -309,32 +310,78 @@ export function useDeleteDiscount() {
 
 export function useStoreCoupons(
   filters?: CouponFiltersInput,
-  pagination?: PaginationInput
+  pagination?: PaginationInput,
+  options?: { enabled?: boolean }
 ) {
   return useQuery<CouponsResponse>({
-    queryKey: ["coupons", filters, pagination],
+    queryKey: ["store-coupons", filters, pagination],
     queryFn: async () => {
-      // TODO: Admin coupon listing not implemented in backend yet
-      // The API only has myCoupons (for current user) and individual coupon queries
-      // const data = await graphqlClient.request<{ coupons: CouponsResponse }>(
-      //   GET_STORE_COUPONS,
-      //   { filters, pagination }
-      // );
-      // return data.coupons;
-      return {
-        data: [],
-        paginationInfo: {
-          total: 0,
-          page: 1,
-          pageSize: 20,
-          totalPages: 0,
-          hasNextPage: false,
-          hasPreviousPage: false,
-        },
-      };
+      const data = await graphqlClient.request<{ coupons: CouponsResponse }>(
+        GET_STORE_COUPONS,
+        { filters, pagination }
+      );
+      return data.coupons;
     },
-    enabled: false, // Disabled until backend implements admin coupon listing
+    enabled:
+      options?.enabled !== false &&
+      (!!filters?.storeId ||
+        !!filters?.storeIds?.length ||
+        options?.enabled === true),
   });
+}
+
+export function useStoreCouponCounts(storeIds: string[]) {
+  const totalQuery = useQuery<CouponsResponse>({
+    queryKey: ["store-coupon-counts-total", storeIds],
+    queryFn: async () => {
+      const data = await graphqlClient.request<{ coupons: CouponsResponse }>(
+        GET_STORE_COUPONS,
+        {
+          filters: { storeIds, includeExpired: true },
+          pagination: { page: 1, first: 1000 },
+        }
+      );
+      return data.coupons;
+    },
+    enabled: storeIds.length > 0,
+  });
+
+  const redeemedQuery = useQuery<CouponsResponse>({
+    queryKey: ["store-coupon-counts-redeemed", storeIds],
+    queryFn: async () => {
+      const data = await graphqlClient.request<{ coupons: CouponsResponse }>(
+        GET_STORE_COUPONS,
+        {
+          filters: { storeIds, used: true, includeExpired: true },
+          pagination: { page: 1, first: 1000 },
+        }
+      );
+      return data.coupons;
+    },
+    enabled: storeIds.length > 0,
+  });
+
+  const totalByStore = new Map<string, number>();
+  const redeemedByStore = new Map<string, number>();
+
+  for (const coupon of totalQuery.data?.data ?? []) {
+    totalByStore.set(
+      coupon.storeId,
+      (totalByStore.get(coupon.storeId) ?? 0) + 1
+    );
+  }
+  for (const coupon of redeemedQuery.data?.data ?? []) {
+    redeemedByStore.set(
+      coupon.storeId,
+      (redeemedByStore.get(coupon.storeId) ?? 0) + 1
+    );
+  }
+
+  return {
+    totalByStore,
+    redeemedByStore,
+    isLoading: totalQuery.isLoading || redeemedQuery.isLoading,
+  };
 }
 
 // ==================== Catalog Hooks ====================

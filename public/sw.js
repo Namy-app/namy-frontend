@@ -32,11 +32,14 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
 
-  // Skip caching for external APIs (Google Maps, Google Ads, etc.)
+  // Skip caching for API requests and external resources
   if (
     url.hostname.includes("googleapis.com") ||
     url.hostname.includes("googlesyndication.com") ||
-    url.hostname.includes("gstatic.com")
+    url.hostname.includes("gstatic.com") ||
+    url.hostname.includes("adtrafficquality.google") ||
+    url.pathname === "/graphql" ||
+    event.request.method === "POST"
   ) {
     return;
   }

@@ -302,7 +302,6 @@ export const GET_STORE_COUPONS = gql`
     coupons(filters: $filters, pagination: $pagination) {
       data {
         id
-        userId
         discountId
         storeId
         code
