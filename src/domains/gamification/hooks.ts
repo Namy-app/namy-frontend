@@ -8,9 +8,11 @@ import type {
 import { graphqlRequest } from "@/lib/graphql-client";
 import {
   CITY_LEADERBOARD_QUERY,
+  GET_CURRENT_USER_QUERY,
   MY_CHALLENGES_QUERY,
   MY_POINTS_HISTORY_QUERY,
 } from "@/lib/graphql-queries";
+import { useAuthStore } from "@/store/useAuthStore";
 
 export function useCityLeaderboard(limit = 20) {
   return useQuery<LeaderboardEntry[]>({
@@ -65,17 +67,16 @@ export function useMyAwardedChallenges() {
 }
 
 export function useLoginStreak() {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   return useQuery<number>({
     queryKey: ["loginStreak"],
     queryFn: async () => {
-      const data = await graphqlRequest<{
-        myChallenges: UserChallenge[];
-      }>(MY_CHALLENGES_QUERY, { status: "on-going" });
-      const streakChallenge = data.myChallenges.find(
-        (c) => c.challenge?.entityType === "login_streaks"
+      const data = await graphqlRequest<{ me: { loginStreak?: number } }>(
+        GET_CURRENT_USER_QUERY
       );
-      return streakChallenge?.count ?? 0;
+      return data.me.loginStreak ?? 0;
     },
-    staleTime: 60 * 1000,
+    enabled: isAuthenticated,
+    staleTime: 5 * 60 * 1000,
   });
 }

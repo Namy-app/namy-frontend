@@ -1,10 +1,10 @@
 "use client";
 
-import { Share2, Trash2, QrCode, Copy, Info } from "lucide-react";
+import { QrCode, Clock, CheckCircle, XCircle } from "lucide-react";
+import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 
 import type { CouponItem } from "@/domains/coupon/type";
-import { useToast } from "@/hooks/use-toast";
 
 type Props = {
   coupon: CouponItem;
@@ -15,97 +15,72 @@ type Props = {
   onViewRestrictions?: (c: CouponItem) => void;
 };
 
-function formatDiscount(
-  discount: { type?: string; value?: number } | null
-): string {
-  if (!discount) {
-    return "";
-  }
-  const t = String(discount.type ?? "").toLowerCase();
-  if (t === "percentage" || t === "percent") {
-    return `${discount.value}% OFF`;
-  }
-  if (t.includes("fixed") || t === "fixed") {
-    return `$${discount.value} OFF`;
-  }
-  return `${discount.value} OFF`;
+// Stable gradient palette cycled by coupon code hash
+const GRADIENTS = [
+  "from-[#FF0099] to-[#493240]",
+  "from-[#11998E] to-[#38EF7D]",
+  "from-[#8E2DE2] to-[#4A00E0]",
+  "from-[#F97316]/60 to-[#F97316]",
+];
+
+function getGradient(code: string): string {
+  const idx =
+    code.split("").reduce((acc, ch) => acc + ch.charCodeAt(0), 0) %
+    GRADIENTS.length;
+  return GRADIENTS[idx]!;
 }
 
 function getTimeRemaining(
   expiresAt: string
-): { hours: number; minutes: number; seconds: number; totalMs: number } | null {
-  const now = new Date();
-  const exp = new Date(expiresAt);
-  const diff = exp.getTime() - now.getTime();
+): { h: number; m: number; s: number; totalMs: number } | null {
+  const diff = new Date(expiresAt).getTime() - Date.now();
   if (diff <= 0) {
     return null;
   }
-  const hours = Math.floor(diff / (1000 * 60 * 60));
-  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-  const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-  return { hours, minutes, seconds, totalMs: diff };
+  return {
+    h: Math.floor(diff / 3_600_000),
+    m: Math.floor((diff % 3_600_000) / 60_000),
+    s: Math.floor((diff % 60_000) / 1000),
+    totalMs: diff,
+  };
+}
+
+function pad(n: number): string {
+  return String(n).padStart(2, "0");
 }
 
 export default function CouponCard({
   coupon,
   discountPercentage,
   onViewQr,
-  onShare,
-  onDelete,
-  onViewRestrictions,
 }: Props): React.JSX.Element {
-  const { toast } = useToast();
   const [countdown, setCountdown] = useState<string | null>(null);
 
+  const expiresAtMs = new Date(coupon.expiresAt).getTime();
+  const [isExpired] = useState(() => expiresAtMs < Date.now());
   const status = useMemo(() => {
     if (coupon.used) {
       return "redeemed";
     }
-    if (new Date() > new Date(coupon.expiresAt)) {
+    if (isExpired) {
       return "expired";
     }
     return "active";
-  }, [coupon]);
-
-  // Check if any restrictions exist
-  const hasRestrictions = useMemo(() => {
-    return !!(
-      coupon.store?.restrictions ||
-      coupon.discount?.restrictions ||
-      coupon.discount?.minPurchaseAmount ||
-      coupon.discount?.maxDiscountAmount ||
-      (coupon.discount?.additionalRestrictions &&
-        coupon.discount.additionalRestrictions.length > 0) ||
-      (coupon.discount?.availableDaysAndTimes &&
-        coupon.discount.availableDaysAndTimes.availableDays.length > 0) ||
-      (coupon.discount?.excludedDaysOfWeek &&
-        coupon.discount.excludedDaysOfWeek.length > 0) ||
-      (coupon.discount?.excludedHours &&
-        coupon.discount.excludedHours.length > 0)
-    );
-  }, [coupon]);
+  }, [coupon.used, isExpired]);
 
   useEffect(() => {
-    // Only run countdown when coupon is active
     if (status !== "active") {
-      // Clear asynchronously to avoid synchronous setState inside effect
-      setTimeout(() => setCountdown(null), 0);
       return;
     }
-
     let timer: number | undefined;
     const update = (): void => {
       const t = getTimeRemaining(coupon.expiresAt);
-      if (!t) {
+      if (!t || t.totalMs > 48 * 3_600_000) {
         setCountdown(null);
         return;
       }
-      if (t.totalMs <= 48 * 60 * 60 * 1000) {
-        setCountdown(`${t.hours}h ${t.minutes}m ${t.seconds}s`);
-        timer = window.setTimeout(update, 1000);
-      } else {
-        setCountdown(null);
-      }
+      setCountdown(`${pad(t.h)}:${pad(t.m)}:${pad(t.s)}`);
+      timer = window.setTimeout(update, 1000);
     };
     update();
     return () => {
@@ -115,136 +90,74 @@ export default function CouponCard({
     };
   }, [coupon.expiresAt, status]);
 
-  const handleCopy = async (): Promise<void> => {
-    try {
-      await navigator.clipboard.writeText(coupon.code);
-      toast({
-        title: "Copiado",
-        description: "Código del cupón copiado al portapapeles.",
-      });
-    } catch (_e) {
-      toast({ title: "Error", description: "No se pudo copiar." });
-    }
-  };
+  const isActive = status === "active";
+  const isRedeemed = status === "redeemed";
+
+  const bgClass = isActive
+    ? `bg-gradient-to-r ${getGradient(coupon.code)}`
+    : "bg-gradient-to-r from-gray-400 to-gray-500";
+
+  const storeImage = (coupon as { store?: { imageUrl?: string | null } }).store
+    ?.imageUrl;
 
   return (
-    <div className="bg-white rounded-2xl shadow-card p-6 animate-slide-up">
-      <div className="flex items-start gap-4 mb-4">
+    <div
+      className={`relative rounded-2xl overflow-hidden ${bgClass} p-4 flex flex-col gap-3 shadow-md`}
+    >
+      {/* Top row: store image + discount + name */}
+      <div className="flex items-center gap-4">
+        <div className="w-20 h-20 rounded-xl overflow-hidden shrink-0 bg-white/20">
+          {storeImage ? (
+            <Image
+              src={storeImage}
+              alt={coupon.store?.name ?? "Store"}
+              width={80}
+              height={80}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-white/60 text-3xl">
+              🏪
+            </div>
+          )}
+        </div>
+
         <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <p className="text-sm text-muted-foreground">Código del Cupón</p>
-              <p className="text-2xl font-bold font-mono tracking-wider text-foreground truncate">
-                {coupon.code}
-              </p>
-
-              {/* store name and discount title */}
-              <div className="mt-2">
-                <p className="text-sm text-muted-foreground truncate">
-                  {coupon.store?.name ?? "Tienda"}
-                </p>
-                <p className="text-sm font-medium text-foreground truncate">
-                  {coupon.discount?.title ?? "Descuento"}
-                </p>
-              </div>
-            </div>
-
-            <div className="shrink-0 text-right">
-              <div
-                className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-semibold ${
-                  status === "active"
-                    ? "bg-green-100 text-green-700"
-                    : status === "redeemed"
-                      ? "bg-blue-100 text-blue-700"
-                      : "bg-gray-100 text-gray-700"
-                }`}
-              >
-                {status === "active"
-                  ? "Activo"
-                  : status === "redeemed"
-                    ? "Canjeado"
-                    : "Expirado"}
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-3 flex items-center justify-between gap-3">
-            <div className="text-sm text-muted-foreground flex items-center gap-2">
-              <span className="inline-flex items-center gap-2">
-                ⏰{" "}
-                {status === "active"
-                  ? `Expira el ${new Date(coupon.expiresAt).toLocaleDateString()}`
-                  : status === "expired"
-                    ? `Expiró el ${new Date(coupon.expiresAt).toLocaleDateString()}`
-                    : coupon.usedAt
-                      ? `Canjeado el ${new Date(coupon.usedAt).toLocaleDateString()}`
-                      : ""}
-              </span>
-              {countdown ? (
-                <span className="ml-2 text-sm text-destructive font-medium">
-                  {countdown}
-                </span>
-              ) : null}
-            </div>
-
-            <div className="flex items-center gap-2">
-              <div className="px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-semibold whitespace-nowrap">
-                {formatDiscount({
-                  value: discountPercentage,
-                  type: "Percentage",
-                })}
-              </div>
-            </div>
-          </div>
+          <p className="text-white font-black text-3xl leading-none tracking-tight">
+            {discountPercentage}% OFF
+          </p>
+          <p className="text-white/90 font-semibold text-base mt-1 truncate">
+            {coupon.store?.name ?? "Tienda"}
+          </p>
         </div>
       </div>
 
-      {/* Description / Actions */}
-      <div className="mt-4">
-        {/* Restrictions Link */}
-        {hasRestrictions && onViewRestrictions ? (
+      {/* Bottom row: timer/status pill left, action right */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="bg-white/20 rounded-full px-3 py-1.5 flex items-center gap-1.5">
+          {isActive && countdown ? (
+            <>
+              <Clock className="w-4 h-4 text-white" />
+              <span className="text-white text-sm font-bold tabular-nums">
+                {countdown}
+              </span>
+            </>
+          ) : isRedeemed ? (
+            <CheckCircle className="w-5 h-5 text-white" />
+          ) : (
+            <XCircle className="w-5 h-5 text-white" />
+          )}
+        </div>
+
+        {isActive ? (
           <button
-            onClick={() => void onViewRestrictions(coupon)}
-            className="text-sm text-amber-600 hover:text-amber-700 font-medium flex items-center gap-1 transition-colors mb-3"
+            onClick={() => onViewQr(coupon)}
+            className="bg-white rounded-full px-4 py-1.5 flex items-center gap-1.5 font-semibold text-sm text-gray-800 hover:bg-white/90 transition-colors"
           >
-            <Info className="w-4 h-4" />
-            Ver Restricciones
+            <QrCode className="w-4 h-4" />
+            Ver QR
           </button>
         ) : null}
-
-        {/* Action Buttons */}
-        <div className="flex items-center justify-between gap-3">
-          <button
-            onClick={() => void onViewQr(coupon)}
-            className="sm:px-8 px-3 sm:py-3  py-2 bg-gradient-primary text-primary-foreground rounded-full font-semibold flex items-center gap-2"
-          >
-            <QrCode className="w-5 h-5" /> Ver QR
-          </button>
-
-          <button
-            onClick={() => void onShare(coupon)}
-            className="p-3 rounded-xl bg-secondary/10 text-secondary-foreground"
-            aria-label="share"
-          >
-            <Share2 className="w-5 h-5" />
-          </button>
-
-          <button
-            onClick={() => void handleCopy()}
-            className="p-3 rounded-xl bg-muted text-foreground"
-            aria-label="copy"
-          >
-            <Copy className="w-5 h-5" />
-          </button>
-
-          <button
-            onClick={() => void onDelete(coupon)}
-            className="p-3 rounded-xl bg-destructive/10 text-destructive"
-            aria-label="delete"
-          >
-            <Trash2 className="w-5 h-5" />
-          </button>
-        </div>
       </div>
     </div>
   );
