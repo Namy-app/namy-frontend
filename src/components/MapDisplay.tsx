@@ -15,6 +15,17 @@ const mapContainerStyle = {
   borderRadius: "12px",
 };
 
+// Hide all POIs, transit, and business labels — only show roads + terrain
+const cleanMapStyles: google.maps.MapTypeStyle[] = [
+  { featureType: "poi", stylers: [{ visibility: "off" }] },
+  { featureType: "transit", stylers: [{ visibility: "off" }] },
+  {
+    featureType: "road",
+    elementType: "labels.icon",
+    stylers: [{ visibility: "off" }],
+  },
+];
+
 export function MapDisplay({
   lat,
   lng,
@@ -35,6 +46,7 @@ export function MapDisplay({
         scrollwheel: false,
         disableDoubleClickZoom: true,
         gestureHandling: "none",
+        styles: cleanMapStyles,
       }}
     >
       <Marker position={center} title={storeName} />
