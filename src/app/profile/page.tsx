@@ -1,24 +1,20 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import {
-  // Flame,
   Wallet,
-  // Star,
   Zap,
-  // Settings,
-  // User as UserIcon,
-  // CreditCard,
   HelpCircle,
-  // Phone,
   LogOut,
   ChevronRight,
   Crown,
-  Percent,
   Copy,
   CheckCircle,
   MessageCircle,
   Camera,
   X,
+  Ticket,
+  Bell,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -27,8 +23,11 @@ import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import {
+  useMyActiveChallenges,
+  useLoginStreak,
+} from "@/domains/gamification/hooks";
 import { useWallet, useWalletBalance } from "@/domains/payment/hooks";
-import { useStores } from "@/domains/store/hooks";
 import { useLogout, useCurrentUser } from "@/domains/user/hooks";
 import { useMyLevel } from "@/domains/user/hooks/query/useMyLevel";
 import { useToast } from "@/hooks/use-toast";
@@ -37,12 +36,11 @@ import { graphqlRequest } from "@/lib/graphql-client";
 import {
   UPDATE_ME_MUTATION,
   REQUEST_AVATAR_UPLOAD_MUTATION,
+  COUPONS_QUERY,
 } from "@/lib/graphql-queries";
 import { getInitials, getUserLevelTitle } from "@/lib/user.lib";
 import { extractErrorMessage } from "@/lib/utils";
 import CrispProvider from "@/providers/CrispProvider";
-import { Button } from "@/shared/components/Button";
-import { Card } from "@/shared/components/Card";
 import { useAuthStore } from "@/store/useAuthStore";
 
 const EMOJI_AVATARS = [
@@ -94,7 +92,6 @@ function AvatarPickerModal({
       return;
     }
     setSelectedFile(file);
-    // Only for local preview — not stored as base64
     const reader = new FileReader();
     reader.onload = () => setPreview(reader.result as string);
     reader.readAsDataURL(file);
@@ -112,12 +109,10 @@ function AvatarPickerModal({
     setSaving(true);
     try {
       if (selectedFile) {
-        // Get presigned URL from backend
         const result = await graphqlRequest<{
           requestAvatarUpload: { uploadUrl: string; publicUrl: string };
         }>(REQUEST_AVATAR_UPLOAD_MUTATION, { fileName: selectedFile.name });
         const { uploadUrl, publicUrl } = result.requestAvatarUpload;
-        // Upload directly to S3
         await fetch(uploadUrl, {
           method: "PUT",
           body: selectedFile,
@@ -125,7 +120,6 @@ function AvatarPickerModal({
         });
         await onSave(publicUrl);
       } else {
-        // Emoji avatar — save as-is
         await onSave(preview);
       }
     } finally {
@@ -146,7 +140,6 @@ function AvatarPickerModal({
         className="bg-white rounded-3xl w-full max-w-sm p-6 shadow-2xl mb-4 sm:mb-0"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-base font-black text-gray-900">
             Editar foto de perfil
@@ -158,8 +151,6 @@ function AvatarPickerModal({
             <X className="w-5 h-5" />
           </button>
         </div>
-
-        {/* Preview */}
         <div className="flex justify-center mb-5">
           <div className="w-24 h-24 rounded-full bg-orange-100 flex items-center justify-center overflow-hidden shadow-md ring-4 ring-orange-200">
             {preview ? (
@@ -182,8 +173,6 @@ function AvatarPickerModal({
             )}
           </div>
         </div>
-
-        {/* Upload button */}
         <input
           ref={fileRef}
           type="file"
@@ -198,8 +187,6 @@ function AvatarPickerModal({
           <Camera className="w-4 h-4" />
           Subir foto
         </button>
-
-        {/* Emoji grid */}
         <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">
           O elige un avatar
         </p>
@@ -214,8 +201,6 @@ function AvatarPickerModal({
             </button>
           ))}
         </div>
-
-        {/* Actions */}
         <div className="flex gap-2">
           <button
             onClick={onClose}
@@ -237,6 +222,389 @@ function AvatarPickerModal({
   );
 }
 
+// ── Sub-components (declared outside ProfilePage to avoid recreating on render) ──
+
+type AvatarBlockProps = {
+  size?: "sm" | "lg";
+  avatarUrl?: string | null;
+  displayName?: string | null;
+  onOpenModal: () => void;
+};
+
+function AvatarBlock({
+  size = "sm",
+  avatarUrl,
+  displayName,
+  onOpenModal,
+}: AvatarBlockProps) {
+  const dim = size === "lg" ? "w-24 h-24" : "w-16 h-16";
+  const textSize = size === "lg" ? "text-5xl" : "text-3xl";
+  const initialsSize = size === "lg" ? "text-2xl" : "text-xl";
+  return (
+    <div className="relative inline-block">
+      <button
+        onClick={onOpenModal}
+        className={`relative ${dim} rounded-full bg-orange-100 flex items-center justify-center overflow-hidden ring-2 ring-orange-200 group`}
+      >
+        {avatarUrl ? (
+          avatarUrl.startsWith("data:") || avatarUrl.startsWith("http") ? (
+            <Image
+              src={avatarUrl}
+              alt="avatar"
+              width={size === "lg" ? 96 : 64}
+              height={size === "lg" ? 96 : 64}
+              className="w-full h-full object-cover"
+              unoptimized
+            />
+          ) : (
+            <span className={textSize}>{avatarUrl}</span>
+          )
+        ) : (
+          <span className={`${initialsSize} font-black text-orange-500`}>
+            {getInitials(displayName ?? undefined)}
+          </span>
+        )}
+        <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+          <Camera className="w-4 h-4 text-white" />
+        </div>
+      </button>
+      <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 bg-orange-500 rounded-full flex items-center justify-center shadow">
+        <Camera className="w-2.5 h-2.5 text-white" />
+      </div>
+    </div>
+  );
+}
+
+type LevelCardProps = {
+  level: number;
+  monthlyUsageCount: number;
+  discountPercentage: number;
+  levelProgress: number;
+  getTotalForLevel: (level: number | undefined) => number;
+};
+
+function LevelCard({
+  level,
+  monthlyUsageCount,
+  discountPercentage,
+  levelProgress,
+  getTotalForLevel,
+}: LevelCardProps) {
+  return (
+    <Link href="/level">
+      <div className="border-2 border-yellow-400 rounded-2xl p-4 bg-white">
+        <div className="flex items-start justify-between mb-1">
+          <div>
+            <h3 className="text-lg font-black text-foreground">
+              Nivel {level}: {getUserLevelTitle(level)}
+            </h3>
+            <p className="text-xs text-muted-foreground">
+              Usa {getTotalForLevel(level)} descuentos al mes para subir de
+              nivel
+            </p>
+          </div>
+          <span className="text-lg font-black text-orange-500">
+            {discountPercentage}%
+          </span>
+        </div>
+        <div className="flex items-center gap-2 mt-3">
+          <span className="text-xs font-bold text-muted-foreground">
+            {level}
+          </span>
+          <div className="relative flex-1 h-5 bg-yellow-100 rounded-full overflow-hidden flex items-center px-1">
+            <div
+              className="h-3 bg-yellow-400 rounded-full transition-all"
+              style={{ width: `${Math.min(levelProgress, 100)}%` }}
+            />
+            <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-yellow-700 pointer-events-none">
+              ⭐ {monthlyUsageCount}/{getTotalForLevel(level)} usos
+            </span>
+          </div>
+          <span className="text-xs font-bold text-muted-foreground">
+            {level + 1}
+          </span>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+type QuickStatsProps = {
+  walletLoading: boolean;
+  walletBalance: number;
+  couponCount: number;
+  onOpenCrisp: () => void;
+};
+
+function QuickStats({
+  walletLoading,
+  walletBalance,
+  couponCount,
+  onOpenCrisp,
+}: QuickStatsProps) {
+  return (
+    <div className="grid grid-cols-3 gap-3">
+      <Link
+        href="/wallet"
+        className="flex flex-col items-center gap-1.5 p-3 bg-white rounded-2xl border border-border shadow-sm hover:shadow-md transition-shadow"
+      >
+        <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center">
+          <Wallet className="w-5 h-5 text-green-600" />
+        </div>
+        {walletLoading ? (
+          <div className="w-4 h-4 border-2 border-green-500 border-t-transparent rounded-full animate-spin" />
+        ) : (
+          <p className="text-sm font-black text-foreground">
+            ${(walletBalance / 100).toFixed(2)}
+          </p>
+        )}
+        <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">
+          Billetera
+        </p>
+      </Link>
+      <button
+        onClick={onOpenCrisp}
+        className="flex flex-col items-center gap-1.5 p-3 bg-white rounded-2xl border border-border shadow-sm hover:shadow-md transition-shadow"
+      >
+        <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
+          <MessageCircle className="w-5 h-5 text-blue-600" />
+        </div>
+        <p className="text-sm font-black text-foreground">24/7</p>
+        <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">
+          Ayuda
+        </p>
+      </button>
+      <Link
+        href="/my-coupons"
+        className="flex flex-col items-center gap-1.5 p-3 bg-white rounded-2xl border border-border shadow-sm hover:shadow-md transition-shadow"
+      >
+        <div className="w-10 h-10 rounded-xl bg-pink-100 flex items-center justify-center">
+          <Ticket className="w-5 h-5 text-pink-600" />
+        </div>
+        <p className="text-sm font-black text-foreground">{couponCount}</p>
+        <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">
+          Mis Cupones
+        </p>
+      </Link>
+    </div>
+  );
+}
+
+type MisionesCardProps = {
+  misionesOpen: boolean;
+  onToggleMisiones: () => void;
+  newMissionsCount: number;
+  loginStreak: number;
+  streakProgress: number;
+  streakTarget: number;
+  streakPoints: number;
+};
+
+function MisionesCard({
+  misionesOpen,
+  onToggleMisiones,
+  newMissionsCount,
+  loginStreak,
+  streakProgress,
+  streakTarget,
+  streakPoints,
+}: MisionesCardProps) {
+  return (
+    <div>
+      <h2 className="text-lg font-black text-foreground mb-3">
+        Misiones y Logros
+      </h2>
+      <div className="bg-white rounded-2xl border border-border shadow-sm divide-y divide-border">
+        <button
+          onClick={onToggleMisiones}
+          className="w-full flex items-center justify-between px-4 py-4 hover:bg-muted/30 transition-colors rounded-t-2xl"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center">
+              <span className="text-lg">📋</span>
+            </div>
+            <span className="font-semibold text-foreground">
+              Misiones diarias
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            {newMissionsCount > 0 ? (
+              <span className="text-xs font-bold text-orange-500 bg-orange-100 px-2 py-0.5 rounded-full">
+                ¡{newMissionsCount} Nuevas!
+              </span>
+            ) : null}
+            <ChevronRight
+              className={`w-4 h-4 text-muted-foreground transition-transform ${misionesOpen ? "rotate-90" : ""}`}
+            />
+          </div>
+        </button>
+
+        {misionesOpen ? (
+          <div className="px-4 py-4 bg-orange-50/60">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">🔥</span>
+                <span className="text-sm font-bold text-foreground">
+                  Racha de inicio de sesión
+                </span>
+              </div>
+              <span className="text-xs font-bold text-orange-500">
+                {loginStreak} días
+              </span>
+            </div>
+            <div className="relative h-4 bg-orange-100 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-orange-400 rounded-full transition-all"
+                style={{
+                  width: `${Math.min((streakProgress / streakTarget) * 100, 100)}%`,
+                }}
+              />
+            </div>
+            <div className="flex justify-between mt-1">
+              <span className="text-[10px] text-muted-foreground">
+                {streakProgress}/{streakTarget} días consecutivos
+              </span>
+              <span className="text-[10px] font-bold text-orange-500">
+                +{streakPoints} pts
+              </span>
+            </div>
+            <Link
+              href="/league/puntos"
+              className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-orange-500 hover:underline"
+            >
+              Ver todas las misiones <ChevronRight className="w-3 h-3" />
+            </Link>
+          </div>
+        ) : null}
+
+        <Link
+          href="/league"
+          className="flex items-center justify-between px-4 py-4 hover:bg-muted/30 transition-colors rounded-b-2xl"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-yellow-100 flex items-center justify-center">
+              <span className="text-lg">🏆</span>
+            </div>
+            <span className="font-semibold text-foreground">
+              Premios ganados
+            </span>
+          </div>
+          <ChevronRight className="w-4 h-4 text-muted-foreground" />
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+type PremiumBannerProps = {
+  isPremium: boolean;
+  discountPercentage: number;
+};
+
+function PremiumBanner({ isPremium, discountPercentage }: PremiumBannerProps) {
+  if (!isPremium) {
+    return (
+      <Link
+        href="/subscription"
+        className="flex items-center justify-between bg-black rounded-2xl px-5 py-4 shadow-lg"
+      >
+        <Image
+          width={68}
+          height={68}
+          src="/premiumbadge.png"
+          alt="restairant Image"
+        />
+        <div className="flex items-center gap-3">
+          <p className="font-black text-white text-sm">
+            Más Descuentos, Sin Anuncios
+          </p>
+        </div>
+        <span className="bg-purple-500 text-white text-xs font-black px-3 py-1.5 rounded-full whitespace-nowrap">
+          Hazte Premium
+        </span>
+      </Link>
+    );
+  }
+  return (
+    <div className="flex items-center justify-between bg-gradient-primary rounded-2xl px-5 py-4 shadow-lg">
+      <div className="flex items-center gap-3">
+        <Crown className="w-8 h-8 text-white" />
+        <div>
+          <p className="font-black text-white text-sm">
+            Miembro Premium Activo
+          </p>
+          <p className="text-white/80 text-xs">
+            Descuento {discountPercentage}% activo
+          </p>
+        </div>
+      </div>
+      <Zap className="w-6 h-6 text-white/80" />
+    </div>
+  );
+}
+
+type AccountMenuProps = {
+  logoutPending: boolean;
+  onLogout: () => void;
+  onOpenCrisp: () => void;
+};
+
+function AccountMenu({
+  logoutPending,
+  onLogout,
+  onOpenCrisp,
+}: AccountMenuProps) {
+  return (
+    <div>
+      <h2 className="text-lg font-black text-foreground mb-3">Mi Cuenta</h2>
+      <div className="bg-white rounded-2xl border border-border shadow-sm divide-y divide-border">
+        <Link
+          href="/help"
+          className="flex items-center justify-between px-4 py-4 hover:bg-muted/30 transition-colors"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-gray-100 flex items-center justify-center">
+              <HelpCircle className="w-4 h-4 text-gray-500" />
+            </div>
+            <span className="font-semibold text-foreground">
+              Ayuda & Preguntas
+            </span>
+          </div>
+          <ChevronRight className="w-4 h-4 text-muted-foreground" />
+        </Link>
+        <button
+          onClick={onOpenCrisp}
+          className="w-full flex items-center justify-between px-4 py-4 hover:bg-muted/30 transition-colors"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-gray-100 flex items-center justify-center">
+              <Bell className="w-4 h-4 text-gray-500" />
+            </div>
+            <span className="font-semibold text-foreground">
+              Notificaciones
+            </span>
+          </div>
+          <ChevronRight className="w-4 h-4 text-muted-foreground" />
+        </button>
+        <button
+          onClick={onLogout}
+          disabled={logoutPending}
+          className="w-full flex items-center justify-between px-4 py-4 hover:bg-red-50 transition-colors rounded-b-2xl"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-red-100 flex items-center justify-center">
+              <LogOut className="w-4 h-4 text-red-500" />
+            </div>
+            <span className="font-semibold text-red-500">
+              {logoutPending ? "Cerrando sesión..." : "Cerrar sesión"}
+            </span>
+          </div>
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function ProfilePage(): React.JSX.Element | null {
   const router = useRouter();
   const { toast } = useToast();
@@ -244,9 +612,9 @@ export default function ProfilePage(): React.JSX.Element | null {
   const { data: myLevel } = useMyLevel();
   const { data: currentUser } = useCurrentUser();
   const logoutMutation = useLogout();
-  const [expandPoints, setExpandPoints] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
   const [showAvatarModal, setShowAvatarModal] = useState(false);
+  const [misionesOpen, setMisionesOpen] = useState(false);
 
   const handleSaveAvatar = async (avatarUrl: string): Promise<void> => {
     try {
@@ -262,33 +630,41 @@ export default function ProfilePage(): React.JSX.Element | null {
     }
   };
 
-  // Sync current user data with auth store
   useEffect(() => {
     if (currentUser) {
       updateUser(currentUser);
     }
   }, [currentUser, updateUser]);
 
-  const { data: storesResult, isLoading: storesLoading } = useStores();
   const { data: wallet } = useWallet({ userId: user?.id });
   const { data: walletBalance, isLoading: walletLoading } = useWalletBalance(
     wallet?.id || ""
   );
-  const allStores = storesResult?.data ?? [];
   const discountPercentage =
     (user?.isPremium ? 15 : myLevel?.discountPercentage) ?? 10;
+
+  const { data: loginStreak = 0 } = useLoginStreak();
+  const { data: activeChallenges = [] } = useMyActiveChallenges();
+  const { data: couponsData } = useQuery({
+    queryKey: ["coupons", "unused"],
+    queryFn: () =>
+      graphqlRequest<{ myCoupons: { id: string }[] }>(COUPONS_QUERY, {
+        filters: { used: false },
+      }).then((r) => r.myCoupons),
+    enabled: !!user,
+  });
+  const couponCount = couponsData?.length ?? 0;
+  const newMissionsCount = activeChallenges.length;
 
   if (!user) {
     return null;
   }
 
   const getTotalForLevel = (level: number | undefined): number => {
-    // Define total usage counts required for each level
     if (level === 3 || level === 2) {
       return 10;
-    } else {
-      return 5;
     }
+    return 5;
   };
 
   const handleCopyReferralCode = async () => {
@@ -297,10 +673,9 @@ export default function ProfilePage(): React.JSX.Element | null {
       await navigator.clipboard.writeText(copyText);
       setCopiedCode(true);
       setTimeout(() => setCopiedCode(false), 2000);
-
       toast({
-        title: "Referral Code Copied!",
-        description: "Referral code copied to clipboard",
+        title: "¡Código copiado!",
+        description: "Código de referido copiado al portapapeles",
       });
     }
   };
@@ -314,11 +689,10 @@ export default function ProfilePage(): React.JSX.Element | null {
       });
       router.push("/");
     } catch (error) {
-      const errorMessage = extractErrorMessage(error);
       toast({
         variant: "destructive",
         title: "Error al cerrar sesión",
-        description: errorMessage || "No se pudo cerrar sesión",
+        description: extractErrorMessage(error) || "No se pudo cerrar sesión",
       });
     }
   };
@@ -330,508 +704,286 @@ export default function ProfilePage(): React.JSX.Element | null {
     }
   };
 
+  const levelProgress =
+    ((myLevel?.monthlyUsageCount ?? 0) / getTotalForLevel(myLevel?.level)) *
+    100;
+
+  const streakChallenge = activeChallenges.find(
+    (c) =>
+      c.challenge?.entityType === "LOGIN_STREAKS" ||
+      c.challenge?.entityType === "login_streaks"
+  );
+  const streakTarget = streakChallenge?.challenge?.count ?? 1;
+  const streakProgress = streakChallenge?.count ?? 0;
+
+  // ── Render ─────────────────────────────────────────────────────────────
+
   return (
     <ProtectedRoute>
       <BasicLayout>
-        {/* Hero Section */}
-        <div className="bg-linear-to-b from-gradient-primary to-transparent p-6 pb-8 pt-20">
-          <div className="text-center max-w-5xl mx-auto">
-            {/* Avatar — tap to edit */}
-            <button
-              onClick={() => setShowAvatarModal(true)}
-              className="relative w-24 h-24 mx-auto mb-4 rounded-full bg-orange-100 flex items-center justify-center shadow-glow ring-4 ring-orange-200 overflow-hidden group"
-            >
-              {user.avatarUrl ? (
-                user.avatarUrl.startsWith("data:") ||
-                user.avatarUrl.startsWith("http") ? (
-                  <Image
-                    src={user.avatarUrl}
-                    alt="avatar"
-                    width={96}
-                    height={96}
-                    className="w-full h-full object-cover"
-                    unoptimized
-                  />
-                ) : (
-                  <span className="text-5xl">{user.avatarUrl}</span>
-                )
-              ) : (
-                <span className="text-3xl font-black text-orange-500">
-                  {getInitials(user.displayName)}
-                </span>
-              )}
-              {/* Edit overlay */}
-              <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                <Camera className="w-6 h-6 text-white" />
-              </div>
-            </button>
-
-            {showAvatarModal ? (
-              <AvatarPickerModal
-                currentAvatarUrl={user.avatarUrl}
-                displayName={user.displayName}
-                onClose={() => setShowAvatarModal(false)}
-                onSave={handleSaveAvatar}
-              />
-            ) : null}
-            <h1 className="text-2xl font-bold text-foreground mb-1">
-              {user.displayName || user.email}
-            </h1>
-            {user.isPremium ? (
-              <div className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold transition-colors border-0 bg-gradient-primary text-white shadow-glow ml-2">
-                <Crown className="w-4 h-4 mr-1" />
-                Miembro Premium
-              </div>
-            ) : null}
-            <p className="text-muted-foreground mb-4">
-              @{user.email?.split("@")[0]}
-            </p>
-
-            {/* Wallet Section */}
-            <div className="inline-block mb-4">
-              <p className="text-sm text-muted-foreground mb-1">
-                Saldo Disponible
-              </p>
-              <div
-                id="wallet-display"
-                className="flex justify-center items-center gap-2 px-4 py-3 rounded-lg bg-card border border-border"
-              >
-                <Wallet className="w-5 h-5 text-primary" />
-                {walletLoading ? (
-                  <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  <span className="text-2xl font-bold text-foreground">
-                    ${((walletBalance?.balance || 0) / 100).toFixed(2)}{" "}
-                    {walletBalance?.currency || "MXN"}
-                  </span>
-                )}
-              </div>
-
-              {/* Referral Code */}
-              {user.referralCode ? (
-                <div className="mt-2">
-                  <button
-                    onClick={() => void handleCopyReferralCode()}
-                    className="flex items-center w-full justify-center gap-1.5 px-3 py-1.5 rounded-md bg-card/50 border border-border/50 hover:bg-muted transition-colors text-xs"
-                  >
-                    <span className="text-muted-foreground">Código:</span>
-                    <span className="font-mono font-semibold text-foreground">
-                      {user.referralCode}
-                    </span>
-                    {copiedCode ? (
-                      <CheckCircle className="w-3 h-3 text-lime-700 ml-0.5" />
-                    ) : (
-                      <Copy className="w-3 h-3 text-primary ml-0.5" />
-                    )}
-                  </button>
-                  <p className="text-[10px] text-muted-foreground text-center mt-1">
-                    🎁 Gana 1 mes Premium gratis cuando alguien use tu código
-                  </p>
-                </div>
-              ) : null}
-            </div>
-
-            {/* Points Card */}
-            {/* TODO: Hide until points is implemented */}
-            {/* <Card className="mt-4 p-4 bg-card border-border">
-              <div className="text-3xl font-bold text-primary mb-1">
-                8,450 🍽️
-              </div>
-              <p className="text-sm text-muted-foreground">Ñamy Points</p>
-            </Card> */}
+        {/* ── Mobile & Tablet (< lg) ── single column */}
+        <div className="lg:hidden pb-10 max-w-xl mx-auto w-full">
+          {/* Header */}
+          <div className="px-5 pt-16 pb-4">
+            <h1 className="text-2xl font-black text-foreground">Perfil</h1>
           </div>
-        </div>
 
-        {/* Quick Actions */}
-        <div className="px-6 py-6 max-w-5xl mx-auto w-full">
-          <div className="grid grid-cols-4 gap-3">
-            {[
-              // { icon: Flame, label: "Streaks", color: "bg-gradient-primary", href: "#" },
-              {
-                icon: Wallet,
-                label: "Ve a mi billetera",
-                // label: "Mi Billetera",
-                color: "bg-gradient-secondary",
-                href: "/wallet",
-              },
-              // { icon: Star, label: "Reviews", color: "bg-accent/20", href: "#" },
-              // { icon: Zap, label: "Mi nivel", color: "bg-accent/20", href: "#" },
-            ].map((item) => (
-              <Link
-                key={item.label}
-                className="flex flex-col col-span-4 items-center hover:shadow-card transition-all"
-                href={item.href}
-              >
-                {/* <Link
-                key={item.label}
-                className="flex flex-col items-center gap-2 p-3 rounded-2xl bg-card hover:shadow-card transition-all"
-                href={item.href}
-              > */}
-                {/* TODO:Put Back once we start implementing other features */}
-                {/* <div
-                  className={`w-12 h-12 rounded-full ${item.color} flex items-center justify-center`}
-                >
-                  <item.icon className="w-6 h-6 text-white" />
-                </div>
-                <span className="text-xs font-medium text-foreground">
-                  {item.label}
-                </span> */}
-                <div
-                  className={`w-full h-12 rounded-sm font-bold text-gray-800 ${item.color} flex items-center justify-center`}
-                >
-                  {item.icon ? <item.icon className="w-6 h-6 mr-2" /> : null}
-                  {item.label}
-                </div>
-              </Link>
-            ))}
-          </div>
-        </div>
-
-        {/* Main Content */}
-        <div className="px-6 space-y-6 max-w-5xl mx-auto w-full">
-          {/* Daily Streak Card */}
-          <Card className="p-6 bg-gradient-primary text-white border-0 shadow-glow">
-            <Link href="/level">
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <h3 className="text-xl font-bold mb-1">
-                    🔥 Level {myLevel?.level} -{" "}
-                    {getUserLevelTitle(myLevel?.level ?? 1)}
-                  </h3>
-                  <p className="text-white/90 text-sm">
-                    <b className="text-base">{myLevel?.usesUntilNextLevel}</b>{" "}
-                    {(myLevel?.level ?? 1) < 3
-                      ? "usos más para el siguiente nivel"
-                      : "Para mantener su estatus de nivel 3"}
-                  </p>
-                </div>
-              </div>
-              <div className="h-2 bg-white/20 rounded-full overflow-hidden mb-4">
-                <div
-                  className="h-full bg-white rounded-full transition-all"
-                  style={{
-                    width: `${((myLevel?.monthlyUsageCount ?? 0) / getTotalForLevel(myLevel?.level)) * 100}%`,
-                  }}
-                />
-              </div>
-              {/* TODO: Hide until leadership is implemented */}
-              {/* <div className="flex items-start justify-between mb-4"> */}
-              {/* <div className="items-start justify-between mb-4">
-              <div>
-                <h3 className="text-xl font-bold mb-1">
-                  🔥 Daily Ñamy Streak: 5 Days
-                </h3>
-                <p className="text-white/90 text-sm">
-                  Open daily to earn +10 bonus points
-                </p>
-              </div>
-            </div>
-            <div className="h-2 bg-white/20 rounded-full overflow-hidden mb-4">
-              <div
-                className="h-full bg-white rounded-full transition-all"
-                style={{ width: "71.4286%" }}
-              />
-            </div> */}
-              <div className="hidden pt-4 border-t border-white/20">
-                <div className="flex items-center justify-between mb-2">
-                  <h4 className="text-lg font-bold text-white">
-                    Level 8 – Savory Explorer 🍝
-                  </h4>
-                  <span className="text-white/90 text-sm">65%</span>
-                </div>
-                <div className="h-2 bg-white/20 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-white rounded-full transition-all"
-                    style={{ width: "65%" }}
-                  />
-                </div>
-                <p className="text-white/80 text-xs mt-2">
-                  350 XP to next level
-                </p>
-              </div>
-            </Link>
-          </Card>
-
-          {/* Points Breakdown */}
-          {/* TODO: Hide until leadership is implemented */}
-          <Card className="p-5 bg-card border-border hidden">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-foreground">
-                📊 Points Breakdown
-              </h3>
-              <button
-                onClick={() => setExpandPoints(!expandPoints)}
-                className="text-sm font-medium hover:bg-accent hover:text-accent-foreground px-3 py-2 rounded-md transition-colors"
-              >
-                {expandPoints ? "Collapse" : "Expand"}
-              </button>
-            </div>
-            <div className="space-y-3">
-              {[
-                { icon: "📊", label: "Use a Discount", points: "+15 pts" },
-                { icon: "💬", label: "Leave a Text Review", points: "+10 pts" },
-                {
-                  icon: "📸",
-                  label: "Add a Photo to a Review",
-                  points: "+5 pts",
-                },
-                {
-                  icon: "🔥",
-                  label: "Visit a Featured Restaurant",
-                  points: "x2 multiplier",
-                },
-                ...(expandPoints
-                  ? [
-                      {
-                        icon: "👥",
-                        label: "Invite a Friend Who Signs Up",
-                        points: "+50 pts",
-                      },
-                      {
-                        icon: "📅",
-                        label: "Daily Login Streak",
-                        points: "+25 pts",
-                      },
-                      {
-                        icon: "⚡",
-                        label: "Complete a Challenge",
-                        points: "+50–100 pts",
-                      },
-                      {
-                        icon: "👑",
-                        label: "Bono de Membresía Premium",
-                        points: "Multiplicador 1.25x",
-                      },
-                    ]
-                  : []),
-              ].map((item, idx) => (
-                <div key={idx} className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span>{item.icon}</span>
-                    <span className="text-sm text-foreground">
-                      {item.label}
-                    </span>
-                  </div>
-                  <span className="font-bold text-primary">{item.points}</span>
-                </div>
-              ))}
-            </div>
-            {expandPoints ? (
-              <div className="mt-4 pt-4 border-t border-border">
-                <p className="text-xs text-muted-foreground">
-                  Detailed earning history and dates will appear here.
-                </p>
-              </div>
-            ) : null}
-          </Card>
-
-          {/* Available Discounts */}
-          <Card className="p-5 bg-card border-border">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-foreground">
-                🎁 Descuentos Disponibles
-              </h3>
-              <Button
-                variant="ghost"
+          {/* Avatar + Name + Streak */}
+          <div className="px-5 flex items-center justify-between mb-5">
+            <div className="flex items-center gap-4">
+              <AvatarBlock
                 size="sm"
-                onClick={() => router.push("/restaurants")}
-              >
-                Ver Todos
-                <ChevronRight className="w-4 h-4 ml-1" />
-              </Button>
-            </div>
-            {storesLoading ? (
-              <div className="text-center py-8">
-                <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-                <p className="text-sm text-muted-foreground">
-                  Cargando descuentos...
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {allStores.slice(0, 3).map((store) => (
-                  <button
-                    key={store.id}
-                    onClick={() => router.push(`/stores/${store.id}`)}
-                    className="w-full flex items-center gap-4 p-3 rounded-lg bg-gradient-hero hover:shadow-card transition-all"
-                  >
-                    <div className="w-12 h-12 rounded-full bg-gradient-primary flex items-center justify-center flex-shrink-0">
-                      <Percent className="w-6 h-6 text-white" />
-                    </div>
-                    <div className="flex-1 text-left">
-                      <p className="font-semibold text-foreground">
-                        {store.name}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {store.type === "RESTAURANT" ? "Restaurant" : "Store"} •{" "}
-                        {store.city || "Location"}
-                      </p>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <p className="font-bold text-primary text-lg">
-                        {discountPercentage}% OFF
-                      </p>
-                      {/* <p className="text-xs text-muted-foreground">+100 pts</p> */}
-                    </div>
-                  </button>
-                ))}
-                {allStores.length === 0 && !storesLoading && (
-                  <div className="text-center py-8">
-                    <p className="text-muted-foreground">
-                      No hay descuentos disponibles
-                    </p>
+                avatarUrl={user.avatarUrl}
+                displayName={user.displayName}
+                onOpenModal={() => setShowAvatarModal(true)}
+              />
+              <div>
+                <h2 className="text-lg font-black text-foreground leading-tight">
+                  {user.displayName || user.email?.split("@")[0]}
+                </h2>
+                {user.isPremium ? (
+                  <div className="inline-flex items-center gap-1 text-xs font-bold text-orange-500">
+                    <Crown className="w-3 h-3" /> Premium
                   </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    @{user.email?.split("@")[0]}
+                  </p>
                 )}
               </div>
-            )}
-          </Card>
-
-          {/* Leaderboard: TODO: Hide until leadership is implemented */}
-          <Card className="p-5 bg-card border-border hidden">
-            <h3 className="text-lg font-bold text-foreground mb-4">
-              🏆 You&apos;re ranked #23 in Cancún!
-            </h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              Earn 1,200 more points to reach Top 10 and unlock 1 week Premium.
-            </p>
-            <div className="space-y-2 mb-4">
-              {[
-                {
-                  rank: "1",
-                  name: "Sofia M.",
-                  points: "12,500 pts",
-                  isCrown: true,
-                },
-                { rank: "2", name: "Carlos R.", points: "11,200 pts" },
-                { rank: "3", name: "Ana L.", points: "10,800 pts" },
-              ].map((item) => (
-                <div
-                  key={item.rank}
-                  className="flex items-center gap-3 p-2 rounded-lg bg-muted/50"
-                >
-                  {item.isCrown ? (
-                    <Crown className="w-4 h-4 text-yellow-500 absolute -top-2 -right-2" />
-                  ) : null}
-                  <div className="w-10 h-10 rounded-full bg-gradient-primary flex items-center justify-center font-bold text-white">
-                    {item.rank}
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-medium text-foreground">{item.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {item.points}
-                    </p>
-                  </div>
-                </div>
-              ))}
             </div>
-            <Button variant="outline" className="w-full">
-              View Full Leaderboard
-              <ChevronRight className="w-4 h-4 ml-2" />
-            </Button>
-          </Card>
-
-          {/* Premium Section */}
-          {!user.isPremium ? (
-            <Card className="p-6 bg-gradient-secondary text-secondary-foreground border-0 shadow-glow text-center">
-              <Zap className="w-12 h-12 mx-auto mb-3 text-secondary-foreground" />
-              <h3 className="text-xl font-bold mb-2">
-                🚀 Upgrade to Ñamy Premium
-              </h3>
-              <p className="text-secondary-foreground/90 mb-4">
-                Earn 2× points on every order!
-              </p>
-              <Link
-                href="/subscription"
-                className="w-full bg-white text-secondary hover:bg-white/90 block font-semibold rounded-sm px-4 py-2"
-              >
-                Hazte Premium
-              </Link>
-            </Card>
-          ) : (
-            <Card className="p-6 bg-gradient-primary text-white border-0 shadow-glow text-center">
-              <Crown className="w-12 h-12 mx-auto mb-3 text-white" />
-              <h3 className="text-xl font-bold mb-2">✨ Ñamy Premium Member</h3>
-              <p className="text-white/90 mb-4">
-                ¡Estás ganando 2× puntos en cada pedido!
-              </p>
-              <div className="space-y-2 text-sm text-white/80">
-                <p>✅ Multiplicador de puntos activo</p>
-                <p>✅ Soporte al cliente prioritario</p>
-                <p>✅ Acceso exclusivo a restaurantes</p>
+            <div className="flex items-center gap-1.5 bg-orange-50 border border-orange-200 rounded-full px-3 py-1.5">
+              <span className="text-lg">🔥</span>
+              <div className="text-right">
+                <p className="text-base font-black text-orange-500 leading-none">
+                  {loginStreak}
+                </p>
+                <p className="text-[10px] text-orange-400 leading-none">
+                  Racha diaria
+                </p>
               </div>
-            </Card>
-          )}
+            </div>
+          </div>
 
-          {/* Settings & Support */}
-          <Card className="p-5 bg-card border-border">
-            <h3 className="text-lg font-bold text-foreground mb-4">
-              Configuración y Soporte
-            </h3>
-            <div className="space-y-1">
-              {[
-                // { icon: Settings, label: "Settings", action: undefined },
-                // { icon: UserIcon, label: "Edit Profile", action: undefined },
-                // {
-                //   icon: CreditCard,
-                //   label: "Payment Methods",
-                //   action: undefined,
-                // },
-                {
-                  icon: HelpCircle,
-                  label: "Ayuda & Preguntas",
-                  action: () => router.push("/help"),
-                },
-                // { icon: Phone, label: "Contactar Soporte", action: undefined },
-              ].map((item) => (
-                <button
-                  key={item.label}
-                  onClick={item.action}
-                  className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-muted transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    <item.icon className="w-5 h-5 text-muted-foreground" />
-                    <span className="text-foreground">{item.label}</span>
-                  </div>
-                  <ChevronRight className="w-5 h-5 text-muted-foreground" />
-                </button>
-              ))}
+          {showAvatarModal ? (
+            <AvatarPickerModal
+              currentAvatarUrl={user.avatarUrl}
+              displayName={user.displayName}
+              onClose={() => setShowAvatarModal(false)}
+              onSave={handleSaveAvatar}
+            />
+          ) : null}
+
+          <div className="px-5 mb-5">
+            <LevelCard
+              level={myLevel?.level ?? 1}
+              monthlyUsageCount={myLevel?.monthlyUsageCount ?? 0}
+              discountPercentage={discountPercentage}
+              levelProgress={levelProgress}
+              getTotalForLevel={getTotalForLevel}
+            />
+          </div>
+          <div className="px-5 mb-5">
+            <QuickStats
+              walletLoading={walletLoading}
+              walletBalance={walletBalance?.balance || 0}
+              couponCount={couponCount}
+              onOpenCrisp={handleOpenCrisp}
+            />
+          </div>
+
+          {user.referralCode ? (
+            <div className="px-5 mb-5">
               <button
-                onClick={handleOpenCrisp}
-                className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-muted transition-colors"
+                onClick={() => void handleCopyReferralCode()}
+                className="w-full flex items-center justify-between px-4 py-3 rounded-2xl bg-white border border-border shadow-sm hover:shadow-md transition-shadow"
               >
-                <div className="flex items-center gap-3">
-                  <MessageCircle className="w-5 h-5 text-muted-foreground" />
-                  <span className="text-foreground">Abrir Chat de Soporte</span>
-                </div>
-                <ChevronRight className="w-5 h-5 text-muted-foreground" />
-              </button>
-              <button
-                onClick={() => {
-                  void handleLogout();
-                }}
-                disabled={logoutMutation.isPending}
-                className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-destructive/10 transition-colors"
-              >
-                <div className="flex items-center gap-3 text-red-500">
-                  <LogOut className="w-5 h-5" />
-                  <span>
-                    {logoutMutation.isPending
-                      ? "Cerrando sesión..."
-                      : "Cerrar Sesión"}
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">
+                    Código referido:
+                  </span>
+                  <span className="font-mono font-black text-foreground">
+                    {user.referralCode}
                   </span>
                 </div>
-                <ChevronRight className="w-5 h-5" />
+                {copiedCode ? (
+                  <CheckCircle className="w-4 h-4 text-green-500" />
+                ) : (
+                  <Copy className="w-4 h-4 text-primary" />
+                )}
               </button>
+              <p className="text-[10px] text-muted-foreground text-center mt-1">
+                🎁 Gana 1 mes Premium gratis cuando alguien use tu código
+              </p>
             </div>
-          </Card>
+          ) : null}
 
-          {/* Footer */}
-          <div className="text-center py-6 pb-8">
+          <div className="px-5 mb-5">
+            <MisionesCard
+              misionesOpen={misionesOpen}
+              onToggleMisiones={() => setMisionesOpen((o) => !o)}
+              newMissionsCount={newMissionsCount}
+              loginStreak={loginStreak}
+              streakProgress={streakProgress}
+              streakTarget={streakTarget}
+              streakPoints={streakChallenge?.challenge?.points ?? 5}
+            />
+          </div>
+          <div className="px-5 mb-5">
+            <PremiumBanner
+              isPremium={user.isPremium ?? false}
+              discountPercentage={discountPercentage}
+            />
+          </div>
+          <div className="px-5 mb-5">
+            <AccountMenu
+              logoutPending={logoutMutation.isPending}
+              onLogout={() => void handleLogout()}
+              onOpenCrisp={handleOpenCrisp}
+            />
+          </div>
+
+          <div className="text-center py-4">
             <p className="text-xs text-muted-foreground">
               Ñamy — Come inteligente, ahorra más 🍴💚
             </p>
           </div>
         </div>
+
+        {/* ── Desktop (≥ lg) ── two-column layout ── */}
+        <div className="hidden lg:block pb-16 max-w-5xl mx-auto w-full px-8 pt-20">
+          <div className="mb-8">
+            <h1 className="text-3xl font-black text-foreground">Perfil</h1>
+          </div>
+
+          <div className="grid grid-cols-[320px_1fr] gap-8 items-start">
+            {/* ── Left sidebar ── */}
+            <div className="space-y-5 sticky top-24">
+              {/* Profile card */}
+              <div className="bg-white rounded-3xl border border-border shadow-sm p-6 flex flex-col items-center gap-3 text-center">
+                <AvatarBlock
+                  size="lg"
+                  avatarUrl={user.avatarUrl}
+                  displayName={user.displayName}
+                  onOpenModal={() => setShowAvatarModal(true)}
+                />
+                <div>
+                  <h2 className="text-xl font-black text-foreground leading-tight">
+                    {user.displayName || user.email?.split("@")[0]}
+                  </h2>
+                  <p className="text-sm text-muted-foreground">
+                    @{user.email?.split("@")[0]}
+                  </p>
+                  {user.isPremium ? (
+                    <div className="inline-flex items-center gap-1 text-xs font-bold text-orange-500 mt-1">
+                      <Crown className="w-3 h-3" /> Miembro Premium
+                    </div>
+                  ) : null}
+                </div>
+
+                {/* Streak pill */}
+                <div className="flex items-center gap-2 bg-orange-50 border border-orange-200 rounded-full px-4 py-2">
+                  <span className="text-xl">🔥</span>
+                  <div>
+                    <p className="text-lg font-black text-orange-500 leading-none">
+                      {loginStreak}
+                    </p>
+                    <p className="text-[10px] text-orange-400 leading-none">
+                      Racha diaria
+                    </p>
+                  </div>
+                </div>
+
+                {/* Referral code */}
+                {user.referralCode ? (
+                  <div className="w-full">
+                    <button
+                      onClick={() => void handleCopyReferralCode()}
+                      className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl bg-muted/50 border border-border hover:bg-muted transition-colors"
+                    >
+                      <div className="flex items-center gap-2 text-sm">
+                        <span className="text-muted-foreground">Código:</span>
+                        <span className="font-mono font-black text-foreground">
+                          {user.referralCode}
+                        </span>
+                      </div>
+                      {copiedCode ? (
+                        <CheckCircle className="w-4 h-4 text-green-500" />
+                      ) : (
+                        <Copy className="w-4 h-4 text-primary" />
+                      )}
+                    </button>
+                    <p className="text-[10px] text-muted-foreground text-center mt-1">
+                      🎁 Gana 1 mes Premium gratis con tu código
+                    </p>
+                  </div>
+                ) : null}
+              </div>
+
+              {/* Quick stats */}
+              <QuickStats
+                walletLoading={walletLoading}
+                walletBalance={walletBalance?.balance || 0}
+                couponCount={couponCount}
+                onOpenCrisp={handleOpenCrisp}
+              />
+
+              <div className="text-center py-2">
+                <p className="text-xs text-muted-foreground">
+                  Ñamy — Come inteligente, ahorra más 🍴💚
+                </p>
+              </div>
+            </div>
+
+            {/* ── Right main content ── */}
+            <div className="space-y-5">
+              <LevelCard
+                level={myLevel?.level ?? 1}
+                monthlyUsageCount={myLevel?.monthlyUsageCount ?? 0}
+                discountPercentage={discountPercentage}
+                levelProgress={levelProgress}
+                getTotalForLevel={getTotalForLevel}
+              />
+              <MisionesCard
+                misionesOpen={misionesOpen}
+                onToggleMisiones={() => setMisionesOpen((o) => !o)}
+                newMissionsCount={newMissionsCount}
+                loginStreak={loginStreak}
+                streakProgress={streakProgress}
+                streakTarget={streakTarget}
+                streakPoints={streakChallenge?.challenge?.points ?? 5}
+              />
+              <PremiumBanner
+                isPremium={user.isPremium ?? false}
+                discountPercentage={discountPercentage}
+              />
+            </div>
+          </div>
+
+          {/* ── Mi Cuenta — full width below both columns ── */}
+          <div className="mt-8">
+            <AccountMenu
+              logoutPending={logoutMutation.isPending}
+              onLogout={() => void handleLogout()}
+              onOpenCrisp={handleOpenCrisp}
+            />
+          </div>
+        </div>
+
+        {showAvatarModal ? (
+          <AvatarPickerModal
+            currentAvatarUrl={user.avatarUrl}
+            displayName={user.displayName}
+            onClose={() => setShowAvatarModal(false)}
+            onSave={handleSaveAvatar}
+          />
+        ) : null}
+
+        {/* ────────────────────────────────────────────────────────────────
+            NOTE: The mobile/tablet AvatarPickerModal is rendered inside
+            the lg:hidden block above. This second instance handles desktop.
+        ──────────────────────────────────────────────────────────────── */}
+
         <CrispProvider />
       </BasicLayout>
     </ProtectedRoute>

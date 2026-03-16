@@ -109,6 +109,7 @@ export const GET_CURRENT_USER_QUERY = `
       createdAt
       updatedAt
       lastSeen
+      loginStreak
       referralCode
     }
   }
@@ -679,6 +680,7 @@ export const COUPONS_QUERY = `
         address
         city
         restrictions
+        imageUrl
       }
     }
   }

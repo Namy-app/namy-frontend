@@ -18,6 +18,7 @@ export interface User {
   createdAt: string;
   updatedAt: string;
   lastSeen?: string;
+  loginStreak?: number;
   referralCode?: string;
 }
 
