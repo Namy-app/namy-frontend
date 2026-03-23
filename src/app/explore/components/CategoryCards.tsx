@@ -17,25 +17,9 @@ export function CategoryCards(): React.JSX.Element {
           onClick={() => router.push("/restaurants")}
           className="w-full flex-1"
         >
-          <Card className="p-4 sm:p-8 bg-[#FFF5E9] shadow-[0px_4px_22px_0px_#00000040]shadow-[0_4px_10px_#FFEDD5] hover:shadow-glow transition-all group border-0 rounded-3xl">
+          <Card className="p-4 sm:p-8 bg-[#FFEDD5] shadow-md hover:shadow-lg transition-all group border-0 rounded-3xl">
             <div className="flex flex-col sm:flex-row items-center sm:items-center gap-4 sm:gap-6">
               <div className="flex sm:hidden shrink-0 w-20 h-20 bg-white/20 rounded-full items-center justify-center">
-                {/* <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="40"
-                  height="40"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="text-white"
-                >
-                  <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2" />
-                  <path d="M7 2v20" />
-                  <path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7" />
-                </svg> */}
                 <Image
                   width="68"
                   height="68"
@@ -44,22 +28,6 @@ export function CategoryCards(): React.JSX.Element {
                 />
               </div>
               <div className="hidden sm:flex shrink-0 w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 bg-white rounded-full items-center justify-center">
-                {/* <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="32"
-                  height="32"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="text-[#FF7B54] sm:w-10 sm:h-10 md:w-12 md:h-12"
-                >
-                  <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2" />
-                  <path d="M7 2v20" />
-                  <path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7" />
-                </svg> */}
                 <Image
                   width="68"
                   height="68"
@@ -83,28 +51,9 @@ export function CategoryCards(): React.JSX.Element {
           onClick={() => router.push("/service")}
           className="w-full flex-1"
         >
-          <Card className="p-2 py-4 sm:py-0 sm:p-8 bg-[#F5F3FF] hover:shadow-glow transition-all group border-0 shadow-[0px_4px_22px_0px_#00000040] rounded-3xl">
+          <Card className="p-2 py-4 sm:py-0 sm:p-8 bg-[#F5F3FF] shadow-md hover:shadow-lg transition-all group border-0 rounded-3xl">
             <div className="flex flex-col sm:flex-row items-center sm:items-center gap-4 sm:gap-6">
               <div className="flex sm:hidden shrink-0 w-20 h-20 rounded-full items-center justify-center">
-                {/* <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="40"
-                  height="40"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="text-white"
-                >
-                  <circle cx="6" cy="6" r="3" />
-                  <circle cx="6" cy="18" r="3" />
-                  <line x1="20" y1="4" x2="8.12" y2="15.88" />
-                  <line x1="14.47" y1="14.48" x2="20" y2="20" />
-                  <line x1="8.12" y1="8.12" x2="12" y2="12" />
-                </svg> */}
-
                 <Image
                   width="68"
                   height="68"
@@ -113,24 +62,6 @@ export function CategoryCards(): React.JSX.Element {
                 />
               </div>
               <div className="hidden sm:flex shrink-0 w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 bg-white rounded-full items-center justify-center">
-                {/* <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="32"
-                  height="32"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="text-[hsl(var(--services))] sm:w-10 sm:h-10 md:w-12 md:h-12"
-                >
-                  <circle cx="6" cy="6" r="3" />
-                  <circle cx="6" cy="18" r="3" />
-                  <line x1="20" y1="4" x2="8.12" y2="15.88" />
-                  <line x1="14.47" y1="14.48" x2="20" y2="20" />
-                  <line x1="8.12" y1="8.12" x2="12" y2="12" />
-                </svg> */}
                 <Image
                   width="68"
                   height="68"
