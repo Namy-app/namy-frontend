@@ -1,6 +1,11 @@
 @import "tailwindcss";
 @import "tailwindcss/utilities";
 
+/* Safe area padding — only on Capacitor Android */
+html.capacitor-android body {
+  padding-bottom: env(safe-area-inset-bottom, 16px);
+}
+
 @layer base {
   /* Enhanced global fix for all interactive elements to ensure consistent hand cursor */
   button,

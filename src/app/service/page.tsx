@@ -14,8 +14,9 @@ import {
   SlidersHorizontal,
 } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState, useEffect, useMemo, useRef } from "react";
+
 
 import { CategoryFilterPills } from "@/components/CategoryFilterPills";
 import StoreMap from "@/components/store-map";
@@ -26,6 +27,7 @@ import { type StoreFilters } from "@/domains/store/type";
 import { useMyLevel } from "@/domains/user/hooks/query/useMyLevel";
 import { BasicLayout } from "@/layouts/BasicLayout";
 import type { Store } from "@/lib/api-types";
+import { navigateTo } from "@/lib/capacitor-navigate";
 import { getUserLocationSafe } from "@/lib/utils";
 import { Button } from "@/shared/components/Button";
 import { Card } from "@/shared/components/Card";
@@ -55,6 +57,7 @@ interface StoreWithDistance extends Store {
 }
 
 export default function ServicesPage(): React.JSX.Element {
+  const router = useRouter();
   const { data: categoriesData, isLoading: categoriesLoading } =
     useCategoriesByStoreType(StoreType.SERVICE);
 
@@ -244,7 +247,11 @@ export default function ServicesPage(): React.JSX.Element {
     };
 
     return (
-      <Link href={`/stores/${service.id}`} key={service.id}>
+      <div
+        key={service.id}
+        className="cursor-pointer"
+        onClick={() => navigateTo(`/stores/${service.id}`, router)}
+      >
         <Card className="overflow-hidden hover:shadow-card hover:scale-[1.02] transition-all cursor-pointer bg-card border-border">
           <div className="relative">
             <Image
@@ -289,7 +296,7 @@ export default function ServicesPage(): React.JSX.Element {
             </div>
           </div>
         </Card>
-      </Link>
+      </div>
     );
   };
 

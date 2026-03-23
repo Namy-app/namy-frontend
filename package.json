@@ -16,9 +16,18 @@
     "format:check": "prettier --check \"src/**/*.{ts,tsx,js,jsx,json,css,md}\"",
     "type-check": "tsc --noEmit",
     "validate": "pnpm lint && pnpm type-check && pnpm format:check",
-    "prepare": "husky"
+    "prepare": "husky",
+    "mobile:postbuild": "cp out/index.html out/404.html && node scripts/copy-dynamic-routes.cjs",
+    "mobile:build": "MOBILE_BUILD=true next build && yarn mobile:postbuild && npx cap sync",
+    "mobile:android": "MOBILE_BUILD=true next build && yarn mobile:postbuild && npx cap sync && npx cap run android",
+    "mobile:ios": "MOBILE_BUILD=true next build && yarn mobile:postbuild && npx cap sync && (xattr -cr ios 2>/dev/null; true) && npx cap run ios"
   },
   "dependencies": {
+    "@capacitor/android": "^8.2.0",
+    "@capacitor/cli": "^8.2.0",
+    "@capacitor/core": "^8.2.0",
+    "@capacitor/ios": "^8.2.0",
+    "@capacitor/status-bar": "^8.0.1",
     "@novu/nextjs": "^3.13.0",
     "@radix-ui/react-accordion": "^1.2.12",
     "@radix-ui/react-slot": "^1.2.4",

@@ -150,8 +150,20 @@ export default function StoreDetailClient(): React.JSX.Element {
   }, [selectedCatalogImage]);
 
   const { data: wallet } = useWallet({ userId: user?.id });
-  // Get store ID from params
-  const storeId = (params?.id as string) || null;
+  // Get store ID from params.
+  // In Capacitor, navigateTo() saves the real UUID to localStorage and pushes
+  // to /stores/placeholder. Read it from localStorage when params is "placeholder".
+  const paramsId = params?.id as string | undefined;
+  const storeId =
+    paramsId && paramsId !== "placeholder"
+      ? paramsId
+      : typeof window !== "undefined"
+        ? (localStorage
+            .getItem("spa_redirect")
+            ?.split("/")
+            .filter(Boolean)
+            .pop() ?? null)
+        : null;
   const { data: store, isLoading } = useStore(storeId);
 
   // Fetch discounts for this store
@@ -177,7 +189,16 @@ export default function StoreDetailClient(): React.JSX.Element {
   const { isValid: isValidDiscount, countdownText: timeUntilNext } =
     useDiscountCountdown(discountsData?.data?.[0]);
 
-  if (!isLoading && !store) {
+  // Show spinner while storeId is not yet available from params or query is loading
+  if (!storeId || isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
+      </div>
+    );
+  }
+
+  if (!store) {
     router.push("/explore");
     return <></>;
   }
@@ -1736,6 +1757,7 @@ export default function StoreDetailClient(): React.JSX.Element {
                   </p>
                   {reviewPhotoPreview ? (
                     <div className="relative w-full rounded-xl overflow-hidden border border-gray-200">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={reviewPhotoPreview}
                         alt="Preview"
@@ -1803,10 +1825,10 @@ export default function StoreDetailClient(): React.JSX.Element {
                         setReviewPhotoPreview(URL.createObjectURL(file));
                         setIsUploadingPhoto(true);
                         try {
-                          const baseUrl = (
+                          const apiUrl =
                             process.env.NEXT_PUBLIC_API_URL ??
-                            "http://localhost:4000/graphql"
-                          ).replace("/graphql", "");
+                            "http://localhost:4000/graphql";
+                          const baseUrl = apiUrl.replace("/graphql", "");
                           const formData = new FormData();
                           formData.append("file", file);
                           const res = await fetch(
@@ -1815,6 +1837,9 @@ export default function StoreDetailClient(): React.JSX.Element {
                               method: "POST",
                               headers: {
                                 Authorization: `Bearer ${accessToken}`,
+                                ...(apiUrl.includes("ngrok") && {
+                                  "ngrok-skip-browser-warning": "true",
+                                }),
                               },
                               body: formData,
                             }

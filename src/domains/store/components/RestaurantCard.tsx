@@ -1,8 +1,9 @@
 import { Star, MapPin, Clock } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 import type { Store } from "@/lib/api-types";
+import { navigateTo } from "@/lib/capacitor-navigate";
 import { Card } from "@/shared/components/Card";
 
 import type { Restaurant } from "../type";
@@ -16,6 +17,7 @@ export const RestaurantCard = ({
   store: Store;
   distance?: number;
 }) => {
+  const router = useRouter();
   const restaurant: Restaurant = {
     id: store.id,
     slug: store.id,
@@ -54,10 +56,9 @@ export const RestaurantCard = ({
   };
 
   return (
-    <Link
-      key={restaurant.id}
-      className="animate-slide-up"
-      href={`/stores/${restaurant.id}`}
+    <div
+      className="animate-slide-up cursor-pointer"
+      onClick={() => navigateTo(`/stores/${restaurant.id}`, router)}
     >
       <Card className="overflow-hidden cursor-pointer transition-all hover:shadow-card hover:scale-[1.02] bg-card border-border">
         {/* Restaurant Image */}
@@ -108,6 +109,6 @@ export const RestaurantCard = ({
           </div>
         </div>
       </Card>
-    </Link>
+    </div>
   );
 };
