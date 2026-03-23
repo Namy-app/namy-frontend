@@ -3,10 +3,11 @@
 import { GoogleMap, useJsApiLoader, OverlayView } from "@react-google-maps/api";
 import { MapPin, Star, X } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState, useEffect, useCallback } from "react";
 
 import type { Store } from "@/lib/api-types";
+import { navigateTo } from "@/lib/capacitor-navigate";
 import { env } from "@/lib/env";
 import { getUserLocationSafe, type UserLocation } from "@/lib/utils";
 
@@ -73,6 +74,7 @@ export default function StoreMap({
   height = "h-screen",
   discountPercentage = 10,
 }: StoreMapProps) {
+  const router = useRouter();
   const [selectedStore, setSelectedStore] = useState<Store | null>(null);
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
   const [isLoadingLocation, setIsLoadingLocation] = useState(!center);
@@ -150,7 +152,9 @@ export default function StoreMap({
   };
 
   const visibleStores = storesWithCoords.filter((store) => {
-    if (!bounds) {return true;}
+    if (!bounds) {
+      return true;
+    }
     return bounds.contains({ lat: store.lat!, lng: store.lng! });
   });
 
@@ -196,7 +200,10 @@ export default function StoreMap({
       {/* Store detail card — fixed bottom panel, outside GoogleMap */}
       {selectedStore ? (
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 w-[calc(100%-2rem)] max-w-sm">
-          <Link href={`/stores/${selectedStore.id}`}>
+          <div
+            className="cursor-pointer"
+            onClick={() => navigateTo(`/stores/${selectedStore.id}`, router)}
+          >
             <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 flex overflow-hidden hover:shadow-xl transition-shadow">
               {/* Image */}
               <div className="relative w-28 shrink-0 h-28">
@@ -275,7 +282,7 @@ export default function StoreMap({
                 ) : null}
               </div>
             </div>
-          </Link>
+          </div>
         </div>
       ) : null}
     </div>

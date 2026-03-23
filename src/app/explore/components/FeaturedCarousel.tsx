@@ -2,11 +2,14 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
+
 
 import { InfoCard } from "@/components/InfoCard";
 import { PlaceHolderTypeEnum } from "@/data/constants";
 import { type Store } from "@/lib/api-types";
+import { navigateTo } from "@/lib/capacitor-navigate";
 import { cn } from "@/lib/utils";
 import { Button } from "@/shared/components/Button";
 import { Card } from "@/shared/components/Card";
@@ -20,6 +23,7 @@ export function FeaturedCarousel({
   isLoading?: boolean;
   stores?: Store[];
 }): React.JSX.Element {
+  const router = useRouter();
   const allStores = stores ?? [];
   const [currentSlide, setCurrentSlide] = useState(0);
 
@@ -69,10 +73,10 @@ export function FeaturedCarousel({
                 }}
               >
                 {featuredItems.map((item) => (
-                  <Link
+                  <div
                     key={item.id}
-                    href={`/stores/${item.id}`}
-                    className="shrink-0 w-[70%] sm:w-[48%] group"
+                    className="shrink-0 w-[70%] sm:w-[48%] group cursor-pointer"
+                    onClick={() => navigateTo(`/stores/${item.id}`, router)}
                   >
                     {/* Image card */}
                     <Card className="relative h-48 overflow-hidden cursor-pointer border-0 shadow-lg rounded-3xl">
@@ -140,7 +144,7 @@ export function FeaturedCarousel({
                         </p>
                       )}
                     </div>
-                  </Link>
+                  </div>
                 ))}
               </div>
             </div>

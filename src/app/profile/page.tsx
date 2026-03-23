@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Wallet,
   Zap,
@@ -609,6 +609,7 @@ export default function ProfilePage(): React.JSX.Element | null {
   const router = useRouter();
   const { toast } = useToast();
   const { user, updateUser } = useAuthStore();
+  const queryClient = useQueryClient();
   const { data: myLevel } = useMyLevel();
   const { data: currentUser } = useCurrentUser();
   const logoutMutation = useLogout();
@@ -620,6 +621,7 @@ export default function ProfilePage(): React.JSX.Element | null {
     try {
       await graphqlRequest(UPDATE_ME_MUTATION, { input: { avatarUrl } });
       updateUser({ avatarUrl });
+      await queryClient.invalidateQueries({ queryKey: ["currentUser"] });
       toast({ title: "Avatar actualizado" });
     } catch (err) {
       toast({

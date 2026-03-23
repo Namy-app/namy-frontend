@@ -1,34 +1,62 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = {
-  // ✅ Required for Capacitor static export
-  output: "export",
-  trailingSlash: true,
 
-  experimental: {
-    optimizePackageImports: ["lucide-react", "@tanstack/react-query"], // ✅ keep
-  },
-  compiler: {
-    removeConsole: process.env.NODE_ENV === "production", // ✅ keep
-  },
+const isMobileBuild = process.env.MOBILE_BUILD === "true";
 
-  images: {
-    unoptimized: true, // ✅ ADD — disables image optimization server (required for static export)
+const nextConfig = isMobileBuild
+  ? {
+      // Mobile (Capacitor) static export config
+      output: "export",
+      trailingSlash: true,
 
-    // ❌ REMOVE — these only apply when the Next.js image server is running:
-    // remotePatterns, formats, minimumCacheTTL, deviceSizes, imageSizes
-
-    // ✅ KEEP — these are still meaningful even without the optimizer
-    dangerouslyAllowSVG: true,
-    contentDispositionType: "attachment",
-    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
-  },
-
-  // ❌ REMOVE entire headers() function
-  // Custom headers are a server feature — they're silently ignored in static export.
-  // For Capacitor, handle security headers in your native layer or backend instead.
-
-  // NOTE: Remove /sw.js config too — service workers behave differently in
-  // Capacitor's WebView. You likely don't need one at all in the mobile app.
-};
+      experimental: {
+        optimizePackageImports: ["lucide-react", "@tanstack/react-query"],
+      },
+      compiler: {
+        removeConsole: process.env.NODE_ENV === "production",
+      },
+      images: {
+        unoptimized: true,
+        dangerouslyAllowSVG: true,
+        contentDispositionType: "attachment",
+        contentSecurityPolicy:
+          "default-src 'self'; script-src 'none'; sandbox;",
+      },
+    }
+  : {
+      // Web config
+      experimental: {
+        optimizePackageImports: ["lucide-react", "@tanstack/react-query"],
+      },
+      compiler: {
+        removeConsole: process.env.NODE_ENV === "production",
+      },
+      images: {
+        remotePatterns: [
+          {
+            protocol: "https",
+            hostname: "**",
+          },
+        ],
+        dangerouslyAllowSVG: true,
+        contentDispositionType: "attachment",
+        contentSecurityPolicy:
+          "default-src 'self'; script-src 'none'; sandbox;",
+      },
+      async headers() {
+        return [
+          {
+            source: "/(.*)",
+            headers: [
+              { key: "X-Frame-Options", value: "DENY" },
+              { key: "X-Content-Type-Options", value: "nosniff" },
+              {
+                key: "Referrer-Policy",
+                value: "strict-origin-when-cross-origin",
+              },
+            ],
+          },
+        ];
+      },
+    };
 
 export default nextConfig;
