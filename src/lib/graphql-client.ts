@@ -109,8 +109,6 @@ export async function graphqlRequest<T>(
 
   if (isNgrok && isCapacitor) {
     graphqlClient.setHeader("ngrok-skip-browser-warning", "true");
-  } else {
-    graphqlClient.setHeaders({ "Content-Type": "application/json" });
   }
   try {
     const result = await graphqlClient.request<T>(query, variables);
