@@ -28,6 +28,7 @@ export function useCityLeaderboard(limit = 20) {
 }
 
 export function useMyActiveChallenges() {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   return useQuery<UserChallenge[]>({
     queryKey: ["myChallenges", "on-going"],
     queryFn: async () => {
@@ -36,11 +37,13 @@ export function useMyActiveChallenges() {
       }>(MY_CHALLENGES_QUERY, { status: "on-going" });
       return data.myChallenges;
     },
+    enabled: isAuthenticated,
     staleTime: 30 * 1000,
   });
 }
 
 export function useMyPointsHistory(limit = 200) {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   return useQuery<PointTransaction[]>({
     queryKey: ["myPointsHistory", limit],
     queryFn: async () => {
@@ -49,11 +52,13 @@ export function useMyPointsHistory(limit = 200) {
       }>(MY_POINTS_HISTORY_QUERY, { limit });
       return data.myPointsHistory;
     },
+    enabled: isAuthenticated,
     staleTime: 30 * 1000,
   });
 }
 
 export function useMyAwardedChallenges() {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   return useQuery<UserChallenge[]>({
     queryKey: ["myChallenges", "awarded"],
     queryFn: async () => {
@@ -62,6 +67,7 @@ export function useMyAwardedChallenges() {
       }>(MY_CHALLENGES_QUERY, { status: "awarded" });
       return data.myChallenges;
     },
+    enabled: isAuthenticated,
     staleTime: 30 * 1000,
   });
 }

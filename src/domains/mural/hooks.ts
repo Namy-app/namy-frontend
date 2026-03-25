@@ -22,6 +22,7 @@ import {
   CREATE_MURAL_COMMENT_MUTATION,
   DELETE_MURAL_COMMENT_MUTATION,
 } from "@/lib/graphql-queries";
+import { useAuthStore } from "@/store/useAuthStore";
 
 // ==================== Queries ====================
 
@@ -40,6 +41,7 @@ export function useMuralFeed(input?: MuralFeedInput) {
 }
 
 export function useMyMuralPosts(page = 1, enabled = true, pageSize = 20) {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   return useQuery<MuralFeedResponse>({
     queryKey: ["myMuralPosts", page, pageSize],
     queryFn: async () => {
@@ -49,7 +51,7 @@ export function useMyMuralPosts(page = 1, enabled = true, pageSize = 20) {
       );
       return data.myMuralPosts;
     },
-    enabled,
+    enabled: isAuthenticated && enabled,
     staleTime: 1 * 60 * 1000,
   });
 }
