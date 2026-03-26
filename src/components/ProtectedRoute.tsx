@@ -14,13 +14,26 @@ export function ProtectedRoute({
 }: ProtectedRouteProps): React.JSX.Element | null {
   const router = useRouter();
   const { isAuthenticated, checkExpiration } = useAuthStore();
-  const [isHydrated, setIsHydrated] = useState(false);
+  // Use Zustand's built-in hasHydrated to wait for localStorage rehydration
+  const [isHydrated, setIsHydrated] = useState(() =>
+    useAuthStore.persist.hasHydrated()
+  );
 
   useEffect(() => {
-    // Mark as hydrated after first render (Zustand has loaded from localStorage)
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setIsHydrated(true);
-  }, []);
+    if (isHydrated) {
+      return;
+    }
+    // Subscribe to Zustand's rehydration finish event
+    const unsub = useAuthStore.persist.onFinishHydration(() => {
+      setIsHydrated(true);
+    });
+    // In case it already hydrated between the useState init and this effect,
+    // schedule the state update asynchronously to avoid cascading renders.
+    if (useAuthStore.persist.hasHydrated()) {
+      setTimeout(() => setIsHydrated(true), 0);
+    }
+    return unsub;
+  }, [isHydrated]);
 
   useEffect(() => {
     // Only check auth after hydration is complete
@@ -37,7 +50,7 @@ export function ProtectedRoute({
     }
   }, [isHydrated, isAuthenticated, checkExpiration, router]);
 
-  // Show loading spinner during hydration
+  // Show loading spinner while waiting for Zustand to rehydrate from localStorage
   if (!isHydrated) {
     return (
       <div className="min-h-screen flex items-center justify-center">

@@ -2,10 +2,11 @@ import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 
 import "../styles/globals.css";
+import { CapacitorSafeArea } from "@/components/CapacitorSafeArea";
 import { GoogleAdsense } from "@/components/GoogleAdsense";
 import { GoogleMapsProvider } from "@/components/GoogleMapsProvider";
+import { SpaRedirectHandler } from "@/components/SpaRedirectHandler";
 import { ReactQueryProvider } from "@/providers/ReactQueryProvider";
-import { RestaurantIdProvider } from "@/providers/RestaurantIdProvider";
 import { Toaster } from "@/shared/components/Toaster";
 
 const poppins = Poppins({
@@ -64,6 +65,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        <meta
+          name="viewport"
+          content="width=device-width, initial-scale=1, maximum-scale=1"
+        />
         <GoogleAdsense />
         <script
           async
@@ -72,10 +77,10 @@ export default function RootLayout({
         />
       </head>
       <body className={`${poppins.variable}  font-sans`}>
+        <CapacitorSafeArea />
+        <SpaRedirectHandler />
         <ReactQueryProvider>
-          <RestaurantIdProvider>
-            <GoogleMapsProvider>{children}</GoogleMapsProvider>
-          </RestaurantIdProvider>
+          <GoogleMapsProvider>{children}</GoogleMapsProvider>
           <Toaster />
         </ReactQueryProvider>
       </body>

@@ -8,6 +8,7 @@ import {
   MY_SUBSCRIPTION_STATUS_QUERY,
   PAY_PREMIUM_WITH_WALLET_MUTATION,
 } from "@/lib/graphql-queries";
+import { useAuthStore } from "@/store/useAuthStore";
 
 export interface SubscriptionStatus {
   isPremium: boolean;
@@ -30,6 +31,7 @@ export interface CreateCheckoutInput {
  * Get user's premium subscription status
  */
 export function useSubscriptionStatus() {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   return useQuery<{ mySubscriptionStatus: SubscriptionStatus }>({
     queryKey: ["subscription-status"],
     queryFn: async () => {
@@ -37,6 +39,7 @@ export function useSubscriptionStatus() {
         MY_SUBSCRIPTION_STATUS_QUERY
       );
     },
+    enabled: isAuthenticated,
   });
 }
 

@@ -371,7 +371,7 @@ export default function RedeemDetail({
         </div>
       </div>
 
-      <div className="p-6 border-b border-border">
+      <div className="p-6 ">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm text-muted-foreground mb-1">
@@ -382,6 +382,57 @@ export default function RedeemDetail({
             </p>
           </div>
           <Tag className="w-8 h-8 text-primary" />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 px-6 pb-6 border-b border-border">
+        <div className="col-span-2 md:col-span-1">
+          <label className="block text-sm font-semibold text-foreground mb-2">
+            PIN de la tienda
+          </label>
+          <div className="relative col-span-2 md:col-span-1">
+            <input
+              ref={storePinRef}
+              type={showPin ? "text" : "password"}
+              inputMode="numeric"
+              pattern="[0-9]*"
+              value={storePin}
+              onChange={(e) => setStorePin(e.target.value)}
+              placeholder="Enter your PIN"
+              disabled={!canRedeem}
+              className="w-full text-sm px-4 py-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary font-mono md:text-lg tracking-widest text-center disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-muted"
+              maxLength={6}
+              required
+            />
+            <button
+              type="button"
+              aria-label={showPin ? "Hide PIN" : "Show PIN"}
+              onClick={() => setShowPin((s) => !s)}
+              disabled={!canRedeem}
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {showPin ? <EyeClosed /> : <Eye />}
+            </button>
+          </div>
+        </div>
+
+        <div className="flex items-end col-span-2 md:col-span-1">
+          <button
+            onClick={() => void handleRedeem()}
+            disabled={!canRedeem || redeeming}
+            className="w-full py-3 px-4 bg-gradient-primary text-primary-foreground rounded-xl font-semibold hover:shadow-glow transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
+            title={
+              !canRedeem
+                ? blockReason || "No se puede canjear este cupón"
+                : "Canjear cupón"
+            }
+          >
+            {redeeming ? (
+              <span className="h-5 w-5 block border-2 border-dashed border-white rounded-full animate-spin" />
+            ) : (
+              "Canjear"
+            )}
+          </button>
         </div>
       </div>
 
@@ -554,57 +605,6 @@ export default function RedeemDetail({
             </div>
           </div>
         ) : null}
-
-        <div className="grid grid-cols-2 gap-3">
-          <div className="col-span-2 md:col-span-1">
-            <label className="block text-sm font-semibold text-foreground mb-2">
-              PIN de la tienda
-            </label>
-            <div className="relative col-span-2 md:col-span-1">
-              <input
-                ref={storePinRef}
-                type={showPin ? "text" : "password"}
-                inputMode="numeric"
-                pattern="[0-9]*"
-                value={storePin}
-                onChange={(e) => setStorePin(e.target.value)}
-                placeholder="Enter your PIN"
-                disabled={!canRedeem}
-                className="w-full text-sm px-4 py-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary font-mono md:text-lg tracking-widest text-center disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-muted"
-                maxLength={6}
-                required
-              />
-              <button
-                type="button"
-                aria-label={showPin ? "Hide PIN" : "Show PIN"}
-                onClick={() => setShowPin((s) => !s)}
-                disabled={!canRedeem}
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {showPin ? <EyeClosed /> : <Eye />}
-              </button>
-            </div>
-          </div>
-
-          <div className="flex items-end col-span-2 md:col-span-1">
-            <button
-              onClick={() => void handleRedeem()}
-              disabled={!canRedeem || redeeming}
-              className="w-full py-3 px-4 bg-gradient-primary text-primary-foreground rounded-xl font-semibold hover:shadow-glow transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
-              title={
-                !canRedeem
-                  ? blockReason || "No se puede canjear este cupón"
-                  : "Canjear cupón"
-              }
-            >
-              {redeeming ? (
-                <span className="h-5 w-5 block border-2 border-dashed border-white rounded-full animate-spin" />
-              ) : (
-                "Canjear"
-              )}
-            </button>
-          </div>
-        </div>
 
         {/* Help Text */}
         {canRedeem ? (

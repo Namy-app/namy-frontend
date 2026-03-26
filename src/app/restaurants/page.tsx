@@ -84,28 +84,33 @@ export default function RestaurantListingPage(): React.JSX.Element {
     "all" | "available"
   >("all");
 
+  const storeFilters = {
+    ...filters,
+    type: StoreType.RESTAURANT,
+    categoryIds:
+      selectedCategoryIds.length > 0 ? selectedCategoryIds : undefined,
+    lat:
+      sortBy === "DISTANCE" && userLocation ? userLocation.latitude : undefined,
+    lng:
+      sortBy === "DISTANCE" && userLocation
+        ? userLocation.longitude
+        : undefined,
+  };
+
   // Backend handles all sorting (newest and distance)
   const { data: storesResult, isLoading } = useStores(
-    {
-      ...filters,
-      type: StoreType.RESTAURANT,
-      categoryIds:
-        selectedCategoryIds.length > 0 ? selectedCategoryIds : undefined,
-      lat:
-        sortBy === "DISTANCE" && userLocation
-          ? userLocation.latitude
-          : undefined,
-      lng:
-        sortBy === "DISTANCE" && userLocation
-          ? userLocation.longitude
-          : undefined,
-    },
-    {
-      page: currentPage,
-      first: ITEMS_PER_PAGE,
-    },
+    storeFilters,
+    { page: currentPage, first: ITEMS_PER_PAGE },
     true
   );
+
+  // For map view fetch all stores (no pagination) so bounds filtering works
+  const { data: allStoresResult } = useStores(
+    storeFilters,
+    { page: 1, first: 500 },
+    viewMode === "map"
+  );
+
   const paginationInfo = storesResult?.paginationInfo;
 
   const { data: myLevel } = useMyLevel();
@@ -497,8 +502,9 @@ export default function RestaurantListingPage(): React.JSX.Element {
             /* Map View */
             <div className="px-6 max-w-5xl mx-auto">
               <StoreMap
-                stores={displayedStores}
+                stores={allStoresResult?.data ?? displayedStores}
                 height="h-[500px]"
+                discountPercentage={discountPercentage}
                 center={
                   userLocation
                     ? {

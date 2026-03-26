@@ -44,6 +44,7 @@ export type Coupon = {
     address?: string;
     city?: string;
     restrictions?: string | null;
+    imageUrl?: string | null;
   } | null;
   discount?: {
     id?: string;

@@ -1,11 +1,13 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { Ticket, Share2, CheckCircle, Clock, Info } from "lucide-react";
+import { Ticket, X, CalendarRange, CheckCircle, Clock } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 
+import { DAYS_OF_WEEK_BY_INDEX } from "@/data/constants";
+import type { AvailableDay } from "@/domains/admin";
 import type { Coupon } from "@/domains/coupon/type";
 import CouponCard from "@/domains/coupons/CouponCard";
 import { RestrictionModal } from "@/domains/coupons/RestrictionModal";
@@ -15,6 +17,106 @@ import { graphqlRequest, setAuthToken } from "@/lib/graphql-client";
 import { COUPONS_QUERY } from "@/lib/graphql-queries";
 import StatusCard from "@/shared/components/StatusCard/StatusCard";
 import { useAuthStore } from "@/store/useAuthStore";
+
+// ── QR modal sub-components ───────────────────────────────────────────────────
+
+function pad(n: number): string {
+  return String(n).padStart(2, "0");
+}
+
+function QrCountdown({ expiresAt }: { expiresAt: string }) {
+  const calc = useCallback(() => {
+    const diff = new Date(expiresAt).getTime() - Date.now();
+    if (diff <= 0) {
+      return null;
+    }
+    return {
+      h: Math.floor(diff / 3_600_000),
+      m: Math.floor((diff % 3_600_000) / 60_000),
+      s: Math.floor((diff % 60_000) / 1000),
+    };
+  }, [expiresAt]);
+
+  const [t, setT] = useState(calc);
+
+  useEffect(() => {
+    const id = setInterval(() => setT(calc()), 1000);
+    return () => clearInterval(id);
+  }, [calc]);
+
+  if (!t) {
+    return <p className="text-2xl font-black text-gray-400">Expirado</p>;
+  }
+  return (
+    <p className="text-2xl font-black text-[#F1A151]">
+      {pad(t.h)}:{pad(t.m)}:{pad(t.s)}
+    </p>
+  );
+}
+
+function QrRestrictions({
+  coupon,
+  decodedData,
+}: {
+  coupon: Coupon;
+  decodedData: DecodedCouponData | null;
+}) {
+  const additionalRestrictions = coupon.discount?.additionalRestrictions ?? [];
+  const storeRestrictions = coupon.store?.restrictions;
+  const discountRestrictions =
+    coupon.discount?.restrictions ?? decodedData?.discount?.restrictions;
+  const availableDaysAndTimes = coupon.discount?.availableDaysAndTimes;
+
+  const textRestrictions: string[] = [
+    ...(storeRestrictions ? [storeRestrictions] : []),
+    ...(discountRestrictions ? [discountRestrictions] : []),
+    ...additionalRestrictions,
+  ];
+
+  const hasDays =
+    availableDaysAndTimes && availableDaysAndTimes.availableDays.length > 0;
+
+  if (textRestrictions.length === 0 && !hasDays) {
+    return null;
+  }
+
+  return (
+    <div>
+      <h3 className="text-2xl font-black text-gray-900 mb-4">Restricciones</h3>
+      <div className="space-y-3">
+        {textRestrictions.map((r, i) => (
+          <div key={i} className="flex items-start gap-3">
+            <X className="w-5 h-5 text-gray-500 shrink-0 mt-0.5" />
+            <span className="text-base text-gray-700">{r}</span>
+          </div>
+        ))}
+
+        {hasDays ? (
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <CalendarRange className="w-5 h-5 text-green-600 shrink-0" />
+              <span className="text-base text-gray-700 font-semibold">
+                Horarios disponibles
+              </span>
+            </div>
+            <div className="pl-8 space-y-1">
+              {availableDaysAndTimes!.availableDays.map(
+                (d: AvailableDay, i: number) => (
+                  <p key={i} className="text-base text-gray-700">
+                    {DAYS_OF_WEEK_BY_INDEX[d.dayIndex]}:{" "}
+                    {d.timeRanges
+                      .map((r) => `${r.start} - ${r.end}`)
+                      .join(", ")}
+                  </p>
+                )
+              )}
+            </div>
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+}
 
 type CouponStatus = "active" | "redeemed" | "expired";
 
@@ -400,82 +502,77 @@ export default function MyCouponsPage(): React.JSX.Element {
         )}
 
         {selectedCoupon ? (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            {/* Backdrop - clicking closes modal */}
-            <div
-              className="absolute inset-0 bg-black/40"
-              onClick={() => setSelectedCoupon(null)}
-            />
+          <div className="fixed inset-0 z-50 bg-gray-50 overflow-y-auto animate-slide-up">
+            {/* Fixed close button */}
+            <button
+              onClick={() => {
+                setSelectedCoupon(null);
+                setDecodedData(null);
+              }}
+              className="fixed top-4 right-4 z-10 w-9 h-9 flex items-center justify-center rounded-full bg-white shadow-md text-gray-500 hover:text-gray-800"
+              aria-label="Cerrar"
+            >
+              <X className="w-4 h-4" />
+            </button>
 
-            <div className="relative z-10 bg-white rounded-2xl shadow-card p-8 w-full max-w-md animate-slide-up">
-              <div className="flex flex-col items-center gap-6">
-                <h2 className="text-2xl font-bold text-foreground">
-                  Tu Código QR
+            {/* Centred content */}
+            <div className="w-full max-w-md mx-auto px-4 pt-6 pb-16">
+              {/* White QR card */}
+              <div className="bg-white rounded-3xl shadow-sm p-6 mb-4">
+                <p className="text-xs text-gray-400 mb-0.5">Negocio</p>
+                <h2 className="text-2xl font-black text-[#F1A151] mb-5">
+                  {selectedCoupon.store?.name ?? "Tienda"}
                 </h2>
 
                 {/* QR Code */}
-                <div className="bg-white p-4 rounded-2xl shadow-glow qr-glow">
+                <div className="flex justify-center mb-6">
                   <Image
                     src={selectedCoupon.qrCode}
                     alt="Coupon QR Code"
-                    width={256}
-                    height={256}
-                    className="w-64 h-64 object-contain"
+                    width={260}
+                    height={260}
+                    className="object-contain"
                   />
                 </div>
 
-                {/* Coupon Code */}
-                <div className="text-center">
-                  <p className="text-sm text-muted-foreground mb-1">
-                    Código del cupón
-                  </p>
-                  <p className="text-3xl font-bold font-mono tracking-wider text-foreground">
-                    {selectedCoupon.code}
-                  </p>
-                </div>
-
-                {/* Help Text */}
-                <p className="text-sm text-muted-foreground text-center">
-                  Muestra este código QR en la tienda para canjear tu descuento
-                </p>
-
-                {/* Restrictions Display */}
-                {decodedData?.discount?.restrictions ? (
-                  <div className="w-full bg-amber-50 border border-amber-200 rounded-xl p-4">
-                    <div className="flex items-start gap-2">
-                      <Info className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-                      <div>
-                        <p className="text-sm font-semibold text-amber-900 mb-1">
-                          Restricciones
-                        </p>
-                        <p className="text-sm text-amber-700">
-                          {decodedData.discount.restrictions}
-                        </p>
-                      </div>
-                    </div>
+                {/* Timer + Discount */}
+                <div className="flex justify-between">
+                  <div>
+                    <p className="text-xs text-gray-400 mb-0.5">
+                      Tiempo restante
+                    </p>
+                    <QrCountdown expiresAt={selectedCoupon.expiresAt} />
                   </div>
-                ) : null}
-
-                {/* Actions */}
-                <div className="flex gap-3 w-full">
-                  <button
-                    onClick={() => void handleShare(selectedCoupon!)}
-                    className="flex-1 py-3 px-4 bg-secondary text-secondary-foreground rounded-xl font-semibold hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
-                  >
-                    <Share2 className="w-5 h-5" />
-                    Compartir
-                  </button>
-                  <button
-                    onClick={() => {
-                      setSelectedCoupon(null);
-                      setDecodedData(null);
-                    }}
-                    className="flex-1 py-3 px-4 bg-primary text-primary-foreground rounded-xl font-semibold hover:opacity-90 transition-opacity"
-                  >
-                    Cerrar
-                  </button>
+                  <div>
+                    <p className="text-xs text-gray-400 mb-0.5">Descuento</p>
+                    <p className="text-2xl font-black text-[#F1A151]">
+                      {selectedCoupon.value ??
+                        selectedCoupon.discount?.value ??
+                        0}
+                      % OFF
+                    </p>
+                  </div>
                 </div>
               </div>
+
+              {/* Help link */}
+              <button
+                onClick={() => {
+                  if (typeof window !== "undefined" && window.$crisp) {
+                    window.$crisp.push(["do", "chat:show"]);
+                    window.$crisp.push(["do", "chat:open"]);
+                  }
+                }}
+                className="w-full text-center text-sm font-semibold text-[#F1A151] mb-5 hover:underline"
+              >
+                ¿Problemas con tu descuento?
+              </button>
+
+              {/* Restrictions */}
+              <QrRestrictions
+                coupon={selectedCoupon}
+                decodedData={decodedData}
+              />
             </div>
           </div>
         ) : null}

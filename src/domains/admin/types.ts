@@ -313,7 +313,7 @@ export interface DiscountFiltersInput {
 
 export interface Coupon {
   id: string;
-  userId: string;
+  userId?: string;
   discountId: string;
   storeId: string;
   code: string;
@@ -331,9 +331,11 @@ export interface CouponsResponse {
 
 export interface CouponFiltersInput {
   storeId?: string;
+  storeIds?: string[];
   userId?: string;
   discountId?: string;
   used?: boolean;
+  includeExpired?: boolean;
 }
 
 // ==================== Catalog Types ====================

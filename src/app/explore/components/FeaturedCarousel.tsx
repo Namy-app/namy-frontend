@@ -2,11 +2,14 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
+
 
 import { InfoCard } from "@/components/InfoCard";
 import { PlaceHolderTypeEnum } from "@/data/constants";
 import { type Store } from "@/lib/api-types";
+import { navigateTo } from "@/lib/capacitor-navigate";
 import { cn } from "@/lib/utils";
 import { Button } from "@/shared/components/Button";
 import { Card } from "@/shared/components/Card";
@@ -20,6 +23,7 @@ export function FeaturedCarousel({
   isLoading?: boolean;
   stores?: Store[];
 }): React.JSX.Element {
+  const router = useRouter();
   const allStores = stores ?? [];
   const [currentSlide, setCurrentSlide] = useState(0);
 
@@ -39,10 +43,10 @@ export function FeaturedCarousel({
   if (isLoading) {
     return (
       <div className="mb-8 px-6">
-        <h2 className="text-xl font-bold mb-4 text-foreground">
-          🌟 Destacados
-        </h2>
-        <div className="h-64 bg-gray-300 rounded-lg animate-pulse" />
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold text-foreground">Destacados 🔥</h2>
+        </div>
+        <div className="h-64 bg-gray-300 rounded-3xl animate-pulse" />
       </div>
     );
   }
@@ -50,25 +54,32 @@ export function FeaturedCarousel({
   return (
     <div className="mb-8">
       <div className="px-6">
-        <h2 className="text-xl font-bold mb-4 text-foreground">
-          🌟 Destacados
-        </h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold text-foreground">Destacados 🔥</h2>
+          <Link
+            href="/restaurants"
+            className="text-sm font-semibold text-[#F1A151] hover:underline"
+          >
+            Ver todos
+          </Link>
+        </div>
         {featuredItems.length > 0 ? (
           <div className="relative">
             <div className="overflow-hidden">
               <div
-                className="flex gap-x-6 transition-transform duration-300 ease-in-out"
+                className="flex gap-x-4 transition-transform duration-300 ease-in-out"
                 style={{
-                  transform: `translateX(-${currentSlide * (100 / itemsPerPage)}%)`,
+                  transform: `translateX(-${currentSlide * 74}%)`,
                 }}
               >
                 {featuredItems.map((item) => (
-                  <Link
+                  <div
                     key={item.id}
-                    href={`/stores/${item.id}`}
-                    className="shrink-0 w-1/2 group"
+                    className="shrink-0 w-[70%] sm:w-[48%] group cursor-pointer"
+                    onClick={() => navigateTo(`/stores/${item.id}`, router)}
                   >
-                    <Card className="relative h-48 overflow-hidden cursor-pointer group border-0 shadow-lg rounded-3xl">
+                    {/* Image card */}
+                    <Card className="relative h-48 overflow-hidden cursor-pointer border-0 shadow-lg rounded-3xl">
                       {item.imageUrl ? (
                         <Image
                           src={item.imageUrl}
@@ -88,15 +99,52 @@ export function FeaturedCarousel({
                           className="object-cover group-hover:scale-110 transition-transform duration-300"
                         />
                       )}
-                      <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/40 to-transparent" />
-                      <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
-                        <h3 className="font-bold text-lg mb-1">{item.name}</h3>
-                        <p className="text-sm text-white/90">
-                          {discountPercentage}% de descuento hoy
-                        </p>
+                      {/* Discount badge — bottom left */}
+                      <div className="absolute bottom-3 left-3 bg-[#F1A151] text-white text-xs font-bold px-2.5 py-1 rounded-full">
+                        {discountPercentage}%
                       </div>
+                      {/* Rating pill — bottom right */}
+                      {item.averageRating != null && (
+                        <div className="absolute bottom-3 right-3 flex items-center gap-1 bg-white text-[#423A33] text-xs font-semibold px-2.5 py-1 rounded-full shadow">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="12"
+                            height="12"
+                            viewBox="0 0 24 24"
+                            fill="#F1A151"
+                            stroke="#F1A151"
+                            strokeWidth="1"
+                          >
+                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                          </svg>
+                          {item.averageRating.toFixed(1)}
+                        </div>
+                      )}
                     </Card>
-                  </Link>
+                    {/* Info below card */}
+                    <div className="mt-2 px-1">
+                      <h3 className="font-bold text-sm text-[#423A33] truncate">
+                        {item.name}
+                      </h3>
+                      {item.distance != null && (
+                        <p className="flex items-center gap-1 text-xs text-gray-500 mt-0.5">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="12"
+                            height="12"
+                            viewBox="0 0 24 24"
+                            fill="#ef4444"
+                            stroke="none"
+                          >
+                            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
+                          </svg>
+                          {item.distance < 1
+                            ? `${Math.round(item.distance * 1000)} m`
+                            : `${item.distance.toFixed(1)} km`}
+                        </p>
+                      )}
+                    </div>
+                  </div>
                 ))}
               </div>
             </div>
@@ -108,7 +156,7 @@ export function FeaturedCarousel({
               onClick={prevSlide}
               disabled={currentSlide === 0}
               className={cn(
-                "absolute h-10 w-10 rounded-full top-1/2 -translate-y-1/2 left-2 bg-white shadow-lg hover:bg-white hover:scale-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed border-2 border-border z-10",
+                "absolute h-10 w-10 rounded-full top-24 -translate-y-1/2 left-2 bg-white shadow-lg hover:bg-white hover:scale-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed border-2 border-border z-10",
                 {
                   hidden: currentSlide === 0 || featuredItems.length === 0,
                 }
@@ -137,7 +185,7 @@ export function FeaturedCarousel({
               onClick={nextSlide}
               disabled={currentSlide === maxSlide}
               className={cn(
-                "absolute h-10 w-10 rounded-full top-1/2 -translate-y-1/2 right-2 bg-white shadow-lg hover:bg-white hover:scale-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed border-2 border-border z-10",
+                "absolute h-10 w-10 rounded-full top-24 -translate-y-1/2 right-2 bg-white shadow-lg hover:bg-white hover:scale-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed border-2 border-border z-10",
                 {
                   hidden:
                     currentSlide === maxSlide || featuredItems.length === 0,

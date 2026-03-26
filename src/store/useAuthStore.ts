@@ -59,6 +59,7 @@ export const useAuthStore = create<AuthState>()(
           "/",
           "/explore",
           "/restaurants",
+          "/stores",
           "/service",
           "/auth",
         ];
@@ -70,6 +71,12 @@ export const useAuthStore = create<AuthState>()(
             (page) => currentPath === page || currentPath.startsWith(page + "/")
           );
 
+          console.warn(
+            "[clearAuth] currentPath:",
+            currentPath,
+            "isGuestPage:",
+            isGuestPage
+          );
           if (!isGuestPage) {
             window.location.href = "/";
           }

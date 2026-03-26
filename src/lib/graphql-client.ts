@@ -95,12 +95,21 @@ function isAuthenticationError(graphqlError: GraphQLError | null): boolean {
   return false;
 }
 
+const isNgrok = env.NEXT_PUBLIC_API_URL.includes("ngrok");
+
 // Helper function to make GraphQL requests with error handling
 export async function graphqlRequest<T>(
   query: string,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   variables?: any
 ): Promise<T> {
+  const isCapacitor =
+    typeof window !== "undefined" &&
+    !!(window as Window & { Capacitor?: unknown }).Capacitor;
+
+  if (isNgrok && isCapacitor) {
+    graphqlClient.setHeader("ngrok-skip-browser-warning", "true");
+  }
   try {
     const result = await graphqlClient.request<T>(query, variables);
     return result;
@@ -111,7 +120,20 @@ export async function graphqlRequest<T>(
     // Check if this is an authentication error
     if (isAuthenticationError(parsedError)) {
       // Guest-accessible pages - don't trigger logout
-      const guestPages = ["/", "/explore", "/restaurants", "/service", "/auth"];
+      const guestPages = [
+        "/",
+        "/explore",
+        "/restaurants",
+        "/stores",
+        "/service",
+        "/auth",
+      ];
+      console.warn(
+        "[graphql-client] Auth error detected. window.location.href:",
+        typeof window !== "undefined" ? window.location.href : "SSR",
+        "pathname:",
+        typeof window !== "undefined" ? window.location.pathname : "SSR"
+      );
 
       const isGuestPage =
         typeof window !== "undefined" &&
@@ -123,8 +145,18 @@ export async function graphqlRequest<T>(
 
       // Call the registered callback to clear auth state only if not on guest-accessible pages
       if (authErrorCallback && !isGuestPage) {
-        console.error("Authentication error detected - triggering logout");
+        console.error(
+          "[graphql-client] Auth error on non-guest page — triggering logout. Path:",
+          typeof window !== "undefined" ? window.location.pathname : "unknown"
+        );
         authErrorCallback();
+      } else {
+        console.warn(
+          "[graphql-client] Auth error suppressed. isGuestPage:",
+          isGuestPage,
+          "path:",
+          typeof window !== "undefined" ? window.location.pathname : "unknown"
+        );
       }
 
       const errorMsg =
