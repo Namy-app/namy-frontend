@@ -44,3 +44,32 @@ package-lock.json
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Android (Gradle / Capacitor)
+android/.gradle/
+android/**/build/
+android/**/.cxx/
+android/captures/
+android/*.iml
+android/.idea/
+# SDK path and local signing secrets (never commit)
+android/**/local.properties
+
+# iOS (Xcode / Capacitor)
+ios.backup*/
+ios/**/build/
+ios/**/DerivedData/
+ios/**/xcuserdata/
+ios/**/*.xcuserstate
+ios/**/*.xcuserdatad/
+ios/Pods/
+ios/**/*.hmap
+ios/**/.swiftpm/
+
+# Native signing & distributable artifacts (repo root or platform dirs)
+*.apk
+*.aab
+*.ipa
+*.dSYM.zip
+*.jks
+*.keystore

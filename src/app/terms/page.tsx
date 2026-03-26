@@ -7,147 +7,191 @@ export default function TermsPage(): React.JSX.Element {
   return (
     <div className="min-h-screen bg-gradient-hero p-6">
       <div className="max-w-4xl mx-auto space-y-6">
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center">
           <h1 className="text-3xl font-bold text-foreground">
-            Terms & Conditions
+            Términos y Condiciones
           </h1>
-          <Link href="/auth">
-            <Button variant="outline">Back to Sign Up</Button>
-          </Link>
+          <div className="flex flex-wrap gap-2">
+            <Link href="/privacy">
+              <Button variant="outline">Política de privacidad</Button>
+            </Link>
+            <Link href="/auth">
+              <Button variant="outline">Volver al registro</Button>
+            </Link>
+          </div>
         </div>
 
         <Card className="p-8 shadow-glow">
           <div className="prose prose-sm max-w-none space-y-6 text-foreground">
             <p className="text-muted-foreground italic">
-              Last updated: {new Date().toLocaleDateString()}
+              Fecha de vigencia: 26/3/2026
+            </p>
+
+            <p className="text-muted-foreground">
+              Bienvenido a Ñamy. Al utilizar esta aplicación, aceptas los
+              presentes Términos y Condiciones.
             </p>
 
             <section>
-              <h2 className="text-xl font-bold mb-3">1. Acceptance of Terms</h2>
+              <h2 className="text-xl font-bold mb-3">
+                1. Uso de la aplicación
+              </h2>
+              <p className="text-muted-foreground mb-2">
+                Ñamy es una plataforma digital que permite descubrir negocios
+                locales participantes y acceder a beneficios, promociones y
+                experiencias disponibles dentro de la aplicación.
+              </p>
               <p className="text-muted-foreground">
-                By accessing and using Ñamy (&quot;the Service&quot;), you
-                accept and agree to be bound by the terms and provision of this
-                agreement. If you do not agree to these terms, please do not use
-                the Service.
+                El uso de la aplicación está permitido únicamente para fines
+                personales y no comerciales.
               </p>
             </section>
 
             <section>
-              <h2 className="text-xl font-bold mb-3">2. Use of Service</h2>
+              <h2 className="text-xl font-bold mb-3">
+                2. Beneficios y promociones
+              </h2>
               <p className="text-muted-foreground mb-2">
-                Ñamy provides a platform for discovering restaurant discounts
-                and special offers. By using our Service, you agree to:
+                Los beneficios, promociones y descuentos mostrados en Ñamy son
+                ofrecidos por negocios participantes y están sujetos a
+                disponibilidad, horarios, condiciones particulares y cambios sin
+                previo aviso.
               </p>
+              <p className="text-muted-foreground mb-2">
+                Cada negocio puede establecer condiciones específicas para
+                aplicar sus beneficios.
+              </p>
+              <p className="text-muted-foreground">
+                Ñamy no garantiza disponibilidad permanente de promociones ni
+                responsabilidad sobre cambios realizados por negocios aliados.
+              </p>
+            </section>
+
+            <section>
+              <h2 className="text-xl font-bold mb-3">
+                3. Responsabilidad del usuario
+              </h2>
+              <p className="text-muted-foreground mb-2">
+                El usuario se compromete a utilizar la aplicación de forma
+                adecuada, respetuosa y conforme a la ley.
+              </p>
+              <p className="text-muted-foreground mb-2">Queda prohibido:</p>
               <ul className="list-disc list-inside space-y-1 text-muted-foreground ml-4">
-                <li>Provide accurate and complete information</li>
-                <li>Maintain the security of your account</li>
-                <li>Not use the Service for illegal purposes</li>
-                <li>Not attempt to interfere with the Service</li>
-                <li>Respect the intellectual property of Ñamy and others</li>
+                <li>proporcionar información falsa</li>
+                <li>intentar manipular promociones</li>
+                <li>duplicar beneficios de forma indebida</li>
+                <li>afectar el funcionamiento de la plataforma</li>
+                <li>
+                  utilizar múltiples cuentas para obtener ventajas indebidas
+                </li>
               </ul>
             </section>
 
             <section>
-              <h2 className="text-xl font-bold mb-3">3. User Accounts</h2>
+              <h2 className="text-xl font-bold mb-3">
+                4. Contenido generado por usuarios
+              </h2>
+              <p className="text-muted-foreground mb-2">
+                Si el usuario publica imágenes, comentarios o contenido dentro
+                de espacios interactivos de la aplicación:
+              </p>
+              <ul className="list-disc list-inside space-y-1 text-muted-foreground ml-4 mb-2">
+                <li>garantiza que posee derechos sobre dicho contenido</li>
+                <li>
+                  acepta no publicar contenido ofensivo, ilegal o inapropiado
+                </li>
+                <li>
+                  autoriza a Ñamy a moderar, ocultar o eliminar contenido cuando
+                  sea necesario
+                </li>
+              </ul>
               <p className="text-muted-foreground">
-                You are responsible for maintaining the confidentiality of your
-                account credentials and for all activities that occur under your
-                account. You agree to immediately notify us of any unauthorized
-                use of your account.
+                Ñamy podrá suspender cuentas por uso indebido.
               </p>
             </section>
 
             <section>
-              <h2 className="text-xl font-bold mb-3">4. Discounts & Offers</h2>
+              <h2 className="text-xl font-bold mb-3">
+                5. Rankings, dinámicas y premios
+              </h2>
               <p className="text-muted-foreground mb-2">
-                Discounts and offers displayed on Ñamy are:
+                Las dinámicas, rankings y premios promocionales pueden variar
+                según campañas activas.
+              </p>
+              <p className="text-muted-foreground mb-2">
+                Los premios ofrecidos por negocios participantes están sujetos a
+                disponibilidad y condiciones específicas.
+              </p>
+              <p className="text-muted-foreground">
+                Ñamy se reserva el derecho de modificar reglas o cancelar
+                dinámicas cuando sea necesario.
+              </p>
+            </section>
+
+            <section>
+              <h2 className="text-xl font-bold mb-3">
+                6. Suspensión o cancelación de cuentas
+              </h2>
+              <p className="text-muted-foreground mb-2">
+                Ñamy podrá limitar o suspender cuentas en caso de:
               </p>
               <ul className="list-disc list-inside space-y-1 text-muted-foreground ml-4">
-                <li>Subject to availability and merchant terms</li>
-                <li>May expire or change without notice</li>
-                <li>Not guaranteed to be current or accurate</li>
-                <li>Provided by third-party merchants</li>
+                <li>uso fraudulento</li>
+                <li>abuso de promociones</li>
+                <li>incumplimiento de estos términos</li>
               </ul>
-              <p className="text-muted-foreground mt-2">
-                Ñamy is not responsible for merchant actions or the quality of
-                goods and services provided.
-              </p>
             </section>
 
             <section>
-              <h2 className="text-xl font-bold mb-3">5. Privacy</h2>
+              <h2 className="text-xl font-bold mb-3">
+                7. Limitación de responsabilidad
+              </h2>
+              <p className="text-muted-foreground mb-2">
+                Ñamy actúa como plataforma intermediaria entre usuarios y
+                negocios participantes.
+              </p>
               <p className="text-muted-foreground">
-                Your use of the Service is also governed by our Privacy Policy.
-                We collect and process personal information as described in our
-                Privacy Policy. By using Ñamy, you consent to such collection
-                and processing.
+                La calidad de productos, servicios o experiencias ofrecidas
+                corresponde directamente a cada negocio.
               </p>
             </section>
 
             <section>
               <h2 className="text-xl font-bold mb-3">
-                6. Intellectual Property
+                8. Cambios en la plataforma
               </h2>
               <p className="text-muted-foreground">
-                All content on Ñamy, including but not limited to text,
-                graphics, logos, images, and software, is the property of Ñamy
-                or its licensors and is protected by copyright and other
-                intellectual property laws.
+                Ñamy podrá actualizar funciones, promociones, beneficios o
+                condiciones de uso en cualquier momento.
               </p>
             </section>
 
             <section>
-              <h2 className="text-xl font-bold mb-3">
-                7. Limitation of Liability
-              </h2>
+              <h2 className="text-xl font-bold mb-3">9. Protección de datos</h2>
               <p className="text-muted-foreground">
-                Ñamy provides the Service &quot;as is&quot; without any
-                warranties. We are not liable for any direct, indirect,
-                incidental, or consequential damages arising from your use of
-                the Service.
+                El tratamiento de datos personales se realiza conforme al{" "}
+                <Link href="/privacy" className="text-primary hover:underline">
+                  Aviso de Privacidad
+                </Link>{" "}
+                correspondiente.
               </p>
             </section>
 
             <section>
-              <h2 className="text-xl font-bold mb-3">8. Termination</h2>
+              <h2 className="text-xl font-bold mb-3">10. Aceptación</h2>
               <p className="text-muted-foreground">
-                We reserve the right to suspend or terminate your account at any
-                time for violations of these terms or for any other reason. You
-                may also terminate your account at any time by contacting us.
-              </p>
-            </section>
-
-            <section>
-              <h2 className="text-xl font-bold mb-3">9. Changes to Terms</h2>
-              <p className="text-muted-foreground">
-                We may modify these terms at any time. Your continued use of the
-                Service after changes are posted constitutes acceptance of the
-                modified terms.
-              </p>
-            </section>
-
-            <section>
-              <h2 className="text-xl font-bold mb-3">
-                10. Contact Information
-              </h2>
-              <p className="text-muted-foreground">
-                If you have questions about these terms, please contact us at:
-              </p>
-              <p className="text-muted-foreground mt-2">
-                Email:{" "}
-                <a
-                  href="mailto:support@namy.com"
-                  className="text-primary hover:underline"
-                >
-                  support@namy.com
-                </a>
+                El uso continuo de Ñamy implica aceptación de estos términos.
               </p>
             </section>
 
             <div className="mt-8 pt-6 border-t border-border">
               <p className="text-xs text-muted-foreground text-center">
-                By creating an account, you acknowledge that you have read,
-                understood, and agree to be bound by these Terms & Conditions.
+                Al crear una cuenta, reconoces haber leído y aceptado estos
+                Términos y Condiciones y nuestra{" "}
+                <Link href="/privacy" className="text-primary hover:underline">
+                  Política de privacidad
+                </Link>
+                .
               </p>
             </div>
           </div>

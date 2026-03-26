@@ -4,6 +4,26 @@ import nextTs from "eslint-config-next/typescript";
 import prettier from "eslint-config-prettier";
 
 export default defineConfig([
+  // First: ignore deps and native/build output so the IDE does not lint 10k+ files
+  globalIgnores([
+    "**/node_modules/**",
+    ".next/**",
+    "out/**",
+    "build/**",
+    "dist/**",
+    "android/**",
+    "ios/**",
+    // Capacitor iOS backup folders contain copied web bundles — do not lint
+    "ios.backup*/**",
+    "**/ios.backup*/**",
+    "coverage/**",
+    ".vercel/**",
+    "*.tsbuildinfo",
+    "next-env.d.ts",
+    // Root tooling scripts (CommonJS) — `yarn lint` targets `src` only
+    "scripts/**",
+    ".lintstagedrc.mjs",
+  ]),
   ...nextVitals,
   ...nextTs,
   prettier,
@@ -90,6 +110,4 @@ export default defineConfig([
       "jsx-a11y/role-supports-aria-props": "error",
     },
   },
-  // global ignores (same as yours)
-  globalIgnores([".next/**", "out/**", "build/**", "next-env.d.ts"]),
 ]);
