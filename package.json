@@ -19,6 +19,10 @@
     "prepare": "husky",
     "mobile:postbuild": "cp out/index.html out/404.html && node scripts/copy-dynamic-routes.cjs",
     "mobile:build": "MOBILE_BUILD=true next build && yarn mobile:postbuild && npx cap sync",
+    "mobile:build:android": "MOBILE_BUILD=true next build && yarn mobile:postbuild && npx cap sync android",
+    "mobile:build:ios": "MOBILE_BUILD=true next build && yarn mobile:postbuild && npx cap sync ios",
+    "mobile:ios:release": "yarn mobile:build:ios && (xattr -cr ios 2>/dev/null; true) && npx cap open ios",
+    "mobile:android:release": "cd android && ./gradlew assembleRelease",
     "mobile:android": "MOBILE_BUILD=true next build && yarn mobile:postbuild && npx cap sync && npx cap run android",
     "mobile:ios": "MOBILE_BUILD=true next build && yarn mobile:postbuild && npx cap sync && (xattr -cr ios 2>/dev/null; true) && npx cap run ios"
   },
