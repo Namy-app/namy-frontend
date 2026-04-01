@@ -1,4 +1,5 @@
 /** @type {import('next').NextConfig} */
+import { withSentryConfig } from "@sentry/nextjs";
 
 const isMobileBuild = process.env.MOBILE_BUILD === "true";
 
@@ -105,4 +106,10 @@ const nextConfig = isMobileBuild
       },
     };
 
-export default nextConfig;
+// Sentry is only applied for web builds — static export (mobile) is incompatible
+export default isMobileBuild
+  ? nextConfig
+  : withSentryConfig(nextConfig, {
+      silent: true,
+      disableLogger: true,
+    });
