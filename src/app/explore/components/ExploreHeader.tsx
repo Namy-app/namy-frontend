@@ -56,7 +56,12 @@ export function ExploreHeader({
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 bg-white/85 backdrop-blur-sm shadow-sm z-20">
+    <header
+      className="fixed top-0 left-0 right-0 bg-white/85 backdrop-blur-sm shadow-sm z-20"
+      style={{
+        paddingTop: "var(--status-bar-height, env(safe-area-inset-top, 0px))",
+      }}
+    >
       <div className="flex items-center justify-between h-14 max-w-5xl mx-auto px-4">
         <div className="flex-1">
           <Link
