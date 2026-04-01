@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-
 import { InfoCard } from "@/components/InfoCard";
 import { PlaceHolderTypeEnum } from "@/data/constants";
 import { type Store } from "@/lib/api-types";

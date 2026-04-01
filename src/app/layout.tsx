@@ -4,7 +4,7 @@ import { Poppins } from "next/font/google";
 import "../styles/globals.css";
 import { CapacitorSafeArea } from "@/components/CapacitorSafeArea";
 import { GoogleAdsense } from "@/components/GoogleAdsense";
-import { GoogleMapsProvider } from "@/components/GoogleMapsProvider";
+import { GoogleMapsProviderClient } from "@/components/GoogleMapsProviderClient";
 import { SpaRedirectHandler } from "@/components/SpaRedirectHandler";
 import { ReactQueryProvider } from "@/providers/ReactQueryProvider";
 import { Toaster } from "@/shared/components/Toaster";
@@ -80,7 +80,7 @@ export default function RootLayout({
         <CapacitorSafeArea />
         <SpaRedirectHandler />
         <ReactQueryProvider>
-          <GoogleMapsProvider>{children}</GoogleMapsProvider>
+          <GoogleMapsProviderClient>{children}</GoogleMapsProviderClient>
           <Toaster />
         </ReactQueryProvider>
       </body>

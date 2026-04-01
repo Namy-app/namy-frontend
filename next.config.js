@@ -12,7 +12,11 @@ const nextConfig = isMobileBuild
         optimizePackageImports: ["lucide-react", "@tanstack/react-query"],
       },
       compiler: {
-        removeConsole: process.env.NODE_ENV === "production",
+        // Keep warn/error in prod so Capacitor iOS can log Maps key when NEXT_PUBLIC_DEBUG_GOOGLE_MAPS=true
+        removeConsole:
+          process.env.NODE_ENV === "production"
+            ? { exclude: ["error", "warn"] }
+            : false,
       },
       images: {
         unoptimized: true,
@@ -28,7 +32,10 @@ const nextConfig = isMobileBuild
         optimizePackageImports: ["lucide-react", "@tanstack/react-query"],
       },
       compiler: {
-        removeConsole: process.env.NODE_ENV === "production",
+        removeConsole:
+          process.env.NODE_ENV === "production"
+            ? { exclude: ["error", "warn"] }
+            : false,
       },
       images: {
         remotePatterns: [

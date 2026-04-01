@@ -18,13 +18,17 @@
     "validate": "pnpm lint && pnpm type-check && pnpm format:check",
     "prepare": "husky",
     "mobile:postbuild": "cp out/index.html out/404.html && node scripts/copy-dynamic-routes.cjs",
+    "mobile:icons:sync-ios": "bash scripts/sync-ios-app-icon-from-android.sh",
+    "certs:ios-csr": "bash scripts/generate-app-store-csr.sh",
     "mobile:build": "MOBILE_BUILD=true next build && yarn mobile:postbuild && npx cap sync",
     "mobile:build:android": "MOBILE_BUILD=true next build && yarn mobile:postbuild && npx cap sync android",
     "mobile:build:ios": "MOBILE_BUILD=true next build && yarn mobile:postbuild && npx cap sync ios",
     "mobile:ios:release": "yarn mobile:build:ios && (xattr -cr ios 2>/dev/null; true) && npx cap open ios",
     "mobile:android:release": "cd android && ./gradlew assembleRelease",
     "mobile:android": "MOBILE_BUILD=true next build && yarn mobile:postbuild && npx cap sync && npx cap run android",
-    "mobile:ios": "MOBILE_BUILD=true next build && yarn mobile:postbuild && npx cap sync && (xattr -cr ios 2>/dev/null; true) && npx cap run ios"
+    "mobile:ios": "MOBILE_BUILD=true next build && yarn mobile:postbuild && npx cap sync && (xattr -cr ios 2>/dev/null; true) && npx cap run ios",
+    "mobile:ios:live": "npx cap run ios -l --host localhost --port 3000",
+    "mobile:ios:dev": "npx concurrently -k -n next,ios -c cyan,magenta \"next dev\" \"npx wait-on tcp:127.0.0.1:3000 && npx cap run ios -l --host localhost --port 3000\""
   },
   "dependencies": {
     "@capacitor/android": "^8.2.0",
