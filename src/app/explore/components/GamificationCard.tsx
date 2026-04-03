@@ -1,5 +1,6 @@
 "use client";
 
+import { Emoji } from "@/components/Emoji";
 import { Button } from "@/shared/components/Button";
 import { Card } from "@/shared/components/Card";
 
@@ -50,7 +51,8 @@ export function GamificationCard(): React.JSX.Element {
             </svg>
             <div>
               <p className="text-sm font-semibold text-foreground">
-                Tu nivel actual: Comelón Curioso 🍔
+                Tu nivel actual: Comelón Curioso{" "}
+                <Emoji cp="1f354" label="hamburguesa" />
               </p>
               <p className="text-sm text-muted-foreground">2,500 pts</p>
             </div>

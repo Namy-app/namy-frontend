@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { buildLevel } from "@/app/level/helper";
+import { Emoji } from "@/components/Emoji";
 import { useMyLevel } from "@/domains/user/hooks/query/useMyLevel";
 import { useAuthStore } from "@/store/useAuthStore";
 
@@ -43,7 +44,7 @@ export function UserLevelBanner(): React.JSX.Element | null {
             <span className="font-black text-[#F1A151] text-base">
               {myLevel.totalUsageCount * 100}
             </span>
-            <span className="text-base">🔥</span>
+            <Emoji cp="1f525" label="fuego" className="inline-block w-5 h-5" />
           </div>
 
           {/* Level badge */}
@@ -66,7 +67,12 @@ export function UserLevelBanner(): React.JSX.Element | null {
                 }}
               />
               <div className="absolute inset-0 flex items-center justify-center text-xs font-black text-amber-800 drop-shadow-sm">
-                ⭐ {level.progress.current}/{level.progress.total} usos
+                <Emoji
+                  cp="2b50"
+                  label="estrella"
+                  className="inline-block w-4 h-4 align-text-bottom"
+                />{" "}
+                {level.progress.current}/{level.progress.total} usos
               </div>
             </div>
             <span className="w-6 h-6 rounded-full bg-gray-200 text-gray-400 text-xs font-bold flex items-center justify-center shrink-0">

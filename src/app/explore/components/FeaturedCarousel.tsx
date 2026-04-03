@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { Emoji } from "@/components/Emoji";
 import { InfoCard } from "@/components/InfoCard";
 import { PlaceHolderTypeEnum } from "@/data/constants";
 import { type Store } from "@/lib/api-types";
@@ -43,7 +44,9 @@ export function FeaturedCarousel({
     return (
       <div className="mb-8 px-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold text-foreground">Destacados 🔥</h2>
+          <h2 className="text-xl font-bold text-foreground">
+            Destacados <Emoji cp="1f525" label="fuego" />
+          </h2>
         </div>
         <div className="h-64 bg-gray-300 rounded-3xl animate-pulse" />
       </div>
@@ -54,7 +57,9 @@ export function FeaturedCarousel({
     <div className="mb-8">
       <div className="px-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold text-foreground">Destacados 🔥</h2>
+          <h2 className="text-xl font-bold text-foreground">
+            Destacados <Emoji cp="1f525" label="fuego" />
+          </h2>
           <Link
             href="/restaurants"
             className="text-sm font-semibold text-[#F1A151] hover:underline"

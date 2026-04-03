@@ -11,37 +11,27 @@ export type GoogleMapsKeySource =
 
 let devKeyLogged = false;
 
-/** Mobile/Capacitor builds use NODE_ENV=production, so dev-only logs never ran. Opt in with NEXT_PUBLIC_DEBUG_GOOGLE_MAPS=true at build time. */
-function shouldLogGoogleMapsKey(): boolean {
-  if (typeof window === "undefined") {
-    return false;
-  }
-  if (process.env.NODE_ENV === "development") {
-    return true;
-  }
-  const flag = process.env.NEXT_PUBLIC_DEBUG_GOOGLE_MAPS;
-  return flag === "1" || flag === "true";
-}
-
 function logDevGoogleMapsKey(
   runtime: "ios" | "android" | "web",
-  source: GoogleMapsKeySource
+  source: GoogleMapsKeySource,
+  key: string
 ): void {
-  if (!shouldLogGoogleMapsKey()) {
+  if (typeof window === "undefined") {
     return;
   }
   if (devKeyLogged) {
     return;
   }
   devKeyLogged = true;
-  if (typeof window !== "undefined") {
-    window.__NAMY_MAPS_DEBUG__ = {
-      ...window.__NAMY_MAPS_DEBUG__,
-      runtime,
-      envVar: source,
-    };
-  }
-  console.warn(`[Google Maps] runtime=${runtime} envVar=${source}`);
+
+  window.__NAMY_MAPS_DEBUG__ = {
+    ...window.__NAMY_MAPS_DEBUG__,
+    runtime,
+    envVar: source,
+    key,
+  };
+
+  console.warn(`[Google Maps] runtime=${runtime} envVar=${source} key=${key}`);
 }
 
 /**
@@ -96,6 +86,6 @@ export function getGoogleMapsApiKey(): string {
     }
   }
 
-  logDevGoogleMapsKey(runtime, source);
+  logDevGoogleMapsKey(runtime, source, key);
   return key;
 }

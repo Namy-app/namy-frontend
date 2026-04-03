@@ -9,8 +9,12 @@ const config: CapacitorConfig = {
   ios: {
     webContentsDebuggingEnabled: true,
   },
+  android: {
+    webContentsDebuggingEnabled: true,
+  },
   server: {
     errorPath: "404.html",
+    hostname: "namyapp.com",
   },
   plugins: {
     StatusBar: {

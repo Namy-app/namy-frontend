@@ -82,6 +82,7 @@ declare global {
     __NAMY_MAPS_DEBUG__?: {
       runtime?: "ios" | "android" | "web";
       envVar?: string;
+      key?: string;
       authFailureAt?: number;
       authFailureSummary?: string;
       loadScriptError?: string;
