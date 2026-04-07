@@ -23,12 +23,17 @@ android {
         }
     }
     signingConfigs {
-        release {
-            storeFile file(System.getProperty("user.home") + "/namy-release.keystore")
-            storePassword System.getenv("KEYSTORE_PASSWORD") ?: ""
-            keyAlias "namy"
-            keyPassword System.getenv("KEY_PASSWORD") ?: ""
-        }
+       def storeFileProp = localProps.getProperty('MYAPP_UPLOAD_STORE_FILE')
+            def storePasswordProp = localProps.getProperty('MYAPP_UPLOAD_STORE_PASSWORD')
+            def keyAliasProp = localProps.getProperty('MYAPP_UPLOAD_KEY_ALIAS')
+            def keyPasswordProp = localProps.getProperty('MYAPP_UPLOAD_KEY_PASSWORD')
+
+            if (storeFileProp && storePasswordProp && keyAliasProp && keyPasswordProp) {
+                storeFile file(storeFileProp)
+                storePassword storePasswordProp
+                keyAlias keyAliasProp
+                keyPassword keyPasswordProp
+            }
     }
     buildTypes {
         release {
