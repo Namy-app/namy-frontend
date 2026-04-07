@@ -23,7 +23,8 @@ android {
         }
     }
     signingConfigs {
-       def storeFileProp = localProps.getProperty('MYAPP_UPLOAD_STORE_FILE')
+        release {
+            def storeFileProp = localProps.getProperty('MYAPP_UPLOAD_STORE_FILE')
             def storePasswordProp = localProps.getProperty('MYAPP_UPLOAD_STORE_PASSWORD')
             def keyAliasProp = localProps.getProperty('MYAPP_UPLOAD_KEY_ALIAS')
             def keyPasswordProp = localProps.getProperty('MYAPP_UPLOAD_KEY_PASSWORD')
@@ -34,13 +35,13 @@ android {
                 keyAlias keyAliasProp
                 keyPassword keyPasswordProp
             }
+        }
     }
     buildTypes {
         release {
             signingConfig signingConfigs.release
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-            signingConfig signingConfigs.release
         }
     }
 }
