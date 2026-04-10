@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/nextjs";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { graphqlClient } from "@/lib/graphql-client";
@@ -100,9 +101,14 @@ export function useCreateStore() {
       return data.createStore;
     },
     onSuccess: () => {
-      // Invalidate store queries
       void queryClient.invalidateQueries({ queryKey: ["stores"] });
       void queryClient.invalidateQueries({ queryKey: ["store-statistics"] });
+    },
+    onError: (error, variables) => {
+      Sentry.captureException(error, {
+        tags: { domain: "store", action: "create_store" },
+        extra: { storeName: variables.name, city: variables.city },
+      });
     },
   });
 }
@@ -122,13 +128,18 @@ export function useUpdateStore() {
       return data.updateStore;
     },
     onSuccess: (_, variables) => {
-      // Invalidate store queries
       void queryClient.invalidateQueries({ queryKey: ["stores"] });
       void queryClient.invalidateQueries({ queryKey: ["store", variables.id] });
       void queryClient.invalidateQueries({
         queryKey: ["store-pin", variables.id],
       });
       void queryClient.invalidateQueries({ queryKey: ["store-statistics"] });
+    },
+    onError: (error, variables) => {
+      Sentry.captureException(error, {
+        tags: { domain: "store", action: "update_store" },
+        extra: { storeId: variables.id },
+      });
     },
   });
 }
@@ -265,6 +276,12 @@ export function useCreateDiscount() {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["discounts"] });
     },
+    onError: (error, variables) => {
+      Sentry.captureException(error, {
+        tags: { domain: "discount", action: "create_discount" },
+        extra: { storeId: variables.storeId, title: variables.title },
+      });
+    },
   });
 }
 
@@ -285,6 +302,12 @@ export function useUpdateDiscount() {
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["discounts"] });
+    },
+    onError: (error, variables) => {
+      Sentry.captureException(error, {
+        tags: { domain: "discount", action: "update_discount" },
+        extra: { discountId: variables.id },
+      });
     },
   });
 }
@@ -431,6 +454,12 @@ export function useCreateCatalog() {
         queryKey: ["catalogs", variables.storeId],
       });
     },
+    onError: (error, variables) => {
+      Sentry.captureException(error, {
+        tags: { domain: "catalog", action: "create_catalog" },
+        extra: { storeId: variables.storeId, name: variables.name },
+      });
+    },
   });
 }
 
@@ -448,6 +477,12 @@ export function useUpdateCatalog() {
     onSuccess: (data) => {
       void queryClient.invalidateQueries({
         queryKey: ["catalogs", data.storeId],
+      });
+    },
+    onError: (error, variables) => {
+      Sentry.captureException(error, {
+        tags: { domain: "catalog", action: "update_catalog" },
+        extra: { catalogId: variables.id },
       });
     },
   });
@@ -846,6 +881,12 @@ export function useAdminDeleteReview() {
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["adminReviews"] });
+    },
+    onError: (error, variables) => {
+      Sentry.captureException(error, {
+        tags: { domain: "review", action: "delete_review" },
+        extra: { reviewId: variables.id },
+      });
     },
   });
 }

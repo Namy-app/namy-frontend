@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/nextjs";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { graphqlRequest } from "@/lib/graphql-client";
@@ -48,8 +49,13 @@ export function useGenerateCoupon() {
       return data.generateCoupon;
     },
     onSuccess: () => {
-      // Invalidate coupons query to refresh the list
       void queryClient.invalidateQueries({ queryKey: ["coupons"] });
+    },
+    onError: (error, variables) => {
+      Sentry.captureException(error, {
+        tags: { domain: "coupon", action: "generate_coupon" },
+        extra: { discountId: variables.discountId },
+      });
     },
   });
 }
