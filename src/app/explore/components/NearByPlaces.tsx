@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 
-
+import { Emoji } from "@/components/Emoji";
 import { InfoCard } from "@/components/InfoCard";
 import { PlaceHolderTypeEnum } from "@/data/constants";
 import { type Store } from "@/lib/api-types";
@@ -35,7 +35,7 @@ export function NearbyPlaces({
     <div className="mb-8">
       <div className="px-6">
         <h2 className="text-xl font-bold mb-4 text-foreground">
-          📍 Cerca de ti
+          <Emoji cp="1f4cd" label="ubicación" /> Cerca de ti
         </h2>
         {closestStores.length === 0 ? (
           <InfoCard

@@ -1,5 +1,19 @@
 "use client";
 
+import type { LucideIcon } from "lucide-react";
+import {
+  Calendar,
+  Camera,
+  Crown,
+  Flame,
+  Store,
+  Star,
+  Target,
+  Ticket,
+  Users,
+  UtensilsCrossed,
+} from "lucide-react";
+
 import { DEFAULT_CHALLENGES } from "@/data/default-challenges.data";
 import { useMyActiveChallenges } from "@/domains/gamification/hooks";
 import type { UserChallenge } from "@/lib/api-types";
@@ -8,21 +22,22 @@ import type { UserChallenge } from "@/lib/api-types";
 
 interface PointAction {
   id: number;
-  icon: string;
+  Icon: LucideIcon;
   label: string;
   pts: string;
   multiplier?: boolean;
 }
 
 // ─── Static data ───────────────────────────────────────────────────────────────
+// Lucide icons instead of emoji — iOS WKWebView often renders emoji as ☐/ without a color font.
 
-const ENTITY_TYPE_TO_ICON: Record<string, string> = {
-  discounts: "🎟️",
-  reviews: "⭐",
-  mural_posts: "📸",
-  first_visit_coupon_redemption: "🏪",
-  referrals: "👥",
-  login_streaks: "🔥",
+const ENTITY_TYPE_TO_ICON: Record<string, LucideIcon> = {
+  discounts: Ticket,
+  reviews: Star,
+  mural_posts: Camera,
+  first_visit_coupon_redemption: Store,
+  referrals: Users,
+  login_streaks: Flame,
 };
 
 const ENTITY_TYPE_TO_LABEL: Record<string, string> = {
@@ -34,31 +49,34 @@ const ENTITY_TYPE_TO_LABEL: Record<string, string> = {
 };
 
 // For login_streaks there are multiple entries (1-day and 7-day) so we handle them individually
-const LOGIN_STREAK_LABELS: Record<number, { icon: string; label: string }> = {
-  1: { icon: "🔥", label: "Entra a Ñamy cada dia" },
-  7: { icon: "📅", label: "Entra a Ñamy 7 dias seguidos" },
+const LOGIN_STREAK_META: Record<number, { Icon: LucideIcon; label: string }> = {
+  1: { Icon: Flame, label: "Entra a Ñamy cada dia" },
+  7: { Icon: Calendar, label: "Entra a Ñamy 7 dias seguidos" },
 };
 
 const POINT_ACTIONS: PointAction[] = [
   ...DEFAULT_CHALLENGES.filter((c) => c.entityType !== "login_streaks").map(
     (c, i) => ({
       id: i + 1,
-      icon: ENTITY_TYPE_TO_ICON[c.entityType] ?? "🎯",
+      Icon: ENTITY_TYPE_TO_ICON[c.entityType] ?? Target,
       label: ENTITY_TYPE_TO_LABEL[c.entityType] ?? c.name,
       pts: `+${c.points} pts`,
     })
   ),
   ...DEFAULT_CHALLENGES.filter((c) => c.entityType === "login_streaks").map(
-    (c, i) => ({
-      id: 100 + i,
-      icon: LOGIN_STREAK_LABELS[c.count]?.icon ?? "🔥",
-      label: LOGIN_STREAK_LABELS[c.count]?.label ?? c.name,
-      pts: `+${c.points} pts`,
-    })
+    (c, i) => {
+      const meta = LOGIN_STREAK_META[c.count];
+      return {
+        id: 100 + i,
+        Icon: meta?.Icon ?? Flame,
+        label: meta?.label ?? c.name,
+        pts: `+${c.points} pts`,
+      };
+    }
   ),
   {
     id: 999,
-    icon: "👑",
+    Icon: Crown,
     label: "Ñamy Premium",
     pts: "x1.25 pts",
     multiplier: true,
@@ -79,9 +97,14 @@ const ENTITY_BADGE: Record<string, { label: string; color: string }> = {
 // ─── Sub-components ────────────────────────────────────────────────────────────
 
 function ActionRow({ action }: { action: PointAction }) {
+  const RowIcon = action.Icon;
   return (
     <div className="flex items-center gap-3 py-3 border-b border-gray-100 last:border-0">
-      <span className="text-2xl w-8 text-center shrink-0">{action.icon}</span>
+      <RowIcon
+        className="w-7 h-7 shrink-0 text-orange-500"
+        strokeWidth={2}
+        aria-hidden
+      />
       <span className="flex-1 text-sm font-semibold text-gray-700">
         {action.label}
       </span>
@@ -123,7 +146,11 @@ function ChallengeCard({ userChallenge }: { userChallenge: UserChallenge }) {
           {badge.label}
         </span>
         <div className="flex items-center gap-1.5">
-          <span className="text-xl">🔥</span>
+          <Flame
+            className="w-5 h-5 shrink-0 text-orange-500"
+            strokeWidth={2.5}
+            aria-hidden
+          />
           <span className="text-lg font-black text-gray-800">
             +{challenge.points} puntos
           </span>
@@ -229,7 +256,11 @@ export default function HowToEarnPoints() {
         {/* Challenges header */}
         <div className="flex items-center justify-center gap-2 fade-2">
           <h2 className="text-xl font-black text-gray-900">Desafíos activos</h2>
-          <span className="text-xl">🍴</span>
+          <UtensilsCrossed
+            className="w-5 h-5 shrink-0 text-orange-500"
+            strokeWidth={2.5}
+            aria-hidden
+          />
         </div>
 
         {/* Challenge cards */}

@@ -4,6 +4,7 @@ import { QrCode, Clock, CheckCircle, XCircle } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 
+import { Emoji } from "@/components/Emoji";
 import type { CouponItem } from "@/domains/coupon/type";
 
 type Props = {
@@ -117,7 +118,11 @@ export default function CouponCard({
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-white/60 text-3xl">
-              🏪
+              <Emoji
+                cp="1f3ea"
+                label="tienda"
+                className="inline-block w-8 h-8"
+              />
             </div>
           )}
         </div>

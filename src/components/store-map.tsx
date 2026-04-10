@@ -2,13 +2,17 @@
 
 import { GoogleMap, useJsApiLoader, OverlayView } from "@react-google-maps/api";
 import { MapPin, Star, X } from "lucide-react";
+import dynamic from "next/dynamic";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useCallback } from "react";
 
+import { GoogleMapsDiagnosticsError } from "@/components/GoogleMapsDiagnosticsError";
+import { MapLoadingView } from "@/components/MapLoadingView";
 import type { Store } from "@/lib/api-types";
 import { navigateTo } from "@/lib/capacitor-navigate";
-import { env } from "@/lib/env";
+import { getGoogleMapsApiKey } from "@/lib/google-maps-api-key";
+import { MAPS_AUTH_FAILURE_EVENT } from "@/lib/google-maps-diagnostics";
 import { getUserLocationSafe, type UserLocation } from "@/lib/utils";
 
 const mapContainerStyle = {
@@ -67,7 +71,7 @@ function StorePinLabel({
   );
 }
 
-export default function StoreMap({
+function StoreMapInner({
   stores,
   center,
   zoom = 12,
@@ -80,6 +84,8 @@ export default function StoreMap({
   const [isLoadingLocation, setIsLoadingLocation] = useState(!center);
   const [mapInstance, setMapInstance] = useState<google.maps.Map | null>(null);
   const [bounds, setBounds] = useState<google.maps.LatLngBounds | null>(null);
+  const [mapTilesReady, setMapTilesReady] = useState(false);
+  const [mapsAuthRejected, setMapsAuthRejected] = useState(false);
 
   const handleBoundsChanged = useCallback(() => {
     if (mapInstance) {
@@ -88,19 +94,54 @@ export default function StoreMap({
   }, [mapInstance]);
 
   const { isLoaded, loadError } = useJsApiLoader({
-    googleMapsApiKey: env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "",
+    googleMapsApiKey: getGoogleMapsApiKey(),
   });
 
   useEffect(() => {
-    if (!center) {
-      void getUserLocationSafe().then((location) => {
-        if (location) {
-          setUserLocation(location);
-        }
-        setIsLoadingLocation(false);
-      });
+    if (center) {
+      return;
     }
+
+    let cancelled = false;
+    const ceilingMs = 15_000;
+
+    const locationPromise = getUserLocationSafe({
+      // Simulator / WKWebView often struggle with high accuracy + long hangs with no callback
+      enableHighAccuracy: false,
+      timeout: 12_000,
+      maximumAge: 300_000,
+    });
+
+    const ceilingPromise = new Promise<null>((resolve) => {
+      window.setTimeout(() => {
+        resolve(null);
+      }, ceilingMs);
+    });
+
+    void Promise.race([locationPromise, ceilingPromise]).then((location) => {
+      if (cancelled) {
+        return;
+      }
+      if (location) {
+        setUserLocation(location);
+      }
+      setIsLoadingLocation(false);
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, [center]);
+
+  useEffect(() => {
+    const onAuthFailure = (): void => {
+      setMapsAuthRejected(true);
+    };
+    window.addEventListener(MAPS_AUTH_FAILURE_EVENT, onAuthFailure);
+    return () => {
+      window.removeEventListener(MAPS_AUTH_FAILURE_EVENT, onAuthFailure);
+    };
+  }, []);
 
   const storesWithCoords = stores.filter((s) => s.lat && s.lng);
   const mapCenter =
@@ -119,18 +160,20 @@ export default function StoreMap({
         }
       : { lat: 19.4326, lng: -99.1332 });
 
-  if (loadError) {
+  if (loadError || mapsAuthRejected) {
     return (
-      <div className={`w-full ${height} flex items-center justify-center`}>
-        Error loading maps
-      </div>
+      <GoogleMapsDiagnosticsError
+        height={height}
+        loadError={loadError ?? undefined}
+        authRejected={mapsAuthRejected}
+      />
     );
   }
 
   if (!isLoaded) {
     return (
-      <div className={`w-full ${height} flex items-center justify-center`}>
-        Loading maps...
+      <div className={`w-full ${height}`}>
+        <MapLoadingView message="Loading map…" />
       </div>
     );
   }
@@ -160,14 +203,15 @@ export default function StoreMap({
 
   return (
     <div className={`relative w-full ${height}`}>
+      {!mapTilesReady ? (
+        <div className="absolute inset-0 z-[5]">
+          <MapLoadingView message="Loading map…" />
+        </div>
+      ) : null}
+
       {isLoadingLocation ? (
-        <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/80 backdrop-blur-sm">
-          <div className="flex flex-col items-center gap-3">
-            <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-            <p className="text-sm text-muted-foreground">
-              Getting your location...
-            </p>
-          </div>
+        <div className="absolute inset-0 z-10">
+          <MapLoadingView message="Getting your location…" />
         </div>
       ) : null}
 
@@ -176,7 +220,13 @@ export default function StoreMap({
         center={mapCenter}
         zoom={zoom}
         options={mapOptions}
-        onLoad={setMapInstance}
+        onLoad={(map) => {
+          setMapInstance(map);
+          setMapTilesReady(false);
+          google.maps.event.addListenerOnce(map, "idle", () => {
+            setMapTilesReady(true);
+          });
+        }}
         onBoundsChanged={handleBoundsChanged}
         onClick={() => setSelectedStore(null)}
       >
@@ -288,3 +338,9 @@ export default function StoreMap({
     </div>
   );
 }
+
+const StoreMap = dynamic(async () => ({ default: StoreMapInner }), {
+  ssr: false,
+});
+
+export default StoreMap;

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo } from "react";
 
+import { Emoji } from "@/components/Emoji";
 import { useLoginStreak } from "@/domains/gamification/hooks";
 import { useMyLevel } from "@/domains/user/hooks/query/useMyLevel";
 import { BasicLayout } from "@/layouts/BasicLayout";
@@ -69,7 +70,8 @@ export default function NamyLevel() {
         </div>
 
         {/* Loading skeleton */}
-        {isLoading ? <div className="flex-1 px-5 py-4 flex flex-col gap-4 animate-pulse">
+        {isLoading ? (
+          <div className="flex-1 px-5 py-4 flex flex-col gap-4 animate-pulse">
             <div className="flex justify-center items-end gap-3 pb-4 px-4">
               {[1, 2, 3, 4].map((i) => (
                 <div key={i} className="w-14 h-16 bg-gray-200 rounded-xl" />
@@ -80,9 +82,11 @@ export default function NamyLevel() {
             <div className="bg-white border-2 border-gray-200 rounded-2xl p-4 h-32" />
             <div className="h-16 bg-gray-100 rounded-full mx-4" />
             <div className="bg-yellow-50 border border-yellow-100 rounded-2xl p-5 h-40" />
-          </div> : null}
+          </div>
+        ) : null}
 
-        {!isLoading && level ? <>
+        {!isLoading && level ? (
+          <>
             {/* Gems row */}
             <div className="flex justify-center items-end gap-3 pb-4 px-4 fade-up-1">
               {ALL_GEM_ICONS.map((g) => (
@@ -178,7 +182,11 @@ export default function NamyLevel() {
                 <span className="text-4xl font-black text-orange-500">
                   {loginStreak}
                 </span>
-                <span className="text-2xl flame">🔥</span>
+                <Emoji
+                  cp="1f525"
+                  label="fuego"
+                  className="inline-block w-7 h-7 flame"
+                />
                 <span className="text-sm font-bold text-orange-700">
                   Racha diaria
                 </span>
@@ -209,7 +217,11 @@ export default function NamyLevel() {
                   href="/subscription"
                   className="rounded-2xl p-4 flex items-center gap-4 cursor-pointer fade-up-5 bg-linear-to-r from-fuchsia-500 via-pink-500 to-orange-400 shadow-lg shadow-pink-200 active:scale-95 transition-transform"
                 >
-                  <span className="text-4xl">🏅</span>
+                  <Emoji
+                    cp="1f3c5"
+                    label="medalla"
+                    className="inline-block w-10 h-10"
+                  />
                   <div>
                     <p className="text-white font-black text-sm">
                       Mejores descuentos y sin anuncios
@@ -223,7 +235,8 @@ export default function NamyLevel() {
 
               <div className="h-24" />
             </div>
-          </> : null}
+          </>
+        ) : null}
       </div>
     </BasicLayout>
   );

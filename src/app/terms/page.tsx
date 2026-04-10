@@ -15,6 +15,9 @@ export default function TermsPage(): React.JSX.Element {
             <Link href="/privacy">
               <Button variant="outline">Política de privacidad</Button>
             </Link>
+            <Link href="/copyright">
+              <Button variant="outline">Derechos de autor</Button>
+            </Link>
             <Link href="/auth">
               <Button variant="outline">Volver al registro</Button>
             </Link>

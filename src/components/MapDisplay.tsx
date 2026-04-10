@@ -1,7 +1,9 @@
 "use client";
 
 import { GoogleMap, Marker } from "@react-google-maps/api";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+
+import { MapLoadingView } from "@/components/MapLoadingView";
 
 interface MapDisplayProps {
   lat: number;
@@ -33,23 +35,40 @@ export function MapDisplay({
   height = "200px",
 }: MapDisplayProps) {
   const center = useMemo(() => ({ lat, lng }), [lat, lng]);
+  const [tilesReady, setTilesReady] = useState(false);
+
   return (
-    <GoogleMap
-      mapContainerStyle={{ ...mapContainerStyle, height }}
-      center={center}
-      zoom={15}
-      options={{
-        disableDefaultUI: true,
-        mapTypeControl: false,
-        streetViewControl: false,
-        draggable: false,
-        scrollwheel: false,
-        disableDoubleClickZoom: true,
-        gestureHandling: "none",
-        styles: cleanMapStyles,
-      }}
+    <div
+      className="relative w-full overflow-hidden rounded-[12px]"
+      style={{ height }}
     >
-      <Marker position={center} title={storeName} />
-    </GoogleMap>
+      {!tilesReady ? (
+        <div className="absolute inset-0 z-[5]">
+          <MapLoadingView message="Loading map…" />
+        </div>
+      ) : null}
+      <GoogleMap
+        mapContainerStyle={{ ...mapContainerStyle, height }}
+        center={center}
+        zoom={15}
+        options={{
+          disableDefaultUI: true,
+          mapTypeControl: false,
+          streetViewControl: false,
+          draggable: false,
+          scrollwheel: false,
+          disableDoubleClickZoom: true,
+          gestureHandling: "none",
+          styles: cleanMapStyles,
+        }}
+        onLoad={(map) => {
+          google.maps.event.addListenerOnce(map, "idle", () => {
+            setTilesReady(true);
+          });
+        }}
+      >
+        <Marker position={center} title={storeName} />
+      </GoogleMap>
+    </div>
   );
 }

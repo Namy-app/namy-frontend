@@ -3,7 +3,9 @@
 import { type Libraries, LoadScript } from "@react-google-maps/api";
 import { type ReactNode } from "react";
 
-import { env } from "@/lib/env";
+import { MapLoadingView } from "@/components/MapLoadingView";
+import { getGoogleMapsApiKey } from "@/lib/google-maps-api-key";
+import { recordLoadScriptError } from "@/lib/google-maps-diagnostics";
 
 const libraries: Libraries = ["places"];
 
@@ -14,8 +16,17 @@ interface GoogleMapsProviderProps {
 export function GoogleMapsProvider({ children }: GoogleMapsProviderProps) {
   return (
     <LoadScript
-      googleMapsApiKey={env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ""}
+      googleMapsApiKey={getGoogleMapsApiKey()}
       libraries={libraries}
+      onError={(err) => {
+        recordLoadScriptError(err);
+        console.warn("[Google Maps] LoadScript error", err);
+      }}
+      loadingElement={
+        <div className="flex min-h-screen w-full items-center justify-center bg-background">
+          <MapLoadingView message="Loading map…" className="min-h-[50vh]" />
+        </div>
+      }
     >
       {children}
     </LoadScript>

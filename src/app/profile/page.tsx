@@ -22,6 +22,7 @@ import { useRouter } from "next/navigation";
 import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 
+import { Emoji } from "@/components/Emoji";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import {
   useMyActiveChallenges,
@@ -421,7 +422,11 @@ function MisionesCard({
         >
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center">
-              <span className="text-lg">📋</span>
+              <Emoji
+                cp="1f4cb"
+                label="misiones"
+                className="inline-block w-5 h-5"
+              />
             </div>
             <span className="font-semibold text-foreground">
               Misiones diarias
@@ -443,7 +448,11 @@ function MisionesCard({
           <div className="px-4 py-4 bg-orange-50/60">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
-                <span className="text-lg">🔥</span>
+                <Emoji
+                  cp="1f525"
+                  label="fuego"
+                  className="inline-block w-5 h-5"
+                />
                 <span className="text-sm font-bold text-foreground">
                   Racha de inicio de sesión
                 </span>
@@ -483,7 +492,11 @@ function MisionesCard({
         >
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-yellow-100 flex items-center justify-center">
-              <span className="text-lg">🏆</span>
+              <Emoji
+                cp="1f3c6"
+                label="trofeo"
+                className="inline-block w-5 h-5"
+              />
             </div>
             <span className="font-semibold text-foreground">
               Premios ganados
@@ -815,7 +828,8 @@ export default function ProfilePage(): React.JSX.Element | null {
                 )}
               </button>
               <p className="text-[10px] text-muted-foreground text-center mt-1">
-                🎁 Gana 1 mes Premium gratis cuando alguien use tu código
+                <Emoji cp="1f381" label="regalo" /> Gana 1 mes Premium gratis
+                cuando alguien use tu código
               </p>
             </div>
           ) : null}
@@ -847,7 +861,9 @@ export default function ProfilePage(): React.JSX.Element | null {
 
           <div className="text-center py-4">
             <p className="text-xs text-muted-foreground">
-              Ñamy — Come inteligente, ahorra más 🍴💚
+              Ñamy — Come inteligente, ahorra más{" "}
+              <Emoji cp="1f374" label="cubiertos" />
+              <Emoji cp="1f49a" label="corazón verde" />
             </p>
           </div>
         </div>
@@ -885,7 +901,11 @@ export default function ProfilePage(): React.JSX.Element | null {
 
                 {/* Streak pill */}
                 <div className="flex items-center gap-2 bg-orange-50 border border-orange-200 rounded-full px-4 py-2">
-                  <span className="text-xl">🔥</span>
+                  <Emoji
+                    cp="1f525"
+                    label="fuego"
+                    className="inline-block w-6 h-6"
+                  />
                   <div>
                     <p className="text-lg font-black text-orange-500 leading-none">
                       {loginStreak}
@@ -916,7 +936,8 @@ export default function ProfilePage(): React.JSX.Element | null {
                       )}
                     </button>
                     <p className="text-[10px] text-muted-foreground text-center mt-1">
-                      🎁 Gana 1 mes Premium gratis con tu código
+                      <Emoji cp="1f381" label="regalo" /> Gana 1 mes Premium
+                      gratis con tu código
                     </p>
                   </div>
                 ) : null}
@@ -932,7 +953,9 @@ export default function ProfilePage(): React.JSX.Element | null {
 
               <div className="text-center py-2">
                 <p className="text-xs text-muted-foreground">
-                  Ñamy — Come inteligente, ahorra más 🍴💚
+                  Ñamy — Come inteligente, ahorra más{" "}
+                  <Emoji cp="1f374" label="cubiertos" />
+                  <Emoji cp="1f49a" label="corazón verde" />
                 </p>
               </div>
             </div>
