@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 
 import "../styles/globals.css";
+import { AndroidBackHandler } from "@/components/AndroidBackHandler";
 import { CapacitorSafeArea } from "@/components/CapacitorSafeArea";
 import { GoogleAdsense } from "@/components/GoogleAdsense";
 import { GoogleMapsProvider } from "@/components/GoogleMapsProvider";
@@ -79,6 +80,7 @@ export default function RootLayout({
       </head>
       <body className={`${poppins.variable}  font-sans`}>
         <CapacitorSafeArea />
+        <AndroidBackHandler />
         <SpaRedirectHandler />
         <ReactQueryProvider>
           <GoogleMapsProvider>{children}</GoogleMapsProvider>
