@@ -11,7 +11,7 @@ interface EmojiProps {
  * Renders an emoji as a Twemoji SVG image.
  * Avoids iOS WKWebView color-emoji font issues.
  */
- 
+
 export const Emoji = ({
   cp,
   label,
