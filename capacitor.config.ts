@@ -17,6 +17,9 @@ const config: CapacitorConfig = {
     hostname: "namyapp.com",
   },
   plugins: {
+    CapacitorHttp: {
+      enabled: true,
+    },
     StatusBar: {
       overlaysWebView: false,
       style: "LIGHT",

@@ -28,6 +28,28 @@ interface StoreMapProps {
   discountPercentage?: number;
 }
 
+// Blue pulsing circle for the user's own location
+function UserLocationMarker({ onClick }: { onClick: () => void }) {
+  return (
+    <div
+      style={{
+        transform: "translate(-50%, -50%)",
+        pointerEvents: "none",
+      }}
+      onClick={(e) => {
+        e.stopPropagation();
+        e.nativeEvent?.stopImmediatePropagation();
+        onClick();
+      }}
+      className="flex items-center justify-center"
+      aria-hidden
+    >
+      <div className="h-8 w-8 shrink-0 rounded-full border-3 border-white bg-[#4285F4] shadow-md ring-1 ring-black/10" />
+      <span className="absolute inline-flex h-10 w-10 rounded-full bg-blue-400 opacity-40 animate-ping" />
+    </div>
+  );
+}
+
 // Pill label + teardrop pin rendered as an HTML overlay
 function StorePinLabel({
   store,
@@ -80,6 +102,7 @@ function StoreMapInner({
 }: StoreMapProps) {
   const router = useRouter();
   const [selectedStore, setSelectedStore] = useState<Store | null>(null);
+  const [showUserInfo, setShowUserInfo] = useState(false);
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
   const [isLoadingLocation, setIsLoadingLocation] = useState(!center);
   const [mapInstance, setMapInstance] = useState<google.maps.Map | null>(null);
@@ -228,8 +251,23 @@ function StoreMapInner({
           });
         }}
         onBoundsChanged={handleBoundsChanged}
-        onClick={() => setSelectedStore(null)}
+        onClick={() => {
+          setSelectedStore(null);
+          setShowUserInfo(false);
+        }}
       >
+        <OverlayView
+          position={mapCenter}
+          mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
+        >
+          <UserLocationMarker
+            onClick={() => {
+              setSelectedStore(null);
+              setShowUserInfo((prev) => !prev);
+            }}
+          />
+        </OverlayView>
+
         {visibleStores.map((store) => (
           <OverlayView
             key={store.id}
@@ -239,13 +277,32 @@ function StoreMapInner({
             <StorePinLabel
               store={store}
               isSelected={selectedStore?.id === store.id}
-              onClick={() =>
-                setSelectedStore(selectedStore?.id === store.id ? null : store)
-              }
+              onClick={() => {
+                setShowUserInfo(false);
+                setSelectedStore(selectedStore?.id === store.id ? null : store);
+              }}
             />
           </OverlayView>
         ))}
       </GoogleMap>
+
+      {/* User location panel */}
+      {showUserInfo ? (
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 w-[calc(100%-2rem)] max-w-sm">
+          <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 flex items-center gap-3 px-4 py-3">
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-500 shrink-0">
+              <span className="h-3 w-3 rounded-full bg-white" />
+            </span>
+            <p className="font-semibold text-gray-900 text-sm">You</p>
+            <button
+              onClick={() => setShowUserInfo(false)}
+              className="ml-auto text-gray-400 hover:text-gray-600"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      ) : null}
 
       {/* Store detail card — fixed bottom panel, outside GoogleMap */}
       {selectedStore ? (
