@@ -26,7 +26,7 @@ export function CapacitorSafeArea(): null {
 
       document.documentElement.style.setProperty(
         "--status-bar-height",
-        `${safeTop}px`
+        `${safeTop + 10}px`
       );
     };
 

@@ -57,7 +57,7 @@ export function ExploreHeader({
 
   return (
     <header
-      className="fixed top-0 left-0 right-0 z-20 w-full max-w-full overflow-x-hidden bg-white/85 backdrop-blur-sm shadow-sm"
+      className="fixed top-0 left-0 right-0 z-20 w-full max-w-full bg-white/85 backdrop-blur-sm shadow-sm"
       style={{
         paddingTop: "var(--status-bar-height, env(safe-area-inset-top, 0px))",
       }}
