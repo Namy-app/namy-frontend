@@ -498,7 +498,82 @@ export interface CouponRedemption {
   };
 }
 
-export interface UserDetailsWithActivity {
+export interface ActivityDateRange {
+  from?: string;
+  to?: string;
+}
+
+export interface UserDetailsActivityFilters {
+  coupons?: ActivityDateRange;
+  redemptions?: ActivityDateRange;
+  referrals?: ActivityDateRange;
+}
+
+export interface AdminUserReferral {
+  id: string;
+  recipientUserId: string;
+  recipientEmail?: string;
+  recipientDisplayName?: string;
+  referralCode?: string;
+  createdAt: string;
+}
+
+/** Admin user detail page — profile + lifetime counts only */
+export interface AdminUserProfileSummary {
+  id: string;
+  email: string;
+  phone?: string;
+  displayName?: string;
+  avatarUrl?: string;
+  role: UserRole;
+  city?: string;
+  country?: string;
+  verified: boolean;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+  lastSeen?: string;
+  referralCode?: string;
+  level: number;
+  monthlyUsageCount: number;
+  totalCouponUsageCount: number;
+  totalCoupons: number;
+  totalRedemptions: number;
+  totalReferrals: number;
+}
+
+export interface AdminUserCouponsResponse {
+  data: UserCoupon[];
+  paginationInfo: PaginationInfo;
+}
+
+export interface AdminUserRedemptionsResponse {
+  data: CouponRedemption[];
+  paginationInfo: PaginationInfo;
+}
+
+export interface AdminUserReferralsResponse {
+  data: AdminUserReferral[];
+  paginationInfo: PaginationInfo;
+}
+
+/** Unified admin user detail payload (split GraphQL queries or legacy monolith) */
+export type AdminUserDetailDataSource =
+  | "split"
+  | "legacy"
+  /** Oldest GraphQL: no activityFilters arg — coupon/redemption filters run in the browser */
+  | "legacy-compat";
+
+export interface AdminUserDetailPageData {
+  dataSource: AdminUserDetailDataSource;
+  profile: AdminUserProfileSummary;
+  coupons: AdminUserCouponsResponse;
+  redemptions: AdminUserRedemptionsResponse;
+  referrals: AdminUserReferralsResponse;
+}
+
+/** Oldest `userDetailsWithActivity` shape (no activity filters arg, no referral list on schema) */
+export interface UserDetailsWithActivityUltraLegacy {
   id: string;
   email: string;
   phone?: string;
@@ -520,6 +595,32 @@ export interface UserDetailsWithActivity {
   redemptions: CouponRedemption[];
   totalCoupons: number;
   totalRedemptions: number;
+}
+
+export interface UserDetailsWithActivity {
+  id: string;
+  email: string;
+  phone?: string;
+  displayName?: string;
+  avatarUrl?: string;
+  role: UserRole;
+  city?: string;
+  country?: string;
+  verified: boolean;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+  lastSeen?: string;
+  referralCode?: string;
+  level: number;
+  monthlyUsageCount: number;
+  totalCouponUsageCount: number;
+  coupons: UserCoupon[];
+  redemptions: CouponRedemption[];
+  referrals: AdminUserReferral[];
+  totalCoupons: number;
+  totalRedemptions: number;
+  totalReferrals: number;
 }
 
 // ==================== Challenges ====================

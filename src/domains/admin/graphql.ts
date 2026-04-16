@@ -471,8 +471,279 @@ export const GET_USERS = gql`
   }
 `;
 
+export const GET_ADMIN_USER_PROFILE_SUMMARY = gql`
+  query AdminUserProfileSummary($userId: String!) {
+    adminUserProfileSummary(userId: $userId) {
+      id
+      email
+      phone
+      displayName
+      avatarUrl
+      role
+      city
+      country
+      verified
+      active
+      createdAt
+      updatedAt
+      lastSeen
+      referralCode
+      level
+      monthlyUsageCount
+      totalCouponUsageCount
+      totalCoupons
+      totalRedemptions
+      totalReferrals
+    }
+  }
+`;
+
+export const GET_ADMIN_USER_COUPONS = gql`
+  query AdminUserCoupons(
+    $userId: String!
+    $createdAtRange: ActivityDateRangeInput = null
+    $pagination: PaginationInput
+  ) {
+    adminUserCoupons(
+      userId: $userId
+      createdAtRange: $createdAtRange
+      pagination: $pagination
+    ) {
+      data {
+        id
+        code
+        qrCode
+        url
+        used
+        usedAt
+        value
+        expiresAt
+        createdAt
+        storeId
+        discountId
+        store {
+          id
+          name
+          description
+          address
+          city
+          phoneNumber
+          averageRating
+          reviewCounter
+        }
+        discount {
+          id
+          title
+          description
+          type
+          value
+          minPurchaseAmount
+          maxDiscountAmount
+        }
+      }
+      paginationInfo {
+        total
+        page
+        pageSize
+        totalPages
+        hasNextPage
+        hasPreviousPage
+      }
+    }
+  }
+`;
+
+export const GET_ADMIN_USER_REDEMPTIONS = gql`
+  query AdminUserRedemptions(
+    $userId: String!
+    $redeemedAtRange: ActivityDateRangeInput = null
+    $pagination: PaginationInput
+  ) {
+    adminUserRedemptions(
+      userId: $userId
+      redeemedAtRange: $redeemedAtRange
+      pagination: $pagination
+    ) {
+      data {
+        id
+        couponId
+        userId
+        storeId
+        redeemedAt
+        billTotalCents
+        discountCents
+        pointsEarned
+        comment
+        coupon {
+          id
+          code
+          used
+          usedAt
+          expiresAt
+          createdAt
+          store {
+            id
+            name
+            city
+          }
+          discount {
+            id
+            title
+            type
+            value
+          }
+        }
+      }
+      paginationInfo {
+        total
+        page
+        pageSize
+        totalPages
+        hasNextPage
+        hasPreviousPage
+      }
+    }
+  }
+`;
+
+export const GET_ADMIN_USER_REFERRALS = gql`
+  query AdminUserReferrals(
+    $userId: String!
+    $createdAtRange: ActivityDateRangeInput = null
+    $pagination: PaginationInput
+  ) {
+    adminUserReferrals(
+      userId: $userId
+      createdAtRange: $createdAtRange
+      pagination: $pagination
+    ) {
+      data {
+        id
+        recipientUserId
+        recipientEmail
+        recipientDisplayName
+        referralCode
+        createdAt
+      }
+      paginationInfo {
+        total
+        page
+        pageSize
+        totalPages
+        hasNextPage
+        hasPreviousPage
+      }
+    }
+  }
+`;
+
+/** Monolithic admin user payload — used when split admin queries are not on the schema yet */
 export const GET_USER_DETAILS_WITH_ACTIVITY = gql`
-  query GetUserDetailsWithActivity($userId: String!) {
+  query UserDetailsWithActivity(
+    $userId: String!
+    $activityFilters: UserDetailsActivityFiltersInput
+  ) {
+    userDetailsWithActivity(
+      userId: $userId
+      activityFilters: $activityFilters
+    ) {
+      id
+      email
+      phone
+      displayName
+      avatarUrl
+      role
+      city
+      country
+      verified
+      active
+      createdAt
+      updatedAt
+      lastSeen
+      referralCode
+      level
+      monthlyUsageCount
+      totalCouponUsageCount
+      totalCoupons
+      totalRedemptions
+      totalReferrals
+      coupons {
+        id
+        code
+        qrCode
+        url
+        used
+        usedAt
+        value
+        expiresAt
+        createdAt
+        storeId
+        discountId
+        store {
+          id
+          name
+          description
+          address
+          city
+          phoneNumber
+          averageRating
+          reviewCounter
+        }
+        discount {
+          id
+          title
+          description
+          type
+          value
+          minPurchaseAmount
+          maxDiscountAmount
+        }
+      }
+      redemptions {
+        id
+        couponId
+        userId
+        storeId
+        redeemedAt
+        billTotalCents
+        discountCents
+        pointsEarned
+        comment
+        coupon {
+          id
+          code
+          used
+          usedAt
+          expiresAt
+          createdAt
+          store {
+            id
+            name
+            city
+          }
+          discount {
+            id
+            title
+            type
+            value
+          }
+        }
+      }
+      referrals {
+        id
+        recipientUserId
+        recipientEmail
+        recipientDisplayName
+        referralCode
+        createdAt
+      }
+    }
+  }
+`;
+
+/** Oldest servers: no `activityFilters`, no `referrals` / `totalReferrals` on `UserDetailsWithActivity` */
+export const GET_USER_DETAILS_WITH_ACTIVITY_ULTRA_LEGACY = gql`
+  query UserDetailsWithActivityCompat($userId: String!) {
     userDetailsWithActivity(userId: $userId) {
       id
       email

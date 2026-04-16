@@ -12,7 +12,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Grid3x3,
-  Clock,
+  // Clock,
   Navigation,
 } from "lucide-react";
 import { useState, useEffect, useMemo, useRef } from "react";
@@ -436,7 +436,7 @@ export default function RestaurantListingPage(): React.JSX.Element {
             <div className="flex flex-wrap items-center justify-between gap-4">
               {/* Available Right Now Filter */}
               <div className="flex items-center gap-2">
-                <Button
+                {/* <Button
                   onClick={() =>
                     handleAvailabilityFilterChange(
                       availabilityFilter === "all" ? "available" : "all"
@@ -450,7 +450,7 @@ export default function RestaurantListingPage(): React.JSX.Element {
                 >
                   <Clock className="w-4 h-4" />
                   Disponible ahora
-                </Button>
+                </Button> */}
                 {sortBy === "DISTANCE" && locationStatus === "granted" && (
                   <Button
                     variant="outline"
