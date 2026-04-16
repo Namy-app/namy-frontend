@@ -57,13 +57,13 @@ export function ExploreHeader({
 
   return (
     <header
-      className="fixed top-0 left-0 right-0 bg-white/85 backdrop-blur-sm shadow-sm z-20"
+      className="fixed top-0 left-0 right-0 z-20 w-full max-w-full overflow-x-hidden bg-white/85 backdrop-blur-sm shadow-sm"
       style={{
         paddingTop: "var(--status-bar-height, env(safe-area-inset-top, 0px))",
       }}
     >
-      <div className="flex items-center justify-between h-14 max-w-5xl mx-auto px-4">
-        <div className="flex-1">
+      <div className="mx-auto flex h-14 w-full min-w-0 max-w-5xl items-center justify-between px-4">
+        <div className="min-w-0 flex-1">
           <Link
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/70 backdrop-blur-md hover:bg-white transition-colors shadow-sm"
             href="/help"
@@ -92,7 +92,7 @@ export function ExploreHeader({
 
         <button
           onClick={() => router.push("/explore")}
-          className="cursor-pointer hover:opacity-80 transition-opacity"
+          className="shrink-0 cursor-pointer transition-opacity hover:opacity-80"
         >
           <Image
             src="/namy-logo.webp"
@@ -103,61 +103,64 @@ export function ExploreHeader({
           />
         </button>
 
-        <div className="flex-1 flex justify-end gap-3">
+        <div className="flex min-w-0 flex-1 items-center justify-end gap-2 sm:gap-3">
           {isAuthenticated &&
           env.NEXT_PUBLIC_NOVU_APPLICATION_IDENTIFIER &&
           user?.id ? (
-            <Inbox
-              applicationIdentifier={
-                env.NEXT_PUBLIC_NOVU_APPLICATION_IDENTIFIER
-              }
-              subscriberId={user.id}
-              appearance={{
-                variables: {
-                  colorPrimary: "hsl(8 92% 70%)",
-                  colorPrimaryForeground: "hsl(0 0% 100%)",
-                  colorSecondary: "hsl(82 65% 65%)",
-                  colorSecondaryForeground: "hsl(24 45% 15%)",
-                  colorCounter: "hsl(0 84.2% 60.2%)",
-                  colorCounterForeground: "hsl(0 0% 100%)",
-                  colorBackground: "hsl(0 0% 100%)",
-                  colorForeground: "hsl(24 45% 15%)",
-                  colorNeutral: "hsl(25 15% 88%)",
-                  fontSize: "14px",
-                  borderRadius: "1rem",
-                },
-                elements: {
-                  button: "p-2 hover:bg-accent rounded-full transition-colors",
-                },
-                icons: {
-                  bell: () => (
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="24"
-                      height="24"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="w-5 h-5 text-muted-foreground"
-                    >
-                      <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
-                      <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
-                    </svg>
-                  ),
-                },
-              }}
-            />
+            <div className="shrink-0">
+              <Inbox
+                applicationIdentifier={
+                  env.NEXT_PUBLIC_NOVU_APPLICATION_IDENTIFIER
+                }
+                subscriberId={user.id}
+                appearance={{
+                  variables: {
+                    colorPrimary: "hsl(8 92% 70%)",
+                    colorPrimaryForeground: "hsl(0 0% 100%)",
+                    colorSecondary: "hsl(82 65% 65%)",
+                    colorSecondaryForeground: "hsl(24 45% 15%)",
+                    colorCounter: "hsl(0 84.2% 60.2%)",
+                    colorCounterForeground: "hsl(0 0% 100%)",
+                    colorBackground: "hsl(0 0% 100%)",
+                    colorForeground: "hsl(24 45% 15%)",
+                    colorNeutral: "hsl(25 15% 88%)",
+                    fontSize: "14px",
+                    borderRadius: "1rem",
+                  },
+                  elements: {
+                    button:
+                      "p-2 hover:bg-accent rounded-full transition-colors",
+                  },
+                  icons: {
+                    bell: () => (
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="h-5 w-5 text-muted-foreground"
+                      >
+                        <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+                        <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+                      </svg>
+                    ),
+                  },
+                }}
+              />
+            </div>
           ) : null}
 
           {/* User Dropdown */}
           {isAuthenticated ? (
-            <div className="relative" ref={dropdownRef}>
+            <div className="relative min-w-0 shrink-0" ref={dropdownRef}>
               <button
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="flex items-center gap-2 py-1.5 hover:bg-accent rounded-full transition-colors"
+                className="flex min-w-0 max-w-full items-center gap-2 rounded-full py-1.5 transition-colors hover:bg-accent"
                 aria-label="User menu"
               >
                 <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center relative">

@@ -19,12 +19,12 @@ export function UserLevelBanner(): React.JSX.Element | null {
   const level = buildLevel(myLevel);
 
   return (
-    <Link href="/level" className="block px-4 mb-6">
+    <Link href="/level" className="mb-6 block min-w-0 px-4">
       <div
-        className={`bg-white rounded-3xl px-4 py-3 shadow-sm border-2 ${level.borderColor}`}
+        className={`rounded-3xl border-2 bg-white px-4 py-3 shadow-sm ${level.borderColor}`}
       >
         {/* Top row: gem + name + points + level badge */}
-        <div className="flex items-center gap-3">
+        <div className="flex min-w-0 items-center gap-3">
           {/* Gem icon */}
           <Image
             src={level.gemIcon}
@@ -35,7 +35,7 @@ export function UserLevelBanner(): React.JSX.Element | null {
           />
 
           {/* Greeting */}
-          <span className="flex-1 font-bold text-[#2D2D2D] text-base truncate">
+          <span className="min-w-0 flex-1 truncate text-base font-bold text-[#2D2D2D]">
             ¡Hola {user.displayName ?? "Usuario"}!
           </span>
 
@@ -55,11 +55,11 @@ export function UserLevelBanner(): React.JSX.Element | null {
 
         {/* Progress bar */}
         {level.progress ? (
-          <div className="flex items-center gap-2 mt-3">
-            <span className="w-6 h-6 rounded-full bg-amber-400 text-white text-xs font-bold flex items-center justify-center shrink-0">
+          <div className="mt-3 flex min-w-0 items-center gap-2">
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-400 text-xs font-bold text-white">
               {level.progress.from}
             </span>
-            <div className="flex-1 h-9 bg-amber-50 rounded-full relative overflow-hidden border border-amber-200">
+            <div className="relative h-9 min-w-0 flex-1 overflow-hidden rounded-full border border-amber-200 bg-amber-50">
               <div
                 className="h-full rounded-full bg-gradient-to-r from-amber-400 to-yellow-300 transition-all duration-700"
                 style={{
