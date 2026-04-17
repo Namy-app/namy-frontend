@@ -2,13 +2,17 @@
 
 import { GoogleMap, useJsApiLoader, OverlayView } from "@react-google-maps/api";
 import { MapPin, Star, X } from "lucide-react";
+import dynamic from "next/dynamic";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useCallback } from "react";
 
+import { GoogleMapsDiagnosticsError } from "@/components/GoogleMapsDiagnosticsError";
+import { MapLoadingView } from "@/components/MapLoadingView";
 import type { Store } from "@/lib/api-types";
 import { navigateTo } from "@/lib/capacitor-navigate";
-import { env } from "@/lib/env";
+import { getGoogleMapsApiKey } from "@/lib/google-maps-api-key";
+import { MAPS_AUTH_FAILURE_EVENT } from "@/lib/google-maps-diagnostics";
 import { getUserLocationSafe, type UserLocation } from "@/lib/utils";
 
 const mapContainerStyle = {
@@ -22,6 +26,28 @@ interface StoreMapProps {
   zoom?: number;
   height?: string;
   discountPercentage?: number;
+}
+
+// Blue pulsing circle for the user's own location
+function UserLocationMarker({ onClick }: { onClick: () => void }) {
+  return (
+    <div
+      style={{
+        transform: "translate(-50%, -50%)",
+        pointerEvents: "none",
+      }}
+      onClick={(e) => {
+        e.stopPropagation();
+        e.nativeEvent?.stopImmediatePropagation();
+        onClick();
+      }}
+      className="flex items-center justify-center"
+      aria-hidden
+    >
+      <div className="h-8 w-8 shrink-0 rounded-full border-3 border-white bg-[#4285F4] shadow-md ring-1 ring-black/10" />
+      <span className="absolute inline-flex h-10 w-10 rounded-full bg-blue-400 opacity-40 animate-ping" />
+    </div>
+  );
 }
 
 // Pill label + teardrop pin rendered as an HTML overlay
@@ -67,7 +93,7 @@ function StorePinLabel({
   );
 }
 
-export default function StoreMap({
+function StoreMapInner({
   stores,
   center,
   zoom = 12,
@@ -76,10 +102,13 @@ export default function StoreMap({
 }: StoreMapProps) {
   const router = useRouter();
   const [selectedStore, setSelectedStore] = useState<Store | null>(null);
+  const [showUserInfo, setShowUserInfo] = useState(false);
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
   const [isLoadingLocation, setIsLoadingLocation] = useState(!center);
   const [mapInstance, setMapInstance] = useState<google.maps.Map | null>(null);
   const [bounds, setBounds] = useState<google.maps.LatLngBounds | null>(null);
+  const [mapTilesReady, setMapTilesReady] = useState(false);
+  const [mapsAuthRejected, setMapsAuthRejected] = useState(false);
 
   const handleBoundsChanged = useCallback(() => {
     if (mapInstance) {
@@ -88,19 +117,54 @@ export default function StoreMap({
   }, [mapInstance]);
 
   const { isLoaded, loadError } = useJsApiLoader({
-    googleMapsApiKey: env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "",
+    googleMapsApiKey: getGoogleMapsApiKey(),
   });
 
   useEffect(() => {
-    if (!center) {
-      void getUserLocationSafe().then((location) => {
-        if (location) {
-          setUserLocation(location);
-        }
-        setIsLoadingLocation(false);
-      });
+    if (center) {
+      return;
     }
+
+    let cancelled = false;
+    const ceilingMs = 15_000;
+
+    const locationPromise = getUserLocationSafe({
+      // Simulator / WKWebView often struggle with high accuracy + long hangs with no callback
+      enableHighAccuracy: false,
+      timeout: 12_000,
+      maximumAge: 300_000,
+    });
+
+    const ceilingPromise = new Promise<null>((resolve) => {
+      window.setTimeout(() => {
+        resolve(null);
+      }, ceilingMs);
+    });
+
+    void Promise.race([locationPromise, ceilingPromise]).then((location) => {
+      if (cancelled) {
+        return;
+      }
+      if (location) {
+        setUserLocation(location);
+      }
+      setIsLoadingLocation(false);
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, [center]);
+
+  useEffect(() => {
+    const onAuthFailure = (): void => {
+      setMapsAuthRejected(true);
+    };
+    window.addEventListener(MAPS_AUTH_FAILURE_EVENT, onAuthFailure);
+    return () => {
+      window.removeEventListener(MAPS_AUTH_FAILURE_EVENT, onAuthFailure);
+    };
+  }, []);
 
   const storesWithCoords = stores.filter((s) => s.lat && s.lng);
   const mapCenter =
@@ -119,18 +183,20 @@ export default function StoreMap({
         }
       : { lat: 19.4326, lng: -99.1332 });
 
-  if (loadError) {
+  if (loadError || mapsAuthRejected) {
     return (
-      <div className={`w-full ${height} flex items-center justify-center`}>
-        Error loading maps
-      </div>
+      <GoogleMapsDiagnosticsError
+        height={height}
+        loadError={loadError ?? undefined}
+        authRejected={mapsAuthRejected}
+      />
     );
   }
 
   if (!isLoaded) {
     return (
-      <div className={`w-full ${height} flex items-center justify-center`}>
-        Loading maps...
+      <div className={`w-full ${height}`}>
+        <MapLoadingView message="Loading map…" />
       </div>
     );
   }
@@ -160,14 +226,15 @@ export default function StoreMap({
 
   return (
     <div className={`relative w-full ${height}`}>
+      {!mapTilesReady ? (
+        <div className="absolute inset-0 z-[5]">
+          <MapLoadingView message="Loading map…" />
+        </div>
+      ) : null}
+
       {isLoadingLocation ? (
-        <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/80 backdrop-blur-sm">
-          <div className="flex flex-col items-center gap-3">
-            <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-            <p className="text-sm text-muted-foreground">
-              Getting your location...
-            </p>
-          </div>
+        <div className="absolute inset-0 z-10">
+          <MapLoadingView message="Getting your location…" />
         </div>
       ) : null}
 
@@ -176,10 +243,31 @@ export default function StoreMap({
         center={mapCenter}
         zoom={zoom}
         options={mapOptions}
-        onLoad={setMapInstance}
+        onLoad={(map) => {
+          setMapInstance(map);
+          setMapTilesReady(false);
+          google.maps.event.addListenerOnce(map, "idle", () => {
+            setMapTilesReady(true);
+          });
+        }}
         onBoundsChanged={handleBoundsChanged}
-        onClick={() => setSelectedStore(null)}
+        onClick={() => {
+          setSelectedStore(null);
+          setShowUserInfo(false);
+        }}
       >
+        <OverlayView
+          position={mapCenter}
+          mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
+        >
+          <UserLocationMarker
+            onClick={() => {
+              setSelectedStore(null);
+              setShowUserInfo((prev) => !prev);
+            }}
+          />
+        </OverlayView>
+
         {visibleStores.map((store) => (
           <OverlayView
             key={store.id}
@@ -189,13 +277,32 @@ export default function StoreMap({
             <StorePinLabel
               store={store}
               isSelected={selectedStore?.id === store.id}
-              onClick={() =>
-                setSelectedStore(selectedStore?.id === store.id ? null : store)
-              }
+              onClick={() => {
+                setShowUserInfo(false);
+                setSelectedStore(selectedStore?.id === store.id ? null : store);
+              }}
             />
           </OverlayView>
         ))}
       </GoogleMap>
+
+      {/* User location panel */}
+      {showUserInfo ? (
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 w-[calc(100%-2rem)] max-w-sm">
+          <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 flex items-center gap-3 px-4 py-3">
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-500 shrink-0">
+              <span className="h-3 w-3 rounded-full bg-white" />
+            </span>
+            <p className="font-semibold text-gray-900 text-sm">You</p>
+            <button
+              onClick={() => setShowUserInfo(false)}
+              className="ml-auto text-gray-400 hover:text-gray-600"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      ) : null}
 
       {/* Store detail card — fixed bottom panel, outside GoogleMap */}
       {selectedStore ? (
@@ -288,3 +395,9 @@ export default function StoreMap({
     </div>
   );
 }
+
+const StoreMap = dynamic(async () => ({ default: StoreMapInner }), {
+  ssr: false,
+});
+
+export default StoreMap;

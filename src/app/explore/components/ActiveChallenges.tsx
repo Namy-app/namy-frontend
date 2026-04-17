@@ -1,5 +1,6 @@
 "use client";
 
+import { Flame, Swords } from "lucide-react";
 import Link from "next/link";
 
 import { useMyActiveChallenges } from "@/domains/gamification/hooks";
@@ -57,7 +58,11 @@ function ChallengeCard({ userChallenge }: { userChallenge: UserChallenge }) {
           {period}
         </span>
         <div className="flex items-center gap-1">
-          <span className="text-base">🔥</span>
+          <Flame
+            className="w-4 h-4 shrink-0 text-orange-500"
+            strokeWidth={2.5}
+            aria-hidden
+          />
           <span className="text-base font-black text-gray-800">
             +{challenge.points} puntos
           </span>
@@ -120,8 +125,13 @@ export function ActiveChallenges(): React.JSX.Element | null {
   return (
     <div className="mb-8">
       <div className="px-6 mb-4 flex items-center justify-between">
-        <h2 className="text-xl font-bold text-foreground">
-          Desafíos activos ⚔️
+        <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+          <span>Desafíos activos</span>
+          <Swords
+            className="w-5 h-5 shrink-0 text-[#F1A151]"
+            strokeWidth={2.5}
+            aria-hidden
+          />
         </h2>
         <Link
           href="/league/puntos"

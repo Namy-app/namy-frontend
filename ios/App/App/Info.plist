@@ -22,6 +22,8 @@
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>
@@ -47,5 +49,11 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Ñamy uses your location to show nearby restaurants and offers on the map.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Ñamy needs camera access to scan coupon QR codes.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Ñamy needs photo library access to scan QR codes from an image you choose.</string>
 </dict>
 </plist>

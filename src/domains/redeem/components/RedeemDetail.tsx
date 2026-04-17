@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 
+import { Emoji } from "@/components/Emoji";
 import { getDiscountRestrictionsFromDecodedCouponData } from "@/domains/store/utils";
 import { useToast } from "@/hooks/use-toast";
 import { CouponDecoder, type DecodedCouponData } from "@/lib/coupon-decoder";
@@ -271,7 +272,9 @@ export default function RedeemDetail({
             </p>
             <div className="mt-4 inline-block bg-white/20 backdrop-blur-sm rounded-full px-6 py-2">
               <span className="text-white font-bold text-xl">
-                🎉 Nuevo Nivel: {redemptionResult.newLevel} 🎉
+                <Emoji cp="1f389" label="celebración" /> Nuevo Nivel:{" "}
+                {redemptionResult.newLevel}{" "}
+                <Emoji cp="1f389" label="celebración" />
               </span>
             </div>
           </div>

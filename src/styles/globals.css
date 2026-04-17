@@ -3,6 +3,7 @@
 
 /* Safe area padding — only on Capacitor Android */
 html.capacitor-android body {
+  padding-top: env(safe-area-inset-top, 0px);
   padding-bottom: env(safe-area-inset-bottom, 16px);
 }
 
@@ -130,7 +131,9 @@ html.capacitor-android body {
   body {
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
-    font-family: Arial, Helvetica, sans-serif;
+    font-family:
+      Arial, Helvetica, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
+      "Noto Color Emoji";
   }
 }
 

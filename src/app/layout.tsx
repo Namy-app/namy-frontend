@@ -2,9 +2,10 @@ import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 
 import "../styles/globals.css";
+import { AndroidBackHandler } from "@/components/AndroidBackHandler";
 import { CapacitorSafeArea } from "@/components/CapacitorSafeArea";
 import { GoogleAdsense } from "@/components/GoogleAdsense";
-import { GoogleMapsProvider } from "@/components/GoogleMapsProvider";
+import { GoogleMapsProviderClient } from "@/components/GoogleMapsProviderClient";
 import { SpaRedirectHandler } from "@/components/SpaRedirectHandler";
 import { ReactQueryProvider } from "@/providers/ReactQueryProvider";
 import { Toaster } from "@/shared/components/Toaster";
@@ -54,6 +55,7 @@ export const metadata: Metadata = {
     width: "device-width",
     initialScale: 1,
     maximumScale: 1,
+    viewportFit: "cover",
   },
 };
 
@@ -67,7 +69,7 @@ export default function RootLayout({
       <head>
         <meta
           name="viewport"
-          content="width=device-width, initial-scale=1, maximum-scale=1"
+          content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover"
         />
         <GoogleAdsense />
         <script
@@ -78,9 +80,10 @@ export default function RootLayout({
       </head>
       <body className={`${poppins.variable}  font-sans`}>
         <CapacitorSafeArea />
+        <AndroidBackHandler />
         <SpaRedirectHandler />
         <ReactQueryProvider>
-          <GoogleMapsProvider>{children}</GoogleMapsProvider>
+          <GoogleMapsProviderClient>{children}</GoogleMapsProviderClient>
           <Toaster />
         </ReactQueryProvider>
       </body>

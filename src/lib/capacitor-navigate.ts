@@ -29,6 +29,8 @@ function isDynamicRoute(path: string): boolean {
 }
 
 function getPlaceholderPath(path: string): string {
-  if (path.startsWith("/stores/")) {return "/stores/placeholder";}
+  if (path.startsWith("/stores/")) {
+    return "/stores/id";
+  }
   return path;
 }

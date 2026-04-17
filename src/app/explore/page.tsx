@@ -29,7 +29,13 @@ export default function ExplorePage(): React.JSX.Element {
 
   return (
     <BasicLayout className="bg-gradient-hero">
-      <div className="mt-10 pt-14 pb-16 max-w-5xl mx-auto">
+      <div
+        className="mx-auto mt-10 w-full min-w-0 max-w-5xl pb-16"
+        style={{
+          paddingTop:
+            "calc(3.5rem + var(--status-bar-height, env(safe-area-inset-top, 0px)))",
+        }}
+      >
         <UserLevelBanner />
         <CategoryCards />
         <FeaturedCarousel

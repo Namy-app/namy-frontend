@@ -155,7 +155,7 @@ export default function StoreDetailClient(): React.JSX.Element {
   // to /stores/placeholder. Read it from localStorage when params is "placeholder".
   const paramsId = params?.id as string | undefined;
   const storeId =
-    paramsId && paramsId !== "placeholder"
+    paramsId && paramsId !== "id"
       ? paramsId
       : typeof window !== "undefined"
         ? (localStorage
@@ -1177,9 +1177,13 @@ export default function StoreDetailClient(): React.JSX.Element {
 
                 {/* ── Opiniones ── */}
                 <div>
-                  <h2 className="text-xl font-bold text-foreground mb-3">
+                  <h2 className="text-xl font-bold text-foreground mb-1">
                     ⭐ Opiniones
                   </h2>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Visita el negocio y usa un descuento para poder dejar tu
+                    reseña
+                  </p>
 
                   {(reviewsData?.data?.length ?? 0) > 0 ? (
                     <>

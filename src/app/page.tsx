@@ -2,8 +2,9 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, type ReactNode } from "react";
 
+import { Emoji } from "@/components/Emoji";
 import { contentfulImageLoader } from "@/lib/image-utils";
 import { useAuthStore } from "@/store/useAuthStore";
 
@@ -15,24 +16,39 @@ export default function Home() {
   const containerRef = useRef<HTMLDivElement>(null);
   const { isAuthenticated } = useAuthStore();
 
-  const slides = [
+  const slides: { image: string; title: string; description: ReactNode }[] = [
     {
       image: "/onboarding-slide-1-Cofq2ejQ.png",
       title: "Come inteligente, ahorra al instante",
-      description:
-        "Mira un anuncio rápido y desbloquea descuentos reales en tus lugares favoritos. 🍔💸",
+      description: (
+        <>
+          Mira un anuncio rápido y desbloquea descuentos reales en tus lugares
+          favoritos. <Emoji cp="1f354" label="hamburger" />{" "}
+          <Emoji cp="1f4b8" label="dinero" />
+        </>
+      ),
     },
     {
       image: "/onboarding-slide-2-CdHaT8L7.png",
       title: "Descubre qué hay cerca de ti",
-      description:
-        "Encuentra promociones exclusivas a tu alrededor — come donde te gusta, gastando menos. 🌮📍",
+      description: (
+        <>
+          Encuentra promociones exclusivas a tu alrededor — come donde te gusta,
+          gastando menos. <Emoji cp="1f32e" label="taco" />{" "}
+          <Emoji cp="1f4cd" label="ubicación" />
+        </>
+      ),
     },
     {
       image: "/onboarding-slide-3-DwHfLKZU.png",
       title: "Tu sabor, tus recompensas",
-      description:
-        "Sube de nivel y desbloquea más beneficios mientras disfrutas. 🍽️✨",
+      description: (
+        <>
+          Sube de nivel y desbloquea más beneficios mientras disfrutas.{" "}
+          <Emoji cp="1f37d" label="plato" />{" "}
+          <Emoji cp="2728" label="destellos" />
+        </>
+      ),
     },
   ];
 
@@ -183,7 +199,8 @@ export default function Home() {
               </button>
             </Link>
             <p className="text-sm text-muted-foreground text-center mt-4">
-              🔓 Puedes registrarte en cualquier momento para empezar a ahorrar
+              <Emoji cp="1f513" label="desbloqueado" /> Puedes registrarte en
+              cualquier momento para empezar a ahorrar
             </p>
           </div>
         )}

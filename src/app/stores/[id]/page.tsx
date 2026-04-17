@@ -7,7 +7,7 @@ const StoreDetailClient = dynamic(
 // Generate a wildcard entry so the static export serves this shell
 // for any /stores/[id] path at runtime via Capacitor.
 export function generateStaticParams() {
-  return [{ id: "placeholder" }];
+  return [{ id: "id" }];
 }
 
 export default function Page() {

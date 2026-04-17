@@ -1,4 +1,5 @@
 /** @type {import('next').NextConfig} */
+import { withSentryConfig } from "@sentry/nextjs";
 
 const isMobileBuild = process.env.MOBILE_BUILD === "true";
 
@@ -12,7 +13,11 @@ const nextConfig = isMobileBuild
         optimizePackageImports: ["lucide-react", "@tanstack/react-query"],
       },
       compiler: {
-        removeConsole: process.env.NODE_ENV === "production",
+        // Keep warn/error in prod so Capacitor iOS can log Maps key when NEXT_PUBLIC_DEBUG_GOOGLE_MAPS=true
+        removeConsole:
+          process.env.NODE_ENV === "production"
+            ? { exclude: ["error", "warn"] }
+            : false,
       },
       images: {
         unoptimized: true,
@@ -28,7 +33,10 @@ const nextConfig = isMobileBuild
         optimizePackageImports: ["lucide-react", "@tanstack/react-query"],
       },
       compiler: {
-        removeConsole: process.env.NODE_ENV === "production",
+        removeConsole:
+          process.env.NODE_ENV === "production"
+            ? { exclude: ["error", "warn"] }
+            : false,
       },
       images: {
         remotePatterns: [
@@ -105,4 +113,10 @@ const nextConfig = isMobileBuild
       },
     };
 
-export default nextConfig;
+// Sentry is only applied for web builds — static export (mobile) is incompatible
+export default isMobileBuild
+  ? nextConfig
+  : withSentryConfig(nextConfig, {
+      silent: true,
+      disableLogger: true,
+    });

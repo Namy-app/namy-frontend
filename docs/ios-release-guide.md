@@ -1,78 +1,112 @@
-# iOS Release Guide (TestFlight/App Store)
+# iOS production build and release
 
-This guide covers how to prepare and ship an iOS release for `namy-frontend` using Capacitor.
+This document explains how to produce a **production** iOS build for `namy-frontend`: a Next.js static export synced into the Capacitor iOS project, then archived and distributed via Xcode (TestFlight or App Store).
+
+## Stack (what you are building)
+
+| Layer      | What happens                                                                            |
+| ---------- | --------------------------------------------------------------------------------------- |
+| Web        | `MOBILE_BUILD=true next build` → static export to `out/` (see `next.config.js`)         |
+| Post-build | `mobile:postbuild` copies `404.html` and dynamic route HTML for Capacitor routing       |
+| Native     | `npx cap sync ios` copies `out/` into `ios/App/App/public` and updates Capacitor config |
+
+Capacitor `appId` remains `namyapp.com` for Android alignment (`capacitor.config.ts`). The **iOS bundle ID** is **`com.namyapp`** (Xcode target **App** → `ios/App/App.xcodeproj`).
 
 ## Prerequisites
 
-- Apple Developer account with App Store Connect access
-- Xcode installed and signed in
-- iOS bundle identifier configured in Apple Developer/App Store Connect
-- Production environment values in `.env.production`
+- **Node** ≥ 24.2 (see `package.json` `engines`)
+- **Yarn** (repo uses `yarn.lock`)
+- **Xcode** (current stable, with command-line tools) on macOS
+- **Apple Developer** account with App Store Connect access for distribution
+- **Environment**: production values in `.env.production` (and any secrets required for the static build)
 
-## 1) Build and sync iOS web assets
+## npm scripts (from repo root `namy-frontend`)
 
-From project root:
+| Script                    | Purpose                                                                                                                          |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `yarn mobile:build:ios`   | Production Next export → postbuild → `cap sync ios` only (no Xcode). Use when you only need fresh web assets in the iOS project. |
+| `yarn mobile:ios:release` | Same as `mobile:build:ios`, clears extended attributes on `ios/`, then **`npx cap open ios`** so you can archive in Xcode.       |
+| `yarn mobile:ios`         | Dev-oriented: build, sync, then run on simulator/device via Capacitor.                                                           |
+
+For App Store / TestFlight, you typically run **`yarn mobile:ios:release`** (or `yarn mobile:build:ios` and open Xcode yourself).
+
+## Step 1 — Build web assets and sync iOS
+
+From the `namy-frontend` directory:
 
 ```bash
-cd /Users/abisoyeoke-lawal/Development/GenieX/namy/namy-frontend
-PATH="/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin" yarn mobile:ios:release
+cd namy-frontend
+yarn mobile:build:ios
 ```
 
-What this does:
+Or to sync and open Xcode in one step:
 
-- runs production web build
-- syncs Capacitor iOS project
-- opens the iOS project in Xcode
+```bash
+yarn mobile:ios:release
+```
 
-## 2) Configure signing in Xcode
+If the macOS Terminal environment cannot find `node` or `yarn`, ensure Homebrew binaries are on `PATH`, for example:
 
-In Xcode:
+```bash
+export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+```
 
-1. Select `App` target
-2. Open **Signing & Capabilities**
-3. Enable **Automatically manage signing**
-4. Choose your Team
-5. Confirm Bundle Identifier matches App Store Connect app
+Successful output ends with Capacitor **Sync finished** and updates `ios/App/App/public` with the exported site.
 
-## 3) Set version and build number
+## Step 2 — Sign and version in Xcode
 
-In Xcode target settings:
+1. Open `ios/App/App.xcodeproj` (or use the project opened by `cap open ios`).
+2. Select the **App** target → **Signing & Capabilities**.
+3. Enable **Automatically manage signing**, choose your **Team**, and confirm the **Bundle Identifier** matches the app in App Store Connect (must align with **`com.namyapp`** / your registered App ID).
+4. Set **Version** (`CFBundleShortVersionString`) and **Build** (`CFBundleVersion`); increment **Build** for every upload.
 
-- **Version** (`CFBundleShortVersionString`), e.g. `1.0.1`
-- **Build** (`CFBundleVersion`), increment each upload
+## Step 3 — Create an archive (production IPA for distribution)
 
-## 4) Create Archive
+1. Destination: **Any iOS Device (arm64)** (not a simulator).
+2. Menu **Product → Archive**.
+3. When the Organizer opens, select the archive → **Distribute App** → **App Store Connect** → **Upload** (or follow your team’s internal process).
 
-In Xcode:
+After processing in App Store Connect, use TestFlight or submit for App Store review.
 
-1. Select **Any iOS Device (arm64)** as destination
-2. Use menu **Product > Archive**
-3. Wait for Organizer to open
+### Optional: archive from the command line
 
-## 5) Upload to TestFlight / App Store Connect
+On a machine with a working Xcode install, you can archive with `xcodebuild` (scheme name is typically **`App`**). Adjust signing settings and export options to match your provisioning; this is often wrapped in CI with a dedicated export plist.
 
-From Organizer:
+```bash
+cd ios/App
+xcodebuild -project App.xcodeproj -scheme App -configuration Release \
+  -destination 'generic/platform=iOS' archive \
+  -archivePath build/App.xcarchive
+```
 
-1. Select latest archive
-2. Click **Distribute App**
-3. Choose **App Store Connect**
-4. Choose **Upload**
-5. Keep defaults unless your release process requires otherwise
+Use **Xcode Organizer** or `xcodebuild -exportArchive` with an export options plist to produce an `.ipa` for upload.
 
-After upload, manage release in App Store Connect:
+## Export compliance (“Missing Compliance” on the build)
 
-- Add testers for TestFlight, or
-- Submit for App Store review
+Apple requires export-encryption info for each build. For a typical app that only uses **HTTPS/TLS** (APIs, Stripe, maps, etc.) and no custom proprietary cryptography, declare that you do **not** use non-exempt encryption:
+
+- **Info.plist** includes `ITSAppUsesNonExemptEncryption` = `NO` (`false`) in this project so new uploads usually skip the manual step.
+- For a build already uploaded: **App Store Connect → your app → TestFlight (or the version) → select the build → App Encryption Documentation / Compliance** and answer that the app uses only exempt encryption (e.g. standard HTTPS), or use the questionnaire’s exempt option. Exact labels vary slightly in the UI.
+
+If you add features that use **non-standard** encryption, reassess and consult Apple’s export compliance docs.
 
 ## Troubleshooting
 
-- If iOS sync fails with missing `Podfile`, regenerate iOS platform:
+- **Stale web UI in the app** — Run `yarn mobile:build:ios` again, then rebuild or re-archive in Xcode.
+- **Capacitor / iOS platform issues** — Regenerate the iOS platform only if you know you need to (this can overwrite native customizations):
 
-```bash
-cd /Users/abisoyeoke-lawal/Development/GenieX/namy/namy-frontend
-PATH="/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin" npx cap add ios
-PATH="/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin" npx cap sync ios
-```
+  ```bash
+  npx cap add ios
+  npx cap sync ios
+  ```
 
-- If app shows stale web content, run `yarn mobile:build:ios` again before archiving.
-- If signing fails, verify Team, Bundle ID, and provisioning in **Signing & Capabilities**.
+- **Signing errors** — Verify Team, Bundle ID, and provisioning profiles under **Signing & Capabilities**; ensure the app record exists in App Store Connect.
+- **Quarantine / “damaged” framework messages** — The `mobile:ios:release` script runs `xattr -cr ios` to clear extended attributes; you can run that manually if needed after copying the repo from another machine.
+
+## App Store screenshots
+
+Processed JPEG screenshots (sRGB, correct pixel sizes per slot) live under **`docs/app-store-screenshots/`** — see that folder’s `README.md` for iPhone **6.5"** / **6.7"** and iPad **13"** / **12.9"** paths.
+
+## Related docs
+
+- [Android signed release with env](signed-android-apk-with-env-prod.md) — Android equivalent patterns for env and builds.

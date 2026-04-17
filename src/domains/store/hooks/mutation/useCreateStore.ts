@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/nextjs";
 import {
   useMutation,
   useQueryClient,
@@ -67,8 +68,13 @@ export function useCreateStore(): UseMutationResult<
       return data.createStore.store;
     },
     onSuccess: () => {
-      // Invalidate stores list
       void queryClient.invalidateQueries({ queryKey: ["stores"] });
+    },
+    onError: (error, variables) => {
+      Sentry.captureException(error, {
+        tags: { domain: "store", action: "create_store" },
+        extra: { storeName: variables.name, city: variables.city },
+      });
     },
   });
 }
