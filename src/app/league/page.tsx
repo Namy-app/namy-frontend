@@ -405,8 +405,65 @@ function Skeleton() {
 
 // ─── Main component ────────────────────────────────────────────────────────────
 
+function PrizesModal({ onClose }: { onClose: () => void }) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-6"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-3xl w-full max-w-sm shadow-2xl p-6"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-base font-black text-gray-900">
+            Premios del leaderboard mensual
+          </h2>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 text-xl font-bold leading-none"
+          >
+            ×
+          </button>
+        </div>
+        <div className="flex flex-col gap-4">
+          <div className="flex items-start gap-3">
+            <span className="text-2xl">🥇</span>
+            <div>
+              <p className="text-sm font-black text-gray-900">1er lugar</p>
+              <p className="text-sm text-gray-600">
+                $2,000 pesos en consumo en un restaurante participante
+              </p>
+            </div>
+          </div>
+          <div className="flex items-start gap-3">
+            <span className="text-2xl">🥈</span>
+            <div>
+              <p className="text-sm font-black text-gray-900">2do lugar</p>
+              <p className="text-sm text-gray-600">
+                1 experiencia a elegir: masaje, manicure &amp; pedicure o corte
+                en barbería
+              </p>
+            </div>
+          </div>
+          <div className="flex items-start gap-3">
+            <span className="text-2xl">🥉</span>
+            <div>
+              <p className="text-sm font-black text-gray-900">3er lugar</p>
+              <p className="text-sm text-gray-600">
+                1 mes de Ñamy Premium gratis
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function League() {
   const [selected, setSelected] = useState<Player | null>(null);
+  const [showPrizes, setShowPrizes] = useState(false);
   const { user: authUser } = useAuthStore();
   const { data: entries, isLoading } = useCityLeaderboard(20);
   const { data: myHistory } = useMyPointsHistory(200);
@@ -452,13 +509,27 @@ export default function League() {
               </p>
             ) : null}
           </div>
-          <Link
-            href="/league/puntos"
-            className="flex flex-col items-center gap-0.5"
-          >
-            <span className="text-xl">🎯</span>
-            <span className="text-[10px] font-bold text-gray-400">Puntos</span>
-          </Link>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowPrizes(true)}
+              className="flex flex-col items-center gap-0.5 active:scale-95 transition-transform"
+              aria-label="Ver premios"
+            >
+              <span className="text-xl">🏆</span>
+              <span className="text-[10px] font-bold text-gray-400">
+                Premios
+              </span>
+            </button>
+            <Link
+              href="/league/puntos"
+              className="flex flex-col items-center gap-0.5"
+            >
+              <span className="text-xl">🎯</span>
+              <span className="text-[10px] font-bold text-gray-400">
+                Puntos
+              </span>
+            </Link>
+          </div>
         </div>
 
         {isLoading ? (
@@ -509,13 +580,18 @@ export default function League() {
           </>
         )}
 
-        {/* Modal */}
+        {/* Player modal */}
         {selected ? (
           <PlayerModal
             player={selected}
             history={selected.isCurrentUser ? myHistory : undefined}
             onClose={() => setSelected(null)}
           />
+        ) : null}
+
+        {/* Prizes modal */}
+        {showPrizes ? (
+          <PrizesModal onClose={() => setShowPrizes(false)} />
         ) : null}
       </div>
     </BasicLayout>

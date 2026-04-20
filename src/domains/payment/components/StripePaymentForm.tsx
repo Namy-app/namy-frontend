@@ -14,6 +14,15 @@ import { extractErrorMessage } from "@/lib/utils";
 import { useCreatePaymentIntent } from "../hooks";
 import type { CreatePaymentIntentInput } from "../types";
 
+function getReturnUrl(): string {
+  if (typeof window === "undefined") {
+    return "https://namyapp.com/wallet/success";
+  }
+  // Capacitor serves the app under https://namyapp.com inside the WebView.
+  // Using window.location.origin works for both web and Capacitor.
+  return `${window.location.origin}/wallet/success`;
+}
+
 // Initialize Stripe
 const stripePromise = loadStripe(
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
@@ -57,7 +66,7 @@ function PaymentForm({
       const { error, paymentIntent } = await stripe.confirmPayment({
         elements,
         confirmParams: {
-          return_url: `${window.location.origin}/wallet/success`,
+          return_url: getReturnUrl(),
         },
         redirect: "if_required",
       });
@@ -68,20 +77,32 @@ function PaymentForm({
         onError?.(error.message || "Payment failed");
         setIsProcessing(false);
       } else if (paymentIntent) {
-        // Payment successful - webhook will credit wallet
         if (paymentIntent.status === "succeeded") {
           onSuccess?.(paymentIntent.id);
         } else if (paymentIntent.status === "processing") {
-          // Payment is processing, show message
           setErrorMessage("Payment is being processed. Please wait...");
           setTimeout(() => {
             onSuccess?.(paymentIntent.id);
           }, 2000);
         } else if (paymentIntent.status === "requires_action") {
-          setErrorMessage(
-            "Additional authentication required. Please complete the verification."
-          );
-          setIsProcessing(false);
+          // On iOS WebView, Stripe redirects to the bank page and may not return.
+          // Use handleNextAction instead so the flow stays within the WebView.
+          const { error: actionError, paymentIntent: confirmedIntent } =
+            await stripe.handleNextAction({
+              clientSecret: paymentIntent.client_secret!,
+            });
+          if (actionError) {
+            setErrorMessage(actionError.message ?? "Authentication failed");
+            onError?.(actionError.message ?? "Authentication failed");
+            setIsProcessing(false);
+          } else if (confirmedIntent?.status === "succeeded") {
+            onSuccess?.(confirmedIntent.id);
+          } else {
+            setErrorMessage(
+              `Payment status: ${confirmedIntent?.status ?? "unknown"}`
+            );
+            setIsProcessing(false);
+          }
         } else {
           setErrorMessage(`Payment status: ${paymentIntent.status}`);
           setIsProcessing(false);
