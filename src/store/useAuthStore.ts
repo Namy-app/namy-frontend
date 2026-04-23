@@ -1,7 +1,8 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { persist, createJSONStorage } from "zustand/middleware";
 
 import { type User } from "@/lib/api-types";
+import { capacitorStorage } from "@/lib/capacitor-storage";
 import { setAuthToken, setAuthErrorCallback } from "@/lib/graphql-client";
 
 interface AuthState {
@@ -53,34 +54,9 @@ export const useAuthStore = create<AuthState>()(
           rememberMe: false,
           expiresAt: null,
         });
-
-        // Guest-accessible pages - don't redirect
-        const guestPages = [
-          "/",
-          "/explore",
-          "/restaurants",
-          "/stores",
-          "/service",
-          "/auth",
-        ];
-
-        // Redirect to home page only if not on a guest-accessible page
-        if (typeof window !== "undefined") {
-          const currentPath = window.location.pathname;
-          const isGuestPage = guestPages.some(
-            (page) => currentPath === page || currentPath.startsWith(page + "/")
-          );
-
-          console.warn(
-            "[clearAuth] currentPath:",
-            currentPath,
-            "isGuestPage:",
-            isGuestPage
-          );
-          if (!isGuestPage) {
-            window.location.href = "/";
-          }
-        }
+        // Navigation is handled by ProtectedRoute — no hard redirect here.
+        // A hard window.location.href causes a full page reload which races
+        // with async storage hydration and can log the user out on the next page.
       },
 
       updateUser: (updatedUser) => {
@@ -100,21 +76,13 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: "namy-auth-storage",
+      storage: createJSONStorage(() => capacitorStorage),
       // Initialize auth token on hydration
       onRehydrateStorage: () => (state) => {
         if (state?.accessToken) {
           // Check if session has expired
           if (state.expiresAt && Date.now() > state.expiresAt) {
-            // persisted state is a plain object (no functions). Removing the
-            // localStorage entry clears the expired session safely during
-            // rehydration instead of calling a nonexistent `clearAuth`.
-            try {
-              if (typeof window !== "undefined" && window.localStorage) {
-                window.localStorage.removeItem("namy-auth-storage");
-              }
-            } catch {
-              // ignore errors during cleanup
-            }
+            void capacitorStorage.removeItem("namy-auth-storage");
           } else {
             setAuthToken(state.accessToken);
           }

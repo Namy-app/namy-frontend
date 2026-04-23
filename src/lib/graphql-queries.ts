@@ -738,6 +738,15 @@ export const CREATE_PREMIUM_CHECKOUT_MUTATION = `
   }
 `;
 
+export const CREATE_PREMIUM_PAYMENT_INTENT_MUTATION = `
+  mutation CreatePremiumPaymentIntent {
+    createPremiumPaymentIntent {
+      clientSecret
+      subscriptionId
+    }
+  }
+`;
+
 export const CANCEL_PREMIUM_SUBSCRIPTION_MUTATION = `
   mutation CancelPremium {
     cancelPremiumSubscription {

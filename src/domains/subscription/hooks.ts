@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { graphqlRequest } from "@/lib/graphql-client";
 import {
   CREATE_PREMIUM_CHECKOUT_MUTATION,
+  CREATE_PREMIUM_PAYMENT_INTENT_MUTATION,
   CANCEL_PREMIUM_SUBSCRIPTION_MUTATION,
   TOGGLE_PREMIUM_AUTO_RENEW_MUTATION,
   MY_SUBSCRIPTION_STATUS_QUERY,
@@ -40,6 +41,23 @@ export function useSubscriptionStatus() {
       );
     },
     enabled: isAuthenticated,
+  });
+}
+
+/**
+ * Create an inline Stripe subscription payment intent (no browser redirect)
+ */
+export function useCreatePremiumPaymentIntent() {
+  return useMutation({
+    mutationFn: async () => {
+      const data = await graphqlRequest<{
+        createPremiumPaymentIntent: {
+          clientSecret: string;
+          subscriptionId: string;
+        };
+      }>(CREATE_PREMIUM_PAYMENT_INTENT_MUTATION);
+      return data.createPremiumPaymentIntent;
+    },
   });
 }
 

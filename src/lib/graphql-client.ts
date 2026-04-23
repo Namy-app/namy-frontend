@@ -68,14 +68,13 @@ function isAuthenticationError(graphqlError: GraphQLError | null): boolean {
     }
 
     // Check for authentication-related error messages
+    // NOTE: "User not found" is intentionally excluded — it's a 404 NotFoundException,
+    // not an auth error, and incorrectly triggered logouts after wallet payments.
     const authErrorMessages = [
-      "User not found",
-      // "Unauthorized",
       "Unauthenticated",
       "Authentication required",
       "Invalid token",
       "Token expired",
-      // "Forbidden",
     ];
 
     const messageMatch = authErrorMessages.some(

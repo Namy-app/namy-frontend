@@ -1,5 +1,6 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
 import { ProtectedRoute } from "@/components/ProtectedRoute";
@@ -16,6 +17,8 @@ export default function PaymentPage(): React.JSX.Element {
   const createWallet = useCreateWallet();
 
   // Check if user has a wallet
+  const queryClient = useQueryClient();
+
   const {
     data: wallet,
     isLoading: walletLoading,
@@ -50,8 +53,9 @@ export default function PaymentPage(): React.JSX.Element {
 
   const handleDepositSuccess = async () => {
     setShowDepositForm(false);
-    // Refetch wallet data to show updated balance
     await refetchWallet();
+    void queryClient.invalidateQueries({ queryKey: ["walletBalance"] });
+    void queryClient.invalidateQueries({ queryKey: ["walletTransactions"] });
   };
 
   return (
