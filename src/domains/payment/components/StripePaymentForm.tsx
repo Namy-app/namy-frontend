@@ -1,5 +1,7 @@
 "use client";
 
+import { Browser } from "@capacitor/browser";
+import { Capacitor } from "@capacitor/core";
 import {
   Elements,
   PaymentElement,
@@ -14,12 +16,10 @@ import { extractErrorMessage } from "@/lib/utils";
 import { useCreatePaymentIntent } from "../hooks";
 import type { CreatePaymentIntentInput } from "../types";
 
+const RETURN_URL = "https://namyapp.com/wallet/success";
+
 function getReturnUrl(): string {
-  if (typeof window === "undefined") {
-    return "https://namyapp.com/wallet/success";
-  }
-  // Capacitor serves the app under https://namyapp.com inside the WebView.
-  // Using window.location.origin works for both web and Capacitor.
+  if (typeof window === "undefined") {return RETURN_URL;}
   return `${window.location.origin}/wallet/success`;
 }
 
@@ -63,54 +63,79 @@ function PaymentForm({
     setErrorMessage(undefined);
 
     try {
-      const { error, paymentIntent } = await stripe.confirmPayment({
-        elements,
-        confirmParams: {
-          return_url: getReturnUrl(),
-        },
-        redirect: "if_required",
-      });
+      if (Capacitor.isNativePlatform()) {
+        // On iOS/Android, redirect:"always" makes Stripe return a redirect URL
+        // instead of navigating the WebView. We open it in @capacitor/browser
+        // so the user stays inside the app and returns cleanly after 3DS.
+        const { error } = await stripe.confirmPayment({
+          elements,
+          confirmParams: { return_url: getReturnUrl() },
+          redirect: "always",
+        });
 
-      if (error) {
-        console.error("Payment error:", error);
-        setErrorMessage(error.message);
-        onError?.(error.message || "Payment failed");
-        setIsProcessing(false);
-      } else if (paymentIntent) {
-        if (paymentIntent.status === "succeeded") {
-          onSuccess?.(paymentIntent.id);
-        } else if (paymentIntent.status === "processing") {
-          setErrorMessage("Payment is being processed. Please wait...");
-          setTimeout(() => {
-            onSuccess?.(paymentIntent.id);
-          }, 2000);
-        } else if (paymentIntent.status === "requires_action") {
-          // On iOS WebView, Stripe redirects to the bank page and may not return.
-          // Use handleNextAction instead so the flow stays within the WebView.
-          const { error: actionError, paymentIntent: confirmedIntent } =
-            await stripe.handleNextAction({
-              clientSecret: paymentIntent.client_secret!,
-            });
-          if (actionError) {
-            setErrorMessage(actionError.message ?? "Authentication failed");
-            onError?.(actionError.message ?? "Authentication failed");
+        if (error) {
+          if (error.type === "validation_error") {
+            setErrorMessage(error.message);
             setIsProcessing(false);
-          } else if (confirmedIntent?.status === "succeeded") {
-            onSuccess?.(confirmedIntent.id);
-          } else {
-            setErrorMessage(
-              `Payment status: ${confirmedIntent?.status ?? "unknown"}`
-            );
-            setIsProcessing(false);
+            return;
           }
-        } else {
-          setErrorMessage(`Payment status: ${paymentIntent.status}`);
+          const redirectUrl =
+            error.payment_intent?.next_action?.redirect_to_url?.url;
+          if (redirectUrl) {
+            await Browser.open({ url: redirectUrl });
+            setIsProcessing(false);
+            return;
+          }
+          setErrorMessage(error.message ?? "Payment failed");
+          onError?.(error.message ?? "Payment failed");
           setIsProcessing(false);
         }
       } else {
-        console.error("No payment intent or error returned");
-        setErrorMessage("Payment failed - no response received");
-        setIsProcessing(false);
+        // On web, use if_required so simple cards succeed without a redirect.
+        const { error, paymentIntent } = await stripe.confirmPayment({
+          elements,
+          confirmParams: { return_url: getReturnUrl() },
+          redirect: "if_required",
+        });
+
+        if (error) {
+          console.error("Payment error:", error);
+          setErrorMessage(error.message);
+          onError?.(error.message || "Payment failed");
+          setIsProcessing(false);
+        } else if (paymentIntent) {
+          if (paymentIntent.status === "succeeded") {
+            onSuccess?.(paymentIntent.id);
+          } else if (paymentIntent.status === "processing") {
+            setErrorMessage("Payment is being processed. Please wait...");
+            setTimeout(() => {
+              onSuccess?.(paymentIntent.id);
+            }, 2000);
+          } else if (paymentIntent.status === "requires_action") {
+            const { error: actionError, paymentIntent: confirmedIntent } =
+              await stripe.handleNextAction({
+                clientSecret: paymentIntent.client_secret!,
+              });
+            if (actionError) {
+              setErrorMessage(actionError.message ?? "Authentication failed");
+              onError?.(actionError.message ?? "Authentication failed");
+              setIsProcessing(false);
+            } else if (confirmedIntent?.status === "succeeded") {
+              onSuccess?.(confirmedIntent.id);
+            } else {
+              setErrorMessage(
+                `Payment status: ${confirmedIntent?.status ?? "unknown"}`
+              );
+              setIsProcessing(false);
+            }
+          } else {
+            setErrorMessage(`Payment status: ${paymentIntent.status}`);
+            setIsProcessing(false);
+          }
+        } else {
+          setErrorMessage("Payment failed - no response received");
+          setIsProcessing(false);
+        }
       }
     } catch (err) {
       console.error("Payment exception:", err);
