@@ -22,6 +22,7 @@ import { useRouter } from "next/navigation";
 import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 
+import { AppVersionLabel } from "@/components/AppVersionLabel";
 import { Emoji } from "@/components/Emoji";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import {
@@ -865,6 +866,7 @@ export default function ProfilePage(): React.JSX.Element | null {
               <Emoji cp="1f374" label="cubiertos" />
               <Emoji cp="1f49a" label="corazón verde" />
             </p>
+            <AppVersionLabel />
           </div>
         </div>
 
@@ -993,6 +995,7 @@ export default function ProfilePage(): React.JSX.Element | null {
               onOpenCrisp={handleOpenCrisp}
             />
           </div>
+          <AppVersionLabel />
         </div>
 
         {showAvatarModal ? (
