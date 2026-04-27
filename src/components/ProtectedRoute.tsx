@@ -46,7 +46,7 @@ export function ProtectedRoute({
 
     // Redirect to login if not authenticated or session expired
     if (!isAuthenticated || !isValid) {
-      router.push("/");
+      router.push("/auth");
     }
   }, [isHydrated, isAuthenticated, checkExpiration, router]);
 

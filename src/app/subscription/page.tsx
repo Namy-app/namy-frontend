@@ -1,5 +1,4 @@
 "use client";
-
 import {
   Crown,
   Check,
@@ -17,7 +16,6 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { useWallet, useWalletBalance } from "@/domains/payment/hooks";
 import {
   useSubscriptionStatus,
-  useCreateCheckout,
   useCancelSubscription,
   useToggleAutoRenew,
   usePayPremiumWithWallet,
@@ -32,6 +30,7 @@ function SubscriptionContent(): React.JSX.Element {
   const searchParams = useSearchParams();
   const { user, updateUser } = useAuthStore();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<"stripe" | "wallet">(
     "stripe"
@@ -42,7 +41,6 @@ function SubscriptionContent(): React.JSX.Element {
   // Fetch subscription status
   const { data: subscriptionData, isLoading: subscriptionLoading } =
     useSubscriptionStatus();
-  const createCheckout = useCreateCheckout();
   const cancelSubscription = useCancelSubscription();
   const toggleAutoRenew = useToggleAutoRenew();
   const payWithWallet = usePayPremiumWithWallet();
@@ -95,9 +93,12 @@ function SubscriptionContent(): React.JSX.Element {
         duration: 5000,
       });
 
-      // Wait a moment for webhook to process, then reload to fetch updated data
+      // Wait for webhook to process then invalidate queries — no hard reload
       setTimeout(() => {
-        window.location.href = "/subscription";
+        void queryClient.invalidateQueries({
+          queryKey: ["subscription-status"],
+        });
+        router.replace("/subscription");
       }, 2000);
     } else if (canceled === "true") {
       toast({
@@ -110,7 +111,6 @@ function SubscriptionContent(): React.JSX.Element {
       router.replace("/subscription");
     }
   }, [searchParams, router, toast]);
-
   const handleSubscribe = async () => {
     setIsProcessing(true);
     try {
@@ -135,7 +135,6 @@ function SubscriptionContent(): React.JSX.Element {
       setIsProcessing(false);
     }
   };
-
   const handleCancelSubscription = async () => {
     if (
       !confirm(
@@ -218,10 +217,9 @@ function SubscriptionContent(): React.JSX.Element {
         duration: 5000,
       });
 
-      // Reload to fetch updated data and ensure all components reflect the change
-      setTimeout(() => {
-        window.location.reload();
-      }, 1500);
+      void queryClient.invalidateQueries({ queryKey: ["subscription-status"] });
+      void queryClient.invalidateQueries({ queryKey: ["wallet"] });
+      void queryClient.invalidateQueries({ queryKey: ["walletBalance"] });
     } catch (error: unknown) {
       toast({
         title: "Pago fallido",
@@ -412,57 +410,28 @@ function SubscriptionContent(): React.JSX.Element {
                 </div>
               </div>
 
-              {/* Payment Method Selection & CTA */}
+              {/* Payment CTA */}
               {!hasActiveSubscription ? (
                 <div className="space-y-4">
-                  {/* Wallet Balance Display */}
-                  {wallet ? (
-                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Wallet className="w-5 h-5 text-gray-600" />
-                          <span className="text-sm font-medium text-gray-700">
-                            Saldo de billetera
-                          </span>
-                        </div>
-                        <span className="text-lg font-bold text-gray-900">
-                          {formatAmount(walletBalance)}
+                  {/* Wallet Balance */}
+                  <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Wallet className="w-5 h-5 text-gray-600" />
+                        <span className="text-sm font-medium text-gray-700">
+                          Saldo de billetera
                         </span>
                       </div>
-                      {!hasEnoughBalance ? (
-                        <p className="text-xs text-red-600 mt-2">
-                          Saldo insuficiente. Necesitas{" "}
-                          {formatAmount(premiumCost)} para pagar con billetera.
-                        </p>
-                      ) : null}
+                      <span className="text-lg font-bold text-gray-900">
+                        {formatAmount(walletBalance)}
+                      </span>
                     </div>
-                  ) : null}
-
-                  {/* Payment Method Tabs */}
-                  <div className="flex gap-2 bg-gray-100 p-1 rounded-lg">
-                    <button
-                      onClick={() => setPaymentMethod("stripe")}
-                      className={`flex-1 py-2 px-4 rounded-md font-medium text-sm transition-all ${
-                        paymentMethod === "stripe"
-                          ? "bg-white text-gray-900 shadow"
-                          : "text-gray-600 hover:text-gray-900"
-                      }`}
-                    >
-                      💳 Pago con tarjeta
-                    </button>
-                    <button
-                      onClick={() => setPaymentMethod("wallet")}
-                      disabled={
-                        !wallet || !hasEnoughBalance || hasActiveSubscription
-                      }
-                      className={`flex-1 py-2 px-4 rounded-md font-medium text-sm transition-all ${
-                        paymentMethod === "wallet"
-                          ? "bg-white text-gray-900 shadow"
-                          : "text-gray-600 hover:text-gray-900"
-                      } disabled:opacity-50 disabled:cursor-not-allowed`}
-                    >
-                      💰 Pago con billetera
-                    </button>
+                    {!hasEnoughBalance ? (
+                      <p className="text-xs text-orange-600 mt-2 font-medium">
+                        Necesitas {formatAmount(premiumCost)} — te faltan{" "}
+                        {formatAmount(premiumCost - walletBalance)}
+                      </p>
+                    ) : null}
                   </div>
 
                   {/* Payment Button */}
@@ -508,28 +477,16 @@ function SubscriptionContent(): React.JSX.Element {
                     </>
                   ) : (
                     <button
-                      onClick={() => void handleWalletPayment()}
-                      disabled={isProcessing || !hasEnoughBalance}
-                      className="w-full py-4 bg-linear-to-r from-green-500 to-emerald-600 text-white font-bold rounded-lg hover:from-green-600 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl text-lg"
+                      onClick={() => router.push("/wallet")}
+                      className="w-full py-4 bg-gradient-to-r from-yellow-400 to-orange-500 text-white font-bold rounded-lg hover:from-yellow-500 hover:to-orange-600 transition-all shadow-lg text-lg"
                     >
-                      {isProcessing ? (
-                        <span className="flex items-center justify-center gap-2">
-                          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                          Procesando...
-                        </span>
-                      ) : (
-                        <>
-                          <Wallet className="w-5 h-5 inline mr-2" />
-                          Pagar con billetera - {formatAmount(premiumCost)}
-                        </>
-                      )}
+                      <Wallet className="w-5 h-5 inline mr-2" />
+                      Recargar Billetera
                     </button>
                   )}
 
                   <p className="text-xs text-gray-500 text-center">
-                    {paymentMethod === "stripe"
-                      ? "Pago seguro con Stripe. Cancela cuando quieras."
-                      : "Activación instantánea. Sin renovación automática para pagos con billetera."}
+                    Activación instantánea. Cancela cuando quieras.
                   </p>
                 </div>
               ) : (
