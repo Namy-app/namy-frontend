@@ -1,7 +1,14 @@
 "use client";
-
-import { useQueryClient } from "@tanstack/react-query";
-import { Crown, Check, X, Zap, Gift, Wallet } from "lucide-react";
+import {
+  Crown,
+  Check,
+  X,
+  Zap,
+  Gift,
+  Wallet,
+  HelpCircle,
+  Copy,
+} from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect, Suspense } from "react";
 
@@ -25,6 +32,11 @@ function SubscriptionContent(): React.JSX.Element {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<"stripe" | "wallet">(
+    "stripe"
+  );
+  const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
+  const [showLinkPopup, setShowLinkPopup] = useState(false);
 
   // Fetch subscription status
   const { data: subscriptionData, isLoading: subscriptionLoading } =
@@ -99,7 +111,30 @@ function SubscriptionContent(): React.JSX.Element {
       router.replace("/subscription");
     }
   }, [searchParams, router, toast]);
+  const handleSubscribe = async () => {
+    setIsProcessing(true);
+    try {
+      const baseUrl = window.location.origin;
+      const successUrl = `${baseUrl}/subscription?success=true`;
+      const cancelUrl = `${baseUrl}/subscription?canceled=true`;
 
+      const checkoutSession = await createCheckout.mutateAsync({
+        successUrl,
+        cancelUrl,
+      });
+
+      setCheckoutUrl(checkoutSession.url);
+    } catch (_error) {
+      toast({
+        title: "Error",
+        description:
+          "No se pudo iniciar el proceso de suscripción. Por favor intenta de nuevo.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
   const handleCancelSubscription = async () => {
     if (
       !confirm(
@@ -399,24 +434,47 @@ function SubscriptionContent(): React.JSX.Element {
                     ) : null}
                   </div>
 
-                  {hasEnoughBalance ? (
-                    <button
-                      onClick={() => void handleWalletPayment()}
-                      disabled={isProcessing}
-                      className="w-full py-4 bg-gradient-to-r from-yellow-400 to-orange-500 text-white font-bold rounded-lg hover:from-yellow-500 hover:to-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg text-lg"
-                    >
-                      {isProcessing ? (
-                        <span className="flex items-center justify-center gap-2">
-                          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                          Procesando...
-                        </span>
+                  {/* Payment Button */}
+                  {paymentMethod === "stripe" ? (
+                    <>
+                      {!checkoutUrl ? (
+                        <button
+                          onClick={() => void handleSubscribe()}
+                          disabled={isProcessing}
+                          className="w-full py-4 bg-linear-to-r from-yellow-400 to-orange-500 text-white font-bold rounded-lg hover:from-yellow-500 hover:to-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl text-lg"
+                        >
+                          {isProcessing ? (
+                            <span className="flex items-center justify-center gap-2">
+                              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                              Procesando...
+                            </span>
+                          ) : (
+                            <>
+                              <Crown className="w-5 h-5 inline mr-2" />
+                              Comprar suscripción - 99 pesos
+                            </>
+                          )}
+                        </button>
                       ) : (
-                        <>
-                          <Crown className="w-5 h-5 inline mr-2" />
-                          Activar Premium — {formatAmount(premiumCost)}
-                        </>
+                        <div className="flex flex-col items-center gap-3">
+                          <a
+                            href={checkoutUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="w-full py-4 bg-green-500 hover:bg-green-600 text-white font-bold rounded-lg transition-all shadow-lg hover:shadow-xl text-lg text-center block"
+                          >
+                            Confirmar pago
+                          </a>
+                          <button
+                            onClick={() => setShowLinkPopup(true)}
+                            className="flex items-center gap-1 text-sm text-muted-foreground underline underline-offset-2"
+                          >
+                            <HelpCircle className="w-4 h-4" />
+                            ¿El botón de pago no funciona?
+                          </button>
+                        </div>
                       )}
-                    </button>
+                    </>
                   ) : (
                     <button
                       onClick={() => router.push("/wallet")}
@@ -481,6 +539,41 @@ function SubscriptionContent(): React.JSX.Element {
 
         {/* Bottom Navigation */}
       </BasicLayout>
+
+      {/* Payment link help popup */}
+      {showLinkPopup && checkoutUrl ? (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl max-w-sm w-full p-6 shadow-2xl">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold text-gray-900">Enlace de pago</h3>
+              <button
+                onClick={() => setShowLinkPopup(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <p className="text-sm text-gray-600 mb-4">
+              Por favor copia este enlace y pégalo en tu navegador para
+              finalizar el pago.
+            </p>
+            <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg p-3">
+              <p className="text-xs text-gray-700 flex-1 break-all line-clamp-2">
+                {checkoutUrl}
+              </p>
+              <button
+                onClick={() => {
+                  void navigator.clipboard.writeText(checkoutUrl);
+                  toast({ title: "¡Enlace copiado!", duration: 2000 });
+                }}
+                className="shrink-0 p-1.5 rounded-md hover:bg-gray-200 transition-colors"
+              >
+                <Copy className="w-4 h-4 text-gray-600" />
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </ProtectedRoute>
   );
 }
