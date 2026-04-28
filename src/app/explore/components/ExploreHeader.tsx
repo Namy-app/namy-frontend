@@ -4,6 +4,7 @@ import { Inbox } from "@novu/nextjs";
 import {
   User,
   Ticket,
+  Wallet,
   Settings,
   LogOut,
   ChevronDown,
@@ -226,6 +227,19 @@ export function ExploreHeader({
                       <Ticket className="w-4 h-4 text-primary" />
                       <span className="text-sm font-medium text-foreground">
                         Mis Cupones
+                      </span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        router.push("/wallet");
+                        setIsDropdownOpen(false);
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-muted/50 transition-colors text-left"
+                    >
+                      <Wallet className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-sm font-medium text-foreground">
+                        Mi Billetera
                       </span>
                     </button>
 
