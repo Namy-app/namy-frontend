@@ -336,6 +336,8 @@ export interface CouponFiltersInput {
   discountId?: string;
   used?: boolean;
   includeExpired?: boolean;
+  usedAtFrom?: string;
+  usedAtTo?: string;
 }
 
 // ==================== Catalog Types ====================

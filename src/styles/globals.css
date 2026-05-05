@@ -5,6 +5,13 @@
 html.capacitor-android body {
   padding-top: env(safe-area-inset-top, 0px);
   padding-bottom: env(safe-area-inset-bottom, 16px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+html,
+body {
+  height: 100%;
 }
 
 @layer base {

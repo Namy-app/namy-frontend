@@ -43,7 +43,10 @@ export default function StoreDetailPage() {
   const [isHydrated, setIsHydrated] = useState(false);
   const [generatingPin, setGeneratingPin] = useState(false);
   const [generatedPin, setGeneratedPin] = useState<string | null>(null);
-  // const [genericDiscount, setGenericDiscount] = useState<Discount | null>(null);
+  const [redeemedFromDraft, setRedeemedFromDraft] = useState("");
+  const [redeemedToDraft, setRedeemedToDraft] = useState("");
+  const [redeemedFrom, setRedeemedFrom] = useState("");
+  const [redeemedTo, setRedeemedTo] = useState("");
 
   // Data fetching
   const updateStore = useUpdateStore();
@@ -56,9 +59,15 @@ export default function StoreDetailPage() {
     { storeId, includeExpired: true },
     { page: 1, first: 20 }
   );
-  const { data: redeemedData } = useStoreCoupons(
-    { storeId, used: true, includeExpired: true },
-    { page: 1, first: 1 }
+  const { data: redeemedData, isLoading: redeemedLoading } = useStoreCoupons(
+    {
+      storeId,
+      used: true,
+      includeExpired: true,
+      ...(redeemedFrom ? { usedAtFrom: `${redeemedFrom}T00:00:00` } : {}),
+      ...(redeemedTo ? { usedAtTo: `${redeemedTo}T23:59:59.999` } : {}),
+    },
+    { page: 1, first: 100 }
   );
   const discount = discountsData?.data[0] ?? null;
 
@@ -306,9 +315,25 @@ export default function StoreDetailPage() {
         {activeTab === "coupons" && (
           <CouponsTab
             coupons={couponsData?.data || []}
+            redeemed={redeemedData?.data || []}
             totalGenerated={couponsData?.paginationInfo.total ?? 0}
             totalRedeemed={redeemedData?.paginationInfo.total ?? 0}
             loading={couponsLoading}
+            redeemedLoading={redeemedLoading}
+            redeemedFromDraft={redeemedFromDraft}
+            redeemedToDraft={redeemedToDraft}
+            onRedeemedFromDraftChange={setRedeemedFromDraft}
+            onRedeemedToDraftChange={setRedeemedToDraft}
+            onApplyRedeemedFilter={() => {
+              setRedeemedFrom(redeemedFromDraft);
+              setRedeemedTo(redeemedToDraft);
+            }}
+            onClearRedeemedFilter={() => {
+              setRedeemedFromDraft("");
+              setRedeemedToDraft("");
+              setRedeemedFrom("");
+              setRedeemedTo("");
+            }}
           />
         )}
       </div>
@@ -333,17 +358,101 @@ export default function StoreDetailPage() {
   );
 }
 
+// Reusable coupon table
+function CouponTable({ coupons }: { coupons: Coupon[] }) {
+  return (
+    <div className="bg-card rounded-lg shadow overflow-hidden">
+      <div className="overflow-x-auto">
+        <table className="w-full">
+          <thead className="bg-muted">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                Código
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                ID Usuario
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                Estado
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                Creado
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                Expira
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                Usado El
+              </th>
+            </tr>
+          </thead>
+          <tbody className="bg-card divide-y divide-gray-200">
+            {coupons.map((coupon) => (
+              <tr key={coupon.id} className="hover:bg-muted">
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className="font-mono text-sm font-medium text-foreground">
+                    {coupon.code}
+                  </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className="text-sm text-muted-foreground font-mono">
+                    {coupon.userId?.slice(0, 8) ?? "—"}...
+                  </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span
+                    className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${coupon.used ? "bg-muted text-foreground" : "bg-secondary/100 text-secondary-foreground800"}`}
+                  >
+                    {coupon.used ? "Usado" : "Activo"}
+                  </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
+                  {new Date(coupon.createdAt).toLocaleDateString()}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
+                  {new Date(coupon.expiresAt).toLocaleDateString()}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
+                  {coupon.usedAt
+                    ? new Date(coupon.usedAt).toLocaleDateString()
+                    : "-"}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
 // Coupons Tab Component
 function CouponsTab({
   coupons,
+  redeemed,
   totalGenerated,
   totalRedeemed,
   loading,
+  redeemedLoading,
+  redeemedFromDraft,
+  redeemedToDraft,
+  onRedeemedFromDraftChange,
+  onRedeemedToDraftChange,
+  onApplyRedeemedFilter,
+  onClearRedeemedFilter,
 }: {
   coupons: Coupon[];
+  redeemed: Coupon[];
   totalGenerated: number;
   totalRedeemed: number;
   loading: boolean;
+  redeemedLoading: boolean;
+  redeemedFromDraft: string;
+  redeemedToDraft: string;
+  onRedeemedFromDraftChange: (v: string) => void;
+  onRedeemedToDraftChange: (v: string) => void;
+  onApplyRedeemedFilter: () => void;
+  onClearRedeemedFilter: () => void;
 }) {
   const redemptionRate =
     totalGenerated > 0 ? Math.round((totalRedeemed / totalGenerated) * 100) : 0;
@@ -389,6 +498,7 @@ function CouponsTab({
         </div>
       </div>
 
+      {/* All Coupons */}
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-foreground">
           Cupones Generados
@@ -398,7 +508,6 @@ function CouponsTab({
           {totalGenerated !== 1 ? "es" : ""}
         </p>
       </div>
-
       {coupons.length === 0 ? (
         <div className="bg-card rounded-lg shadow p-8 text-center">
           <Ticket className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
@@ -408,72 +517,61 @@ function CouponsTab({
           </p>
         </div>
       ) : (
-        <div className="bg-card rounded-lg shadow overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-muted">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Código
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    ID Usuario
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Estado
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Creado
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Expira
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Usado El
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-card divide-y divide-gray-200">
-                {coupons.map((coupon) => (
-                  <tr key={coupon.id} className="hover:bg-muted">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="font-mono text-sm font-medium text-foreground">
-                        {coupon.code}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-sm text-muted-foreground font-mono">
-                        {coupon.userId?.slice(0, 8) ?? "—"}...
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span
-                        className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          coupon.used
-                            ? "bg-muted text-foreground"
-                            : "bg-secondary/100 text-secondary-foreground800"
-                        }`}
-                      >
-                        {coupon.used ? "Usado" : "Activo"}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
-                      {new Date(coupon.createdAt).toLocaleDateString()}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
-                      {new Date(coupon.expiresAt).toLocaleDateString()}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
-                      {coupon.usedAt
-                        ? new Date(coupon.usedAt).toLocaleDateString()
-                        : "-"}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+        <CouponTable coupons={coupons} />
+      )}
+
+      {/* Redeemed Coupons */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h2 className="text-2xl font-bold text-foreground">
+          Cupones Canjeados
+        </h2>
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            type="date"
+            aria-label="Desde"
+            className="h-9 rounded-md border border-input bg-background px-2 text-sm text-foreground"
+            value={redeemedFromDraft}
+            onChange={(e) => onRedeemedFromDraftChange(e.target.value)}
+          />
+          <input
+            type="date"
+            aria-label="Hasta"
+            className="h-9 rounded-md border border-input bg-background px-2 text-sm text-foreground"
+            value={redeemedToDraft}
+            onChange={(e) => onRedeemedToDraftChange(e.target.value)}
+          />
+          <button
+            type="button"
+            onClick={onApplyRedeemedFilter}
+            className="h-9 px-3 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90"
+          >
+            Apply
+          </button>
+          <button
+            type="button"
+            onClick={onClearRedeemedFilter}
+            className="h-9 px-3 rounded-md border border-input bg-background text-sm font-medium hover:bg-muted"
+          >
+            Clear
+          </button>
         </div>
+      </div>
+      {redeemedLoading ? (
+        <div className="bg-card rounded-lg shadow p-8 text-center">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-green-600" />
+          <p className="text-muted-foreground mt-2">Cargando canjeados...</p>
+        </div>
+      ) : redeemed.length === 0 ? (
+        <div className="bg-card rounded-lg shadow p-8 text-center">
+          <Ticket className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+          <p className="text-muted-foreground">
+            {redeemedFromDraft || redeemedToDraft
+              ? "No hay canjeados en ese rango de fechas"
+              : "Aún no hay cupones canjeados"}
+          </p>
+        </div>
+      ) : (
+        <CouponTable coupons={redeemed} />
       )}
     </div>
   );
