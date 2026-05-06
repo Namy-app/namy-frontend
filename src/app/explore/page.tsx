@@ -3,6 +3,7 @@
 import { useClosestStores } from "@/domains/store/hooks/query/useClosestStores";
 import { useStores } from "@/domains/store/hooks/query/useStores";
 import { useMyLevel } from "@/domains/user/hooks/query/useMyLevel";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { BasicLayout } from "@/layouts/BasicLayout";
 import { useAuthStore } from "@/store/useAuthStore";
 
@@ -15,6 +16,7 @@ import { UserLevelBanner } from "./components/UserLevelBanner";
 
 export default function ExplorePage(): React.JSX.Element {
   const { user } = useAuthStore();
+  usePushNotifications(user?.id);
   const { data: closestStores, isLoading: isLoadingClosestStores } =
     useClosestStores(undefined, { page: 1, first: 10 });
   const { data: storesResult, isLoading: isLoadingStores } = useStores(

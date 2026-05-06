@@ -131,6 +131,10 @@ export function ExploreHeader({
                   elements: {
                     button:
                       "p-2 hover:bg-accent rounded-full transition-colors",
+                    inbox__popoverContent: {
+                      width: "min(400px, calc(100vw - 8px))",
+                      maxWidth: "calc(100vw - 8px)",
+                    },
                   },
                   icons: {
                     bell: () => (
