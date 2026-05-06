@@ -20,6 +20,11 @@ const config: CapacitorConfig = {
     CapacitorHttp: {
       enabled: true,
     },
+    Keyboard: {
+      resize: "ionic",
+      scrollAssist: false,
+      resizeOnFullScreen: true,
+    },
     StatusBar: {
       overlaysWebView: false,
       style: "LIGHT",

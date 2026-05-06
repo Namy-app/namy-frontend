@@ -54,8 +54,8 @@ function dateRangeFromInputs(
     return undefined;
   }
   return {
-    ...(f ? { from: new Date(`${f}T00:00:00.000Z`).toISOString() } : {}),
-    ...(t ? { to: new Date(`${t}T23:59:59.999Z`).toISOString() } : {}),
+    ...(f ? { from: new Date(`${f}T00:00:00`).toISOString() } : {}),
+    ...(t ? { to: new Date(`${t}T23:59:59.999`).toISOString() } : {}),
   };
 }
 
