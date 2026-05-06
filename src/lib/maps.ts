@@ -1,3 +1,6 @@
+import { Browser } from "@capacitor/browser";
+import { Capacitor } from "@capacitor/core";
+
 /**
  * Interface for location data
  */
@@ -8,48 +11,52 @@ export interface LocationData {
   address?: string;
 }
 
+function buildGoogleMapsUrl(location: LocationData): string {
+  if (location.placeId) {
+    const query =
+      location.lat && location.lng
+        ? `${location.lat},${location.lng}`
+        : encodeURIComponent(location.address ?? "");
+    return `https://www.google.com/maps/search/?api=1&query=${query}&query_place_id=${location.placeId}`;
+  } else if (location.lat && location.lng) {
+    return `https://www.google.com/maps/search/?api=1&query=${location.lat},${location.lng}`;
+  } else if (location.address) {
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location.address)}`;
+  }
+  return "";
+}
+
+async function openUrl(url: string): Promise<void> {
+  const platform = Capacitor.getPlatform();
+  if (platform === "android" || platform === "ios") {
+    await Browser.open({ url });
+  } else {
+    window.open(url, "_blank", "noopener,noreferrer");
+  }
+}
+
 /**
  * Opens a location in Google Maps using placeId, coordinates, or address
- * @param location - Object containing placeId, lat/lng coordinates and/or address
- * @returns void
  */
 export function openInGoogleMaps(location: LocationData): void {
-  let mapsUrl: string;
-
-  // Use placeId if available (most reliable for Google Maps)
-  if (location.placeId) {
-    mapsUrl = `https://www.google.com/maps/search/?api=1&query_place_id=${location.placeId}`;
-  } else if (location.lat && location.lng) {
-    mapsUrl = `https://www.google.com/maps/search/${location.lat},${location.lng}`;
-  } else if (location.address) {
-    // Fallback to address if coordinates aren't available
-    mapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(location.address)}`;
-  } else {
+  const url = buildGoogleMapsUrl(location);
+  if (!url) {
     console.warn("No location data provided for Google Maps");
     return;
   }
-
-  // Always open in new tab
-  window.open(mapsUrl, "_blank", "noopener,noreferrer");
+  void openUrl(url);
 }
 
 /**
  * Gets the Google Maps URL for a location without opening it
- * @param location - Object containing lat/lng coordinates and/or address
- * @returns Google Maps URL string
  */
 export function getGoogleMapsUrl(location: LocationData): string {
-  let mapsUrl = "https://www.google.com/maps/search/";
-
   if (location.lat && location.lng) {
-    mapsUrl += `${location.lat},${location.lng}`;
+    return `https://www.google.com/maps/search/?api=1&query=${location.lat},${location.lng}`;
   } else if (location.address) {
-    mapsUrl += encodeURIComponent(location.address);
-  } else {
-    return "";
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location.address)}`;
   }
-
-  return mapsUrl;
+  return "";
 }
 
 /**
@@ -63,18 +70,14 @@ export function openDirectionsInGoogleMaps(
 ): void {
   let mapsUrl = "https://www.google.com/maps/dir/";
 
-  // Add origin if provided
   if (origin) {
     if (origin.lat && origin.lng) {
       mapsUrl += `${origin.lat},${origin.lng}/`;
     } else if (origin.address) {
       mapsUrl += `${encodeURIComponent(origin.address)}/`;
-    } else {
-      mapsUrl += ""; // Empty origin will use current location
     }
   }
 
-  // Add destination
   if (destination.lat && destination.lng) {
     mapsUrl += `${destination.lat},${destination.lng}`;
   } else if (destination.address) {
@@ -84,6 +87,5 @@ export function openDirectionsInGoogleMaps(
     return;
   }
 
-  // Always open in new tab
-  window.open(mapsUrl, "_blank", "noopener,noreferrer");
+  void openUrl(mapsUrl);
 }
