@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 
 import { useLogin, useSignup } from "@/domains/user/hooks";
 import { useToast } from "@/hooks/use-toast";
@@ -51,17 +51,6 @@ export default function AuthPage(): React.JSX.Element {
 
   const loginMutation = useLogin();
   const signupMutation = useSignup();
-
-  const rememberMeRowRef = useRef<HTMLDivElement>(null);
-
-  const scrollToRememberMe = (): void => {
-    setTimeout(() => {
-      rememberMeRowRef.current?.scrollIntoView({
-        behavior: "smooth",
-        block: "end",
-      });
-    }, 300);
-  };
 
   const updateCrisp = (user: AuthResponse["user"]): void => {
     try {
@@ -170,7 +159,7 @@ export default function AuthPage(): React.JSX.Element {
 
   return (
     <div className="min-h-screen bg-gradient-hero flex items-center justify-center px-6">
-      <div className="w-full max-w-md max-h-[60vh] overflow-y-auto rounded-2xl border-border shadow-glow">
+      <div className="w-full max-w-md rounded-2xl border-border shadow-glow">
         <Card className="w-full p-8 bg-card border-none">
           <div className="text-center mb-8">
             <Image
@@ -226,14 +215,10 @@ export default function AuthPage(): React.JSX.Element {
                     value={loginPassword}
                     onChange={(e) => setLoginPassword(e.target.value)}
                     disabled={loginMutation.isPending}
-                    onFocus={scrollToRememberMe}
                   />
                 </div>
 
-                <div
-                  ref={rememberMeRowRef}
-                  className="flex items-center justify-between"
-                >
+                <div className="flex items-center justify-between">
                   <Checkbox
                     label="Recuérdame"
                     checked={rememberMe}

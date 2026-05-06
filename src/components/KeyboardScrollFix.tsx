@@ -1,20 +1,22 @@
 "use client";
 
 import { Capacitor } from "@capacitor/core";
-// @ts-expect-error Capacitor keyboard plugin types can be unavailable in web-only type checking.
 import { Keyboard } from "@capacitor/keyboard";
 import { useEffect } from "react";
 
 export function KeyboardScrollFix(): null {
   useEffect(() => {
-    if (Capacitor.getPlatform() !== "android") {
+    const platform = Capacitor.getPlatform();
+    if (platform !== "android" && platform !== "ios") {
       return;
     }
 
     const onShow = Keyboard.addListener(
       "keyboardDidShow",
       (info: { keyboardHeight: number }) => {
-        document.body.style.paddingBottom = `${info.keyboardHeight}px`;
+        if (platform === "android") {
+          document.body.style.paddingBottom = `${info.keyboardHeight}px`;
+        }
         setTimeout(() => {
           const el = document.activeElement as HTMLElement | null;
           if (el && ["INPUT", "TEXTAREA"].includes(el.tagName)) {
@@ -25,7 +27,9 @@ export function KeyboardScrollFix(): null {
     );
 
     const onHide = Keyboard.addListener("keyboardDidHide", () => {
-      document.body.style.paddingBottom = "";
+      if (platform === "android") {
+        document.body.style.paddingBottom = "";
+      }
     });
 
     return () => {

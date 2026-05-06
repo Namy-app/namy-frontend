@@ -206,6 +206,11 @@
   resolved "https://registry.npmjs.org/@capacitor/preferences/-/preferences-8.0.1.tgz"
   integrity sha512-T6no3ebi79XJCk91U3Jp/liJUwgBdvHR+s6vhvPkPxSuch7z3zx5Rv1bdWM6sWruNx+pViuEGqZvbfCdyBvcHQ==
 
+"@capacitor/push-notifications@^8.0.3":
+  version "8.0.3"
+  resolved "https://registry.yarnpkg.com/@capacitor/push-notifications/-/push-notifications-8.0.3.tgz#30e05e187d6a631413829a87673a27b86c4b2d9b"
+  integrity sha512-jmBBoJvOzmzem8YoO9dQJBPFiM1bksTNAoV7yksCBN10BybAOtmBF19vFPt/jr2KGAirnPZz0ne2X0OH/rRGtg==
+
 "@capacitor/status-bar@^8.0.1":
   version "8.0.2"
   resolved "https://registry.npmjs.org/@capacitor/status-bar/-/status-bar-8.0.2.tgz"

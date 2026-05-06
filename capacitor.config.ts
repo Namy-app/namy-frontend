@@ -21,8 +21,8 @@ const config: CapacitorConfig = {
       enabled: true,
     },
     Keyboard: {
-      resize: "ionic",
-      scrollAssist: false,
+      resize: "body",
+      scrollAssist: true,
       resizeOnFullScreen: true,
     },
     StatusBar: {
