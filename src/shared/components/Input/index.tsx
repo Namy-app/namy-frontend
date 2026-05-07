@@ -6,25 +6,7 @@ import { cn } from "@/lib/utils";
 export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {}
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, type, onFocus, ...props }, ref) => {
-    const handleFocus = (e: React.FocusEvent<HTMLInputElement>): void => {
-      onFocus?.(e);
-      // On Capacitor native (Android/iOS), the keyboard shrinks the body but not 100vh.
-      // Scroll the input into view after the keyboard animation completes.
-      if (globalThis.window !== undefined) {
-        const html = document.documentElement;
-        if (
-          html.classList.contains("capacitor-android") ||
-          html.classList.contains("capacitor-ios")
-        ) {
-          const target = e.target;
-          setTimeout(() => {
-            target.scrollIntoView({ behavior: "smooth", block: "center" });
-          }, 350);
-        }
-      }
-    };
-
+  ({ className, type, ...props }, ref) => {
     return (
       <input
         type={type}
@@ -33,7 +15,6 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           className
         )}
         ref={ref}
-        onFocus={handleFocus}
         {...props}
       />
     );

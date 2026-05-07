@@ -1,6 +1,12 @@
 @import "tailwindcss";
 @import "tailwindcss/utilities";
 
+/* iOS keyboard height (px), set by KeyboardScrollFix.tsx. Zero on Android (adjustResize handles it). */
+:root {
+  --keyboard-height: 0px;
+  --keyboard-safe-height: 100dvh;
+}
+
 /* Safe area padding — only on Capacitor Android */
 html.capacitor-android body {
   padding-top: env(safe-area-inset-top, 0px);

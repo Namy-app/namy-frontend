@@ -1,44 +1,67 @@
 "use client";
 
 import { Capacitor } from "@capacitor/core";
+import type { PluginListenerHandle } from "@capacitor/core";
 import { Keyboard } from "@capacitor/keyboard";
 import { useEffect } from "react";
 
 export function KeyboardScrollFix(): null {
   useEffect(() => {
     const platform = Capacitor.getPlatform();
-    if (platform !== "android" && platform !== "ios") {
-      return;
+    if (platform !== "android" && platform !== "ios") {return;}
+
+    let keyboardVisible = false;
+    let focusTimer: ReturnType<typeof setTimeout> | null = null;
+    let showHandle: PluginListenerHandle | null = null;
+    let hideHandle: PluginListenerHandle | null = null;
+
+    function scrollActiveIntoView() {
+      const el = document.activeElement as HTMLElement | null;
+      if (!el || !["INPUT", "TEXTAREA"].includes(el.tagName)) {return;}
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
     }
 
-    const onShow = Keyboard.addListener(
-      "keyboardDidShow",
-      (info: { keyboardHeight: number }) => {
-        if (platform === "android") {
-          document.body.style.paddingBottom = `${info.keyboardHeight}px`;
-        }
-        setTimeout(() => {
-          const el = document.activeElement as HTMLElement | null;
-          if (el && ["INPUT", "TEXTAREA"].includes(el.tagName)) {
-            el.scrollIntoView({ behavior: "smooth", block: "center" });
-          }
-        }, 50);
-      }
-    );
+    function onFocusIn(e: FocusEvent) {
+      const el = e.target as HTMLElement | null;
+      if (!el || !["INPUT", "TEXTAREA"].includes(el.tagName)) {return;}
+      if (!keyboardVisible) {return;}
+      if (focusTimer) {clearTimeout(focusTimer);}
+      focusTimer = setTimeout(scrollActiveIntoView, 80);
+    }
 
-    const onHide = Keyboard.addListener("keyboardDidHide", () => {
-      if (platform === "android") {
-        document.body.style.paddingBottom = "";
+    // keyboardDidShow gives us the final keyboard height after animation.
+    // On iOS we shrink the container by setting --keyboard-height; Android's
+    // WebView already resizes via adjustResize so we leave --keyboard-height at 0.
+    void Keyboard.addListener("keyboardDidShow", (info) => {
+      keyboardVisible = true;
+      if (platform === "ios") {
+        document.documentElement.style.setProperty(
+          "--keyboard-height",
+          `${info.keyboardHeight}px`
+        );
       }
+      setTimeout(scrollActiveIntoView, 80);
+    }).then((h) => {
+      showHandle = h;
     });
 
+    void Keyboard.addListener("keyboardWillHide", () => {
+      keyboardVisible = false;
+      if (platform === "ios") {
+        document.documentElement.style.setProperty("--keyboard-height", "0px");
+      }
+    }).then((h) => {
+      hideHandle = h;
+    });
+
+    document.addEventListener("focusin", onFocusIn);
+
     return () => {
-      onShow
-        .then((h: { remove: () => Promise<void> }) => h.remove())
-        .catch(() => undefined);
-      onHide
-        .then((h: { remove: () => Promise<void> }) => h.remove())
-        .catch(() => undefined);
+      if (focusTimer) {clearTimeout(focusTimer);}
+      void showHandle?.remove();
+      void hideHandle?.remove();
+      document.removeEventListener("focusin", onFocusIn);
+      document.documentElement.style.removeProperty("--keyboard-height");
     };
   }, []);
 
