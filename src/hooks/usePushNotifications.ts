@@ -53,9 +53,7 @@ export function usePushNotifications(userId: string | undefined): void {
         return;
       }
 
-      await PushNotifications.register();
-
-      // Registration success — receive the device token
+      // Add listeners BEFORE calling register() to avoid missing the registration event
       await PushNotifications.addListener(
         "registration",
         (token: { value: string }) => {
@@ -85,6 +83,8 @@ export function usePushNotifications(userId: string | undefined): void {
           );
         }
       );
+
+      await PushNotifications.register();
     };
 
     setup().catch((err) =>
