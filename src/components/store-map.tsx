@@ -1,14 +1,14 @@
 "use client";
 
 import { GoogleMap, useJsApiLoader, OverlayView } from "@react-google-maps/api";
-import { MapPin, Star, X } from "lucide-react";
+import { X } from "lucide-react";
 import dynamic from "next/dynamic";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 
 import { GoogleMapsDiagnosticsError } from "@/components/GoogleMapsDiagnosticsError";
 import { MapLoadingView } from "@/components/MapLoadingView";
+import { RestaurantCard } from "@/domains/store/components/RestaurantCard";
 import type { Store } from "@/lib/api-types";
 import { navigateTo } from "@/lib/capacitor-navigate";
 import { getGoogleMapsApiKey } from "@/lib/google-maps-api-key";
@@ -101,6 +101,7 @@ function StoreMapInner({
   discountPercentage = 10,
 }: StoreMapProps) {
   const router = useRouter();
+  const stripRef = useRef<HTMLDivElement>(null);
   const [selectedStore, setSelectedStore] = useState<Store | null>(null);
   const [showUserInfo, setShowUserInfo] = useState(false);
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
@@ -167,6 +168,31 @@ function StoreMapInner({
   }, []);
 
   const storesWithCoords = stores.filter((s) => s.lat && s.lng);
+
+  const visibleStores = useMemo(() => {
+    return stores
+      .filter((s) => s.lat && s.lng)
+      .filter((store) => {
+        if (!bounds) {
+          return true;
+        }
+        return bounds.contains({ lat: store.lat!, lng: store.lng! });
+      });
+  }, [stores, bounds]);
+
+  const stripStores: Store[] = selectedStore
+    ? [
+        selectedStore,
+        ...visibleStores.filter((s) => s.id !== selectedStore.id).slice(0, 9),
+      ]
+    : [];
+
+  useEffect(() => {
+    if (stripRef.current && selectedStore) {
+      stripRef.current.scrollLeft = 0;
+    }
+  }, [selectedStore]);
+
   const mapCenter =
     center ||
     (userLocation
@@ -216,13 +242,6 @@ function StoreMapInner({
       { featureType: "transit", stylers: [{ visibility: "off" }] },
     ],
   };
-
-  const visibleStores = storesWithCoords.filter((store) => {
-    if (!bounds) {
-      return true;
-    }
-    return bounds.contains({ lat: store.lat!, lng: store.lng! });
-  });
 
   return (
     <div className={`relative w-full ${height}`}>
@@ -304,91 +323,30 @@ function StoreMapInner({
         </div>
       ) : null}
 
-      {/* Store detail card — fixed bottom panel, outside GoogleMap */}
       {selectedStore ? (
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 w-[calc(100%-2rem)] max-w-sm">
+        <div className="absolute bottom-4 left-0 right-0 z-10 px-3">
           <div
-            className="cursor-pointer"
-            onClick={() => navigateTo(`/stores/${selectedStore.id}`, router)}
+            ref={stripRef}
+            className="flex gap-3 overflow-x-auto pb-2"
+            style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
           >
-            <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 flex overflow-hidden hover:shadow-xl transition-shadow">
-              {/* Image */}
-              <div className="relative w-28 shrink-0 h-28">
-                <Image
-                  src={
-                    selectedStore.imageUrl ||
-                    "https://placehold.co/112x112/fef2f2/f87171?text=Store"
-                  }
-                  alt={selectedStore.name}
-                  fill
-                  className="object-cover"
-                  unoptimized
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src =
-                      "https://placehold.co/112x112/fef2f2/f87171?text=Store";
-                  }}
+            {stripStores.map((store) => (
+              <div
+                key={store.id}
+                className={`shrink-0 w-64 cursor-pointer transition-transform duration-200 ${
+                  store.id === selectedStore.id
+                    ? "ring-2 ring-primary scale-[1.03] rounded-2xl"
+                    : ""
+                }`}
+                onClick={() => navigateTo(`/stores/${store.id}`, router)}
+              >
+                <RestaurantCard
+                  store={store}
+                  discountPercentage={discountPercentage}
+                  distance={store.distance}
                 />
-                {/* Discount badge */}
-                <div className="absolute top-2 left-2 bg-[#E8572A] text-white text-xs font-bold px-1.5 py-0.5 rounded-md">
-                  {discountPercentage}%
-                </div>
               </div>
-
-              {/* Info */}
-              <div className="flex-1 p-3 min-w-0">
-                <div className="flex items-start justify-between mb-1">
-                  <p className="font-bold text-gray-900 text-sm leading-tight pr-2">
-                    {selectedStore.name}
-                  </p>
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setSelectedStore(null);
-                    }}
-                    className="shrink-0 text-gray-400 hover:text-gray-600 mt-0.5"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-
-                {/* Rating */}
-                <div className="flex items-center gap-1 mb-1.5">
-                  <Star className="w-3.5 h-3.5 fill-[#E8572A] text-[#E8572A]" />
-                  <span className="text-xs font-semibold text-gray-800">
-                    {selectedStore.averageRating?.toFixed(1) ?? "4.5"}
-                  </span>
-                  {selectedStore.reviewCounter ? (
-                    <span className="text-xs text-gray-400">
-                      ({selectedStore.reviewCounter})
-                    </span>
-                  ) : null}
-                </div>
-
-                {/* Category pill */}
-                {selectedStore.type ? (
-                  <div className="flex gap-1 mb-1.5">
-                    <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
-                      {selectedStore.type === "RESTAURANT"
-                        ? "Restaurante"
-                        : selectedStore.type === "SERVICE"
-                          ? "Servicio"
-                          : "Tienda"}
-                    </span>
-                  </div>
-                ) : null}
-
-                {/* Distance */}
-                {selectedStore.distance !== undefined ? (
-                  <div className="flex items-center gap-1 text-gray-500">
-                    <MapPin className="w-3 h-3 text-[#E8572A]" />
-                    <span className="text-xs">
-                      {selectedStore.distance.toFixed(1)} km
-                    </span>
-                  </div>
-                ) : null}
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       ) : null}
