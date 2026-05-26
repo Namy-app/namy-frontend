@@ -183,7 +183,23 @@ function StoreMapInner({
   const stripStores: Store[] = selectedStore
     ? [
         selectedStore,
-        ...visibleStores.filter((s) => s.id !== selectedStore.id).slice(0, 9),
+        ...storesWithCoords
+          .filter((s) => s.id !== selectedStore.id)
+          .sort((a, b) => {
+            if (!selectedStore.lat || !selectedStore.lng) {
+              return 0;
+            }
+            const distA = Math.sqrt(
+              Math.pow((a.lat ?? 0) - selectedStore.lat, 2) +
+                Math.pow((a.lng ?? 0) - selectedStore.lng, 2)
+            );
+            const distB = Math.sqrt(
+              Math.pow((b.lat ?? 0) - selectedStore.lat, 2) +
+                Math.pow((b.lng ?? 0) - selectedStore.lng, 2)
+            );
+            return distA - distB;
+          })
+          .slice(0, 9),
       ]
     : [];
 
@@ -335,7 +351,7 @@ function StoreMapInner({
                 key={store.id}
                 className={`shrink-0 w-64 cursor-pointer transition-transform duration-200 ${
                   store.id === selectedStore.id
-                    ? "ring-2 ring-primary scale-[1.03] rounded-2xl"
+                    ? " ring-primary scale-[1.03] rounded-2xl"
                     : ""
                 }`}
                 onClick={() => navigateTo(`/stores/${store.id}`, router)}
