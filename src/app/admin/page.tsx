@@ -32,7 +32,9 @@ export default function AdminDashboardPage() {
   const [reportError, setReportError] = useState<string | null>(null);
 
   const handleExportMonthlyReport = async () => {
-    if (!reportMonth) {return;}
+    if (!reportMonth) {
+      return;
+    }
 
     const [year, month] = reportMonth.split("-");
     setReportError(null);
@@ -448,11 +450,11 @@ export default function AdminDashboardPage() {
                 </div>
               </div>
 
-              <div className="flex flex-wrap items-center gap-3">
+              <div className="flex flex-nowrap items-center gap-3">
                 <input
                   type="month"
                   aria-label="Report month"
-                  className="h-9 rounded-md border border-input bg-background px-2 text-sm text-foreground"
+                  className="h-9 shrink-0 rounded-md border border-input bg-background px-2 text-sm text-foreground"
                   value={reportMonth}
                   onChange={(e) => {
                     setReportMonth(e.target.value);
@@ -465,11 +467,11 @@ export default function AdminDashboardPage() {
                     void handleExportMonthlyReport();
                   }}
                   disabled={!reportMonth || reportExporting}
-                  className="h-9 px-4 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+                  className="h-9 shrink-0 min-w-[9.5rem] justify-center px-4 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors inline-flex items-center gap-2"
                 >
                   {reportExporting ? (
                     <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <Loader2 className="w-4 h-4 shrink-0 animate-spin" />
                       Exporting...
                     </>
                   ) : (
