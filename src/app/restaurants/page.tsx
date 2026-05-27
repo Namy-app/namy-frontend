@@ -46,6 +46,8 @@ const ITEMS_PER_PAGE = 12;
 const MAP_PANEL_TOP =
   "calc(var(--status-bar-height, env(safe-area-inset-top, 0px)) + 3.5rem)";
 const MAP_PANEL_BOTTOM = "4rem";
+/** Height of back + search row floating over the map */
+const MAP_FLOATING_HEADER_HEIGHT = "3.8rem";
 const MAP_SHEET_TRANSITION =
   "transition-[top,opacity,box-shadow,border-radius] duration-[500ms] ease-in-out";
 
@@ -96,10 +98,6 @@ export default function RestaurantListingPage(): React.JSX.Element {
 
   const searchTimeoutRef = useRef<NodeJS.Timeout>(undefined);
   const sheetScrollRef = useRef<HTMLDivElement>(null);
-  const mapSearchRef = useRef<HTMLDivElement>(null);
-  const mapTabsRef = useRef<HTMLDivElement>(null);
-  const [mapSearchHeight, setMapSearchHeight] = useState(0);
-  const [mapTabsHeight, setMapTabsHeight] = useState(0);
   const lastSheetScrollTopRef = useRef(0);
   const sheetTouchStartYRef = useRef(0);
   const sheetHandleDraggingRef = useRef(false);
@@ -129,6 +127,7 @@ export default function RestaurantListingPage(): React.JSX.Element {
   const [_, setShowGuideModal] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>("map");
   const [snapPosition, setSnapPosition] = useState<MapSnapPosition>("half");
+  const [isPinSelected, setIsPinSelected] = useState(false);
   const [mapSortBy, setMapSortBy] = useState<MapSortBy>("DISTANCE");
 
   const [sortBy, setSortBy] = useState<"DISTANCE" | "NEWEST">("NEWEST");
@@ -232,36 +231,8 @@ export default function RestaurantListingPage(): React.JSX.Element {
     };
   }, []);
 
-  useEffect(() => {
-    if (viewMode !== "map") {
-      return;
-    }
-    const searchEl = mapSearchRef.current;
-    const tabsEl = mapTabsRef.current;
-    if (!searchEl || !tabsEl) {
-      return;
-    }
-    const updateHeights = (): void => {
-      setMapSearchHeight(searchEl.offsetHeight);
-      setMapTabsHeight(tabsEl.offsetHeight);
-    };
-    updateHeights();
-    const observer = new ResizeObserver(updateHeights);
-    observer.observe(searchEl);
-    observer.observe(tabsEl);
-    return () => {
-      observer.disconnect();
-    };
-  }, [viewMode]);
-
-  const mapChromeHeight = mapSearchHeight + mapTabsHeight;
-
   const mapSheetTop =
-    snapPosition === "full"
-      ? mapSearchHeight
-      : mapChromeHeight > 0
-        ? `calc(${mapChromeHeight}px + (100% - ${mapChromeHeight}px) * 0.55)`
-        : "55%";
+    snapPosition === "full" ? MAP_FLOATING_HEADER_HEIGHT : "55%";
 
   // Calculate distances for display purposes only
   // All sorting (newest and distance) is handled by the backend
@@ -297,10 +268,6 @@ export default function RestaurantListingPage(): React.JSX.Element {
 
   const toggleMapSheetSnap = (): void => {
     setSnapPosition((prev) => (prev === "half" ? "full" : "half"));
-  };
-
-  const expandMapSheetForSearch = (): void => {
-    setSnapPosition("full");
   };
 
   const handleSheetScroll = (): void => {
@@ -423,13 +390,6 @@ export default function RestaurantListingPage(): React.JSX.Element {
     }, 300);
   };
 
-  const handleMapSearchChange = (query: string): void => {
-    if (snapPosition !== "full") {
-      setSnapPosition("full");
-    }
-    handleSetSearchQuery(query);
-  };
-
   // Cleanup timeout on unmount
   useEffect(() => {
     return () => {
@@ -438,6 +398,13 @@ export default function RestaurantListingPage(): React.JSX.Element {
       }
     };
   }, []);
+
+  const handleMapSearchChange = (query: string): void => {
+    if (snapPosition !== "full") {
+      setSnapPosition("full");
+    }
+    handleSetSearchQuery(query);
+  };
 
   const handleSortChange = (newSort: "DISTANCE" | "NEWEST") => {
     setSortBy(newSort);
@@ -525,59 +492,29 @@ export default function RestaurantListingPage(): React.JSX.Element {
           className="fixed left-0 right-0 z-10 flex flex-col overflow-hidden bg-background"
           style={{ top: MAP_PANEL_TOP, bottom: MAP_PANEL_BOTTOM }}
         >
-          <div
-            ref={mapSearchRef}
-            className="relative z-40 shrink-0 bg-card px-4 pt-2"
-          >
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+          {/* Back + search — always on top of map and sheet */}
+          <div className="pointer-events-none absolute inset-x-0 top-0 z-50 flex items-center gap-2 px-3 py-2">
+            <Button
+              type="button"
+              size="icon"
+              aria-label="Volver a la lista"
+              onClick={() => setViewMode("grid")}
+              className="pointer-events-auto h-10 w-10 shrink-0 rounded-full border-0 bg-white text-foreground shadow-md hover:bg-white/95"
+            >
+              <ChevronLeft className="h-5 w-5" strokeWidth={2} />
+            </Button>
+            <div className="relative min-w-0 flex-1 pointer-events-auto">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 type="search"
                 enterKeyHint="search"
                 autoComplete="off"
-                placeholder="Buscar restaurantes..."
+                placeholder="Busca lugares o categorias"
                 value={searchQuery}
                 onChange={(e) => handleMapSearchChange(e.target.value)}
-                onFocus={expandMapSheetForSearch}
-                onClick={expandMapSheetForSearch}
-                onPointerDown={expandMapSheetForSearch}
-                className="h-12 rounded-2xl border-border bg-background pl-10"
+                onFocus={() => setSnapPosition("full")}
+                className="h-11 rounded-full border-border/60 bg-white pl-9 shadow-md"
               />
-            </div>
-          </div>
-
-          <div
-            ref={mapTabsRef}
-            className="relative z-0 shrink-0 border-b border-border bg-card px-4 pb-2"
-          >
-            <div className="flex justify-center gap-2 pt-2">
-              <Button
-                onClick={() => setShowGuideModal(true)}
-                variant="outline"
-                size="sm"
-                className="gap-2"
-              >
-                <Info className="w-4 h-4" />
-                Guía
-              </Button>
-              <Button
-                onClick={() => setViewMode("grid")}
-                variant="outline"
-                size="sm"
-                className="gap-2"
-              >
-                <Grid3x3 className="w-4 h-4" />
-                Grid
-              </Button>
-              <Button
-                onClick={() => setViewMode("map")}
-                variant="default"
-                size="sm"
-                className="gap-2"
-              >
-                <Map className="w-4 h-4" />
-                Mapa
-              </Button>
             </div>
           </div>
 
@@ -593,6 +530,7 @@ export default function RestaurantListingPage(): React.JSX.Element {
                 stores={mapStoresList}
                 height="h-full"
                 discountPercentage={discountPercentage}
+                onSelectedStoreChange={(store) => setIsPinSelected(!!store)}
                 center={
                   userLocation
                     ? {
@@ -605,115 +543,112 @@ export default function RestaurantListingPage(): React.JSX.Element {
             </div>
           </div>
 
-          <div
-            className={`absolute inset-x-0 bottom-0 flex flex-col overflow-hidden bg-card ${MAP_SHEET_TRANSITION} ${
-              snapPosition === "full"
-                ? "z-30 rounded-none shadow-[0_-4px_24px_rgba(0,0,0,0.12)]"
-                : "z-20 rounded-t-2xl shadow-[0_-4px_24px_rgba(0,0,0,0.1)]"
-            }`}
-            style={{
-              top:
-                typeof mapSheetTop === "number"
-                  ? `${mapSheetTop}px`
-                  : mapSheetTop,
-            }}
-          >
-            <button
-              type="button"
-              aria-label={
-                snapPosition === "half" ? "Expandir lista" : "Mostrar mapa"
-              }
-              onPointerDown={handleSheetHandlePointerDown}
-              onPointerMove={handleSheetHandlePointerMove}
-              onPointerUp={handleSheetHandlePointerUp}
-              onPointerCancel={handleSheetHandlePointerUp}
-              className="flex min-h-11 w-full shrink-0 cursor-grab touch-none items-center justify-center bg-card active:cursor-grabbing"
+          {!isPinSelected ? (
+            <div
+              className={`absolute inset-x-0 bottom-0 flex flex-col overflow-hidden bg-card ${MAP_SHEET_TRANSITION} ${
+                snapPosition === "full"
+                  ? "z-30 rounded-none shadow-[0_-4px_24px_rgba(0,0,0,0.12)]"
+                  : "z-20 rounded-t-2xl shadow-[0_-4px_24px_rgba(0,0,0,0.1)]"
+              }`}
+              style={{ top: mapSheetTop }}
             >
-              <span className="h-1.5 w-12 rounded-full bg-gray-300" />
-            </button>
+              <button
+                type="button"
+                aria-label={
+                  snapPosition === "half" ? "Expandir lista" : "Mostrar mapa"
+                }
+                onPointerDown={handleSheetHandlePointerDown}
+                onPointerMove={handleSheetHandlePointerMove}
+                onPointerUp={handleSheetHandlePointerUp}
+                onPointerCancel={handleSheetHandlePointerUp}
+                className="flex min-h-11 w-full shrink-0 cursor-grab touch-none items-center justify-center bg-card active:cursor-grabbing"
+              >
+                <span className="h-1.5 w-12 rounded-full bg-gray-300" />
+              </button>
 
-            <div className="z-10 shrink-0 border-b border-border/60 bg-card">
-              <CategoryFilterPills
-                categories={categories}
-                selectedCategoryIds={selectedCategoryIds}
-                onCategoryClick={handleCategoryClick}
-                isLoading={categoriesLoading}
-                allLabel="Todos"
-                loadingLabel="Cargando categorías..."
-                className="pb-1"
-              />
+              <div className="z-10 shrink-0 border-b border-border/60 bg-card">
+                <CategoryFilterPills
+                  categories={categories}
+                  selectedCategoryIds={selectedCategoryIds}
+                  onCategoryClick={handleCategoryClick}
+                  isLoading={categoriesLoading}
+                  allLabel="Todos"
+                  loadingLabel="Cargando categorías..."
+                  className="pb-1"
+                />
 
-              <div className="flex flex-col gap-2 px-4 pb-3">
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setMapSortBy("DISTANCE")}
-                    className={`flex w-1/2 items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold transition-colors ${
-                      mapSortBy === "DISTANCE"
-                        ? "bg-[#0f172a] text-white"
-                        : "bg-slate-100 text-foreground"
-                    }`}
-                  >
-                    <Map className="h-4 w-4 shrink-0" />
-                    Distancia
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setMapSortBy("RATING")}
-                    className={`flex w-1/2 items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold transition-colors ${
-                      mapSortBy === "RATING"
-                        ? "bg-[#0f172a] text-white"
-                        : "bg-slate-100 text-foreground"
-                    }`}
-                  >
-                    <Star className="h-4 w-4 shrink-0 fill-current" />
-                    Mejor valorado
-                  </button>
+                <div className="flex flex-col gap-2 px-4 pb-3">
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setMapSortBy("DISTANCE")}
+                      className={`flex w-1/2 items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold transition-colors ${
+                        mapSortBy === "DISTANCE"
+                          ? "bg-[#0f172a] text-white"
+                          : "bg-slate-100 text-foreground"
+                      }`}
+                    >
+                      <Map className="h-4 w-4 shrink-0" />
+                      Distancia
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setMapSortBy("RATING")}
+                      className={`flex w-1/2 items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold transition-colors ${
+                        mapSortBy === "RATING"
+                          ? "bg-[#0f172a] text-white"
+                          : "bg-slate-100 text-foreground"
+                      }`}
+                    >
+                      <Star className="h-4 w-4 shrink-0 fill-current" />
+                      Mejor valorado
+                    </button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {loading ? "" : `${mapStoresList.length} restaurantes`}
+                  </p>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  {loading ? "" : `${mapStoresList.length} restaurantes`}
-                </p>
+              </div>
+
+              <div
+                ref={sheetScrollRef}
+                onScroll={handleSheetScroll}
+                onWheel={handleSheetWheel}
+                onTouchStart={handleSheetTouchStart}
+                onTouchEnd={handleSheetTouchEnd}
+                className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain touch-pan-y px-4 pb-4 [-webkit-overflow-scrolling:touch]"
+              >
+                {loading ? (
+                  <div className="flex flex-col items-center justify-center gap-3 py-12">
+                    <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+                    <p className="text-center text-muted-foreground">
+                      Cargando restaurantes...
+                    </p>
+                  </div>
+                ) : mapStoresList.length === 0 ? (
+                  <div className="py-12 text-center">
+                    <p className="mb-4 text-lg text-muted-foreground">
+                      No se encontraron restaurantes
+                    </p>
+                    <Button onClick={clearFilters} variant="outline">
+                      Limpiar filtros
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-4 pt-1">
+                    {mapStoresList.map((store) => (
+                      <RestaurantCard
+                        key={store.id}
+                        discountPercentage={discountPercentage}
+                        store={store}
+                        distance={store.distance}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
-
-            <div
-              ref={sheetScrollRef}
-              onScroll={handleSheetScroll}
-              onWheel={handleSheetWheel}
-              onTouchStart={handleSheetTouchStart}
-              onTouchEnd={handleSheetTouchEnd}
-              className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain touch-pan-y px-4 pb-4 [-webkit-overflow-scrolling:touch]"
-            >
-              {loading ? (
-                <div className="flex flex-col items-center justify-center gap-3 py-12">
-                  <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-                  <p className="text-center text-muted-foreground">
-                    Cargando restaurantes...
-                  </p>
-                </div>
-              ) : mapStoresList.length === 0 ? (
-                <div className="py-12 text-center">
-                  <p className="mb-4 text-lg text-muted-foreground">
-                    No se encontraron restaurantes
-                  </p>
-                  <Button onClick={clearFilters} variant="outline">
-                    Limpiar filtros
-                  </Button>
-                </div>
-              ) : (
-                <div className="space-y-4 pt-1">
-                  {mapStoresList.map((store) => (
-                    <RestaurantCard
-                      key={store.id}
-                      discountPercentage={discountPercentage}
-                      store={store}
-                      distance={store.distance}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
+          ) : null}
         </div>
       ) : (
         <div className="pt-14">
