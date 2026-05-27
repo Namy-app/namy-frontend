@@ -28,6 +28,8 @@ const MAP_PANEL_TOP =
 const MAP_PANEL_BOTTOM = "4rem";
 /** Height of back + search row floating over the map */
 const MAP_FLOATING_HEADER_HEIGHT = "3.8rem";
+/** Top corner radius for the map bottom sheet (half snap) */
+const MAP_SHEET_TOP_RADIUS = "rounded-t-[40px]";
 const MAP_SHEET_TRANSITION =
   "transition-[top,opacity,box-shadow,border-radius] duration-[500ms] ease-in-out";
 
@@ -386,7 +388,7 @@ export default function RestaurantListingPage(): React.JSX.Element {
             className={`absolute inset-x-0 bottom-0 flex flex-col overflow-hidden bg-card ${MAP_SHEET_TRANSITION} ${
               snapPosition === "full"
                 ? "z-30 rounded-none shadow-[0_-4px_24px_rgba(0,0,0,0.12)]"
-                : "z-20 rounded-t-2xl shadow-[0_-4px_24px_rgba(0,0,0,0.1)]"
+                : `z-20 ${MAP_SHEET_TOP_RADIUS} shadow-[0_-4px_24px_rgba(0,0,0,0.1)]`
             }`}
             style={{ top: mapSheetTop }}
           >

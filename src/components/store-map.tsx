@@ -1,14 +1,14 @@
 "use client";
 
 import { GoogleMap, useJsApiLoader, OverlayView } from "@react-google-maps/api";
-import { X } from "lucide-react";
+import { Heart, MapPin, Star, X } from "lucide-react";
 import dynamic from "next/dynamic";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useCallback, useMemo } from "react";
 
 import { GoogleMapsDiagnosticsError } from "@/components/GoogleMapsDiagnosticsError";
 import { MapLoadingView } from "@/components/MapLoadingView";
-import { RestaurantCard } from "@/domains/store/components/RestaurantCard";
 import type { Store } from "@/lib/api-types";
 import { navigateTo } from "@/lib/capacitor-navigate";
 import { getGoogleMapsApiKey } from "@/lib/google-maps-api-key";
@@ -90,6 +90,103 @@ function StorePinLabel({
       >
         <path d="M6 10 L0 0 Q6 3 12 0 Z" fill="currentColor" />
       </svg>
+    </div>
+  );
+}
+
+function MapSelectedStoreCard({
+  store,
+  discountPercentage,
+  onClose,
+  onNavigate,
+}: {
+  store: Store;
+  discountPercentage: number;
+  onClose: () => void;
+  onNavigate: () => void;
+}) {
+  const imageUrl =
+    store.imageUrl ||
+    "https://images.unsplash.com/photo-1565299507177-b0ac66763828?w=800&auto=format&fit=crop";
+  const rating = store.averageRating?.toFixed(1) ?? "4.5";
+  const distanceLabel =
+    store.distance !== undefined ? `${store.distance.toFixed(1)} km` : null;
+  const categoryLabel =
+    store.type === "RESTAURANT"
+      ? "Restaurante"
+      : store.type === "SERVICE"
+        ? "Servicio"
+        : store.type === "PRODUCT"
+          ? "Tienda"
+          : "Restaurant";
+
+  return (
+    <div
+      className="flex h-[7.75rem] cursor-pointer overflow-hidden rounded-2xl bg-white shadow-[0_8px_32px_rgba(0,0,0,0.18)]"
+      onClick={onNavigate}
+    >
+      <div className="relative h-full w-[7.75rem] shrink-0">
+        <Image
+          src={imageUrl}
+          alt={store.name}
+          fill
+          className="object-cover"
+          unoptimized
+          onError={(e) => {
+            (e.target as HTMLImageElement).src =
+              "https://placehold.co/124x124/fef2f2/f87171?text=Store";
+          }}
+        />
+        <div className="absolute left-2 top-2 rounded-md bg-[#E8572A] px-1.5 py-0.5 text-[11px] font-bold leading-none text-white">
+          {discountPercentage}%
+        </div>
+        <button
+          type="button"
+          aria-label="Cerrar"
+          onClick={(e) => {
+            e.stopPropagation();
+            onClose();
+          }}
+          className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-white/95 text-gray-500 shadow-sm hover:text-gray-700"
+        >
+          <X className="h-3.5 w-3.5" />
+        </button>
+      </div>
+
+      <div className="flex min-w-0 flex-1 flex-col justify-between px-3 py-2.5">
+        <div className="flex items-start justify-between gap-2">
+          <p className="line-clamp-2 text-sm font-bold leading-tight text-gray-900">
+            {store.name}
+          </p>
+          <Heart
+            className="mt-0.5 h-4 w-4 shrink-0 text-gray-300"
+            aria-hidden
+          />
+        </div>
+
+        <div className="flex items-center gap-1">
+          <Star className="h-3.5 w-3.5 fill-[#E8572A] text-[#E8572A]" />
+          <span className="text-xs font-semibold text-[#E8572A]">{rating}</span>
+          {store.reviewCounter ? (
+            <span className="text-xs text-gray-400">
+              ({store.reviewCounter})
+            </span>
+          ) : null}
+        </div>
+
+        <div className="flex flex-wrap gap-x-2 gap-y-0.5">
+          <span className="text-[11px] font-medium text-sky-600">
+            {categoryLabel}
+          </span>
+        </div>
+
+        {distanceLabel ? (
+          <div className="flex items-center gap-1 text-gray-500">
+            <MapPin className="h-3 w-3 text-[#E8572A]" />
+            <span className="text-xs">{distanceLabel}</span>
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 }
@@ -316,17 +413,13 @@ function StoreMapInner({
       ) : null}
 
       {selectedStore ? (
-        <div className="absolute bottom-4 left-4 right-4 z-10">
-          <div
-            className="cursor-pointer overflow-hidden rounded-2xl bg-white shadow-2xl"
-            onClick={() => navigateTo(`/stores/${selectedStore.id}`, router)}
-          >
-            <RestaurantCard
-              store={selectedStore}
-              discountPercentage={discountPercentage}
-              distance={selectedStore.distance}
-            />
-          </div>
+        <div className="absolute bottom-5 left-4 right-4 z-10">
+          <MapSelectedStoreCard
+            store={selectedStore}
+            discountPercentage={discountPercentage}
+            onClose={() => setSelectedStore(null)}
+            onNavigate={() => navigateTo(`/stores/${selectedStore.id}`, router)}
+          />
         </div>
       ) : null}
     </div>
