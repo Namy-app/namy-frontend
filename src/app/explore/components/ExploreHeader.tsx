@@ -15,6 +15,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 
+import { navigateTo } from "@/lib/capacitor-navigate";
 import { env } from "@/lib/env";
 import { useAuthStore } from "@/store/useAuthStore";
 
@@ -27,6 +28,40 @@ export function ExploreHeader({
 }: ExploreHeaderProps): React.JSX.Element {
   const router = useRouter();
   const { user, clearAuth } = useAuthStore();
+
+  const handleNotificationClick = (notification: {
+    subject?: string;
+    body?: string;
+    data?: Record<string, unknown>;
+    redirect?: { url?: string; target?: string } | null;
+  }): void => {
+    const data = notification.data;
+    const isPromo = !data?.type || data.type === "promo_banner";
+
+    if (isPromo) {
+      // Build deepLink: explicit deepLink > storeId > storeIds > explore
+      let deepLink =
+        typeof data?.deepLink === "string" && data.deepLink.startsWith("/")
+          ? data.deepLink
+          : undefined;
+      if (!deepLink && typeof data?.storeId === "string" && data.storeId) {
+        deepLink = `/stores/${data.storeId}`;
+      } else if (
+        !deepLink &&
+        typeof data?.storeIds === "string" &&
+        data.storeIds
+      ) {
+        deepLink = `/restaurants?ids=${data.storeIds}`;
+      }
+      // Navigate directly to the store/page — no banner for inbox clicks
+      navigateTo(deepLink ?? "/explore", router);
+    } else {
+      const deepLink = data?.deepLink;
+      if (typeof deepLink === "string" && deepLink.startsWith("/")) {
+        navigateTo(deepLink, router);
+      }
+    }
+  };
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -114,6 +149,7 @@ export function ExploreHeader({
                   env.NEXT_PUBLIC_NOVU_APPLICATION_IDENTIFIER
                 }
                 subscriberId={user.id}
+                onNotificationClick={handleNotificationClick}
                 appearance={{
                   variables: {
                     colorPrimary: "hsl(8 92% 70%)",
