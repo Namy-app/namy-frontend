@@ -12,6 +12,7 @@ import {
   Trophy,
   FileSpreadsheet,
   Loader2,
+  Bell,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -179,6 +180,18 @@ export default function AdminDashboardPage() {
     stats: [
       { label: "Total", value: "-" },
       { label: "Active", value: "-" },
+    ],
+  });
+
+  adminSections.push({
+    title: "Notificaciones",
+    description: "Envía notificaciones promocionales a los usuarios",
+    icon: Bell,
+    color: "from-emerald-500 to-teal-600",
+    href: "/admin/notifications",
+    stats: [
+      { label: "Push", value: "FCM" },
+      { label: "In-App", value: "Novu" },
     ],
   });
 

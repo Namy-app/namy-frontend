@@ -3,20 +3,22 @@
 import { useClosestStores } from "@/domains/store/hooks/query/useClosestStores";
 import { useStores } from "@/domains/store/hooks/query/useStores";
 import { useMyLevel } from "@/domains/user/hooks/query/useMyLevel";
-import { usePushNotifications } from "@/hooks/usePushNotifications";
+import { usePromoRecovery } from "@/hooks/usePromoRecovery";
 import { BasicLayout } from "@/layouts/BasicLayout";
 import { useAuthStore } from "@/store/useAuthStore";
+import { usePromoStore } from "@/store/usePromoStore";
 
 import { ActiveChallenges } from "./components/ActiveChallenges";
 import { CategoryCards } from "./components/CategoryCards";
 import { FeaturedCarousel } from "./components/FeaturedCarousel";
 import { PageFooter } from "./components/PageFooter";
+import { PromoBanner } from "./components/PromoBanner";
 import { UserLevelBanner } from "./components/UserLevelBanner";
-// import { GamificationCard } from "./components/GamificationCard"; // Unused component
 
 export default function ExplorePage(): React.JSX.Element {
   const { user } = useAuthStore();
-  usePushNotifications(user?.id);
+  const { activePromo, dismissPromo } = usePromoStore();
+  usePromoRecovery();
   const { data: closestStores, isLoading: isLoadingClosestStores } =
     useClosestStores(undefined, { page: 1, first: 10 });
   const { data: storesResult, isLoading: isLoadingStores } = useStores(
@@ -25,12 +27,14 @@ export default function ExplorePage(): React.JSX.Element {
   );
   const { data: myLevel } = useMyLevel();
 
-  // For guests, show 0% discount (no user-specific discounts)
   const discountPercentage =
     (user?.isPremium ? 15 : myLevel?.discountPercentage) ?? 10;
 
   return (
     <BasicLayout className="bg-gradient-hero">
+      {activePromo ? (
+        <PromoBanner promo={activePromo} onClose={() => void dismissPromo()} />
+      ) : null}
       <div
         className="mx-auto mt-10 w-full min-w-0 max-w-5xl pb-16"
         style={{
@@ -45,12 +49,6 @@ export default function ExplorePage(): React.JSX.Element {
           discountPercentage={discountPercentage}
           isLoading={isLoadingClosestStores ? isLoadingStores : undefined}
         />
-        {/* <NearbyPlaces
-          closestStores={closestStores?.data}
-          isLoading={isLoadingClosestStores}
-          discountPercentage={discountPercentage}
-        /> */}
-        {/* <GamificationCard /> */}
         <ActiveChallenges />
         <PageFooter />
       </div>
