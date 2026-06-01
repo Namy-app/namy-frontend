@@ -10,8 +10,11 @@ import {
   Activity,
   Video,
   Trophy,
+  FileSpreadsheet,
+  Loader2,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 import {
   useStoreStatistics,
@@ -23,7 +26,51 @@ import { useAuthStore } from "@/store/useAuthStore";
 
 export default function AdminDashboardPage() {
   const router = useRouter();
-  const { user } = useAuthStore();
+  const { user, accessToken } = useAuthStore();
+  const [reportMonth, setReportMonth] = useState("");
+  const [reportExporting, setReportExporting] = useState(false);
+  const [reportError, setReportError] = useState<string | null>(null);
+
+  const handleExportMonthlyReport = async () => {
+    if (!reportMonth) {
+      return;
+    }
+
+    const [year, month] = reportMonth.split("-");
+    setReportError(null);
+    setReportExporting(true);
+
+    try {
+      const baseUrl = (
+        process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"
+      ).replace("/graphql", "");
+
+      const res = await fetch(
+        `${baseUrl}/export/monthly-report?year=${year}&month=${month}`,
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }
+      );
+
+      if (!res.ok) {
+        throw new Error("Failed to export report");
+      }
+
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `report-${year}-${month}.xlsx`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setReportError(
+        err instanceof Error ? err.message : "Failed to export report."
+      );
+    } finally {
+      setReportExporting(false);
+    }
+  };
 
   // Fetch real data
   const { data: storeStats, isLoading: storeStatsLoading } =
@@ -120,8 +167,6 @@ export default function AdminDashboardPage() {
       ],
       superAdminOnly: true,
     });
-  } else {
-    console.log("Not adding Video Ads - user role is:", user?.role);
   }
 
   // Add remaining sections
@@ -378,6 +423,65 @@ export default function AdminDashboardPage() {
                   )}
                 </>
               )}
+            </div>
+          </div>
+        </div>
+
+        {/* Reports */}
+        <div className="mt-8">
+          <h2 className="text-2xl font-bold text-foreground mb-6">Reports</h2>
+          <div className="bg-card rounded-lg shadow overflow-hidden">
+            <div className="h-2 bg-gradient-to-r from-teal-500 to-teal-600" />
+            <div className="p-6">
+              <div className="flex items-start justify-between mb-6">
+                <div className="flex items-center gap-4">
+                  <div className="p-4 bg-gradient-to-br from-teal-500 to-teal-600 rounded-lg text-white shadow-lg">
+                    <FileSpreadsheet className="w-8 h-8" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-foreground">
+                      Monthly Redemption Report
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      Download monthly coupon redemption data for all
+                      restaurants
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-nowrap items-center gap-3">
+                <input
+                  type="month"
+                  aria-label="Report month"
+                  className="h-9 shrink-0 rounded-md border border-input bg-background px-2 text-sm text-foreground"
+                  value={reportMonth}
+                  onChange={(e) => {
+                    setReportMonth(e.target.value);
+                    setReportError(null);
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    void handleExportMonthlyReport();
+                  }}
+                  disabled={!reportMonth || reportExporting}
+                  className="h-9 shrink-0 min-w-[9.5rem] justify-center px-4 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors inline-flex items-center gap-2"
+                >
+                  {reportExporting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 shrink-0 animate-spin" />
+                      Exporting...
+                    </>
+                  ) : (
+                    "Export Report"
+                  )}
+                </button>
+              </div>
+              {reportError ? (
+                <p className="text-sm text-red-600 mt-2">{reportError}</p>
+              ) : null}
             </div>
           </div>
         </div>
