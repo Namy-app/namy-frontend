@@ -54,7 +54,7 @@ export default function StoreDetailPage() {
   const { data: catalogs, isLoading: catalogsLoading } =
     useStoreCatalogs(storeId);
   const { data: discountsData, isLoading: discountsLoading } =
-    useStoreDiscounts({ storeId }, { page: 1, first: 1 });
+    useStoreDiscounts({ storeId }, { page: 1, first: 50 }, { staleTime: 0 });
   const { data: couponsData, isLoading: couponsLoading } = useStoreCoupons(
     { storeId, includeExpired: true },
     { page: 1, first: 20 }
@@ -69,7 +69,7 @@ export default function StoreDetailPage() {
     },
     { page: 1, first: 100 }
   );
-  const discount = discountsData?.data[0] ?? null;
+  const discounts = discountsData?.data ?? [];
 
   // Wait for client-side hydration
   useEffect(() => {
@@ -293,7 +293,7 @@ export default function StoreDetailPage() {
         {activeTab === "info" && (
           <div className="space-y-8">
             <StoreInfo
-              discount={discount}
+              discounts={discounts}
               discountIsLoading={discountsLoading}
               store={store}
               onGeneratePin={() => void handleOnGeneratePin()}

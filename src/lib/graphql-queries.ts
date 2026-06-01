@@ -525,6 +525,7 @@ export const GET_COUPON_REDEEM_DETAILS_QUERY = `
         excludedHours
         additionalRestrictions
         restrictions
+        customText
       }
     }
   }
@@ -668,11 +669,14 @@ export const COUPONS_QUERY = `
         description
         type
         value
+        minPurchaseAmount
+        maxDiscountAmount
         availableDaysAndTimes
         excludedDaysOfWeek
         excludedHours
         additionalRestrictions
         restrictions
+        customText
       }
       store {
         id
@@ -705,6 +709,9 @@ export const REDEEM_COUPON_BY_STAFF_MUTATION = `
       oldLevel
       message
       challengeProgress
+      customText
+      discountTitle
+      discountType
     }
   }
 `;

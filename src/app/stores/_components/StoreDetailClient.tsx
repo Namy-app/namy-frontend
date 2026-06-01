@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { useRouter, useParams } from "next/navigation";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { createPortal } from "react-dom";
 
 import { CongratulationsModal } from "@/components/CongratulationsModal";
@@ -27,17 +27,24 @@ import { VideoAdsModal } from "@/components/VideoAdsModal";
 import { PlaceHolderTypeEnum } from "@/data/constants";
 import { getDefaultChallenge } from "@/data/default-challenges.data";
 import { useStoreDiscounts, useStoreCatalogs } from "@/domains/admin/hooks";
+import type { Discount } from "@/domains/admin/types";
 import { GeneratingCouponModal } from "@/domains/coupons/GeneratingCouponModal";
 import { useWallet } from "@/domains/payment/hooks";
 import { CatalogCarousel } from "@/domains/store/components/CatalogCarousel";
+import {
+  DISCOUNT_PROMO_GRADIENT,
+  DiscountPromoCarousel,
+} from "@/domains/store/components/DiscountPromoCarousel";
 import { useStore } from "@/domains/store/hooks";
 import { useStoreReviews } from "@/domains/store/hooks/query/useStoreReviews";
 import type { ParsedStore } from "@/domains/store/type";
 import { getDiscountRestrictions } from "@/domains/store/utils";
+import { buildPromoSlideFromDiscount } from "@/domains/store/utils/discountPromoDisplay";
 import { useMyLevel } from "@/domains/user/hooks/query/useMyLevel";
 import { useToast } from "@/hooks/use-toast";
 import { useDiscountCountdown } from "@/hooks/useDiscountCountdown";
 import { BasicLayout } from "@/layouts/BasicLayout";
+import { resolveDiscountDisplayText } from "@/lib/coupon-decoder";
 import { convertTo12Hour } from "@/lib/date-time-utils";
 import { graphqlRequest } from "@/lib/graphql-client";
 import {
@@ -92,6 +99,7 @@ export default function StoreDetailClient(): React.JSX.Element {
   const queryClient = useQueryClient();
 
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [activeCardIndex, setActiveCardIndex] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
   const [showAllHours, setShowAllHours] = useState(false);
   const [showRestrictions, setShowRestrictions] = useState(false);
@@ -166,12 +174,17 @@ export default function StoreDetailClient(): React.JSX.Element {
         : null;
   const { data: store, isLoading } = useStore(storeId);
 
+  const storeDiscountFilters = useMemo(
+    () => (storeId ? { storeId } : undefined),
+    [storeId]
+  );
+  const storeDiscountPagination = useMemo(() => ({ page: 1, first: 10 }), []);
+
   // Fetch discounts for this store
   const { data: discountsData, isLoading: isLoadingDiscounts } =
-    useStoreDiscounts({ storeId: storeId }, { page: 1, first: 10 });
-  const discountRestrictions = getDiscountRestrictions(
-    discountsData?.data?.[0]
-  );
+    useStoreDiscounts(storeDiscountFilters, storeDiscountPagination, {
+      enabled: !!storeId,
+    });
 
   // Fetch catalogs for this store
   const { data: catalogs = [] } = useStoreCatalogs(storeId || "");
@@ -179,15 +192,45 @@ export default function StoreDetailClient(): React.JSX.Element {
   // Fetch reviews for this store
   const { data: reviewsData } = useStoreReviews(storeId, { first: 3 });
 
-  // Get the first active discount for this store
-  const firstActiveDiscount = discountsData?.data?.find((d) => d.active);
+  // Active discounts only — no promotional filters
+  const visibleDiscounts: Discount[] =
+    discountsData?.data?.filter((d) => d.active === true) ?? [];
+  const fallbackDiscountPercentage = userLevel?.discountPercentage ?? 10;
+  const currentCarouselDiscount =
+    visibleDiscounts[activeCardIndex] ?? visibleDiscounts[0];
+
+  const getDiscountSlideLabel = (discount: Discount): string => {
+    const label = resolveDiscountDisplayText({
+      customText: discount.customText,
+      type: discount.type,
+      value: discount.value,
+    });
+    return label || `${fallbackDiscountPercentage}% OFF`;
+  };
+
+  const getSelectedDiscountId = (): string | undefined => {
+    if (visibleDiscounts.length === 0) {
+      return undefined;
+    }
+    const safeIndex = Math.min(activeCardIndex, visibleDiscounts.length - 1);
+    return visibleDiscounts[safeIndex]?.id;
+  };
+
+  const discountRestrictions = getDiscountRestrictions(currentCarouselDiscount);
+
   const isRestaurant =
     store?.type === "RESTAURANT" || store?.type === "PRODUCT";
   const storeCategoryType = isRestaurant ? "Restaurant" : "Store";
 
-  // Use optimized countdown hook
+  // Use optimized countdown hook for the carousel's current discount
   const { isValid: isValidDiscount, countdownText: timeUntilNext } =
-    useDiscountCountdown(discountsData?.data?.[0]);
+    useDiscountCountdown(currentCarouselDiscount);
+
+  useEffect(() => {
+    if (activeCardIndex >= visibleDiscounts.length) {
+      setActiveCardIndex(Math.max(0, visibleDiscounts.length - 1));
+    }
+  }, [visibleDiscounts.length, activeCardIndex]);
 
   // Show spinner while storeId is not yet available from params or query is loading
   if (!storeId || isLoading) {
@@ -396,10 +439,9 @@ export default function StoreDetailClient(): React.JSX.Element {
       return;
     }
 
-    // Set the selected discount
-    const firstActive = discountsData?.data?.find((d) => d.active);
-    if (firstActive) {
-      setSelectedDiscount({ id: firstActive.id });
+    const discountId = getSelectedDiscountId();
+    if (discountId) {
+      setSelectedDiscount({ id: discountId });
     }
 
     // If user is premium, directly unlock discount
@@ -435,10 +477,9 @@ export default function StoreDetailClient(): React.JSX.Element {
     }
 
     try {
-      // Get the first active discount for this store
-      const firstActiveDiscount = discountsData?.data?.find((d) => d.active);
+      const discountId = getSelectedDiscountId();
 
-      if (!firstActiveDiscount) {
+      if (!discountId) {
         toast({
           variant: "destructive",
           title: "No hay descuentos disponibles",
@@ -460,7 +501,7 @@ export default function StoreDetailClient(): React.JSX.Element {
       }>(EXCHANGE_UNLOCK_MUTATION, {
         input: {
           token: unlockToken,
-          discountId: firstActiveDiscount.id,
+          discountId,
         },
       });
 
@@ -501,10 +542,9 @@ export default function StoreDetailClient(): React.JSX.Element {
       return;
     }
 
-    // Get the first active discount for this store
-    const firstActiveDiscount = discountsData?.data?.find((d) => d.active);
+    const discountId = getSelectedDiscountId();
 
-    if (!firstActiveDiscount) {
+    if (!discountId) {
       toast({
         variant: "destructive",
         title: "No hay descuentos disponibles",
@@ -512,8 +552,6 @@ export default function StoreDetailClient(): React.JSX.Element {
       });
       return;
     }
-
-    const discountId = firstActiveDiscount.id;
 
     try {
       // Set loading state for premium users
@@ -618,7 +656,7 @@ export default function StoreDetailClient(): React.JSX.Element {
           };
         };
       }>(QUICK_PAY_FOR_DISCOUNT_MUTATION, {
-        discountId: firstActiveDiscount?.id,
+        discountId: getSelectedDiscountId(),
       });
 
       if (data?.quickPayForDiscount) {
@@ -874,24 +912,37 @@ export default function StoreDetailClient(): React.JSX.Element {
             </div>
 
             <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <div className="lg:col-span-2 space-y-6">
-                <div className="rounded-3xl overflow-hidden shadow-glow">
-                  <div className="p-6 md:p-8 bg-linear-to-br from-rose-300 via-amber-300 to-lime-200 rounded-3xl">
+              <div className="min-w-0 space-y-6 lg:col-span-2">
+                <div
+                  className={`max-w-full min-w-0 overflow-hidden rounded-3xl shadow-glow ${DISCOUNT_PROMO_GRADIENT}`}
+                >
+                  {visibleDiscounts.length > 0 ? (
+                    <DiscountPromoCarousel
+                      activeIndex={activeCardIndex}
+                      onActiveIndexChange={setActiveCardIndex}
+                      slides={visibleDiscounts.map((discount) =>
+                        buildPromoSlideFromDiscount(
+                          discount,
+                          getDiscountSlideLabel
+                        )
+                      )}
+                    />
+                  ) : (
+                    <div className="p-6 md:p-8 text-center text-white min-h-[120px] flex items-center justify-center">
+                      <p className="text-xl font-bold">
+                        🎉 {fallbackDiscountPercentage}% de descuento con Ñamy!
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="p-6 md:p-8 border-t border-white/20">
                     <div className="max-w-5xl mx-auto text-center text-white">
-                      <h2 className="text-2xl md:text-3xl font-bold mb-2">
-                        🎉 {parsedStore.discount.percentage}% de descuento con
-                        Ñamy!
-                      </h2>
-                      <p className="text-white/90 mb-1 text-sm">
+                      <p className="text-white/90 mb-4 text-sm">
                         {user?.isPremium
                           ? "Como miembro premium, ¡desbloquea instantáneamente!"
                           : "Solo muestra tu código QR después de ver un anuncio"}
                       </p>
-                      {/* <p className="text-xs text-white/80 mb-4">
-                        +{restaurant.discount.points} Ñamy points when using
-                        this discount
-                      </p> */}
-                      <div className="mt-4">
+                      <div>
                         {isValidDiscount ? (
                           <Button
                             onClick={handleUnlockDiscountClick}

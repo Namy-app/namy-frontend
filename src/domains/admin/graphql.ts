@@ -1,5 +1,7 @@
 import { gql } from "graphql-request";
 
+import { DISCOUNT_QUANTITY_LIMIT_SELECTION } from "./discountGraphqlFields";
+
 // ==================== Store Mutations ====================
 
 export const CREATE_STORE_MUTATION = gql`
@@ -222,16 +224,16 @@ export const GET_STORE_DISCOUNTS = gql`
         startDate
         endDate
         active
-        maxUses
-        usedCount
+        ${DISCOUNT_QUANTITY_LIMIT_SELECTION}
         minPurchaseAmount
         maxDiscountAmount
         availableDaysAndTimes
         excludedDaysOfWeek
         excludedHours
         additionalRestrictions
-        maxUsesPerUserPerMonth
-        monthlyRedemptionCap
+        customText
+        imageUrl
+        isPromoted
         createdAt
         updatedAt
       }
@@ -260,12 +262,16 @@ export const CREATE_DISCOUNT = gql`
       startDate
       endDate
       active
-      maxUses
-      usedCount
+      ${DISCOUNT_QUANTITY_LIMIT_SELECTION}
       minPurchaseAmount
       maxDiscountAmount
       excludedDaysOfWeek
       excludedHours
+      availableDaysAndTimes
+      additionalRestrictions
+      customText
+      imageUrl
+      isPromoted
       createdAt
       updatedAt
     }
@@ -276,11 +282,26 @@ export const UPDATE_DISCOUNT = gql`
   mutation UpdateDiscount($id: String!, $input: UpdateDiscountInput!) {
     updateDiscount(id: $id, input: $input) {
       id
+      storeId
       title
       description
       type
       value
+      code
+      startDate
+      endDate
       active
+      ${DISCOUNT_QUANTITY_LIMIT_SELECTION}
+      minPurchaseAmount
+      maxDiscountAmount
+      excludedDaysOfWeek
+      excludedHours
+      availableDaysAndTimes
+      additionalRestrictions
+      customText
+      imageUrl
+      isPromoted
+      createdAt
       updatedAt
     }
   }

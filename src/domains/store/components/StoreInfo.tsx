@@ -31,14 +31,14 @@ const DAY_LABELS: Record<string, string> = {
 
 interface Props {
   store: Store;
-  discount?: Discount | null;
+  discounts?: Discount[];
   discountIsLoading?: boolean;
   generatingPin?: boolean;
   onGeneratePin: () => void;
 }
 
 export const StoreInfo = ({
-  discount,
+  discounts = [],
   discountIsLoading,
   generatingPin,
   store,
@@ -278,7 +278,7 @@ export const StoreInfo = ({
 
       <DiscountSection
         className="lg:col-span-3"
-        discount={discount}
+        discounts={discounts}
         loading={discountIsLoading}
         storeId={store.id}
       />

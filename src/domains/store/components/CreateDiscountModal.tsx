@@ -12,17 +12,18 @@ import { useToast } from "@/hooks/use-toast";
 import { formatDateToYMDSafe } from "@/lib/date.lib";
 import { extractValidationErrors } from "@/lib/utils";
 
-import { TimeRestrictionsEditor } from "./TimeRestrictionsEditor";
+import {
+  buildPromoSlidePayload,
+  inferDiscountPromoDisplayMode,
+  type PromoDisplayMode,
+} from "../utils/discountPromoDisplay";
+import { buildDiscountQuantityLimitInput } from "../utils/discountQuantityLimits";
 
-const daysOfTheWeek = [
-  { label: "Lunes", index: 0 },
-  { label: "Martes", index: 1 },
-  { label: "Miércoles", index: 2 },
-  { label: "Jueves", index: 3 },
-  { label: "Viernes", index: 4 },
-  { label: "Sábado", index: 5 },
-  { label: "Domingo", index: 6 },
-];
+import {
+  computeExcludedDaysOfWeek,
+  resolveInitialAvailableDays,
+} from "./defaultDiscountSchedule";
+import { TimeRestrictionsEditor } from "./TimeRestrictionsEditor";
 
 // Create Discount Modal - Unused, can be removed
 export const CreateDiscountModal = ({
@@ -40,28 +41,26 @@ export const CreateDiscountModal = ({
   const [formData, setFormData] = useState({
     title: discount?.title ?? "",
     description: discount?.description ?? "",
-    // TODO: Undo once we confirm we want to have dynamic types
-    type: DiscountType.PERCENTAGE,
-    // type: discount?.type ?? DiscountType.PERCENTAGE,
-    value: "15",
-    // TODO: Undo once we confirm we want to have dynamic values
-    // value: discount?.value.toString() ?? "15",
+    type: discount?.type ?? DiscountType.PERCENTAGE,
+    value: discount?.value?.toString() ?? "15",
+    customText: discount?.customText ?? "",
+    imageUrl: discount?.imageUrl ?? "",
+    promoDisplayMode: discount
+      ? inferDiscountPromoDisplayMode(discount)
+      : ("text" as PromoDisplayMode),
     code: discount?.code ?? undefined,
     startDate: discount?.startDate
       ? formatDateToYMDSafe(discount.startDate)
       : "",
     endDate: discount?.endDate ? formatDateToYMDSafe(discount.endDate) : "",
     active: discount?.active ?? true,
-    excludedDaysOfWeek: discount?.excludedDaysOfWeek ?? [],
-    excludedStartHour: discount?.excludedHours[0],
-    excludedEndHour: discount?.excludedHours[1],
+    excludedStartHour: discount?.excludedHours?.[0],
+    excludedEndHour: discount?.excludedHours?.[1],
     maxUses: discount?.maxUses?.toString() ?? "",
     maxUsesPerUserPerMonth: discount?.maxUsesPerUserPerMonth?.toString() ?? "",
     minPurchaseAmount: discount?.minPurchaseAmount?.toString() ?? "",
     maxDiscountAmount: discount?.maxDiscountAmount?.toString() ?? "",
-    availableDaysAndTimes: discount?.availableDaysAndTimes ?? {
-      availableDays: [],
-    },
+    availableDaysAndTimes: resolveInitialAvailableDays(discount),
     additionalRestrictions: discount?.additionalRestrictions ?? [],
   });
 
@@ -102,8 +101,29 @@ export const CreateDiscountModal = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const promoPayload = buildPromoSlidePayload(
+      formData.promoDisplayMode,
+      formData.imageUrl,
+      formData.customText
+    );
+
+    if (formData.promoDisplayMode === "banner" && !promoPayload.imageUrl) {
+      toast({
+        variant: "destructive",
+        title: "Imagen requerida",
+        description:
+          "En modo banner, sube o pega la URL de una imagen promocional completa.",
+      });
+      return;
+    }
+
     try {
-      const parsedExcludedHours = [];
+      const computedExcludedDaysOfWeek = computeExcludedDaysOfWeek(
+        formData.availableDaysAndTimes
+      );
+
+      const parsedExcludedHours: number[] = [];
 
       if (formData.excludedStartHour !== undefined) {
         parsedExcludedHours.push(formData.excludedStartHour);
@@ -111,6 +131,15 @@ export const CreateDiscountModal = ({
       if (formData.excludedEndHour !== undefined) {
         parsedExcludedHours.push(formData.excludedEndHour);
       }
+
+      const schedulePayload =
+        formData.availableDaysAndTimes.availableDays.length > 0
+          ? formData.availableDaysAndTimes
+          : undefined;
+
+      const quantityLimits = buildDiscountQuantityLimitInput(formData);
+
+      const eodEndDate = `${formData.endDate.split("T")[0]}T23:59:59.999Z`;
 
       if (discount?.id) {
         await updateDiscount.mutateAsync({
@@ -122,30 +151,23 @@ export const CreateDiscountModal = ({
             value: Number.parseFloat(formData.value),
             code: formData.code,
             startDate: formData.startDate,
-            endDate: formData.endDate,
+            endDate: eodEndDate,
             active: formData.active,
-            excludedDaysOfWeek: formData.excludedDaysOfWeek,
+            excludedDaysOfWeek: computedExcludedDaysOfWeek,
             excludedHours: parsedExcludedHours,
-            maxUses: formData.maxUses
-              ? Number.parseInt(formData.maxUses)
-              : undefined,
-            maxUsesPerUserPerMonth: formData.maxUsesPerUserPerMonth
-              ? Number.parseInt(formData.maxUsesPerUserPerMonth)
-              : undefined,
+            ...quantityLimits,
             minPurchaseAmount: formData.minPurchaseAmount
               ? Number.parseFloat(formData.minPurchaseAmount)
               : undefined,
             maxDiscountAmount: formData.maxDiscountAmount
               ? Number.parseFloat(formData.maxDiscountAmount)
               : undefined,
-            availableDaysAndTimes:
-              formData.availableDaysAndTimes.availableDays.length > 0
-                ? formData.availableDaysAndTimes
-                : undefined,
+            availableDaysAndTimes: schedulePayload,
             additionalRestrictions:
               formData.additionalRestrictions.length > 0
                 ? formData.additionalRestrictions
                 : undefined,
+            ...promoPayload,
           },
         });
       } else {
@@ -157,30 +179,23 @@ export const CreateDiscountModal = ({
           value: Number.parseFloat(formData.value),
           code: formData.code,
           startDate: formData.startDate,
-          endDate: formData.endDate,
+          endDate: eodEndDate,
           active: formData.active,
-          excludedDaysOfWeek: formData.excludedDaysOfWeek,
+          excludedDaysOfWeek: computedExcludedDaysOfWeek,
           excludedHours: parsedExcludedHours,
-          maxUses: formData.maxUses
-            ? Number.parseInt(formData.maxUses)
-            : undefined,
-          maxUsesPerUserPerMonth: formData.maxUsesPerUserPerMonth
-            ? Number.parseInt(formData.maxUsesPerUserPerMonth)
-            : undefined,
+          ...quantityLimits,
           minPurchaseAmount: formData.minPurchaseAmount
             ? Number.parseFloat(formData.minPurchaseAmount)
             : undefined,
           maxDiscountAmount: formData.maxDiscountAmount
             ? Number.parseFloat(formData.maxDiscountAmount)
             : undefined,
-          availableDaysAndTimes:
-            formData.availableDaysAndTimes.availableDays.length > 0
-              ? formData.availableDaysAndTimes
-              : undefined,
+          availableDaysAndTimes: schedulePayload,
           additionalRestrictions:
             formData.additionalRestrictions.length > 0
               ? formData.additionalRestrictions
               : undefined,
+          ...promoPayload,
         });
       }
       toast({
@@ -200,16 +215,16 @@ export const CreateDiscountModal = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-card rounded-lg shadow-card max-w-2xl w-full max-h-[90vh] flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-3 sm:p-4">
+      <div className="flex max-h-[90dvh] w-full min-w-0 max-w-2xl flex-col rounded-lg bg-card shadow-card sm:max-h-[90vh]">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-border shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-accent/20 rounded-lg">
-              <Percent className="w-5 h-5 text-accent-foreground" />
+        <div className="flex shrink-0 items-start justify-between gap-3 border-b border-border p-4 sm:items-center sm:p-6">
+          <div className="flex min-w-0 flex-1 items-center gap-3">
+            <div className="shrink-0 rounded-lg bg-accent/20 p-2">
+              <Percent className="h-5 w-5 text-accent-foreground" />
             </div>
-            <div>
-              <h3 className="text-xl font-bold text-foreground">
+            <div className="min-w-0">
+              <h3 className="text-lg font-bold text-foreground sm:text-xl">
                 {discount?.id
                   ? "Descuento de actualización"
                   : "Crear nuevo descuento"}
@@ -222,18 +237,18 @@ export const CreateDiscountModal = ({
           <button
             onClick={onClose}
             disabled={createDiscount.isPending}
-            className="p-2 hover:bg-muted rounded-lg transition-colors disabled:opacity-50"
+            className="shrink-0 rounded-lg p-2 transition-colors hover:bg-muted disabled:opacity-50"
           >
-            <X className="w-5 h-5" />
+            <X className="h-5 w-5" />
           </button>
         </div>
 
         {/* Form */}
         <form
           onSubmit={(e) => void handleSubmit(e)}
-          className="flex flex-col flex-1 min-h-0"
+          className="flex min-h-0 flex-1 flex-col"
         >
-          <div className="p-6 space-y-6 overflow-y-auto flex-1">
+          <div className="min-w-0 flex-1 space-y-6 overflow-x-hidden overflow-y-auto p-4 sm:p-6">
             {/* Basic Information */}
             <div className="space-y-4">
               <h4 className="text-sm font-semibold text-foreground uppercase tracking-wide">
@@ -290,7 +305,6 @@ export const CreateDiscountModal = ({
                         type: e.target.value as DiscountType,
                       })
                     }
-                    disabled
                     className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                   >
                     <option value={DiscountType.PERCENTAGE}>
@@ -305,10 +319,10 @@ export const CreateDiscountModal = ({
                   <label className="block text-sm font-medium text-foreground mb-2">
                     Valor <span className="text-destructive">*</span>
                   </label>
-                  {/* For Now it would be read only */}
                   <input
                     type="number"
                     step="0.01"
+                    min={0}
                     value={formData.value}
                     onChange={(e) =>
                       setFormData({ ...formData, value: e.target.value })
@@ -316,19 +330,121 @@ export const CreateDiscountModal = ({
                     className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                     placeholder={
                       formData.type === DiscountType.PERCENTAGE
-                        ? "ej. 20"
+                        ? "ej. 20 (usa 0 para BOGO)"
                         : "ej. 10.00"
                     }
-                    disabled
                     required
                   />
                 </div>
+                <div className="md:col-span-2 space-y-3 p-4 bg-muted/30 rounded-lg border border-border">
+                  <p className="text-sm font-semibold text-foreground">
+                    Visualización en la tienda
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-4">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="promo-display-mode"
+                        checked={formData.promoDisplayMode === "banner"}
+                        onChange={() =>
+                          setFormData({
+                            ...formData,
+                            promoDisplayMode: "banner",
+                            customText: "",
+                          })
+                        }
+                        className="text-primary"
+                      />
+                      <span className="text-sm text-foreground">
+                        Banner completo (solo imagen)
+                      </span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="promo-display-mode"
+                        checked={formData.promoDisplayMode === "text"}
+                        onChange={() =>
+                          setFormData({
+                            ...formData,
+                            promoDisplayMode: "text",
+                          })
+                        }
+                        className="text-primary"
+                      />
+                      <span className="text-sm text-foreground">
+                        Fondo + texto personalizado
+                      </span>
+                    </label>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {formData.promoDisplayMode === "banner"
+                      ? "Pide al restaurante un banner con el texto incluido. No se superpone texto en la app."
+                      : "Usa el degradado de la app y escribe el mensaje (ej. 2-for-1 Milkshakes)."}
+                  </p>
+                </div>
+                {formData.promoDisplayMode === "banner" ? (
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-foreground mb-2">
+                      URL del banner promocional{" "}
+                      <span className="text-destructive">*</span>
+                    </label>
+                    <input
+                      type="url"
+                      value={formData.imageUrl}
+                      onChange={(e) =>
+                        setFormData({ ...formData, imageUrl: e.target.value })
+                      }
+                      className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                      placeholder="https://..."
+                      required
+                    />
+                  </div>
+                ) : (
+                  <>
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-foreground mb-2">
+                        Texto promocional / BOGO
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.customText}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            customText: e.target.value,
+                          })
+                        }
+                        className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                        placeholder="Ej: 2-for-1 Milkshakes"
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-foreground mb-2">
+                        Imagen de fondo (opcional)
+                      </label>
+                      <input
+                        type="url"
+                        value={formData.imageUrl}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            imageUrl: e.target.value,
+                          })
+                        }
+                        className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                        placeholder="https://..."
+                      />
+                    </div>
+                  </>
+                )}
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-2">
                     Usos máximos por mes
                   </label>
                   <input
-                    type="text"
+                    type="number"
+                    min={1}
                     value={formData.maxUsesPerUserPerMonth}
                     onChange={(e) =>
                       setFormData({
@@ -415,52 +531,6 @@ export const CreateDiscountModal = ({
               <h4 className="text-sm font-semibold text-foreground uppercase tracking-wide">
                 Condiciones
               </h4>
-
-              {/* Exclude Days */}
-              {/* TODO: Remove once confirmed that new configuratin is working */}
-              <div className="hidden">
-                <label className="block text-sm font-medium text-foreground mb-3">
-                  Excluir Días
-                </label>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {daysOfTheWeek.map((day) => (
-                    <label
-                      key={day.index}
-                      className="flex items-center gap-2 cursor-pointer"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={formData.excludedDaysOfWeek.includes(
-                          day.index
-                        )}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setFormData({
-                              ...formData,
-                              excludedDaysOfWeek: [
-                                ...formData.excludedDaysOfWeek,
-                                day.index,
-                              ],
-                            });
-                          } else {
-                            setFormData({
-                              ...formData,
-                              excludedDaysOfWeek:
-                                formData.excludedDaysOfWeek.filter(
-                                  (d) => d !== day.index
-                                ),
-                            });
-                          }
-                        }}
-                        className="w-4 h-4 text-primary border-border rounded focus:ring-primary"
-                      />
-                      <span className="text-sm text-foreground">
-                        {day.label}
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              </div>
 
               {/* Exclude Hours */}
               {/* TODO: Remove once confirmed that new configuratin is working */}
@@ -636,19 +706,19 @@ export const CreateDiscountModal = ({
           </div>
 
           {/* Actions */}
-          <div className="flex gap-3 p-6 border-t border-border shrink-0">
+          <div className="flex shrink-0 flex-col-reverse gap-2 border-t border-border p-4 sm:flex-row sm:gap-3 sm:p-6">
             <button
               type="button"
               onClick={onClose}
               disabled={loading}
-              className="flex-1 px-4 py-3 border border-border text-foreground font-semibold rounded-lg hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full rounded-lg border border-border px-4 py-3 font-semibold text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50 sm:flex-1"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 px-4 py-3 bg-primary text-primary-foreground font-semibold rounded-lg hover:opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 font-semibold text-primary-foreground transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 sm:flex-1"
             >
               {loading ? (
                 <>
