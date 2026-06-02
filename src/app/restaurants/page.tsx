@@ -4,8 +4,8 @@
 "use client";
 
 import { Search, Map, ChevronLeft, Star } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useState, useEffect, useMemo, useRef, Suspense } from "react";
 
 import { CategoryFilterPills } from "@/components/CategoryFilterPills";
 import StoreMap from "@/components/store-map";
@@ -72,8 +72,20 @@ function sortMapStores(
   );
 }
 
-export default function RestaurantListingPage(): React.JSX.Element {
+function RestaurantListingContent(): React.JSX.Element {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const promoIds = useMemo(() => {
+    const raw = searchParams.get("ids");
+    if (!raw) {
+      return undefined;
+    }
+    const ids = raw
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    return ids.length > 0 ? ids : undefined;
+  }, [searchParams]);
   const { data: categoriesData, isLoading: categoriesLoading } =
     useCategoriesByStoreType(StoreType.RESTAURANT);
 
@@ -108,6 +120,7 @@ export default function RestaurantListingPage(): React.JSX.Element {
   const storeFilters = {
     ...filters,
     type: StoreType.RESTAURANT,
+    ids: promoIds,
     categoryIds:
       selectedCategoryIds.length > 0 ? selectedCategoryIds : undefined,
     lat:
@@ -319,9 +332,10 @@ export default function RestaurantListingPage(): React.JSX.Element {
     setSelectedCategoryIds([]);
     setSortBy("NEWEST");
     setAvailabilityFilter("all");
-    setFilters({
-      type: StoreType.RESTAURANT,
-    });
+    setFilters({ type: StoreType.RESTAURANT });
+    if (promoIds) {
+      router.replace("/restaurants");
+    }
   };
 
   return (
@@ -416,6 +430,21 @@ export default function RestaurantListingPage(): React.JSX.Element {
                 loadingLabel="Cargando categorías..."
                 className="pb-1"
               />
+
+              {promoIds ? (
+                <div className="mx-4 mb-2 flex items-center justify-between gap-2 rounded-xl bg-orange-50 border border-orange-200 px-3 py-2">
+                  <p className="text-xs text-orange-700 font-medium">
+                    {promoIds.length} restaurante
+                    {promoIds.length !== 1 ? "s" : ""} de la promoción
+                  </p>
+                  <button
+                    onClick={() => router.replace("/restaurants")}
+                    className="text-xs text-orange-500 underline shrink-0"
+                  >
+                    Ver todos
+                  </button>
+                </div>
+              ) : null}
 
               <div className="flex flex-col gap-2 px-4 pb-3">
                 <div className="flex items-center gap-2">
@@ -585,5 +614,13 @@ export default function RestaurantListingPage(): React.JSX.Element {
         onClose={() => setShowGuideModal(false)}
       /> */}
     </BasicLayout>
+  );
+}
+
+export default function RestaurantListingPage(): React.JSX.Element {
+  return (
+    <Suspense>
+      <RestaurantListingContent />
+    </Suspense>
   );
 }
