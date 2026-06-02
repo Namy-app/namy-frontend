@@ -80,6 +80,7 @@ export interface StoreFilters {
   lat?: number;
   lng?: number;
   id?: string;
+  ids?: string[];
   availabilityStatus?: "available" | "soon" | "unavailable";
   sortBy?: StoreSortBy;
 }

@@ -16,7 +16,8 @@ import {
   // Clock,
   Navigation,
 } from "lucide-react";
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useSearchParams } from "next/navigation";
+import { useState, useEffect, useMemo, useRef , Suspense } from "react";
 
 import { CategoryFilterPills } from "@/components/CategoryFilterPills";
 import StoreMap from "@/components/store-map";
@@ -88,7 +89,18 @@ function sortMapStores(
   );
 }
 
-export default function RestaurantListingPage(): React.JSX.Element {
+function RestaurantListingContent(): React.JSX.Element {
+  const searchParams = useSearchParams();
+  const promoIds = useMemo(() => {
+    const raw = searchParams.get("ids");
+    if (!raw) {return undefined;}
+    const ids = raw
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    return ids.length > 0 ? ids : undefined;
+  }, [searchParams]);
+
   const { data: categoriesData, isLoading: categoriesLoading } =
     useCategoriesByStoreType(StoreType.RESTAURANT);
 
@@ -127,7 +139,7 @@ export default function RestaurantListingPage(): React.JSX.Element {
   const [searchQuery, setSearchQuery] = useState("");
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [_, setShowGuideModal] = useState(false);
-  const [viewMode, setViewMode] = useState<ViewMode>("map");
+  const [viewMode, setViewMode] = useState<ViewMode>(promoIds ? "grid" : "map");
   const [snapPosition, setSnapPosition] = useState<MapSnapPosition>("half");
   const [mapSortBy, setMapSortBy] = useState<MapSortBy>("DISTANCE");
 
@@ -140,6 +152,7 @@ export default function RestaurantListingPage(): React.JSX.Element {
   const storeFilters = {
     ...filters,
     type: StoreType.RESTAURANT,
+    ids: promoIds,
     categoryIds:
       selectedCategoryIds.length > 0 ? selectedCategoryIds : undefined,
     lat:
@@ -460,9 +473,8 @@ export default function RestaurantListingPage(): React.JSX.Element {
     setSortBy("NEWEST");
     setAvailabilityFilter("all");
     setCurrentPage(1);
-    setFilters({
-      type: StoreType.RESTAURANT,
-    });
+    setFilters({ type: StoreType.RESTAURANT });
+    if (promoIds) {window.location.href = "/restaurants";}
   };
 
   const handlePageChange = (page: number): void => {
@@ -814,6 +826,22 @@ export default function RestaurantListingPage(): React.JSX.Element {
               </div>
             </div>
 
+            {/* Promo filter notice */}
+            {promoIds ? <div className="mx-6 mb-4 max-w-5xl md:mx-auto flex items-center justify-between gap-2 rounded-xl bg-orange-50 border border-orange-200 px-4 py-2.5">
+                <p className="text-sm text-orange-700 font-medium">
+                  Mostrando {promoIds.length} restaurante
+                  {promoIds.length !== 1 ? "s" : ""} de la promoción
+                </p>
+                <button
+                  onClick={() => {
+                    void (window.location.href = "/restaurants");
+                  }}
+                  className="text-xs text-orange-500 underline shrink-0"
+                >
+                  Ver todos
+                </button>
+              </div> : null}
+
             {/* Category Filter Pills */}
             <div className="-mt-4 mb-4 max-w-5xl mx-auto">
               <CategoryFilterPills
@@ -1097,5 +1125,13 @@ export default function RestaurantListingPage(): React.JSX.Element {
         onClose={() => setShowGuideModal(false)}
       /> */}
     </BasicLayout>
+  );
+}
+
+export default function RestaurantListingPage(): React.JSX.Element {
+  return (
+    <Suspense>
+      <RestaurantListingContent />
+    </Suspense>
   );
 }
