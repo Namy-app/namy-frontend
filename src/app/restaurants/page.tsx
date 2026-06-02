@@ -333,7 +333,9 @@ function RestaurantListingContent(): React.JSX.Element {
     setSortBy("NEWEST");
     setAvailabilityFilter("all");
     setFilters({ type: StoreType.RESTAURANT });
-    if (promoIds) {router.replace("/restaurants");}
+    if (promoIds) {
+      router.replace("/restaurants");
+    }
   };
 
   return (
@@ -436,9 +438,7 @@ function RestaurantListingContent(): React.JSX.Element {
                     {promoIds.length !== 1 ? "s" : ""} de la promoción
                   </p>
                   <button
-                    onClick={() => {
-                      window.location.href = "/restaurants";
-                    }}
+                    onClick={() => router.replace("/restaurants")}
                     className="text-xs text-orange-500 underline shrink-0"
                   >
                     Ver todos
