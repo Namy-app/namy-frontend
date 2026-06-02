@@ -77,7 +77,9 @@ function RestaurantListingContent(): React.JSX.Element {
   const searchParams = useSearchParams();
   const promoIds = useMemo(() => {
     const raw = searchParams.get("ids");
-    if (!raw) {return undefined;}
+    if (!raw) {
+      return undefined;
+    }
     const ids = raw
       .split(",")
       .map((s) => s.trim())
@@ -331,7 +333,7 @@ function RestaurantListingContent(): React.JSX.Element {
     setSortBy("NEWEST");
     setAvailabilityFilter("all");
     setFilters({ type: StoreType.RESTAURANT });
-    if (promoIds) {window.location.href = "/restaurants";}
+    if (promoIds) {router.replace("/restaurants");}
   };
 
   return (
@@ -427,7 +429,8 @@ function RestaurantListingContent(): React.JSX.Element {
                 className="pb-1"
               />
 
-              {promoIds ? <div className="mx-4 mb-2 flex items-center justify-between gap-2 rounded-xl bg-orange-50 border border-orange-200 px-3 py-2">
+              {promoIds ? (
+                <div className="mx-4 mb-2 flex items-center justify-between gap-2 rounded-xl bg-orange-50 border border-orange-200 px-3 py-2">
                   <p className="text-xs text-orange-700 font-medium">
                     {promoIds.length} restaurante
                     {promoIds.length !== 1 ? "s" : ""} de la promoción
@@ -440,7 +443,8 @@ function RestaurantListingContent(): React.JSX.Element {
                   >
                     Ver todos
                   </button>
-                </div> : null}
+                </div>
+              ) : null}
 
               <div className="flex flex-col gap-2 px-4 pb-3">
                 <div className="flex items-center gap-2">
