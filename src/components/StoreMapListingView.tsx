@@ -44,6 +44,10 @@ export interface StoreMapListingViewProps {
   emptyMessage: string;
   categoriesLoadingLabel?: string;
   defaultPlaceholderService?: boolean;
+  /** Store IDs from `?ids=` (promo / push deep links). */
+  promoIds?: string[];
+  /** Route to clear promo filter, e.g. `/restaurants`. */
+  promoListPath?: string;
 }
 
 function attachDistanceToStores(
@@ -85,6 +89,8 @@ export function StoreMapListingView({
   emptyMessage,
   categoriesLoadingLabel = "Cargando categorías...",
   defaultPlaceholderService = false,
+  promoIds,
+  promoListPath,
 }: StoreMapListingViewProps): React.JSX.Element {
   const router = useRouter();
   const { data: categoriesData, isLoading: categoriesLoading } =
@@ -121,6 +127,7 @@ export function StoreMapListingView({
   const storeFilters = {
     ...filters,
     type: storeType,
+    ids: promoIds,
     categoryIds:
       selectedCategoryIds.length > 0 ? selectedCategoryIds : undefined,
     lat:
@@ -328,6 +335,9 @@ export function StoreMapListingView({
     setFilters({
       type: storeType,
     });
+    if (promoIds?.length && promoListPath) {
+      router.replace(promoListPath);
+    }
   };
 
   return (
@@ -422,6 +432,24 @@ export function StoreMapListingView({
                 className="pb-1"
                 defaultPlaceholderService={defaultPlaceholderService}
               />
+
+              {promoIds?.length ? (
+                <div className="mx-4 mb-2 flex items-center justify-between gap-2 rounded-xl border border-orange-200 bg-orange-50 px-3 py-2">
+                  <p className="text-xs font-medium text-orange-700">
+                    {promoIds.length} {entityLabelPlural.replace(/es$/, "")}
+                    {promoIds.length !== 1 ? "s" : ""} de la promoción
+                  </p>
+                  {promoListPath ? (
+                    <button
+                      type="button"
+                      onClick={() => router.replace(promoListPath)}
+                      className="shrink-0 text-xs text-orange-500 underline"
+                    >
+                      Ver todos
+                    </button>
+                  ) : null}
+                </div>
+              ) : null}
 
               <div className="flex flex-col gap-2 px-4 pb-3">
                 <div className="flex items-center gap-2">
