@@ -8,6 +8,11 @@ import { useEffect, useState, useCallback } from "react";
 
 import { DAYS_OF_WEEK_BY_INDEX } from "@/data/constants";
 import type { AvailableDay } from "@/domains/admin";
+import {
+  formatCouponExpiryCountdown,
+  getCouponExpiryCountdownTickMs,
+  getMsUntilExpiry,
+} from "@/domains/coupon/formatExpiryCountdown";
 import type { Coupon } from "@/domains/coupon/type";
 import CouponCard from "@/domains/coupons/CouponCard";
 import { RestrictionModal } from "@/domains/coupons/RestrictionModal";
@@ -20,37 +25,39 @@ import { useAuthStore } from "@/store/useAuthStore";
 
 // ── QR modal sub-components ───────────────────────────────────────────────────
 
-function pad(n: number): string {
-  return String(n).padStart(2, "0");
-}
-
 function QrCountdown({ expiresAt }: { expiresAt: string }) {
-  const calc = useCallback(() => {
-    const diff = new Date(expiresAt).getTime() - Date.now();
-    if (diff <= 0) {
-      return null;
-    }
-    return {
-      h: Math.floor(diff / 3_600_000),
-      m: Math.floor((diff % 3_600_000) / 60_000),
-      s: Math.floor((diff % 60_000) / 1000),
+  const calc = useCallback(
+    () => formatCouponExpiryCountdown(getMsUntilExpiry(expiresAt)),
+    [expiresAt]
+  );
+
+  const [label, setLabel] = useState<string | null>(calc);
+
+  useEffect(() => {
+    let timeoutId: number | undefined;
+
+    const tick = (): void => {
+      const msRemaining = getMsUntilExpiry(expiresAt);
+      setLabel(formatCouponExpiryCountdown(msRemaining));
+      timeoutId = window.setTimeout(
+        tick,
+        getCouponExpiryCountdownTickMs(msRemaining)
+      );
+    };
+
+    tick();
+    return () => {
+      if (timeoutId !== undefined) {
+        clearTimeout(timeoutId);
+      }
     };
   }, [expiresAt]);
 
-  const [t, setT] = useState(calc);
-
-  useEffect(() => {
-    const id = setInterval(() => setT(calc()), 1000);
-    return () => clearInterval(id);
-  }, [calc]);
-
-  if (!t) {
+  if (!label) {
     return <p className="text-2xl font-black text-gray-400">Expirado</p>;
   }
   return (
-    <p className="text-2xl font-black text-[#F1A151]">
-      {pad(t.h)}:{pad(t.m)}:{pad(t.s)}
-    </p>
+    <p className="text-2xl font-black text-[#F1A151] tabular-nums">{label}</p>
   );
 }
 
@@ -484,6 +491,7 @@ export default function MyCouponsPage(): React.JSX.Element {
                   >
                     <CouponCard
                       coupon={coupon}
+                      customText={coupon.discount?.customText}
                       discountPercentage={
                         (user?.isPremium
                           ? coupon.discount?.value

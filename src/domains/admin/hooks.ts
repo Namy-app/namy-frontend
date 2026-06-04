@@ -269,7 +269,7 @@ export function useStorePin(id: string, enabled = false) {
 export function useStoreDiscounts(
   filters?: DiscountFiltersInput,
   pagination?: PaginationInput,
-  options?: { enabled?: boolean }
+  options?: { enabled?: boolean; staleTime?: number }
 ) {
   return useQuery<DiscountsResponse>({
     queryKey: ["discounts", filters, pagination],
@@ -280,6 +280,7 @@ export function useStoreDiscounts(
       return data.discounts;
     },
     enabled: options?.enabled !== false,
+    staleTime: options?.staleTime,
   });
 }
 
@@ -321,8 +322,33 @@ export function useUpdateDiscount() {
       );
       return data.updateDiscount;
     },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["discounts"] });
+    onSuccess: (updated, variables) => {
+      queryClient.setQueriesData<DiscountsResponse>(
+        { queryKey: ["discounts"] },
+        (cached) => {
+          if (!cached?.data) {
+            return cached;
+          }
+          return {
+            ...cached,
+            data: cached.data.map((d) =>
+              d.id === variables.id
+                ? {
+                    ...d,
+                    ...updated,
+                    ...(variables.input.active !== undefined
+                      ? { active: variables.input.active }
+                      : {}),
+                  }
+                : d
+            ),
+          };
+        }
+      );
+      void queryClient.invalidateQueries({
+        queryKey: ["discounts"],
+        refetchType: "active",
+      });
     },
     onError: (error, variables) => {
       Sentry.captureException(error, {

@@ -22,6 +22,7 @@ export interface DecodedCouponData {
   };
   discount: {
     title: string;
+    customText?: string | null;
     description?: string;
     type: string;
     value: number;
@@ -294,12 +295,79 @@ export class CouponDecoder {
    * Format discount value for display
    */
   static formatDiscountValue(type: string, value: number): string {
-    if (type === "percentage") {
+    const normalized = type?.toLowerCase();
+    if (normalized === "percentage") {
       return `${value}% OFF`;
-    } else if (type === "fixed") {
-      return `$${value} OFF`;
-    } else {
-      return `${value} OFF`;
     }
+    if (
+      normalized === "fixed" ||
+      normalized === "fixed_amount" ||
+      normalized === "fixedamount"
+    ) {
+      return `$${value} OFF`;
+    }
+    return `${value} OFF`;
   }
+}
+
+export function resolveDiscountDisplayText(options: {
+  customText?: string | null;
+  discountTitle?: string | null;
+  type?: string;
+  value?: number;
+}): string {
+  const trimmedCustom = options.customText?.trim();
+  if (trimmedCustom) {
+    return trimmedCustom;
+  }
+  const trimmedTitle = options.discountTitle?.trim();
+  if (trimmedTitle) {
+    return trimmedTitle;
+  }
+  if (options.type != null && options.value != null) {
+    return CouponDecoder.formatDiscountValue(options.type, options.value);
+  }
+  return "";
+}
+
+/**
+ * Staff redeem screens (pre + post) — use discount entity value, not coupon tier %.
+ * coupon.value is the user's level % at generation time; discount.value/customText
+ * describe the store promo (custom deals often have discount.value === 0).
+ */
+export function resolveRedemptionPromoLabel(options: {
+  customText?: string | null;
+  promoText?: string | null;
+  discountTitle?: string | null;
+  type?: string;
+  discountValue?: number;
+  couponValue?: number;
+}): string {
+  const custom = options.customText?.trim() || options.promoText?.trim() || "";
+  const discountValue = options.discountValue;
+  const type = options.type;
+
+  if (discountValue != null && discountValue > 0 && type) {
+    return CouponDecoder.formatDiscountValue(type, discountValue);
+  }
+
+  if (custom) {
+    return custom;
+  }
+
+  const title = options.discountTitle?.trim();
+  if (title) {
+    return title;
+  }
+
+  if (
+    options.couponValue != null &&
+    options.couponValue > 0 &&
+    type &&
+    discountValue == null
+  ) {
+    return CouponDecoder.formatDiscountValue(type, options.couponValue);
+  }
+
+  return "Promoción Especial";
 }

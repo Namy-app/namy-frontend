@@ -29,9 +29,15 @@ const REGISTER_PUSH_TOKEN = `
 function resolveNotificationRoute(
   data: Record<string, string> | undefined
 ): string {
-  if (data?.deepLink?.startsWith("/")) {return data.deepLink;}
-  if (data?.storeId) {return `/stores/${data.storeId}`;}
-  if (data?.storeIds) {return `/stores?ids=${data.storeIds}`;}
+  if (data?.deepLink?.startsWith("/")) {
+    return data.deepLink;
+  }
+  if (data?.storeId) {
+    return `/stores/${data.storeId}`;
+  }
+  if (data?.storeIds) {
+    return `/stores?ids=${data.storeIds}`;
+  }
 
   return "/explore";
 }
@@ -54,8 +60,12 @@ export function usePushNotifications(userId: string | undefined): void {
   const initializedForRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!userId || !Capacitor.isNativePlatform()) {return;}
-    if (initializedForRef.current === userId) {return;}
+    if (!userId || !Capacitor.isNativePlatform()) {
+      return;
+    }
+    if (initializedForRef.current === userId) {
+      return;
+    }
     initializedForRef.current = userId;
 
     const rawPlatform = Capacitor.getPlatform();
@@ -63,7 +73,9 @@ export function usePushNotifications(userId: string | undefined): void {
 
     const setup = async () => {
       const permResult = await PushNotifications.requestPermissions();
-      if (permResult.receive !== "granted") {return;}
+      if (permResult.receive !== "granted") {
+        return;
+      }
 
       // Register listeners BEFORE calling register() to avoid missing the token event
       await PushNotifications.addListener(
@@ -96,7 +108,9 @@ export function usePushNotifications(userId: string | undefined): void {
           const data = notification.data;
           // Treat missing type as promo_banner (promo workflows always send it,
           // but FCM data maps can occasionally drop optional fields)
-          if (data?.type && data.type !== "promo_banner") {return;}
+          if (data?.type && data.type !== "promo_banner") {
+            return;
+          }
 
           const promo = {
             title: notification.title ?? data?.title ?? "",

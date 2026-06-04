@@ -12,7 +12,9 @@ export function PushNotificationProvider(): null {
   const { user } = useAuthStore();
 
   useEffect(() => {
-    if (!user?.id) {return;}
+    if (!user?.id) {
+      return;
+    }
 
     void initPushNotifications(user.id, (path) => navigateTo(path, router));
 

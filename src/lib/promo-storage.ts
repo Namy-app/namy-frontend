@@ -43,9 +43,13 @@ async function storageRemove(key: string): Promise<void> {
 export async function getDismissedPromoIds(): Promise<Set<string>> {
   try {
     const raw = await storageGet(DISMISSED_KEY);
-    if (!raw) {return new Set();}
+    if (!raw) {
+      return new Set();
+    }
     const parsed = JSON.parse(raw) as unknown;
-    if (!Array.isArray(parsed)) {return new Set();}
+    if (!Array.isArray(parsed)) {
+      return new Set();
+    }
     return new Set(parsed.filter((v): v is string => typeof v === "string"));
   } catch {
     return new Set();
@@ -80,7 +84,9 @@ export async function savePendingPromo(promo: PromoBannerData): Promise<void> {
 export async function loadPendingPromo(): Promise<PromoBannerData | null> {
   try {
     const raw = await storageGet(PENDING_PROMO_KEY);
-    if (!raw) {return null;}
+    if (!raw) {
+      return null;
+    }
     return JSON.parse(raw) as PromoBannerData;
   } catch {
     return null;
@@ -97,7 +103,9 @@ export async function clearPendingPromo(): Promise<void> {
 
 /** Returns true if the promo has not expired yet (or has no expiry). */
 export function isPromoActive(promo: PromoBannerData): boolean {
-  if (!promo.expiresAt) {return true;}
+  if (!promo.expiresAt) {
+    return true;
+  }
   return new Date(promo.expiresAt) > new Date();
 }
 

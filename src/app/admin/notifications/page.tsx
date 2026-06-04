@@ -64,8 +64,12 @@ interface SendPromoInput {
 }
 
 function buildDeepLink(selected: Store[]): string {
-  if (selected.length === 0) {return "";}
-  if (selected.length === 1 && selected[0]) {return `/stores/${selected[0].id}`;}
+  if (selected.length === 0) {
+    return "";
+  }
+  if (selected.length === 1 && selected[0]) {
+    return `/stores/${selected[0].id}`;
+  }
   return `/restaurants?ids=${selected.map((s) => s.id).join(",")}`;
 }
 
@@ -119,8 +123,9 @@ function SearchablePicker({
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node))
-        {setOpen(false);}
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
@@ -176,7 +181,8 @@ function SearchablePicker({
           </span>
         </button>
 
-        {open ? <div className="absolute z-50 mt-1 w-full bg-card border border-border rounded-lg shadow-xl overflow-hidden">
+        {open ? (
+          <div className="absolute z-50 mt-1 w-full bg-card border border-border rounded-lg shadow-xl overflow-hidden">
             <div className="p-2 border-b border-border">
               <input
                 autoFocus
@@ -207,18 +213,23 @@ function SearchablePicker({
                       >
                         <span className="flex flex-col items-start text-left">
                           <span>{item.label}</span>
-                          {item.sublabel ? <span className="text-xs text-muted-foreground">
+                          {item.sublabel ? (
+                            <span className="text-xs text-muted-foreground">
                               {item.sublabel}
-                            </span> : null}
+                            </span>
+                          ) : null}
                         </span>
-                        {isSelected ? <Check className="w-4 h-4 text-primary shrink-0 ml-2" /> : null}
+                        {isSelected ? (
+                          <Check className="w-4 h-4 text-primary shrink-0 ml-2" />
+                        ) : null}
                       </button>
                     </li>
                   );
                 })
               )}
             </ul>
-          </div> : null}
+          </div>
+        ) : null}
       </div>
     </div>
   );
@@ -309,7 +320,9 @@ export default function AdminNotificationsPage() {
   const toggleStore = (item: PickerItem) => {
     setSelectedStores((prev) => {
       const exists = prev.find((s) => s.id === item.id);
-      if (exists) {return prev.filter((s) => s.id !== item.id);}
+      if (exists) {
+        return prev.filter((s) => s.id !== item.id);
+      }
       return [...prev, { id: item.id, name: item.label }];
     });
     setSentCount(null);
@@ -331,10 +344,14 @@ export default function AdminNotificationsPage() {
 
   const toggleUser = (item: PickerItem) => {
     const found = userResults.find((u) => u.id === item.id);
-    if (!found) {return;}
+    if (!found) {
+      return;
+    }
     setSelectedUsers((prev) => {
       const exists = prev.find((u) => u.id === item.id);
-      if (exists) {return prev.filter((u) => u.id !== item.id);}
+      if (exists) {
+        return prev.filter((u) => u.id !== item.id);
+      }
       return [...prev, found];
     });
     setSentCount(null);
@@ -352,7 +369,9 @@ export default function AdminNotificationsPage() {
     e: React.ChangeEvent<HTMLInputElement>
   ): Promise<void> => {
     const file = e.target.files?.[0];
-    if (!file) {return;}
+    if (!file) {
+      return;
+    }
     if (file.size > 5 * 1024 * 1024) {
       toast({
         title: "Imagen demasiado grande",
@@ -375,7 +394,9 @@ export default function AdminNotificationsPage() {
         headers: { Authorization: `Bearer ${accessToken}` },
         body: formData,
       });
-      if (!res.ok) {throw new Error("Upload failed");}
+      if (!res.ok) {
+        throw new Error("Upload failed");
+      }
       const json = (await res.json()) as { url: string };
       setForm((prev) => ({ ...prev, imageUrl: json.url }));
       toast({ title: "Imagen subida", description: "URL lista para usar." });
@@ -408,12 +429,18 @@ export default function AdminNotificationsPage() {
       body: form.body.trim(),
     };
 
-    if (form.imageUrl.trim()) {input.imageUrl = form.imageUrl.trim();}
-    if (derivedDeepLink) {input.deepLink = derivedDeepLink;}
-    if (scheduleEnabled && form.startsAt.trim())
-      {input.startsAt = new Date(form.startsAt).toISOString();}
-    if (form.expiresAt.trim())
-      {input.expiresAt = new Date(form.expiresAt).toISOString();}
+    if (form.imageUrl.trim()) {
+      input.imageUrl = form.imageUrl.trim();
+    }
+    if (derivedDeepLink) {
+      input.deepLink = derivedDeepLink;
+    }
+    if (scheduleEnabled && form.startsAt.trim()) {
+      input.startsAt = new Date(form.startsAt).toISOString();
+    }
+    if (form.expiresAt.trim()) {
+      input.expiresAt = new Date(form.expiresAt).toISOString();
+    }
 
     if (selectedStores.length === 1 && selectedStores[0]) {
       input.storeId = selectedStores[0].id;
@@ -540,7 +567,8 @@ export default function AdminNotificationsPage() {
                   }}
                 />
               </div>
-              {form.imageUrl ? <div className="relative mt-2 h-20 w-32 overflow-hidden rounded-lg border border-border">
+              {form.imageUrl ? (
+                <div className="relative mt-2 h-20 w-32 overflow-hidden rounded-lg border border-border">
                   <Image
                     src={form.imageUrl}
                     alt="preview"
@@ -548,7 +576,8 @@ export default function AdminNotificationsPage() {
                     className="object-cover"
                     sizes="128px"
                   />
-                </div> : null}
+                </div>
+              ) : null}
             </div>
 
             <div>
@@ -559,7 +588,8 @@ export default function AdminNotificationsPage() {
                     (opcional)
                   </span>
                 </label>
-                {scheduleEnabled ? <button
+                {scheduleEnabled ? (
+                  <button
                     type="button"
                     onClick={() => {
                       setScheduleEnabled(false);
@@ -568,7 +598,8 @@ export default function AdminNotificationsPage() {
                     className="text-xs text-muted-foreground hover:text-destructive"
                   >
                     Enviar ahora
-                  </button> : null}
+                  </button>
+                ) : null}
               </div>
               {!scheduleEnabled ? (
                 <button
@@ -636,14 +667,16 @@ export default function AdminNotificationsPage() {
             onClear={() => setSelectedStores([])}
           />
 
-          {derivedDeepLink ? <div className="mt-3 px-3 py-2 bg-muted rounded-lg">
+          {derivedDeepLink ? (
+            <div className="mt-3 px-3 py-2 bg-muted rounded-lg">
               <p className="text-xs text-muted-foreground mb-0.5">
                 Deep link generado
               </p>
               <p className="text-sm font-mono text-foreground break-all">
                 {derivedDeepLink}
               </p>
-            </div> : null}
+            </div>
+          ) : null}
         </section>
 
         {/* ── User Picker ── */}

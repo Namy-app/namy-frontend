@@ -8,6 +8,19 @@ import { Card } from "@/shared/components/Card";
 
 import type { Restaurant } from "../type";
 
+function storeCategoryLabel(type?: Store["type"]): string {
+  if (type === "RESTAURANT") {
+    return "Restaurante";
+  }
+  if (type === "SERVICE") {
+    return "Servicio";
+  }
+  if (type === "PRODUCT") {
+    return "Tienda";
+  }
+  return "Restaurant";
+}
+
 export const RestaurantCard = ({
   discountPercentage,
   store,
@@ -23,7 +36,7 @@ export const RestaurantCard = ({
     slug: store.id,
     name: store.name,
     categoryIds: store.categoryIds ?? [],
-    categoryLabel: "Restaurant",
+    categoryLabel: storeCategoryLabel(store.type),
     rating: store.averageRating ?? 4.5,
     image:
       store.imageUrl ||

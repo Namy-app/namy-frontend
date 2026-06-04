@@ -23,13 +23,18 @@ function stripNovuPrefix(s: string): string {
 function buildDeepLink(
   data: Record<string, unknown> | undefined
 ): string | undefined {
-  if (!data) {return undefined;}
-  if (typeof data.deepLink === "string" && data.deepLink.startsWith("/"))
-    {return data.deepLink;}
-  if (typeof data.storeId === "string" && data.storeId)
-    {return `/stores/${data.storeId}`;}
-  if (typeof data.storeIds === "string" && data.storeIds)
-    {return `/restaurants?ids=${data.storeIds}`;}
+  if (!data) {
+    return undefined;
+  }
+  if (typeof data.deepLink === "string" && data.deepLink.startsWith("/")) {
+    return data.deepLink;
+  }
+  if (typeof data.storeId === "string" && data.storeId) {
+    return `/stores/${data.storeId}`;
+  }
+  if (typeof data.storeIds === "string" && data.storeIds) {
+    return `/restaurants?ids=${data.storeIds}`;
+  }
   return undefined;
 }
 
@@ -37,7 +42,9 @@ function buildDeepLink(
 async function waitForUserId(): Promise<string | null> {
   const { useAuthStore } = await import("@/store/useAuthStore");
   const existing = useAuthStore.getState().user?.id;
-  if (existing) {return existing;}
+  if (existing) {
+    return existing;
+  }
   return new Promise((resolve) => {
     const timeout = setTimeout(() => {
       unsub();
@@ -133,7 +140,9 @@ async function fetchLatestNovuPromo(userId: string): Promise<void> {
   try {
     const { env } = await import("@/lib/env");
     const appId = env.NEXT_PUBLIC_NOVU_APPLICATION_IDENTIFIER;
-    if (!appId) {return;}
+    if (!appId) {
+      return;
+    }
 
     const sessionRes = await fetch("https://api.novu.co/v1/inbox/session", {
       method: "POST",
@@ -143,7 +152,9 @@ async function fetchLatestNovuPromo(userId: string): Promise<void> {
         subscriberId: userId,
       }),
     });
-    if (!sessionRes.ok) {return;}
+    if (!sessionRes.ok) {
+      return;
+    }
     const { data: sessionData } = (await sessionRes.json()) as {
       data: { token: string };
     };
@@ -154,7 +165,9 @@ async function fetchLatestNovuPromo(userId: string): Promise<void> {
         headers: { Authorization: `Bearer ${sessionData.token}` },
       }
     );
-    if (!notifRes.ok) {return;}
+    if (!notifRes.ok) {
+      return;
+    }
     const { data: notifications } = (await notifRes.json()) as {
       data: Array<{
         subject?: string;
@@ -168,7 +181,9 @@ async function fetchLatestNovuPromo(userId: string): Promise<void> {
     const notif = notifications.find(
       (n) => !n.isRead && (!n.data?.type || n.data.type === "promo_banner")
     );
-    if (!notif) {return;}
+    if (!notif) {
+      return;
+    }
 
     const nd = notif.data ?? {};
     const title =
@@ -179,7 +194,9 @@ async function fetchLatestNovuPromo(userId: string): Promise<void> {
       typeof nd.body === "string" && nd.body
         ? nd.body
         : stripNovuPrefix(notif.body ?? "");
-    if (!title && !body) {return;}
+    if (!title && !body) {
+      return;
+    }
 
     const promo = {
       title,
@@ -215,14 +232,20 @@ export async function initPushNotifications(
   _userId: string,
   navigateFn: (path: string) => void
 ): Promise<void> {
-  if (!Capacitor.isNativePlatform()) {return;}
-  if (initialized) {return;}
+  if (!Capacitor.isNativePlatform()) {
+    return;
+  }
+  if (initialized) {
+    return;
+  }
   initialized = true;
 
   const platform = Capacitor.getPlatform() === "ios" ? "apns" : "fcm";
 
   const perm = await PushNotifications.requestPermissions();
-  if (perm.receive !== "granted") {return;}
+  if (perm.receive !== "granted") {
+    return;
+  }
 
   await PushNotifications.addListener("registration", (token) => {
     graphqlRequest(REGISTER_PUSH_TOKEN, { token: token.value, platform }).catch(
@@ -238,7 +261,9 @@ export async function initPushNotifications(
   await PushNotifications.addListener("pushNotificationReceived", (n) => {
     console.warn("[Push] received raw:", JSON.stringify(n));
     const data = n.data;
-    if (data?.type && data.type !== "promo_banner") {return;}
+    if (data?.type && data.type !== "promo_banner") {
+      return;
+    }
 
     const title = stripNovuPrefix(
       n.title ||

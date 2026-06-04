@@ -19,7 +19,9 @@ export function usePromoRecovery(): void {
     // Recover any promo that arrived before the app opened
     void recoverPendingPromo();
 
-    if (!Capacitor.isNativePlatform()) {return;}
+    if (!Capacitor.isNativePlatform()) {
+      return;
+    }
 
     // Also recover when the user brings the app back to foreground
     const listenerPromise = App.addListener(

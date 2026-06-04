@@ -28,9 +28,15 @@ export const usePromoStore = create<PromoState>()((set, get) => ({
   activePromo: null,
 
   offerPromo: async (promo) => {
-    if (promo.type !== "promo_banner") {return;}
-    if (!isPromoActive(promo)) {return;}
-    if (await isPromoDismissed(promoId(promo))) {return;}
+    if (promo.type !== "promo_banner") {
+      return;
+    }
+    if (!isPromoActive(promo)) {
+      return;
+    }
+    if (await isPromoDismissed(promoId(promo))) {
+      return;
+    }
     set({ activePromo: promo });
   },
 
@@ -58,12 +64,16 @@ export async function recoverPendingPromo(): Promise<void> {
     clearPendingPromo: clear,
   } = await import("@/lib/promo-storage");
   const promo = await loadPendingPromo();
-  if (!promo) {return;}
+  if (!promo) {
+    return;
+  }
   // Discard promos with no content — FCM tray taps can produce empty payloads
   if (!promo.title && !promo.body) {
     await clear();
     return;
   }
-  if (!isPromoActive(promo)) {return;}
+  if (!isPromoActive(promo)) {
+    return;
+  }
   usePromoStore.getState()._forceSetPromo(promo);
 }

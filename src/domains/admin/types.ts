@@ -252,6 +252,9 @@ export interface Discount {
   availableDaysAndTimes?: AvailableDaysAndTimes;
   maxUsesPerUserPerMonth?: number;
   monthlyRedemptionCap?: number;
+  customText?: string | null;
+  imageUrl?: string | null;
+  isPromoted?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -280,6 +283,9 @@ export interface CreateDiscountInput {
   availableDaysAndTimes?: AvailableDaysAndTimes;
   maxUsesPerUserPerMonth?: number;
   monthlyRedemptionCap?: number;
+  customText?: string;
+  imageUrl?: string;
+  isPromoted?: boolean;
   id?: string;
 }
 
@@ -301,6 +307,9 @@ export interface UpdateDiscountInput {
   availableDaysAndTimes?: AvailableDaysAndTimes;
   maxUsesPerUserPerMonth?: number;
   monthlyRedemptionCap?: number;
+  customText?: string;
+  imageUrl?: string;
+  isPromoted?: boolean;
 }
 
 export interface DiscountFiltersInput {
