@@ -44,8 +44,9 @@ import { useMyLevel } from "@/domains/user/hooks/query/useMyLevel";
 import { useToast } from "@/hooks/use-toast";
 import { useDiscountCountdown } from "@/hooks/useDiscountCountdown";
 import { BasicLayout } from "@/layouts/BasicLayout";
-import { resolveDiscountDisplayText } from "@/lib/coupon-decoder";
+import { resolveCapacitorDynamicId } from "@/lib/capacitor-navigate";
 import { convertTo12Hour } from "@/lib/date-time-utils";
+import { resolveDiscountDisplayText } from "@/lib/discount-type";
 import { graphqlRequest } from "@/lib/graphql-client";
 import {
   GENERATE_COUPON_MUTATION,
@@ -158,20 +159,9 @@ export default function StoreDetailClient(): React.JSX.Element {
   }, [selectedCatalogImage]);
 
   const { data: wallet } = useWallet({ userId: user?.id });
-  // Get store ID from params.
-  // In Capacitor, navigateTo() saves the real UUID to localStorage and pushes
-  // to /stores/placeholder. Read it from localStorage when params is "placeholder".
-  const paramsId = params?.id as string | undefined;
   const storeId =
-    paramsId && paramsId !== "id"
-      ? paramsId
-      : typeof window !== "undefined"
-        ? (localStorage
-            .getItem("spa_redirect")
-            ?.split("/")
-            .filter(Boolean)
-            .pop() ?? null)
-        : null;
+    resolveCapacitorDynamicId("/stores/", params?.id as string | undefined) ??
+    "";
   const { data: store, isLoading } = useStore(storeId);
 
   const storeDiscountFilters = useMemo(
@@ -202,10 +192,11 @@ export default function StoreDetailClient(): React.JSX.Element {
   const getDiscountSlideLabel = (discount: Discount): string => {
     const label = resolveDiscountDisplayText({
       customText: discount.customText,
+      title: discount.title,
       type: discount.type,
       value: discount.value,
     });
-    return label || `${fallbackDiscountPercentage}% OFF`;
+    return label || discount.title || "Promoción Especial";
   };
 
   const getSelectedDiscountId = (): string | undefined => {

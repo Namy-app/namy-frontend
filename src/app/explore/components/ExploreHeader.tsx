@@ -17,6 +17,11 @@ import { useState, useRef, useEffect } from "react";
 
 import { navigateTo } from "@/lib/capacitor-navigate";
 import { env } from "@/lib/env";
+import {
+  isPromoActive,
+  notificationToPromo,
+  surfacePromo,
+} from "@/lib/promo-storage";
 import { useAuthStore } from "@/store/useAuthStore";
 
 interface ExploreHeaderProps {
@@ -39,27 +44,24 @@ export function ExploreHeader({
     const isPromo = !data?.type || data.type === "promo_banner";
 
     if (isPromo) {
-      // Build deepLink: explicit deepLink > storeId > storeIds > explore
-      let deepLink =
-        typeof data?.deepLink === "string" && data.deepLink.startsWith("/")
-          ? data.deepLink
-          : undefined;
-      if (!deepLink && typeof data?.storeId === "string" && data.storeId) {
-        deepLink = `/stores/${data.storeId}`;
-      } else if (
-        !deepLink &&
-        typeof data?.storeIds === "string" &&
-        data.storeIds
-      ) {
-        deepLink = `/restaurants?ids=${data.storeIds}`;
-      }
-      // Navigate directly to the store/page — no banner for inbox clicks
-      navigateTo(deepLink ?? "/explore", router);
-    } else {
-      const deepLink = data?.deepLink;
-      if (typeof deepLink === "string" && deepLink.startsWith("/")) {
-        navigateTo(deepLink, router);
-      }
+      const promo = notificationToPromo(notification);
+      void surfacePromo(promo).then((shown) => {
+        if (shown) {
+          navigateTo("/explore", router);
+          return;
+        }
+        if (isPromoActive(promo) && promo.deepLink) {
+          navigateTo(promo.deepLink, router);
+          return;
+        }
+        navigateTo("/explore", router);
+      });
+      return;
+    }
+
+    const deepLink = data?.deepLink;
+    if (typeof deepLink === "string" && deepLink.startsWith("/")) {
+      navigateTo(deepLink, router);
     }
   };
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);

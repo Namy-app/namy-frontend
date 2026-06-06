@@ -1,4 +1,11 @@
 import type { AvailableDaysAndTimes } from "@/domains/admin";
+import {
+  formatDiscountPromo,
+  normalizeDiscountType,
+  resolveDiscountDisplayText,
+} from "@/lib/discount-type";
+
+export { resolveDiscountDisplayText };
 
 /**
  * Decoded coupon data structure matching backend payload
@@ -295,46 +302,10 @@ export class CouponDecoder {
    * Format discount value for display
    */
   static formatDiscountValue(type: string, value: number): string {
-    const normalized = type?.toLowerCase();
-    if (normalized === "percentage") {
-      return `${value}% OFF`;
-    }
-    if (
-      normalized === "fixed" ||
-      normalized === "fixed_amount" ||
-      normalized === "fixedamount"
-    ) {
-      return `$${value} OFF`;
-    }
-    return `${value} OFF`;
+    return formatDiscountPromo(type, value);
   }
 }
 
-export function resolveDiscountDisplayText(options: {
-  customText?: string | null;
-  discountTitle?: string | null;
-  type?: string;
-  value?: number;
-}): string {
-  const trimmedCustom = options.customText?.trim();
-  if (trimmedCustom) {
-    return trimmedCustom;
-  }
-  const trimmedTitle = options.discountTitle?.trim();
-  if (trimmedTitle) {
-    return trimmedTitle;
-  }
-  if (options.type != null && options.value != null) {
-    return CouponDecoder.formatDiscountValue(options.type, options.value);
-  }
-  return "";
-}
-
-/**
- * Staff redeem screens (pre + post) — use discount entity value, not coupon tier %.
- * coupon.value is the user's level % at generation time; discount.value/customText
- * describe the store promo (custom deals often have discount.value === 0).
- */
 export function resolveRedemptionPromoLabel(options: {
   customText?: string | null;
   promoText?: string | null;
@@ -346,9 +317,10 @@ export function resolveRedemptionPromoLabel(options: {
   const custom = options.customText?.trim() || options.promoText?.trim() || "";
   const discountValue = options.discountValue;
   const type = options.type;
+  const normalizedType = type ? normalizeDiscountType(type) : null;
 
-  if (discountValue != null && discountValue > 0 && type) {
-    return CouponDecoder.formatDiscountValue(type, discountValue);
+  if (discountValue != null && discountValue > 0 && normalizedType) {
+    return formatDiscountPromo(type!, discountValue);
   }
 
   if (custom) {
@@ -358,15 +330,6 @@ export function resolveRedemptionPromoLabel(options: {
   const title = options.discountTitle?.trim();
   if (title) {
     return title;
-  }
-
-  if (
-    options.couponValue != null &&
-    options.couponValue > 0 &&
-    type &&
-    discountValue == null
-  ) {
-    return CouponDecoder.formatDiscountValue(type, options.couponValue);
   }
 
   return "Promoción Especial";

@@ -14,8 +14,7 @@ import type { CouponItem } from "@/domains/coupon/type";
 
 type Props = {
   coupon: CouponItem;
-  discountPercentage: number;
-  customText?: string | null;
+  promoLabel: string;
   onViewQr: (c: CouponItem) => void;
   onShare: (c: CouponItem) => void;
   onDelete: (c: CouponItem) => void;
@@ -39,12 +38,11 @@ function getGradient(code: string): string {
 
 export default function CouponCard({
   coupon,
-  discountPercentage,
-  customText,
+  promoLabel,
   onViewQr,
 }: Props): React.JSX.Element {
-  const displayCustomText =
-    customText?.trim() || coupon.discount?.customText?.trim() || null;
+  const displayLabel = promoLabel.trim() || "Promoción Especial";
+  const isCompactLabel = displayLabel.length > 12;
   const [countdown, setCountdown] = useState<string | null>(null);
 
   const expiresAtMs = new Date(coupon.expiresAt).getTime();
@@ -124,10 +122,10 @@ export default function CouponCard({
         <div className="flex-1 min-w-0">
           <p
             className={`text-white font-black leading-none tracking-tight ${
-              displayCustomText ? "text-2xl line-clamp-2" : "text-3xl"
+              isCompactLabel ? "text-2xl line-clamp-2" : "text-3xl"
             }`}
           >
-            {displayCustomText ?? `${discountPercentage}% OFF`}
+            {displayLabel}
           </p>
           <p className="text-white/90 font-semibold text-base mt-1 truncate">
             {coupon.store?.name ?? "Tienda"}

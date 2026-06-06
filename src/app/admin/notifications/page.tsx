@@ -1,5 +1,6 @@
 "use client";
 
+import type { LucideIcon } from "lucide-react";
 import {
   ArrowLeft,
   Bell,
@@ -11,12 +12,43 @@ import {
   Users,
   X,
 } from "lucide-react";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "@/hooks/use-toast";
 import { graphqlClient } from "@/lib/graphql-client";
+import { cn } from "@/lib/utils";
+
+function deferToast(...args: Parameters<typeof toast>): void {
+  window.setTimeout(() => toast(...args), 0);
+}
+
+function SwapIcon({
+  active,
+  activeIcon: ActiveIcon,
+  idleIcon: IdleIcon,
+  className = "w-4 h-4",
+}: {
+  active: boolean;
+  activeIcon: LucideIcon;
+  idleIcon: LucideIcon;
+  className?: string;
+}): React.ReactElement {
+  return (
+    <span
+      className={cn(
+        "inline-flex shrink-0 items-center justify-center",
+        className
+      )}
+      aria-hidden
+    >
+      <ActiveIcon
+        className={cn(className, "animate-spin", !active && "hidden")}
+      />
+      <IdleIcon className={cn(className, active && "hidden")} />
+    </span>
+  );
+}
 
 const SEND_PROMO_NOTIFICATION = `
   mutation SendPromoNotification($input: SendPromoInput!) {
@@ -142,20 +174,23 @@ function SearchablePicker({
       {selected.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {selected.map((item) => (
-            <span
+            <div
               key={item.id}
               className={`flex items-center gap-1 px-2 py-1 text-xs rounded-full ${chipColor}`}
             >
               <span className="max-w-40 truncate">{item.label}</span>
               <button
+                type="button"
                 onClick={() => onRemove(item.id)}
                 className="hover:opacity-70 transition-opacity"
+                aria-label={`Quitar ${item.label}`}
               >
                 <X className="w-3 h-3" />
               </button>
-            </span>
+            </div>
           ))}
           <button
+            type="button"
             onClick={onClear}
             className="text-xs text-muted-foreground hover:text-destructive underline"
           >
@@ -239,7 +274,6 @@ function SearchablePicker({
 
 export default function AdminNotificationsPage() {
   const router = useRouter();
-  const { toast } = useToast();
   const [isSending, setIsSending] = useState(false);
   const [sentCount, setSentCount] = useState<number | null>(null);
   const [imageUploading, setImageUploading] = useState(false);
@@ -373,7 +407,7 @@ export default function AdminNotificationsPage() {
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
-      toast({
+      deferToast({
         title: "Imagen demasiado grande",
         description: "Máximo 5 MB.",
         variant: "destructive",
@@ -399,16 +433,21 @@ export default function AdminNotificationsPage() {
       }
       const json = (await res.json()) as { url: string };
       setForm((prev) => ({ ...prev, imageUrl: json.url }));
-      toast({ title: "Imagen subida", description: "URL lista para usar." });
+      deferToast({
+        title: "Imagen subida",
+        description: "URL lista para usar.",
+      });
     } catch {
-      toast({
+      deferToast({
         title: "Error al subir",
         description: "No se pudo subir la imagen.",
         variant: "destructive",
       });
     } finally {
       setImageUploading(false);
-      e.target.value = "";
+      window.setTimeout(() => {
+        e.target.value = "";
+      }, 0);
     }
   };
 
@@ -416,7 +455,7 @@ export default function AdminNotificationsPage() {
 
   const handleSend = async () => {
     if (!form.title.trim() || !form.body.trim()) {
-      toast({
+      deferToast({
         title: "Campos requeridos",
         description: "El título y el mensaje son obligatorios.",
         variant: "destructive",
@@ -459,7 +498,7 @@ export default function AdminNotificationsPage() {
       }>(SEND_PROMO_NOTIFICATION, { input });
       const count = result.sendPromoNotification;
       setSentCount(count);
-      toast({
+      deferToast({
         title:
           scheduleEnabled && form.startsAt
             ? "Notificación programada"
@@ -470,7 +509,7 @@ export default function AdminNotificationsPage() {
             : `Se envió a ${count} usuario${count !== 1 ? "s" : ""}.`,
       });
     } catch (err) {
-      toast({
+      deferToast({
         title: "Error al enviar",
         description: err instanceof Error ? err.message : "Error desconocido",
         variant: "destructive",
@@ -484,6 +523,7 @@ export default function AdminNotificationsPage() {
     <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex items-center gap-4 mb-8">
         <button
+          type="button"
           onClick={() => router.back()}
           className="p-2 hover:bg-muted rounded-lg transition-colors"
         >
@@ -550,11 +590,12 @@ export default function AdminNotificationsPage() {
                   title="Subir imagen"
                   className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border bg-muted hover:bg-muted/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium text-foreground shrink-0"
                 >
-                  {imageUploading ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <ImagePlus className="w-4 h-4" />
-                  )}
+                  <SwapIcon
+                    active={imageUploading}
+                    activeIcon={Loader2}
+                    idleIcon={ImagePlus}
+                    className="w-4 h-4"
+                  />
                   {imageUploading ? "Subiendo…" : "Subir"}
                 </button>
                 <input
@@ -568,13 +609,12 @@ export default function AdminNotificationsPage() {
                 />
               </div>
               {form.imageUrl ? (
-                <div className="relative mt-2 h-20 w-32 overflow-hidden rounded-lg border border-border">
-                  <Image
+                <div className="mt-2 h-20 w-32 overflow-hidden rounded-lg border border-border">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
                     src={form.imageUrl}
-                    alt="preview"
-                    fill
-                    className="object-cover"
-                    sizes="128px"
+                    alt="Vista previa"
+                    className="h-full w-full object-cover"
                   />
                 </div>
               ) : null}
@@ -734,23 +774,22 @@ export default function AdminNotificationsPage() {
 
         {/* ── Send button ── */}
         <button
+          type="button"
           onClick={() => void handleSend()}
           disabled={isSending || !form.title.trim() || !form.body.trim()}
           className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-primary text-primary-foreground font-semibold rounded-lg hover:opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isSending ? (
-            <span className="flex items-center gap-2">
-              <Loader2 className="w-5 h-5 animate-spin" />
-              Enviando...
-            </span>
-          ) : (
-            <span className="flex items-center gap-2">
-              <Send className="w-5 h-5" />
-              {scheduleEnabled && form.startsAt
-                ? "Programar notificación"
-                : "Enviar notificación"}
-            </span>
-          )}
+          <SwapIcon
+            active={isSending}
+            activeIcon={Loader2}
+            idleIcon={Send}
+            className="w-5 h-5"
+          />
+          {isSending
+            ? "Enviando..."
+            : scheduleEnabled && form.startsAt
+              ? "Programar notificación"
+              : "Enviar notificación"}
         </button>
       </div>
     </div>

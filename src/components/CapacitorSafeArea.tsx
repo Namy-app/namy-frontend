@@ -4,6 +4,10 @@ import { Capacitor } from "@capacitor/core";
 import { StatusBar, Style } from "@capacitor/status-bar";
 import { useEffect } from "react";
 
+import { runCapacitorColdStartSync } from "@/lib/capacitor-navigate";
+
+runCapacitorColdStartSync();
+
 export function CapacitorSafeArea(): null {
   useEffect(() => {
     if (Capacitor.getPlatform() !== "android") {

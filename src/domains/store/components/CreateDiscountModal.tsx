@@ -3,14 +3,18 @@ import { useState, useCallback } from "react";
 
 import {
   type Discount,
-  DiscountType,
   type AvailableDaysAndTimes,
   useCreateDiscount,
   useUpdateDiscount,
 } from "@/domains/admin";
 import { useToast } from "@/hooks/use-toast";
 import { formatDateToYMDSafe } from "@/lib/date.lib";
-import { extractValidationErrors } from "@/lib/utils";
+import {
+  DiscountType,
+  normalizeDiscountType,
+  toApiDiscountType,
+} from "@/lib/discount-type";
+import { extractErrorMessage } from "@/lib/utils";
 
 import {
   buildPromoSlidePayload,
@@ -41,7 +45,7 @@ export const CreateDiscountModal = ({
   const [formData, setFormData] = useState({
     title: discount?.title ?? "",
     description: discount?.description ?? "",
-    type: discount?.type ?? DiscountType.PERCENTAGE,
+    type: normalizeDiscountType(discount?.type) ?? DiscountType.PERCENTAGE,
     value: discount?.value?.toString() ?? "15",
     customText: discount?.customText ?? "",
     imageUrl: discount?.imageUrl ?? "",
@@ -118,6 +122,9 @@ export const CreateDiscountModal = ({
       return;
     }
 
+    const parsedValue = Number.parseFloat(formData.value);
+    const apiType = toApiDiscountType(formData.type);
+
     try {
       const computedExcludedDaysOfWeek = computeExcludedDaysOfWeek(
         formData.availableDaysAndTimes
@@ -147,8 +154,8 @@ export const CreateDiscountModal = ({
           input: {
             title: formData.title,
             description: formData.description,
-            type: formData.type,
-            value: Number.parseFloat(formData.value),
+            type: apiType,
+            value: parsedValue,
             code: formData.code,
             startDate: formData.startDate,
             endDate: eodEndDate,
@@ -175,8 +182,8 @@ export const CreateDiscountModal = ({
           storeId,
           title: formData.title,
           description: formData.description || undefined,
-          type: formData.type,
-          value: Number.parseFloat(formData.value),
+          type: apiType,
+          value: parsedValue,
           code: formData.code,
           startDate: formData.startDate,
           endDate: eodEndDate,
@@ -204,12 +211,15 @@ export const CreateDiscountModal = ({
       });
       onClose();
     } catch (_error) {
+      const message =
+        extractErrorMessage(_error) ??
+        (discount?.id
+          ? "No se pudo actualizar el descuento."
+          : "No se pudo crear el descuento.");
       toast({
         variant: "destructive",
-        title: "Error",
-        description: _error
-          ? extractValidationErrors(_error).join(", ")
-          : "No se pudo crear el descuento.",
+        title: discount?.id ? "Error al actualizar" : "Error al crear",
+        description: message,
       });
     }
   };
@@ -310,7 +320,7 @@ export const CreateDiscountModal = ({
                     <option value={DiscountType.PERCENTAGE}>
                       Porcentaje (%)
                     </option>
-                    <option value={DiscountType.FIXED_AMOUNT}>
+                    <option value={DiscountType.FIXED}>
                       Cantidad Fija ($)
                     </option>
                   </select>

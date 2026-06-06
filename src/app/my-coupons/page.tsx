@@ -18,6 +18,7 @@ import CouponCard from "@/domains/coupons/CouponCard";
 import { RestrictionModal } from "@/domains/coupons/RestrictionModal";
 import { BasicLayout } from "@/layouts/BasicLayout";
 import { CouponDecoder, type DecodedCouponData } from "@/lib/coupon-decoder";
+import { resolveCouponDisplayLabel } from "@/lib/discount-type";
 import { graphqlRequest, setAuthToken } from "@/lib/graphql-client";
 import { COUPONS_QUERY } from "@/lib/graphql-queries";
 import StatusCard from "@/shared/components/StatusCard/StatusCard";
@@ -491,12 +492,7 @@ export default function MyCouponsPage(): React.JSX.Element {
                   >
                     <CouponCard
                       coupon={coupon}
-                      customText={coupon.discount?.customText}
-                      discountPercentage={
-                        (user?.isPremium
-                          ? coupon.discount?.value
-                          : coupon?.value) ?? 10
-                      }
+                      promoLabel={resolveCouponDisplayLabel(coupon)}
                       onViewQr={() => void handleViewQR(coupon)}
                       onShare={() => void handleShare(coupon)}
                       onDelete={() => void handleDelete(coupon)}
@@ -554,10 +550,7 @@ export default function MyCouponsPage(): React.JSX.Element {
                   <div>
                     <p className="text-xs text-gray-400 mb-0.5">Descuento</p>
                     <p className="text-2xl font-black text-[#F1A151]">
-                      {selectedCoupon.value ??
-                        selectedCoupon.discount?.value ??
-                        0}
-                      % OFF
+                      {resolveCouponDisplayLabel(selectedCoupon)}
                     </p>
                   </div>
                 </div>

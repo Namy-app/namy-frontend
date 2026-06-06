@@ -212,10 +212,11 @@ export interface PaginationInput {
 
 // ==================== Discount Types ====================
 
-export enum DiscountType {
-  PERCENTAGE = "PERCENTAGE",
-  FIXED_AMOUNT = "FIXED_AMOUNT",
-}
+import type { GraphQLDiscountType } from "@/lib/discount-type";
+import { DiscountType } from "@/lib/discount-type";
+
+export { DiscountType };
+export type { GraphQLDiscountType };
 
 export interface TimeRange {
   start: string;
@@ -236,7 +237,7 @@ export interface Discount {
   storeId: string;
   title: string;
   description?: string;
-  type: DiscountType;
+  type: GraphQLDiscountType;
   value: number;
   code?: string;
   startDate: string;
@@ -268,7 +269,7 @@ export interface CreateDiscountInput {
   storeId: string;
   title: string;
   description?: string;
-  type: DiscountType;
+  type: GraphQLDiscountType;
   value: number;
   code?: string;
   startDate: string;
@@ -292,7 +293,7 @@ export interface CreateDiscountInput {
 export interface UpdateDiscountInput {
   title?: string;
   description?: string;
-  type?: DiscountType;
+  type?: GraphQLDiscountType;
   value?: number;
   code?: string;
   startDate?: string;
@@ -315,7 +316,7 @@ export interface UpdateDiscountInput {
 export interface DiscountFiltersInput {
   storeId?: string | null;
   active?: boolean;
-  type?: DiscountType;
+  type?: GraphQLDiscountType;
 }
 
 // ==================== Coupon Types ====================

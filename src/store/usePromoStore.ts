@@ -1,13 +1,16 @@
+"use client";
+
 import { create } from "zustand";
 
 import type { PromoBannerData } from "@/app/explore/components/PromoBanner";
 import {
   clearPendingPromo,
   isPromoActive,
-  isPromoDismissed,
-  markPromoAsDismissed,
-  promoId,
+  isPromoDismissedFor,
+  markPromoDismissedForever,
 } from "@/lib/promo-storage";
+import { markNovuInboxNotificationRead } from "@/lib/push-handler";
+import { useAuthStore } from "@/store/useAuthStore";
 
 interface PromoState {
   activePromo: PromoBannerData | null;
@@ -34,7 +37,7 @@ export const usePromoStore = create<PromoState>()((set, get) => ({
     if (!isPromoActive(promo)) {
       return;
     }
-    if (await isPromoDismissed(promoId(promo))) {
+    if (await isPromoDismissedFor(promo)) {
       return;
     }
     set({ activePromo: promo });
@@ -44,8 +47,13 @@ export const usePromoStore = create<PromoState>()((set, get) => ({
     const current = get().activePromo;
     set({ activePromo: null });
     await clearPendingPromo();
-    if (current) {
-      await markPromoAsDismissed(promoId(current));
+    if (!current) {
+      return;
+    }
+    await markPromoDismissedForever(current);
+    const userId = useAuthStore.getState().user?.id;
+    if (userId && current.novuMessageId) {
+      void markNovuInboxNotificationRead(userId, current.novuMessageId);
     }
   },
 
@@ -61,19 +69,24 @@ export async function recoverPendingPromo(): Promise<void> {
   const {
     loadPendingPromo,
     isPromoActive,
+    isPromoDismissedFor,
     clearPendingPromo: clear,
   } = await import("@/lib/promo-storage");
   const promo = await loadPendingPromo();
   if (!promo) {
     return;
   }
-  // Discard promos with no content — FCM tray taps can produce empty payloads
   if (!promo.title && !promo.body) {
     await clear();
     return;
   }
   if (!isPromoActive(promo)) {
+    await clear();
     return;
   }
-  usePromoStore.getState()._forceSetPromo(promo);
+  if (await isPromoDismissedFor(promo)) {
+    await clear();
+    return;
+  }
+  await usePromoStore.getState().offerPromo(promo);
 }

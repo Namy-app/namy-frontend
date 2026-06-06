@@ -6,27 +6,27 @@ import { useMemo, useState } from "react";
 import {
   type Discount,
   type DiscountsResponse,
-  DiscountType,
   useUpdateDiscount,
 } from "@/domains/admin";
 import { useToast } from "@/hooks/use-toast";
+import {
+  formatDiscountTypeLabel,
+  resolveDiscountDisplayText,
+} from "@/lib/discount-type";
 
 import { inferDiscountPromoDisplayMode } from "../utils/discountPromoDisplay";
 
 import { CreateDiscountModal } from "./CreateDiscountModal";
 
 function formatDiscountValue(discount: Discount): string {
-  if (discount.customText?.trim()) {
-    return discount.customText.trim();
-  }
-  if (discount.type === DiscountType.PERCENTAGE) {
-    return `${discount.value}%`;
-  }
-  return `$${discount.value}`;
-}
-
-function formatDiscountTypeLabel(type: DiscountType): string {
-  return type.replace("_", " ");
+  return (
+    resolveDiscountDisplayText({
+      customText: discount.customText,
+      title: discount.title,
+      type: discount.type,
+      value: discount.value,
+    }) || "—"
+  );
 }
 
 // Multi-discount management for a single store (admin)
@@ -212,9 +212,12 @@ export const DiscountSection = ({
                       <span className="text-muted-foreground">
                         Valor:{" "}
                         <span className="font-medium text-foreground">
-                          {discount.type === DiscountType.PERCENTAGE
-                            ? `${discount.value}%`
-                            : `$${discount.value}`}
+                          {resolveDiscountDisplayText({
+                            customText: discount.customText,
+                            title: discount.title,
+                            type: discount.type,
+                            value: discount.value,
+                          }) || "—"}
                         </span>
                       </span>
                       {discount.customText?.trim() ? (

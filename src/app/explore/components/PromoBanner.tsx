@@ -12,6 +12,8 @@ export interface PromoBannerData {
   imageUrl?: string;
   deepLink?: string;
   expiresAt?: string;
+  /** Novu inbox message id — used to mark read when the user dismisses. */
+  novuMessageId?: string;
   type: "promo_banner";
 }
 

@@ -27,6 +27,7 @@ import { type Coupon, PriceRange, UserRole } from "@/domains/admin/types";
 import { CatalogsTab } from "@/domains/store/components/CatalogsTab";
 import { StoreInfo } from "@/domains/store/components/StoreInfo";
 import { toast, useToast } from "@/hooks/use-toast";
+import { resolveCapacitorDynamicId } from "@/lib/capacitor-navigate";
 import { extractErrorMessage } from "@/lib/utils";
 import { useAuthStore } from "@/store/useAuthStore";
 
@@ -36,7 +37,11 @@ export default function StoreDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { user, isAuthenticated } = useAuthStore();
-  const storeId = params?.id as string;
+  const storeId =
+    resolveCapacitorDynamicId(
+      "/admin/stores/",
+      params?.id as string | undefined
+    ) ?? "";
 
   const [activeTab, setActiveTab] = useState<TabType>("info");
   const [showCreateCatalog, setShowCreateCatalog] = useState(false);
