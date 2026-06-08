@@ -8,6 +8,11 @@ import { Card } from "@/shared/components/Card";
 
 import type { Restaurant } from "../type";
 
+const DEFAULT_RESTAURANT_IMAGE =
+  "https://images.unsplash.com/photo-1565299507177-b0ac66763828?w=800&auto=format&fit=crop";
+const DEFAULT_SERVICE_IMAGE =
+  "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=800&auto=format&fit=crop";
+
 function storeCategoryLabel(type?: Store["type"]): string {
   if (type === "RESTAURANT") {
     return "Restaurante";
@@ -40,7 +45,9 @@ export const RestaurantCard = ({
     rating: store.averageRating ?? 4.5,
     image:
       store.imageUrl ||
-      "https://images.unsplash.com/photo-1565299507177-b0ac66763828?w=800&auto=format&fit=crop",
+      (store.type === "SERVICE"
+        ? DEFAULT_SERVICE_IMAGE
+        : DEFAULT_RESTAURANT_IMAGE),
     discount: discountPercentage,
     distance: distance !== undefined ? `${distance.toFixed(1)} km` : "N/A",
     availabilityStatus: store.discountAvailabilityStatus ?? "unavailable",
