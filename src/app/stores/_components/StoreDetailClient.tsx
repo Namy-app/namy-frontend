@@ -31,15 +31,15 @@ import type { Discount } from "@/domains/admin/types";
 import { GeneratingCouponModal } from "@/domains/coupons/GeneratingCouponModal";
 import { useWallet } from "@/domains/payment/hooks";
 import { CatalogCarousel } from "@/domains/store/components/CatalogCarousel";
-import {
-  DISCOUNT_PROMO_GRADIENT,
-  DiscountPromoCarousel,
-} from "@/domains/store/components/DiscountPromoCarousel";
+import { DiscountPromoCarousel } from "@/domains/store/components/DiscountPromoCarousel";
 import { useStore } from "@/domains/store/hooks";
 import { useStoreReviews } from "@/domains/store/hooks/query/useStoreReviews";
 import type { ParsedStore } from "@/domains/store/type";
 import { getDiscountRestrictions } from "@/domains/store/utils";
-import { buildPromoSlideFromDiscount } from "@/domains/store/utils/discountPromoDisplay";
+import {
+  buildFallbackPromoSlide,
+  buildPromoSlidesFromDiscounts,
+} from "@/domains/store/utils/discountPromoDisplay";
 import { useMyLevel } from "@/domains/user/hooks/query/useMyLevel";
 import { useToast } from "@/hooks/use-toast";
 import { useDiscountCountdown } from "@/hooks/useDiscountCountdown";
@@ -904,69 +904,38 @@ export default function StoreDetailClient(): React.JSX.Element {
 
             <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
               <div className="min-w-0 space-y-6 lg:col-span-2">
-                <div
-                  className={`max-w-full min-w-0 overflow-hidden rounded-3xl shadow-glow ${DISCOUNT_PROMO_GRADIENT}`}
-                >
+                <div className="max-w-full min-w-0">
                   {visibleDiscounts.length > 0 ? (
                     <DiscountPromoCarousel
                       activeIndex={activeCardIndex}
                       onActiveIndexChange={setActiveCardIndex}
-                      slides={visibleDiscounts.map((discount) =>
-                        buildPromoSlideFromDiscount(
-                          discount,
-                          getDiscountSlideLabel
-                        )
+                      slides={buildPromoSlidesFromDiscounts(
+                        visibleDiscounts,
+                        getDiscountSlideLabel
                       )}
+                      unlock={{
+                        onUnlock: handleUnlockDiscountClick,
+                        isAvailable: isValidDiscount,
+                        isPremium: user?.isPremium,
+                        isLoading: isLoadingDiscounts,
+                        countdown: timeUntilNext,
+                      }}
                     />
                   ) : (
-                    <div className="p-6 md:p-8 text-center text-white min-h-[120px] flex items-center justify-center">
-                      <p className="text-xl font-bold">
-                        🎉 {fallbackDiscountPercentage}% de descuento con Ñamy!
-                      </p>
-                    </div>
+                    <DiscountPromoCarousel
+                      activeIndex={0}
+                      onActiveIndexChange={() => undefined}
+                      slides={[
+                        buildFallbackPromoSlide(fallbackDiscountPercentage),
+                      ]}
+                      unlock={{
+                        onUnlock: handleUnlockDiscountClick,
+                        isAvailable: false,
+                        isPremium: user?.isPremium,
+                        isLoading: isLoadingDiscounts,
+                      }}
+                    />
                   )}
-
-                  <div className="p-6 md:p-8 border-t border-white/20">
-                    <div className="max-w-5xl mx-auto text-center text-white">
-                      <p className="text-white/90 mb-4 text-sm">
-                        {user?.isPremium
-                          ? "Como miembro premium, ¡desbloquea instantáneamente!"
-                          : "Solo muestra tu código QR después de ver un anuncio"}
-                      </p>
-                      <div>
-                        {isValidDiscount ? (
-                          <Button
-                            onClick={handleUnlockDiscountClick}
-                            className="w-full bg-white text-rose-600 hover:bg-white/95 font-bold rounded-full shadow-lg py-4"
-                          >
-                            {user?.isPremium
-                              ? "Desbloquear descuento ahora"
-                              : "Desbloquear descuento"}
-                          </Button>
-                        ) : (
-                          <div className="text-center text-white bg-black/50 px-4 py-3 rounded-full">
-                            {isLoadingDiscounts ? (
-                              <Loader2 className="mx-auto animate-spin" />
-                            ) : (
-                              <div className="flex flex-col gap-1">
-                                <p className="text-sm font-semibold">
-                                  Descuento no disponible en este momento
-                                </p>
-                                {timeUntilNext ? (
-                                  <p className="text-xs text-white/80">
-                                    Disponible en:{" "}
-                                    <span className="font-mono font-bold">
-                                      {timeUntilNext}
-                                    </span>
-                                  </p>
-                                ) : null}
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
                 </div>
 
                 <Card className="p-6 space-y-4 bg-white border border-[#f1e9e6] rounded-xl shadow-md">
