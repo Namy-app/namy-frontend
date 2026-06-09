@@ -1,0 +1,11 @@
+{
+  "payment": {
+    "completeSubscription": "サブスクリプションを完了する",
+    "upgradePremiumPrice": "プレミアムにアップグレード",
+    "stripe": "Stripe",
+    "paypal": "PayPal",
+    "subscribeNow": "今すぐ登録",
+    "havingTrouble": "お困りですか?サポートにお問い合わせください",
+    "securePaymentDisclaimer": "お客様のお支払い情報は安全で暗号化されています"
+  }
+}

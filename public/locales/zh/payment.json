@@ -1,0 +1,11 @@
+{
+  "payment": {
+    "completeSubscription": "完成订阅",
+    "upgradePremiumPrice": "升级到高级版",
+    "stripe": "Stripe",
+    "paypal": "PayPal",
+    "subscribeNow": "立即订阅",
+    "havingTrouble": "遇到问题？联系支持",
+    "securePaymentDisclaimer": "您的支付信息是安全的并且已加密"
+  }
+}
