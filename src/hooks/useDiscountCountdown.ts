@@ -8,6 +8,7 @@ import {
 } from "@/lib/discount-utils";
 
 interface Discount {
+  id?: string;
   active?: boolean;
   startDate?: string;
   endDate?: string;
@@ -28,63 +29,62 @@ interface UseDiscountCountdownReturn {
 }
 
 /**
- * Optimized hook for managing discount countdown without excessive re-renders
- * Updates countdown display every second using refs, only re-renders when validity changes
+ * Countdown until the discount becomes available (schedule / validity).
+ * Uses a single interval per discount target to avoid duplicate timer strings in UI.
  */
 export function useDiscountCountdown(
   discount?: Discount | null
 ): UseDiscountCountdownReturn {
   const queryClient = useQueryClient();
   const [countdownText, setCountdownText] = useState("");
-  const countdownRef = useRef("");
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Memoize validity and next available time
+  const discountId = discount?.id;
   const isValid = useMemo(() => isDiscountValid(discount), [discount]);
-  const nextAvailableTime = useMemo(
-    () => calculateNextAvailableTime(discount),
-    [discount]
-  );
+  const nextAvailableTimeMs = useMemo(() => {
+    const next = calculateNextAvailableTime(discount);
+    return next?.getTime() ?? null;
+  }, [discount, discountId]);
 
-  // Countdown timer - only updates text, minimal re-renders
   useEffect(() => {
-    if (!nextAvailableTime || isValid) {
-      // Clear countdown asynchronously to avoid cascading renders
-      const timer = setTimeout(() => setCountdownText(""), 0);
-      return () => clearTimeout(timer);
-    }
-
-    const updateCountdown = () => {
-      const now = Date.now();
-      const diff = nextAvailableTime.getTime() - now;
-
-      if (diff <= 0) {
-        // Discount is now available - invalidate queries to refresh
-        setCountdownText("Disponible ahora");
-
-        // Refresh discount data instead of full page reload
-        void queryClient.invalidateQueries({ queryKey: ["discounts"] });
-        void queryClient.invalidateQueries({ queryKey: ["stores"] });
-
-        return;
-      }
-
-      const formatted = formatCountdown(diff);
-
-      // Only update state if the text actually changed (reduces re-renders)
-      if (formatted !== countdownRef.current) {
-        countdownRef.current = formatted;
-        setCountdownText(formatted);
+    const stopInterval = (): void => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
       }
     };
 
-    // Update immediately
-    updateCountdown();
+    if (nextAvailableTimeMs == null || isValid) {
+      stopInterval();
+      const clearTimer = setTimeout(() => setCountdownText(""), 0);
+      return () => {
+        clearTimeout(clearTimer);
+        stopInterval();
+      };
+    }
 
-    // Then update every second
-    const interval = setInterval(updateCountdown, 1000);
+    const tick = (): void => {
+      const diff = nextAvailableTimeMs - Date.now();
 
-    return () => clearInterval(interval);
-  }, [isValid, nextAvailableTime, queryClient]);
+      if (diff <= 0) {
+        setCountdownText("Disponible ahora");
+        stopInterval();
+        void queryClient.invalidateQueries({ queryKey: ["discounts"] });
+        void queryClient.invalidateQueries({ queryKey: ["stores"] });
+        return;
+      }
+
+      setCountdownText(formatCountdown(diff));
+    };
+
+    tick();
+    stopInterval();
+    intervalRef.current = setInterval(tick, 1000);
+
+    return () => {
+      stopInterval();
+    };
+  }, [isValid, nextAvailableTimeMs, queryClient, discountId]);
 
   return {
     isValid,

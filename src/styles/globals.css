@@ -1,10 +1,23 @@
 @import "tailwindcss";
 @import "tailwindcss/utilities";
 
+/* iOS keyboard height (px), set by KeyboardScrollFix.tsx. Zero on Android (adjustResize handles it). */
+:root {
+  --keyboard-height: 0px;
+  --keyboard-safe-height: 100dvh;
+}
+
 /* Safe area padding — only on Capacitor Android */
 html.capacitor-android body {
   padding-top: env(safe-area-inset-top, 0px);
   padding-bottom: env(safe-area-inset-bottom, 16px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+html,
+body {
+  height: 100%;
 }
 
 @layer base {
@@ -400,5 +413,17 @@ html.capacitor-android body {
 
   .delay-300 {
     animation-delay: 300ms;
+  }
+
+  /* Hide scrollbars while keeping scroll (categories, carousels, etc.) */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
   }
 }

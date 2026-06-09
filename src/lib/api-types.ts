@@ -79,7 +79,7 @@ export interface Discount {
   id: string;
   code: string;
   description?: string;
-  discountType: "PERCENTAGE" | "FIXED_AMOUNT";
+  discountType: "PERCENTAGE" | "FIXED";
   discountValue: number;
   minOrderValue?: number;
   maxDiscountAmount?: number;

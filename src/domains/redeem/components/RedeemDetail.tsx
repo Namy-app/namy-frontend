@@ -19,7 +19,11 @@ import { useEffect, useState, useRef } from "react";
 import { Emoji } from "@/components/Emoji";
 import { getDiscountRestrictionsFromDecodedCouponData } from "@/domains/store/utils";
 import { useToast } from "@/hooks/use-toast";
-import { CouponDecoder, type DecodedCouponData } from "@/lib/coupon-decoder";
+import {
+  CouponDecoder,
+  resolveRedemptionPromoLabel,
+  type DecodedCouponData,
+} from "@/lib/coupon-decoder";
 import { graphqlRequest } from "@/lib/graphql-client";
 import {
   REDEEM_COUPON_BY_STAFF_MUTATION,
@@ -39,6 +43,16 @@ type RedemptionResult = {
   oldLevel?: number | null;
   message?: string | null;
   challengeProgress?: string | null;
+  customText?: string | null;
+  discountTitle?: string | null;
+  discountType?: string | null;
+};
+
+type ServerDiscountMeta = {
+  customText?: string | null;
+  title?: string;
+  type?: string;
+  value?: number;
 };
 
 export default function RedeemDetail({
@@ -59,6 +73,8 @@ export default function RedeemDetail({
   const storePinRef = useRef<HTMLInputElement | null>(null);
   const fetchedCodeRef = useRef<string | null>(null);
   const [showRestrictions, setShowRestrictions] = useState(false);
+  const [serverDiscountMeta, setServerDiscountMeta] =
+    useState<ServerDiscountMeta | null>(null);
 
   const deviceId = (() => {
     if (typeof window === "undefined") {
@@ -116,6 +132,14 @@ export default function RedeemDetail({
         const detailsJson = await detailsRes.json();
         const details = detailsJson.data?.couponRedeemDetails;
         if (details) {
+          if (details.discount) {
+            setServerDiscountMeta({
+              customText: details.discount.customText,
+              title: details.discount.title,
+              type: details.discount.type,
+              value: details.discount.value,
+            });
+          }
           setIsActive(Boolean(details.valid && !details.used));
           if (!details.valid) {
             setError("This coupon is not valid for redemption");
@@ -211,10 +235,23 @@ export default function RedeemDetail({
     }
   };
 
-  const discountText = CouponDecoder.formatDiscountValue(
-    couponData.discount.type,
-    couponData.value
-  );
+  const redemptionPromoLabel = resolveRedemptionPromoLabel({
+    customText:
+      redemptionResult?.customText ??
+      serverDiscountMeta?.customText ??
+      couponData?.discount?.customText,
+    discountTitle:
+      redemptionResult?.discountTitle ??
+      serverDiscountMeta?.title ??
+      couponData?.discount?.title,
+    type:
+      redemptionResult?.discountType ??
+      serverDiscountMeta?.type ??
+      couponData?.discount?.type,
+    discountValue: serverDiscountMeta?.value ?? couponData?.discount?.value,
+    couponValue: couponData?.value,
+  });
+
   // Success State - Show celebration UI
   if (redeemed && redemptionResult && couponData) {
     return (
@@ -309,14 +346,16 @@ export default function RedeemDetail({
 
         {/* Discount Applied */}
         <div className="p-6 bg-muted/30">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground mb-1">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="mb-1 text-sm text-muted-foreground">
                 Descuento Aplicado
               </p>
-              <p className="text-3xl font-bold text-primary">{discountText}</p>
+              <p className="break-words text-xl font-bold leading-snug text-primary sm:text-2xl md:text-3xl">
+                {redemptionPromoLabel}
+              </p>
             </div>
-            <Tag className="w-12 h-12 text-primary opacity-20" />
+            <Tag className="h-12 w-12 shrink-0 text-primary opacity-20" />
           </div>
         </div>
 
@@ -368,9 +407,11 @@ export default function RedeemDetail({
   return (
     <div className="bg-white rounded-2xl shadow-card overflow-hidden animate-slide-up w-full max-w-2xl mx-auto">
       <div className="bg-gradient-primary p-8 text-center">
-        <div className="inline-block bg-white rounded-2xl px-8 py-4 shadow-glow">
-          <p className="text-sm text-muted-foreground mb-1">Tu Descuento</p>
-          <p className="text-5xl font-bold text-primary">{discountText}</p>
+        <div className="mx-auto inline-block max-w-full rounded-2xl bg-white px-6 py-4 shadow-glow sm:px-8">
+          <p className="mb-1 text-sm text-muted-foreground">Tu Descuento</p>
+          <p className="break-words text-3xl font-bold leading-tight text-primary sm:text-4xl md:text-5xl">
+            {redemptionPromoLabel}
+          </p>
         </div>
       </div>
 
@@ -460,11 +501,20 @@ export default function RedeemDetail({
       </div>
 
       <div className="p-6 border-b border-border bg-muted/30">
-        <h3 className="font-semibold text-lg text-foreground mb-3">
+        <h3 className="mb-2 break-words text-lg font-semibold text-foreground">
           {couponData.discount.title}
         </h3>
+        {(
+          serverDiscountMeta?.customText ?? couponData.discount.customText
+        )?.trim() ? (
+          <p className="mb-3 break-words text-base font-medium text-primary">
+            {(
+              serverDiscountMeta?.customText ?? couponData.discount.customText
+            )?.trim()}
+          </p>
+        ) : null}
         {couponData.discount.description ? (
-          <p className="text-sm text-muted-foreground mb-4">
+          <p className="mb-4 break-words text-sm text-muted-foreground">
             {couponData.discount.description}
           </p>
         ) : null}

@@ -28,6 +28,7 @@ import {
 } from "@/domains/admin/hooks";
 import { type Store } from "@/domains/admin/types";
 import { useToast } from "@/hooks/use-toast";
+import { navigateTo } from "@/lib/capacitor-navigate";
 
 export default function AdminStoresPage() {
   const router = useRouter();
@@ -303,7 +304,7 @@ export default function AdminStoresPage() {
                           <td
                             className="px-6 py-4 whitespace-nowrap cursor-pointer"
                             onClick={() =>
-                              router.push(`/admin/stores/${store.id}`)
+                              navigateTo(`/admin/stores/${store.id}`, router)
                             }
                           >
                             <div className="flex items-center gap-3">
@@ -328,7 +329,7 @@ export default function AdminStoresPage() {
                           <td
                             className="px-6 py-4 whitespace-nowrap cursor-pointer"
                             onClick={() =>
-                              router.push(`/admin/stores/${store.id}`)
+                              navigateTo(`/admin/stores/${store.id}`, router)
                             }
                           >
                             <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-primary/10 text-primary capitalize">
@@ -338,7 +339,7 @@ export default function AdminStoresPage() {
                           <td
                             className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground cursor-pointer"
                             onClick={() =>
-                              router.push(`/admin/stores/${store.id}`)
+                              navigateTo(`/admin/stores/${store.id}`, router)
                             }
                           >
                             {store.city}
@@ -346,7 +347,7 @@ export default function AdminStoresPage() {
                           <td
                             className="px-6 py-4 whitespace-nowrap cursor-pointer"
                             onClick={() =>
-                              router.push(`/admin/stores/${store.id}`)
+                              navigateTo(`/admin/stores/${store.id}`, router)
                             }
                           >
                             <span
@@ -362,7 +363,7 @@ export default function AdminStoresPage() {
                           <td
                             className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground cursor-pointer"
                             onClick={() =>
-                              router.push(`/admin/stores/${store.id}`)
+                              navigateTo(`/admin/stores/${store.id}`, router)
                             }
                           >
                             ⭐ {store.averageRating}/5 ({store.reviewCounter})

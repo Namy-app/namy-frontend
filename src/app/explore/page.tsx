@@ -11,7 +11,6 @@ import { CategoryCards } from "./components/CategoryCards";
 import { FeaturedCarousel } from "./components/FeaturedCarousel";
 import { PageFooter } from "./components/PageFooter";
 import { UserLevelBanner } from "./components/UserLevelBanner";
-// import { GamificationCard } from "./components/GamificationCard"; // Unused component
 
 export default function ExplorePage(): React.JSX.Element {
   const { user } = useAuthStore();
@@ -23,7 +22,6 @@ export default function ExplorePage(): React.JSX.Element {
   );
   const { data: myLevel } = useMyLevel();
 
-  // For guests, show 0% discount (no user-specific discounts)
   const discountPercentage =
     (user?.isPremium ? 15 : myLevel?.discountPercentage) ?? 10;
 
@@ -43,12 +41,6 @@ export default function ExplorePage(): React.JSX.Element {
           discountPercentage={discountPercentage}
           isLoading={isLoadingClosestStores ? isLoadingStores : undefined}
         />
-        {/* <NearbyPlaces
-          closestStores={closestStores?.data}
-          isLoading={isLoadingClosestStores}
-          discountPercentage={discountPercentage}
-        /> */}
-        {/* <GamificationCard /> */}
         <ActiveChallenges />
         <PageFooter />
       </div>

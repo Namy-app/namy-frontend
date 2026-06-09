@@ -14,6 +14,7 @@ import { useState } from "react";
 
 import { useUsers } from "@/domains/admin/hooks";
 import { UserRole } from "@/domains/admin/types";
+import { navigateTo } from "@/lib/capacitor-navigate";
 import { Button } from "@/shared/components/Button";
 import { Card } from "@/shared/components/Card";
 import { Input } from "@/shared/components/Input";
@@ -146,7 +147,7 @@ export default function AdminUsersPage() {
             <Card
               key={user.id}
               className="p-6 hover:shadow-lg transition-shadow cursor-pointer"
-              onClick={() => router.push(`/admin/users/${user.id}`)}
+              onClick={() => navigateTo(`/admin/users/${user.id}`, router)}
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1">

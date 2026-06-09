@@ -1,63 +1,53 @@
 "use client";
 
-import { Crown, Check, X, Zap, Gift, Wallet } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { Crown, Check, X, Zap, Gift } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect, Suspense } from "react";
 
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import { useWallet, useWalletBalance } from "@/domains/payment/hooks";
+import { StripePaymentForm } from "@/domains/payment/components";
 import {
   useSubscriptionStatus,
-  useCreateCheckout,
   useCancelSubscription,
   useToggleAutoRenew,
-  usePayPremiumWithWallet,
 } from "@/domains/subscription/hooks";
 import { useToast } from "@/hooks/use-toast";
 import { BasicLayout } from "@/layouts/BasicLayout";
 import { extractErrorMessage } from "@/lib/utils";
 import { useAuthStore } from "@/store/useAuthStore";
 
+const PREMIUM_PRICE_ID = "price_1SRJIhC26wcdh5DNWUT2Sqfs";
+const PREMIUM_AMOUNT = 9900; // $99 MXN in cents
+
+function getStripeReturnUrl(): string {
+  if (typeof window === "undefined") {
+    return "https://namyapp.com/subscription?success=true";
+  }
+  return `${window.location.origin}/subscription?success=true`;
+}
+
 function SubscriptionContent(): React.JSX.Element {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, updateUser } = useAuthStore();
   const { toast } = useToast();
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<"stripe" | "wallet">(
-    "stripe"
-  );
+  const queryClient = useQueryClient();
+  const [showStripeForm, setShowStripeForm] = useState(false);
 
-  // Fetch subscription status
   const { data: subscriptionData, isLoading: subscriptionLoading } =
     useSubscriptionStatus();
-  const createCheckout = useCreateCheckout();
   const cancelSubscription = useCancelSubscription();
   const toggleAutoRenew = useToggleAutoRenew();
-  const payWithWallet = usePayPremiumWithWallet();
-
-  // Fetch wallet data
-  const { data: wallet } = useWallet({ userId: user?.id || "" });
-  const { data: balance } = useWalletBalance(wallet?.id || "");
 
   const subscriptionStatus = subscriptionData?.mySubscriptionStatus;
   const hasActiveSubscription = subscriptionStatus?.isPremium || false;
   const subscriptionEndDate = subscriptionStatus?.premiumEndDate || null;
   const autoRenewEnabled = subscriptionStatus?.autoRenew ?? true;
 
-  const walletBalance = balance?.availableBalance || 0;
-  const premiumCost = 9900; // 99 MXN in cents
-  const hasEnoughBalance = walletBalance >= premiumCost;
-
-  const formatAmount = (amount: number, currency: string = "MXN") => {
-    const value = (amount / 100).toFixed(2);
-    return `$${value}${currency.toUpperCase()}`;
-  };
-
   // Sync subscription status with auth store
   useEffect(() => {
     if (subscriptionStatus && user) {
-      // Update the user in auth store with latest premium status
       if (
         user.isPremium !== subscriptionStatus.isPremium ||
         user.premiumEndDate !== subscriptionStatus.premiumEndDate
@@ -71,7 +61,7 @@ function SubscriptionContent(): React.JSX.Element {
     }
   }, [subscriptionStatus, user, updateUser]);
 
-  // Handle success/cancel query parameters from Stripe redirect
+  // Handle success/cancel query parameters from Stripe 3DS redirect
   useEffect(() => {
     const success = searchParams?.get("success");
     const canceled = searchParams?.get("canceled");
@@ -84,51 +74,37 @@ function SubscriptionContent(): React.JSX.Element {
         duration: 5000,
       });
 
-      // Wait a moment for webhook to process, then reload to fetch updated data
       setTimeout(() => {
-        window.location.href = "/subscription";
+        void queryClient.invalidateQueries({
+          queryKey: ["subscription-status"],
+        });
+        router.replace("/subscription");
       }, 2000);
     } else if (canceled === "true") {
       toast({
-        title: "Suscripción cancelada",
+        title: "Pago cancelado",
         description:
           "Puedes suscribirte en cualquier momento para desbloquear beneficios premium.",
         variant: "default",
       });
-      // Remove query params from URL
       router.replace("/subscription");
     }
-  }, [searchParams, router, toast]);
+  }, [searchParams, router, toast, queryClient]);
 
-  const handleSubscribe = async () => {
-    setIsProcessing(true);
-    try {
-      const baseUrl = window.location.origin;
-      const successUrl = `${baseUrl}/subscription?success=true`;
-      const cancelUrl = `${baseUrl}/subscription?canceled=true`;
-
-      const checkoutSession = await createCheckout.mutateAsync({
-        successUrl,
-        cancelUrl,
-      });
-
-      toast({
-        title: "Redirigiendo al pago...",
-        description: "Serás redirigido para completar tu suscripción.",
-      });
-
-      // Redirect to Stripe checkout
-      window.location.href = checkoutSession.url;
-    } catch (_error) {
-      toast({
-        title: "Error",
-        description:
-          "No se pudo iniciar el proceso de suscripción. Por favor intenta de nuevo.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsProcessing(false);
-    }
+  const handleStripePaymentSuccess = (_paymentIntentId: string) => {
+    setShowStripeForm(false);
+    const premiumStartDate = new Date().toISOString();
+    const premiumEndDate = new Date(
+      Date.now() + 30 * 24 * 60 * 60 * 1000
+    ).toISOString();
+    updateUser({ isPremium: true, premiumStartDate, premiumEndDate });
+    toast({
+      title: "🎉 ¡Bienvenido a Premium!",
+      description:
+        "Tu suscripción está activa. ¡Disfruta de generación instantánea de cupones y descuentos máximos!",
+      duration: 5000,
+    });
+    void queryClient.invalidateQueries({ queryKey: ["subscription-status"] });
   };
 
   const handleCancelSubscription = async () => {
@@ -180,60 +156,9 @@ function SubscriptionContent(): React.JSX.Element {
     }
   };
 
-  const handleWalletPayment = async () => {
-    if (!hasEnoughBalance) {
-      toast({
-        title: "Saldo insuficiente",
-        description: `Necesitas ${formatAmount(premiumCost)} en tu billetera. Saldo actual: ${formatAmount(walletBalance)}`,
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsProcessing(true);
-    try {
-      const result = await payWithWallet.mutateAsync();
-
-      // Calculate premium dates
-      const premiumStartDate = new Date().toISOString();
-      const premiumEndDate = new Date(
-        Date.now() + 30 * 24 * 60 * 60 * 1000
-      ).toISOString();
-
-      // Update auth store immediately with premium status
-      updateUser({
-        isPremium: true,
-        premiumStartDate,
-        premiumEndDate,
-      });
-
-      toast({
-        title: "🎉 ¡Bienvenido a Premium!",
-        description: result.message,
-        duration: 5000,
-      });
-
-      // Reload to fetch updated data and ensure all components reflect the change
-      setTimeout(() => {
-        window.location.reload();
-      }, 1500);
-    } catch (error: unknown) {
-      toast({
-        title: "Pago fallido",
-        description:
-          extractErrorMessage(error) ??
-          "No se pudo procesar el pago. Por favor intenta de nuevo.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
   return (
     <ProtectedRoute>
       <BasicLayout className="pb-20">
-        {/* Main Content */}
         <div className="pt-14 pb-16 bg-gradient-hero p-6">
           <div className="max-w-4xl mx-auto">
             {/* Header */}
@@ -249,7 +174,7 @@ function SubscriptionContent(): React.JSX.Element {
               </p>
             </div>
 
-            {/* Current Subscription Status */}
+            {/* Active subscription management */}
             {hasActiveSubscription ? (
               <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
                 <div className="flex items-start justify-between mb-4">
@@ -302,7 +227,6 @@ function SubscriptionContent(): React.JSX.Element {
 
             {/* Pricing Card */}
             <div className="bg-white rounded-lg shadow-xl p-8 mb-6 border-2 border-yellow-400 relative">
-              {/* Loading Overlay */}
               {subscriptionLoading ? (
                 <div className="absolute inset-0 bg-white/80 backdrop-blur-sm rounded-lg flex items-center justify-center z-10">
                   <div className="text-center">
@@ -388,7 +312,7 @@ function SubscriptionContent(): React.JSX.Element {
                 </div>
               </div>
 
-              {/* Free Features Comparison */}
+              {/* Free plan limitations */}
               <div className="border-t border-gray-200 pt-6 mb-8">
                 <p className="text-sm font-semibold text-gray-700 mb-3">
                   Limitaciones del plan gratuito:
@@ -407,102 +331,18 @@ function SubscriptionContent(): React.JSX.Element {
                 </div>
               </div>
 
-              {/* Payment Method Selection & CTA */}
+              {/* CTA */}
               {!hasActiveSubscription ? (
-                <div className="space-y-4">
-                  {/* Wallet Balance Display */}
-                  {wallet ? (
-                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Wallet className="w-5 h-5 text-gray-600" />
-                          <span className="text-sm font-medium text-gray-700">
-                            Saldo de billetera
-                          </span>
-                        </div>
-                        <span className="text-lg font-bold text-gray-900">
-                          {formatAmount(walletBalance)}
-                        </span>
-                      </div>
-                      {!hasEnoughBalance ? (
-                        <p className="text-xs text-red-600 mt-2">
-                          Saldo insuficiente. Necesitas{" "}
-                          {formatAmount(premiumCost)} para pagar con billetera.
-                        </p>
-                      ) : null}
-                    </div>
-                  ) : null}
-
-                  {/* Payment Method Tabs */}
-                  <div className="flex gap-2 bg-gray-100 p-1 rounded-lg">
-                    <button
-                      onClick={() => setPaymentMethod("stripe")}
-                      className={`flex-1 py-2 px-4 rounded-md font-medium text-sm transition-all ${
-                        paymentMethod === "stripe"
-                          ? "bg-white text-gray-900 shadow"
-                          : "text-gray-600 hover:text-gray-900"
-                      }`}
-                    >
-                      💳 Pago con tarjeta
-                    </button>
-                    <button
-                      onClick={() => setPaymentMethod("wallet")}
-                      disabled={
-                        !wallet || !hasEnoughBalance || hasActiveSubscription
-                      }
-                      className={`flex-1 py-2 px-4 rounded-md font-medium text-sm transition-all ${
-                        paymentMethod === "wallet"
-                          ? "bg-white text-gray-900 shadow"
-                          : "text-gray-600 hover:text-gray-900"
-                      } disabled:opacity-50 disabled:cursor-not-allowed`}
-                    >
-                      💰 Pago con billetera
-                    </button>
-                  </div>
-
-                  {/* Payment Button */}
-                  {paymentMethod === "stripe" ? (
-                    <button
-                      onClick={() => void handleSubscribe()}
-                      disabled={isProcessing}
-                      className="w-full py-4 bg-gradient-to-r from-yellow-400 to-orange-500 text-white font-bold rounded-lg hover:from-yellow-500 hover:to-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl text-lg"
-                    >
-                      {isProcessing ? (
-                        <span className="flex items-center justify-center gap-2">
-                          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                          Procesando...
-                        </span>
-                      ) : (
-                        <>
-                          <Crown className="w-5 h-5 inline mr-2" />
-                          Pagar con tarjeta - {formatAmount(premiumCost)}
-                        </>
-                      )}
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => void handleWalletPayment()}
-                      disabled={isProcessing || !hasEnoughBalance}
-                      className="w-full py-4 bg-linear-to-r from-green-500 to-emerald-600 text-white font-bold rounded-lg hover:from-green-600 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl text-lg"
-                    >
-                      {isProcessing ? (
-                        <span className="flex items-center justify-center gap-2">
-                          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                          Procesando...
-                        </span>
-                      ) : (
-                        <>
-                          <Wallet className="w-5 h-5 inline mr-2" />
-                          Pagar con billetera - {formatAmount(premiumCost)}
-                        </>
-                      )}
-                    </button>
-                  )}
-
+                <div className="space-y-3">
+                  <button
+                    onClick={() => setShowStripeForm(true)}
+                    className="w-full py-4 bg-linear-to-r from-yellow-400 to-orange-500 text-white font-bold rounded-lg hover:from-yellow-500 hover:to-orange-600 transition-all shadow-lg text-lg"
+                  >
+                    <Crown className="w-5 h-5 inline mr-2" />
+                    Activar Premium — $99 MXN
+                  </button>
                   <p className="text-xs text-gray-500 text-center">
-                    {paymentMethod === "stripe"
-                      ? "Pago seguro con Stripe. Cancela cuando quieras."
-                      : "Activación instantánea. Sin renovación automática para pagos con billetera."}
+                    Pago seguro con Stripe. Cancela cuando quieras.
                   </p>
                 </div>
               ) : (
@@ -514,7 +354,7 @@ function SubscriptionContent(): React.JSX.Element {
               )}
             </div>
 
-            {/* FAQ Section */}
+            {/* FAQ */}
             <div className="bg-white rounded-lg shadow p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">
                 Preguntas frecuentes
@@ -553,7 +393,49 @@ function SubscriptionContent(): React.JSX.Element {
           </div>
         </div>
 
-        {/* Bottom Navigation */}
+        {/* Stripe Payment Modal */}
+        {showStripeForm ? (
+          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+            <div className="bg-white rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between p-6 pb-4 border-b border-gray-200">
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900">
+                    Activar Ñamy Premium
+                  </h2>
+                  <p className="text-sm text-gray-500 mt-0.5">$99 MXN / mes</p>
+                </div>
+                <button
+                  onClick={() => setShowStripeForm(false)}
+                  className="text-gray-400 hover:text-gray-600 p-1"
+                  aria-label="Cerrar"
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="p-6">
+                <StripePaymentForm
+                  amount={PREMIUM_AMOUNT}
+                  currency="MXN"
+                  description="Ñamy Premium — 1 mes"
+                  metadata={{
+                    priceId: PREMIUM_PRICE_ID,
+                    type: "premium_subscription",
+                    userId: user?.id ?? "",
+                  }}
+                  returnUrl={getStripeReturnUrl()}
+                  onSuccess={handleStripePaymentSuccess}
+                  onError={(error) => {
+                    toast({
+                      title: "Pago fallido",
+                      description: error,
+                      variant: "destructive",
+                    });
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        ) : null}
       </BasicLayout>
     </ProtectedRoute>
   );

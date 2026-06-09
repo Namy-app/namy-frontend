@@ -269,7 +269,7 @@ export function useStorePin(id: string, enabled = false) {
 export function useStoreDiscounts(
   filters?: DiscountFiltersInput,
   pagination?: PaginationInput,
-  options?: { enabled?: boolean }
+  options?: { enabled?: boolean; staleTime?: number }
 ) {
   return useQuery<DiscountsResponse>({
     queryKey: ["discounts", filters, pagination],
@@ -280,6 +280,7 @@ export function useStoreDiscounts(
       return data.discounts;
     },
     enabled: options?.enabled !== false,
+    staleTime: options?.staleTime,
   });
 }
 
@@ -321,8 +322,33 @@ export function useUpdateDiscount() {
       );
       return data.updateDiscount;
     },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["discounts"] });
+    onSuccess: (updated, variables) => {
+      queryClient.setQueriesData<DiscountsResponse>(
+        { queryKey: ["discounts"] },
+        (cached) => {
+          if (!cached?.data) {
+            return cached;
+          }
+          return {
+            ...cached,
+            data: cached.data.map((d) =>
+              d.id === variables.id
+                ? {
+                    ...d,
+                    ...updated,
+                    ...(variables.input.active !== undefined
+                      ? { active: variables.input.active }
+                      : {}),
+                  }
+                : d
+            ),
+          };
+        }
+      );
+      void queryClient.invalidateQueries({
+        queryKey: ["discounts"],
+        refetchType: "active",
+      });
     },
     onError: (error, variables) => {
       Sentry.captureException(error, {
@@ -607,9 +633,27 @@ function legacyListPaginationInfo(rowCount: number): PaginationInfo {
 }
 
 function mapLegacyUserDetailsToPageData(
-  raw: UserDetailsWithActivity
+  raw: UserDetailsWithActivity,
+  activityFilters?: UserDetailsActivityFilters
 ): AdminUserDetailPageData {
-  const referrals = raw.referrals ?? [];
+  let coupons = raw.coupons;
+  let redemptions = raw.redemptions;
+  let referrals = raw.referrals ?? [];
+  if (activityFilters?.coupons) {
+    coupons = coupons.filter((c) =>
+      inDateRange(c.createdAt, activityFilters.coupons!)
+    );
+  }
+  if (activityFilters?.redemptions) {
+    redemptions = redemptions.filter((r) =>
+      inDateRange(r.redeemedAt, activityFilters.redemptions!)
+    );
+  }
+  if (activityFilters?.referrals) {
+    referrals = referrals.filter((r) =>
+      inDateRange(r.createdAt, activityFilters.referrals!)
+    );
+  }
   return {
     dataSource: "legacy",
     profile: {
@@ -635,12 +679,12 @@ function mapLegacyUserDetailsToPageData(
       totalReferrals: raw.totalReferrals ?? referrals.length,
     },
     coupons: {
-      data: raw.coupons,
-      paginationInfo: legacyListPaginationInfo(raw.coupons.length),
+      data: coupons,
+      paginationInfo: legacyListPaginationInfo(coupons.length),
     },
     redemptions: {
-      data: raw.redemptions,
-      paginationInfo: legacyListPaginationInfo(raw.redemptions.length),
+      data: redemptions,
+      paginationInfo: legacyListPaginationInfo(redemptions.length),
     },
     referrals: {
       data: referrals,
@@ -745,7 +789,10 @@ async function fetchLegacyAdminUserDetailBundleDeduped(
       const legacy = await graphqlClient.request<{
         userDetailsWithActivity: UserDetailsWithActivity;
       }>(GET_USER_DETAILS_WITH_ACTIVITY, variables);
-      bundle = mapLegacyUserDetailsToPageData(legacy.userDetailsWithActivity);
+      bundle = mapLegacyUserDetailsToPageData(
+        legacy.userDetailsWithActivity,
+        filters
+      );
     } catch (legacyMonolithError) {
       if (!isUltraLegacyUserDetailsMonolithError(legacyMonolithError)) {
         throw legacyMonolithError;
@@ -778,7 +825,7 @@ export function useAdminUserProfileSummary(
   const filters = activityFilters ?? undefined;
   const sourceKey = adminUserDetailFilterKey(userId, activityFilters);
   return useQuery<AdminUserProfileSummary>({
-    queryKey: ["admin-user-profile-summary", userId, filters ?? null],
+    queryKey: ["admin-user-profile-summary", userId],
     placeholderData: keepPreviousData,
     queryFn: async () => {
       try {
@@ -887,13 +934,18 @@ export function useAdminUserReferrals(
   return useQuery<AdminUserReferralsResponse>({
     queryKey: ["admin-user-referrals", userId, filters ?? null],
     placeholderData: keepPreviousData,
+    staleTime: 0,
     queryFn: async () => {
+      console.log(
+        "[adminUserReferrals] querying with createdAtRange:",
+        filters?.referrals ?? null
+      );
       try {
         const data = await graphqlClient.request<{
           adminUserReferrals: AdminUserReferralsResponse;
         }>(GET_ADMIN_USER_REFERRALS, {
           userId,
-          createdAtRange: filters?.referrals,
+          createdAtRange: filters?.referrals ?? null,
           pagination,
         });
         resolvedAdminUserDetailDataSource.set(sourceKey, "split");

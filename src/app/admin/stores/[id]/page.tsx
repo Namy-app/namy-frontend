@@ -5,7 +5,7 @@ const AdminStoreDetailClient = dynamic(
 );
 
 export function generateStaticParams() {
-  return [{ id: "placeholder" }];
+  return [{ id: "id" }];
 }
 
 export default function Page() {

@@ -158,203 +158,213 @@ export default function AuthPage(): React.JSX.Element {
   };
 
   return (
-    <div className="flex min-h-screen bg-gradient-hero items-center justify-center p-6">
-      <Card className="w-full max-w-md p-8 bg-card border-border shadow-glow">
-        <div className="text-center mb-8">
-          <Image
-            loader={contentfulImageLoader}
-            src="/namy-logo.webp"
-            alt="Ñamy Logo"
-            width={96}
-            height={96}
-            className="mx-auto mb-4 rounded-2xl shadow-glow"
-          />
-          <h1 className="text-4xl font-bold text-primary mb-2">Ñamy</h1>
-          <p className="text-muted-foreground">
-            Desbloquea descuentos deliciosos
-          </p>
-        </div>
-
-        <Tabs defaultValue="login" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-6 rounded-[14px]">
-            <TabsTrigger value="login">Acceso</TabsTrigger>
-            <TabsTrigger value="signup">Registrarse</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="login">
-            <form
-              onSubmit={(e) => {
-                void handleLogin(e);
-              }}
-              className="space-y-4"
-            >
-              <div>
-                <label className="text-sm font-medium text-foreground mb-2 block">
-                  Correo electrónico
-                </label>
-                <Input
-                  type="text"
-                  placeholder="your@email.com"
-                  className="h-12 rounded-xl"
-                  required
-                  value={loginEmail}
-                  onChange={(e) => setLoginEmail(e.target.value)}
-                  disabled={loginMutation.isPending}
-                />
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-foreground mb-2 block">
-                  Contraseña
-                </label>
-                <PasswordInput
-                  placeholder="••••••••"
-                  className="h-12 rounded-xl"
-                  required
-                  value={loginPassword}
-                  onChange={(e) => setLoginPassword(e.target.value)}
-                  disabled={loginMutation.isPending}
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <Checkbox
-                  label="Recuérdame"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                  disabled={loginMutation.isPending}
-                />
-                <Link
-                  href="/auth/forgot-password"
-                  className="text-sm text-primary hover:underline"
-                >
-                  ¿Olvidaste tu contraseña?
-                </Link>
-              </div>
-
-              <Button
-                type="submit"
-                className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 rounded-full font-bold shadow-glow"
-                disabled={loginMutation.isPending}
-              >
-                {loginMutation.isPending
-                  ? "Iniciando sesión..."
-                  : "Iniciar sesión"}
-              </Button>
-            </form>
-          </TabsContent>
-
-          <TabsContent value="signup">
-            <form
-              onSubmit={(e) => {
-                void handleSignup(e);
-              }}
-              className="space-y-4"
-            >
-              <div>
-                <label className="text-sm font-medium text-foreground mb-2 block">
-                  Nombre para mostrar
-                </label>
-                <Input
-                  type="text"
-                  placeholder="John Doe"
-                  className="h-12 rounded-xl"
-                  value={signupDisplayName}
-                  onChange={(e) => setSignupDisplayName(e.target.value)}
-                  disabled={signupMutation.isPending}
-                />
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-foreground mb-2 block">
-                  Correo electrónico
-                </label>
-                <Input
-                  type="email"
-                  placeholder="your@email.com"
-                  className="h-12 rounded-xl"
-                  required
-                  value={signupEmail}
-                  onChange={(e) => setSignupEmail(e.target.value)}
-                  disabled={signupMutation.isPending}
-                />
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-foreground mb-2 block">
-                  Contraseña
-                </label>
-                <PasswordInput
-                  placeholder="••••••••"
-                  className="h-12 rounded-xl"
-                  required
-                  value={signupPassword}
-                  onChange={(e) => setSignupPassword(e.target.value)}
-                  disabled={signupMutation.isPending}
-                  showStrength
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  Usa 8+ caracteres con una mezcla de letras, números y símbolos
-                </p>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-foreground mb-2 block">
-                  Confirmar contraseña
-                </label>
-                <PasswordInput
-                  placeholder="••••••••"
-                  className="h-12 rounded-xl"
-                  required
-                  value={signupConfirmPassword}
-                  onChange={(e) => setSignupConfirmPassword(e.target.value)}
-                  disabled={signupMutation.isPending}
-                />
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-foreground mb-2 block">
-                  Código de referido (opcional)
-                </label>
-                <Input
-                  type="text"
-                  placeholder="Ingresa el código de referido"
-                  className="h-12 rounded-xl"
-                  value={referralCode}
-                  onChange={(e) => setReferralCode(e.target.value)}
-                  disabled={signupMutation.isPending}
-                />
-              </div>
-
-              <Checkbox
-                label={
-                  <span>
-                    Acepto los{" "}
-                    <Link
-                      href="/terms"
-                      className="text-primary hover:underline"
-                      target="_blank"
-                    >
-                      Términos y Condiciones
-                    </Link>
-                  </span>
-                }
-                checked={agreeToTerms}
-                onChange={(e) => setAgreeToTerms(e.target.checked)}
-                disabled={signupMutation.isPending}
+    <div
+      className="overflow-y-auto bg-gradient-hero"
+      style={{ height: "calc(100dvh - var(--keyboard-height, 0px))" }}
+    >
+      <div className="flex min-h-full flex-col items-center justify-center px-6 py-4">
+        <div className="w-full max-w-md rounded-2xl border-border shadow-glow">
+          <Card className="w-full p-8 bg-card border-none">
+            <div className="text-center mb-8">
+              <Image
+                loader={contentfulImageLoader}
+                src="/namy-logo.webp"
+                alt="Ñamy Logo"
+                width={96}
+                height={96}
+                className="mx-auto mb-4 rounded-2xl shadow-glow"
               />
+              <h1 className="text-4xl font-bold text-primary mb-2">Ñamy</h1>
+              <p className="text-muted-foreground">
+                Desbloquea descuentos deliciosos
+              </p>
+            </div>
 
-              <Button
-                type="submit"
-                className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 rounded-full font-bold shadow-glow"
-                disabled={signupMutation.isPending}
-              >
-                {signupMutation.isPending ? "Creando cuenta..." : "Registrarse"}
-              </Button>
-            </form>
-          </TabsContent>
-        </Tabs>
-      </Card>
+            <Tabs defaultValue="login" className="w-full">
+              <TabsList className="grid w-full grid-cols-2 mb-6 rounded-[14px]">
+                <TabsTrigger value="login">Acceso</TabsTrigger>
+                <TabsTrigger value="signup">Registrarse</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="login">
+                <form
+                  onSubmit={(e) => {
+                    void handleLogin(e);
+                  }}
+                  className="space-y-4"
+                >
+                  <div>
+                    <label className="text-sm font-medium text-foreground mb-2 block">
+                      Correo electrónico
+                    </label>
+                    <Input
+                      type="text"
+                      placeholder="your@email.com"
+                      className="h-12 rounded-xl"
+                      required
+                      value={loginEmail}
+                      onChange={(e) => setLoginEmail(e.target.value)}
+                      disabled={loginMutation.isPending}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium text-foreground mb-2 block">
+                      Contraseña
+                    </label>
+                    <PasswordInput
+                      placeholder="••••••••"
+                      className="h-12 rounded-xl"
+                      required
+                      value={loginPassword}
+                      onChange={(e) => setLoginPassword(e.target.value)}
+                      disabled={loginMutation.isPending}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <Checkbox
+                      label="Recuérdame"
+                      checked={rememberMe}
+                      onChange={(e) => setRememberMe(e.target.checked)}
+                      disabled={loginMutation.isPending}
+                    />
+                    <Link
+                      href="/auth/forgot-password"
+                      className="text-sm text-primary hover:underline"
+                    >
+                      ¿Olvidaste tu contraseña?
+                    </Link>
+                  </div>
+
+                  <Button
+                    type="submit"
+                    className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 rounded-full font-bold shadow-glow"
+                    disabled={loginMutation.isPending}
+                  >
+                    {loginMutation.isPending
+                      ? "Iniciando sesión..."
+                      : "Iniciar sesión"}
+                  </Button>
+                </form>
+              </TabsContent>
+
+              <TabsContent value="signup">
+                <form
+                  onSubmit={(e) => {
+                    void handleSignup(e);
+                  }}
+                  className="space-y-4"
+                >
+                  <div>
+                    <label className="text-sm font-medium text-foreground mb-2 block">
+                      Nombre para mostrar
+                    </label>
+                    <Input
+                      type="text"
+                      placeholder="John Doe"
+                      className="h-12 rounded-xl"
+                      value={signupDisplayName}
+                      onChange={(e) => setSignupDisplayName(e.target.value)}
+                      disabled={signupMutation.isPending}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium text-foreground mb-2 block">
+                      Correo electrónico
+                    </label>
+                    <Input
+                      type="email"
+                      placeholder="your@email.com"
+                      className="h-12 rounded-xl"
+                      required
+                      value={signupEmail}
+                      onChange={(e) => setSignupEmail(e.target.value)}
+                      disabled={signupMutation.isPending}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium text-foreground mb-2 block">
+                      Contraseña
+                    </label>
+                    <PasswordInput
+                      placeholder="••••••••"
+                      className="h-12 rounded-xl"
+                      required
+                      value={signupPassword}
+                      onChange={(e) => setSignupPassword(e.target.value)}
+                      disabled={signupMutation.isPending}
+                      showStrength
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Usa 8+ caracteres con una mezcla de letras, números y
+                      símbolos
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium text-foreground mb-2 block">
+                      Confirmar contraseña
+                    </label>
+                    <PasswordInput
+                      placeholder="••••••••"
+                      className="h-12 rounded-xl"
+                      required
+                      value={signupConfirmPassword}
+                      onChange={(e) => setSignupConfirmPassword(e.target.value)}
+                      disabled={signupMutation.isPending}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium text-foreground mb-2 block">
+                      Código de referido (opcional)
+                    </label>
+                    <Input
+                      type="text"
+                      placeholder="Ingresa el código de referido"
+                      className="h-12 rounded-xl"
+                      value={referralCode}
+                      onChange={(e) => setReferralCode(e.target.value)}
+                      disabled={signupMutation.isPending}
+                    />
+                  </div>
+
+                  <Checkbox
+                    label={
+                      <span>
+                        Acepto los{" "}
+                        <Link
+                          href="/terms"
+                          className="text-primary hover:underline"
+                          target="_blank"
+                        >
+                          Términos y Condiciones
+                        </Link>
+                      </span>
+                    }
+                    checked={agreeToTerms}
+                    onChange={(e) => setAgreeToTerms(e.target.checked)}
+                    disabled={signupMutation.isPending}
+                  />
+
+                  <Button
+                    type="submit"
+                    className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 rounded-full font-bold shadow-glow"
+                    disabled={signupMutation.isPending}
+                  >
+                    {signupMutation.isPending
+                      ? "Creando cuenta..."
+                      : "Registrarse"}
+                  </Button>
+                </form>
+              </TabsContent>
+            </Tabs>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 }
