@@ -8,7 +8,9 @@ import { useEffect } from "react";
 export function KeyboardScrollFix(): null {
   useEffect(() => {
     const platform = Capacitor.getPlatform();
-    if (platform !== "android" && platform !== "ios") {return;}
+    if (platform !== "android" && platform !== "ios") {
+      return;
+    }
 
     let keyboardVisible = false;
     let focusTimer: ReturnType<typeof setTimeout> | null = null;
@@ -17,15 +19,23 @@ export function KeyboardScrollFix(): null {
 
     function scrollActiveIntoView() {
       const el = document.activeElement as HTMLElement | null;
-      if (!el || !["INPUT", "TEXTAREA"].includes(el.tagName)) {return;}
+      if (!el || !["INPUT", "TEXTAREA"].includes(el.tagName)) {
+        return;
+      }
       el.scrollIntoView({ behavior: "smooth", block: "center" });
     }
 
     function onFocusIn(e: FocusEvent) {
       const el = e.target as HTMLElement | null;
-      if (!el || !["INPUT", "TEXTAREA"].includes(el.tagName)) {return;}
-      if (!keyboardVisible) {return;}
-      if (focusTimer) {clearTimeout(focusTimer);}
+      if (!el || !["INPUT", "TEXTAREA"].includes(el.tagName)) {
+        return;
+      }
+      if (!keyboardVisible) {
+        return;
+      }
+      if (focusTimer) {
+        clearTimeout(focusTimer);
+      }
       focusTimer = setTimeout(scrollActiveIntoView, 80);
     }
 
@@ -57,7 +67,9 @@ export function KeyboardScrollFix(): null {
     document.addEventListener("focusin", onFocusIn);
 
     return () => {
-      if (focusTimer) {clearTimeout(focusTimer);}
+      if (focusTimer) {
+        clearTimeout(focusTimer);
+      }
       void showHandle?.remove();
       void hideHandle?.remove();
       document.removeEventListener("focusin", onFocusIn);

@@ -10,6 +10,7 @@ export interface PromoBannerData {
   title: string;
   body: string;
   imageUrl?: string;
+  storeImages?: string[];
   deepLink?: string;
   expiresAt?: string;
   /** Novu inbox message id — used to mark read when the user dismisses. */
@@ -45,9 +46,12 @@ export function PromoBanner({
     }
   };
 
-  const images: [string, string, string] = promo.imageUrl
-    ? [promo.imageUrl, promo.imageUrl, promo.imageUrl]
-    : FOOD_PLACEHOLDERS;
+  const images: [string, string, string] =
+    promo.storeImages && promo.storeImages.length === 3
+      ? (promo.storeImages as [string, string, string])
+      : promo.imageUrl
+        ? [promo.imageUrl, promo.imageUrl, promo.imageUrl]
+        : FOOD_PLACEHOLDERS;
 
   return (
     <div
