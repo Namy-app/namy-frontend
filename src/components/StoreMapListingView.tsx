@@ -343,13 +343,8 @@ export function StoreMapListingView({
   return (
     <BasicLayout>
       <div
-        className="fixed left-1/2 -translate-x-1/2 z-10 flex flex-col overflow-hidden bg-background"
-        style={{
-          top: MAP_PANEL_TOP,
-          bottom: MAP_PANEL_BOTTOM,
-          maxWidth: "1024px",
-          width: "100%",
-        }}
+        className="fixed left-0 right-0 z-10 flex flex-col overflow-hidden bg-background"
+        style={{ top: MAP_PANEL_TOP, bottom: MAP_PANEL_BOTTOM }}
       >
         <div className="pointer-events-none absolute inset-x-0 top-0 z-50 flex items-center gap-2 px-3 py-2">
           <Button
@@ -516,17 +511,15 @@ export function StoreMapListingView({
                   </Button>
                 </div>
               ) : (
-                <div className="mx-auto" style={{ maxWidth: "1024px" }}>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
-                    {mapStoresList.map((store) => (
-                      <RestaurantCard
-                        key={store.id}
-                        discountPercentage={discountPercentage}
-                        store={store}
-                        distance={store.distance}
-                      />
-                    ))}
-                  </div>
+                <div className="space-y-4 pt-1">
+                  {mapStoresList.map((store) => (
+                    <RestaurantCard
+                      key={store.id}
+                      discountPercentage={discountPercentage}
+                      store={store}
+                      distance={store.distance}
+                    />
+                  ))}
                 </div>
               )}
             </div>
