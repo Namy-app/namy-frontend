@@ -15,7 +15,13 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 
+import { navigateTo } from "@/lib/capacitor-navigate";
 import { env } from "@/lib/env";
+import {
+  isPromoActive,
+  notificationToPromo,
+  surfacePromo,
+} from "@/lib/promo-storage";
 import { useAuthStore } from "@/store/useAuthStore";
 
 interface ExploreHeaderProps {
@@ -27,6 +33,37 @@ export function ExploreHeader({
 }: ExploreHeaderProps): React.JSX.Element {
   const router = useRouter();
   const { user, clearAuth } = useAuthStore();
+
+  const handleNotificationClick = (notification: {
+    subject?: string;
+    body?: string;
+    data?: Record<string, unknown>;
+    redirect?: { url?: string; target?: string } | null;
+  }): void => {
+    const data = notification.data;
+    const isPromo = !data?.type || data.type === "promo_banner";
+
+    if (isPromo) {
+      const promo = notificationToPromo(notification);
+      void surfacePromo(promo).then((shown) => {
+        if (shown) {
+          navigateTo("/explore", router);
+          return;
+        }
+        if (isPromoActive(promo) && promo.deepLink) {
+          navigateTo(promo.deepLink, router);
+          return;
+        }
+        navigateTo("/explore", router);
+      });
+      return;
+    }
+
+    const deepLink = data?.deepLink;
+    if (typeof deepLink === "string" && deepLink.startsWith("/")) {
+      navigateTo(deepLink, router);
+    }
+  };
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -114,6 +151,7 @@ export function ExploreHeader({
                   env.NEXT_PUBLIC_NOVU_APPLICATION_IDENTIFIER
                 }
                 subscriberId={user.id}
+                onNotificationClick={handleNotificationClick}
                 appearance={{
                   variables: {
                     colorPrimary: "hsl(8 92% 70%)",
@@ -131,6 +169,10 @@ export function ExploreHeader({
                   elements: {
                     button:
                       "p-2 hover:bg-accent rounded-full transition-colors",
+                    inbox__popoverContent: {
+                      width: "min(400px, calc(100vw - 8px))",
+                      maxWidth: "calc(100vw - 8px)",
+                    },
                   },
                   icons: {
                     bell: () => (

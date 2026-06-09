@@ -7,6 +7,8 @@ import { CapacitorSafeArea } from "@/components/CapacitorSafeArea";
 import { GoogleAdsense } from "@/components/GoogleAdsense";
 import { GoogleMapsProviderClient } from "@/components/GoogleMapsProviderClient";
 import { KeyboardScrollFix } from "@/components/KeyboardScrollFix";
+import { PromoProvider } from "@/components/PromoProvider";
+import { PushNotificationProvider } from "@/components/PushNotificationProvider";
 import { SpaRedirectHandler } from "@/components/SpaRedirectHandler";
 import { ReactQueryProvider } from "@/providers/ReactQueryProvider";
 import { Toaster } from "@/shared/components/Toaster";
@@ -82,7 +84,10 @@ export default function RootLayout({
         <KeyboardScrollFix />
         <SpaRedirectHandler />
         <ReactQueryProvider>
-          <GoogleMapsProviderClient>{children}</GoogleMapsProviderClient>
+          <PromoProvider>
+            <PushNotificationProvider />
+            <GoogleMapsProviderClient>{children}</GoogleMapsProviderClient>
+          </PromoProvider>
           <Toaster />
         </ReactQueryProvider>
       </body>

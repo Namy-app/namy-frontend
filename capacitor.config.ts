@@ -17,12 +17,15 @@ const config: CapacitorConfig = {
     hostname: "namyapp.com",
   },
   plugins: {
+    PushNotifications: {
+      presentationOptions: ["badge", "sound", "alert"],
+    },
     CapacitorHttp: {
       enabled: true,
     },
     Keyboard: {
-      resize: "ionic",
-      scrollAssist: false,
+      resize: "body",
+      scrollAssist: true,
       resizeOnFullScreen: true,
     },
     StatusBar: {

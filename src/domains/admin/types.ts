@@ -212,10 +212,11 @@ export interface PaginationInput {
 
 // ==================== Discount Types ====================
 
-export enum DiscountType {
-  PERCENTAGE = "PERCENTAGE",
-  FIXED_AMOUNT = "FIXED_AMOUNT",
-}
+import type { GraphQLDiscountType } from "@/lib/discount-type";
+import { DiscountType } from "@/lib/discount-type";
+
+export { DiscountType };
+export type { GraphQLDiscountType };
 
 export interface TimeRange {
   start: string;
@@ -236,7 +237,7 @@ export interface Discount {
   storeId: string;
   title: string;
   description?: string;
-  type: DiscountType;
+  type: GraphQLDiscountType;
   value: number;
   code?: string;
   startDate: string;
@@ -252,6 +253,9 @@ export interface Discount {
   availableDaysAndTimes?: AvailableDaysAndTimes;
   maxUsesPerUserPerMonth?: number;
   monthlyRedemptionCap?: number;
+  customText?: string | null;
+  imageUrl?: string | null;
+  isPromoted?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -265,7 +269,7 @@ export interface CreateDiscountInput {
   storeId: string;
   title: string;
   description?: string;
-  type: DiscountType;
+  type: GraphQLDiscountType;
   value: number;
   code?: string;
   startDate: string;
@@ -280,13 +284,16 @@ export interface CreateDiscountInput {
   availableDaysAndTimes?: AvailableDaysAndTimes;
   maxUsesPerUserPerMonth?: number;
   monthlyRedemptionCap?: number;
+  customText?: string;
+  imageUrl?: string;
+  isPromoted?: boolean;
   id?: string;
 }
 
 export interface UpdateDiscountInput {
   title?: string;
   description?: string;
-  type?: DiscountType;
+  type?: GraphQLDiscountType;
   value?: number;
   code?: string;
   startDate?: string;
@@ -301,12 +308,15 @@ export interface UpdateDiscountInput {
   availableDaysAndTimes?: AvailableDaysAndTimes;
   maxUsesPerUserPerMonth?: number;
   monthlyRedemptionCap?: number;
+  customText?: string;
+  imageUrl?: string;
+  isPromoted?: boolean;
 }
 
 export interface DiscountFiltersInput {
   storeId?: string | null;
   active?: boolean;
-  type?: DiscountType;
+  type?: GraphQLDiscountType;
 }
 
 // ==================== Coupon Types ====================

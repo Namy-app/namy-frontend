@@ -18,6 +18,9 @@ type GraphQLError = {
 export const graphqlClient = new GraphQLClient(env.NEXT_PUBLIC_API_URL, {
   headers: {
     "Content-Type": "application/json",
+    ...(env.NEXT_PUBLIC_API_URL.includes("ngrok") && {
+      "ngrok-skip-browser-warning": "true",
+    }),
   },
   fetch: fetch,
 });
@@ -101,11 +104,7 @@ export async function graphqlRequest<T>(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   variables?: any
 ): Promise<T> {
-  const isCapacitor =
-    typeof window !== "undefined" &&
-    !!(window as Window & { Capacitor?: unknown }).Capacitor;
-
-  if (isNgrok && isCapacitor) {
+  if (isNgrok) {
     graphqlClient.setHeader("ngrok-skip-browser-warning", "true");
   }
   try {

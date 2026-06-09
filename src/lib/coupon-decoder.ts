@@ -1,4 +1,11 @@
 import type { AvailableDaysAndTimes } from "@/domains/admin";
+import {
+  formatDiscountPromo,
+  normalizeDiscountType,
+  resolveDiscountDisplayText,
+} from "@/lib/discount-type";
+
+export { resolveDiscountDisplayText };
 
 /**
  * Decoded coupon data structure matching backend payload
@@ -22,6 +29,7 @@ export interface DecodedCouponData {
   };
   discount: {
     title: string;
+    customText?: string | null;
     description?: string;
     type: string;
     value: number;
@@ -294,12 +302,35 @@ export class CouponDecoder {
    * Format discount value for display
    */
   static formatDiscountValue(type: string, value: number): string {
-    if (type === "percentage") {
-      return `${value}% OFF`;
-    } else if (type === "fixed") {
-      return `$${value} OFF`;
-    } else {
-      return `${value} OFF`;
-    }
+    return formatDiscountPromo(type, value);
   }
+}
+
+export function resolveRedemptionPromoLabel(options: {
+  customText?: string | null;
+  promoText?: string | null;
+  discountTitle?: string | null;
+  type?: string;
+  discountValue?: number;
+  couponValue?: number;
+}): string {
+  const custom = options.customText?.trim() || options.promoText?.trim() || "";
+  const discountValue = options.discountValue;
+  const type = options.type;
+  const normalizedType = type ? normalizeDiscountType(type) : null;
+
+  if (discountValue != null && discountValue > 0 && normalizedType) {
+    return formatDiscountPromo(type!, discountValue);
+  }
+
+  if (custom) {
+    return custom;
+  }
+
+  const title = options.discountTitle?.trim();
+  if (title) {
+    return title;
+  }
+
+  return "Promoción Especial";
 }
