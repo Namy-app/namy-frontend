@@ -525,6 +525,7 @@ export const GET_COUPON_REDEEM_DETAILS_QUERY = `
         excludedHours
         additionalRestrictions
         restrictions
+        customText
       }
     }
   }
@@ -668,11 +669,14 @@ export const COUPONS_QUERY = `
         description
         type
         value
+        minPurchaseAmount
+        maxDiscountAmount
         availableDaysAndTimes
         excludedDaysOfWeek
         excludedHours
         additionalRestrictions
         restrictions
+        customText
       }
       store {
         id
@@ -705,6 +709,9 @@ export const REDEEM_COUPON_BY_STAFF_MUTATION = `
       oldLevel
       message
       challengeProgress
+      customText
+      discountTitle
+      discountType
     }
   }
 `;
@@ -729,15 +736,6 @@ export const DELETE_COUPON_MUTATION = `
 `;
 
 // ============ PREMIUM SUBSCRIPTION ============
-export const CREATE_PREMIUM_CHECKOUT_MUTATION = `
-  mutation CreatePremiumCheckout($input: CreatePremiumCheckoutInput!) {
-    createPremiumCheckoutSession(input: $input) {
-      sessionId
-      url
-    }
-  }
-`;
-
 export const CANCEL_PREMIUM_SUBSCRIPTION_MUTATION = `
   mutation CancelPremium {
     cancelPremiumSubscription {

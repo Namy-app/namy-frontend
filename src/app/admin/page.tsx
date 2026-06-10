@@ -12,6 +12,7 @@ import {
   Trophy,
   FileSpreadsheet,
   Loader2,
+  Bell,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -22,6 +23,7 @@ import {
   useStoreCoupons,
 } from "@/domains/admin/hooks";
 import { UserRole } from "@/domains/admin/types";
+import { downloadBlobFile } from "@/lib/download-file";
 import { useAuthStore } from "@/store/useAuthStore";
 
 export default function AdminDashboardPage() {
@@ -57,12 +59,7 @@ export default function AdminDashboardPage() {
       }
 
       const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `report-${year}-${month}.xlsx`;
-      a.click();
-      URL.revokeObjectURL(url);
+      await downloadBlobFile(blob, `report-${year}-${month}.xlsx`);
     } catch (err) {
       setReportError(
         err instanceof Error ? err.message : "Failed to export report."
@@ -179,6 +176,18 @@ export default function AdminDashboardPage() {
     stats: [
       { label: "Total", value: "-" },
       { label: "Active", value: "-" },
+    ],
+  });
+
+  adminSections.push({
+    title: "Notificaciones",
+    description: "Envía notificaciones promocionales a los usuarios",
+    icon: Bell,
+    color: "from-emerald-500 to-teal-600",
+    href: "/admin/notifications",
+    stats: [
+      { label: "Push", value: "FCM" },
+      { label: "In-App", value: "Novu" },
     ],
   });
 

@@ -5,11 +5,16 @@ import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 
 import { Emoji } from "@/components/Emoji";
+import {
+  formatCouponExpiryCountdown,
+  getCouponExpiryCountdownTickMs,
+  getMsUntilExpiry,
+} from "@/domains/coupon/formatExpiryCountdown";
 import type { CouponItem } from "@/domains/coupon/type";
 
 type Props = {
   coupon: CouponItem;
-  discountPercentage: number;
+  promoLabel: string;
   onViewQr: (c: CouponItem) => void;
   onShare: (c: CouponItem) => void;
   onDelete: (c: CouponItem) => void;
@@ -31,30 +36,13 @@ function getGradient(code: string): string {
   return GRADIENTS[idx]!;
 }
 
-function getTimeRemaining(
-  expiresAt: string
-): { h: number; m: number; s: number; totalMs: number } | null {
-  const diff = new Date(expiresAt).getTime() - Date.now();
-  if (diff <= 0) {
-    return null;
-  }
-  return {
-    h: Math.floor(diff / 3_600_000),
-    m: Math.floor((diff % 3_600_000) / 60_000),
-    s: Math.floor((diff % 60_000) / 1000),
-    totalMs: diff,
-  };
-}
-
-function pad(n: number): string {
-  return String(n).padStart(2, "0");
-}
-
 export default function CouponCard({
   coupon,
-  discountPercentage,
+  promoLabel,
   onViewQr,
 }: Props): React.JSX.Element {
+  const displayLabel = promoLabel.trim() || "Promoción Especial";
+  const isCompactLabel = displayLabel.length > 12;
   const [countdown, setCountdown] = useState<string | null>(null);
 
   const expiresAtMs = new Date(coupon.expiresAt).getTime();
@@ -75,13 +63,17 @@ export default function CouponCard({
     }
     let timer: number | undefined;
     const update = (): void => {
-      const t = getTimeRemaining(coupon.expiresAt);
-      if (!t || t.totalMs > 48 * 3_600_000) {
+      const msRemaining = getMsUntilExpiry(coupon.expiresAt);
+      const formatted = formatCouponExpiryCountdown(msRemaining);
+      if (!formatted) {
         setCountdown(null);
         return;
       }
-      setCountdown(`${pad(t.h)}:${pad(t.m)}:${pad(t.s)}`);
-      timer = window.setTimeout(update, 1000);
+      setCountdown(formatted);
+      timer = window.setTimeout(
+        update,
+        getCouponExpiryCountdownTickMs(msRemaining)
+      );
     };
     update();
     return () => {
@@ -128,8 +120,12 @@ export default function CouponCard({
         </div>
 
         <div className="flex-1 min-w-0">
-          <p className="text-white font-black text-3xl leading-none tracking-tight">
-            {discountPercentage}% OFF
+          <p
+            className={`text-white font-black leading-none tracking-tight ${
+              isCompactLabel ? "text-2xl line-clamp-2" : "text-3xl"
+            }`}
+          >
+            {displayLabel}
           </p>
           <p className="text-white/90 font-semibold text-base mt-1 truncate">
             {coupon.store?.name ?? "Tienda"}

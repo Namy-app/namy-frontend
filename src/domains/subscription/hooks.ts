@@ -2,7 +2,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { graphqlRequest } from "@/lib/graphql-client";
 import {
-  CREATE_PREMIUM_CHECKOUT_MUTATION,
   CANCEL_PREMIUM_SUBSCRIPTION_MUTATION,
   TOGGLE_PREMIUM_AUTO_RENEW_MUTATION,
   MY_SUBSCRIPTION_STATUS_QUERY,
@@ -17,19 +16,6 @@ export interface SubscriptionStatus {
   autoRenew: boolean;
 }
 
-export interface CheckoutSession {
-  sessionId: string;
-  url: string;
-}
-
-export interface CreateCheckoutInput {
-  successUrl: string;
-  cancelUrl: string;
-}
-
-/**
- * Get user's premium subscription status
- */
 export function useSubscriptionStatus() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   return useQuery<{ mySubscriptionStatus: SubscriptionStatus }>({
@@ -40,27 +26,6 @@ export function useSubscriptionStatus() {
       );
     },
     enabled: isAuthenticated,
-  });
-}
-
-/**
- * Create Stripe checkout session for premium subscription
- */
-export function useCreateCheckout() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (input: CreateCheckoutInput) => {
-      const data = await graphqlRequest<{
-        createPremiumCheckoutSession: CheckoutSession;
-      }>(CREATE_PREMIUM_CHECKOUT_MUTATION, { input });
-
-      return data.createPremiumCheckoutSession;
-    },
-    onSuccess: () => {
-      // Invalidate subscription status to refresh after checkout
-      void queryClient.invalidateQueries({ queryKey: ["subscription-status"] });
-    },
   });
 }
 

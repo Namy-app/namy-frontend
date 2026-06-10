@@ -1,1 +1,2 @@
 CAPACITOR_DEBUG = true
+OTHER_CODE_SIGN_FLAGS = --no-strict

@@ -23,13 +23,13 @@ interface Props {
 }
 
 const DAY_LABELS: Record<number, string> = {
-  0: "Lunes",
-  1: "Martes",
-  2: "Miércoles",
-  3: "Jueves",
-  4: "Viernes",
-  5: "Sábado",
-  6: "Domingo",
+  0: "Monday",
+  1: "Tuesday",
+  2: "Wednesday",
+  3: "Thursday",
+  4: "Friday",
+  5: "Saturday",
+  6: "Sunday",
 };
 
 export const TimeRestrictionsEditor = ({ value, onChange }: Props) => {
@@ -147,14 +147,14 @@ export const TimeRestrictionsEditor = ({ value, onChange }: Props) => {
   const canAddMore = availableDays.length < 7;
 
   return (
-    <div className="bg-card rounded-lg shadow p-6">
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
-            <Clock className="w-5 h-5 text-muted-foreground" />
+    <div className="min-w-0 overflow-hidden rounded-lg bg-card p-4 shadow sm:p-6">
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <h2 className="flex items-center gap-2 text-lg font-semibold text-foreground sm:text-xl">
+            <Clock className="h-5 w-5 shrink-0 text-muted-foreground" />
             Días y horarios disponibles
           </h2>
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="mt-1 text-sm text-muted-foreground">
             Configurar los días y horas en los que el descuento está disponible
           </p>
         </div>
@@ -162,9 +162,9 @@ export const TimeRestrictionsEditor = ({ value, onChange }: Props) => {
           <button
             type="button"
             onClick={handleAddDay}
-            className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-primary bg-primary/10 hover:bg-primary/20 rounded-md transition-colors"
+            className="flex w-full shrink-0 items-center justify-center gap-2 rounded-md bg-primary/10 px-3 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/20 sm:w-auto"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="h-4 w-4" />
             Añadir Día
           </button>
         ) : null}
@@ -183,12 +183,12 @@ export const TimeRestrictionsEditor = ({ value, onChange }: Props) => {
           {availableDays.map((dayData, dayIndex) => (
             <div
               key={dayIndex}
-              className="p-4 bg-muted/50 rounded-lg border border-border"
+              className="min-w-0 rounded-lg border border-border bg-muted/50 p-3 sm:p-4"
             >
               {/* Day Header */}
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex-1 max-w-[200px]">
-                  <label className="block text-xs font-medium text-muted-foreground mb-1">
+              <div className="mb-4 flex items-end gap-2 sm:gap-3">
+                <div className="min-w-0 flex-1">
+                  <label className="mb-1 block text-xs font-medium text-muted-foreground">
                     Día
                   </label>
                   <select
@@ -196,7 +196,7 @@ export const TimeRestrictionsEditor = ({ value, onChange }: Props) => {
                     onChange={(e) =>
                       handleUpdateDay(dayIndex, Number(e.target.value))
                     }
-                    className="w-full px-3 py-2 bg-background border border-input rounded-md text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-full min-w-0 rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                   >
                     {getAvailableDayIndices(dayData.dayIndex).map((dayIdx) => (
                       <option key={dayIdx} value={dayIdx}>
@@ -208,25 +208,25 @@ export const TimeRestrictionsEditor = ({ value, onChange }: Props) => {
                 <button
                   type="button"
                   onClick={() => handleRemoveDay(dayIndex)}
-                  className="p-2 text-destructive hover:bg-destructive/10 rounded-md transition-colors"
+                  className="shrink-0 rounded-md p-2 text-destructive transition-colors hover:bg-destructive/10"
                   title="Eliminar día"
                 >
-                  <Trash2 className="w-4 h-4" />
+                  <Trash2 className="h-4 w-4" />
                 </button>
               </div>
 
               {/* Time Ranges */}
               <div className="space-y-3">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                   <label className="text-xs font-medium text-muted-foreground">
                     Horarios Disponibles
                   </label>
                   <button
                     type="button"
                     onClick={() => handleAddTimeRange(dayIndex)}
-                    className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-primary bg-primary/10 hover:bg-primary/20 rounded transition-colors"
+                    className="flex w-full items-center justify-center gap-1 rounded bg-primary/10 px-2 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary/20 sm:w-auto"
                   >
-                    <Plus className="w-3 h-3" />
+                    <Plus className="h-3 w-3" />
                     Añadir Horario
                   </button>
                 </div>
@@ -234,10 +234,10 @@ export const TimeRestrictionsEditor = ({ value, onChange }: Props) => {
                 {dayData.timeRanges.map((range, rangeIndex) => (
                   <div
                     key={rangeIndex}
-                    className="flex items-center gap-3 p-3 bg-background rounded-md"
+                    className="flex flex-col gap-3 rounded-md bg-background p-3 sm:flex-row sm:items-end"
                   >
-                    <div className="flex-1">
-                      <label className="block text-xs font-medium text-muted-foreground mb-1">
+                    <div className="min-w-0 flex-1">
+                      <label className="mb-1 block text-xs font-medium text-muted-foreground">
                         Desde
                       </label>
                       <input
@@ -251,11 +251,11 @@ export const TimeRestrictionsEditor = ({ value, onChange }: Props) => {
                             e.target.value
                           )
                         }
-                        className="w-full px-3 py-2 bg-background border border-input rounded-md text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                        className="box-border w-full min-w-0 max-w-full appearance-none rounded-md border border-input bg-background px-2 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                       />
                     </div>
-                    <div className="flex-1">
-                      <label className="block text-xs font-medium text-muted-foreground mb-1">
+                    <div className="min-w-0 flex-1">
+                      <label className="mb-1 block text-xs font-medium text-muted-foreground">
                         Hasta
                       </label>
                       <input
@@ -269,7 +269,7 @@ export const TimeRestrictionsEditor = ({ value, onChange }: Props) => {
                             e.target.value
                           )
                         }
-                        className="w-full px-3 py-2 bg-background border border-input rounded-md text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                        className="box-border w-full min-w-0 max-w-full appearance-none rounded-md border border-input bg-background px-2 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                       />
                     </div>
                     {dayData.timeRanges.length > 1 ? (
@@ -278,10 +278,10 @@ export const TimeRestrictionsEditor = ({ value, onChange }: Props) => {
                         onClick={() =>
                           handleRemoveTimeRange(dayIndex, rangeIndex)
                         }
-                        className="p-2 text-destructive hover:bg-destructive/10 rounded-md transition-colors mt-5"
+                        className="flex shrink-0 items-center justify-center self-stretch rounded-md p-2 text-destructive transition-colors hover:bg-destructive/10 sm:self-end"
                         title="Eliminar horario"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="h-4 w-4" />
                       </button>
                     ) : null}
                   </div>

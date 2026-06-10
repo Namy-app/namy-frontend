@@ -12,6 +12,7 @@ export type CouponItem = {
   } | null;
   discount?: {
     title?: string;
+    customText?: string | null;
     type?: string;
     value?: number;
     additionalRestrictions?: string[] | null;
@@ -49,6 +50,7 @@ export type Coupon = {
   discount?: {
     id?: string;
     title?: string;
+    customText?: string | null;
     description?: string;
     type?: string;
     value?: number;

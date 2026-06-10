@@ -1,5 +1,8 @@
 package namyapp.com;
 
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -32,6 +35,22 @@ public class MainActivity extends BridgeActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Create the default notification channel required for Android 8+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel channel = new NotificationChannel(
+                "default_channel",
+                "Notificaciones",
+                NotificationManager.IMPORTANCE_HIGH
+            );
+            channel.setDescription("Notificaciones de Ñamy");
+            channel.enableLights(true);
+            channel.enableVibration(true);
+            NotificationManager manager = getSystemService(NotificationManager.class);
+            if (manager != null) {
+                manager.createNotificationChannel(channel);
+            }
+        }
 
         // Do NOT let Android automatically fit system windows — we handle it manually.
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);

@@ -31,6 +31,11 @@ import {
   type UserDetailsActivityFilters,
   type ActivityDateRange,
 } from "@/domains/admin/types";
+import {
+  navigateTo,
+  resolveCapacitorDynamicId,
+} from "@/lib/capacitor-navigate";
+import { resolveCouponDisplayLabel } from "@/lib/discount-type";
 import { Button } from "@/shared/components/Button";
 import { Card } from "@/shared/components/Card";
 import { useAuthStore } from "@/store/useAuthStore";
@@ -54,8 +59,8 @@ function dateRangeFromInputs(
     return undefined;
   }
   return {
-    ...(f ? { from: new Date(`${f}T00:00:00.000Z`).toISOString() } : {}),
-    ...(t ? { to: new Date(`${t}T23:59:59.999Z`).toISOString() } : {}),
+    ...(f ? { from: new Date(`${f}T00:00:00`).toISOString() } : {}),
+    ...(t ? { to: new Date(`${t}T23:59:59.999`).toISOString() } : {}),
   };
 }
 
@@ -122,7 +127,11 @@ export default function UserDetailsPage() {
   const router = useRouter();
   const { user: currentUser } = useAuthStore();
   const params = useParams();
-  const userId = params?.id as string;
+  const userId =
+    resolveCapacitorDynamicId(
+      "/admin/users/",
+      params?.id as string | undefined
+    ) ?? "";
 
   const [draftFilters, setDraftFilters] = useState(emptyDraft);
   const [appliedActivityFilters, setAppliedActivityFilters] = useState<
@@ -608,11 +617,8 @@ export default function UserDetailsPage() {
                             ) : null}
                             {coupon.discount ? (
                               <p className="text-sm text-muted-foreground mb-2">
-                                {coupon.discount.title} -{" "}
-                                {coupon.discount.type === "percentage"
-                                  ? `${coupon.value}%`
-                                  : `$${coupon.value}`}{" "}
-                                off
+                                {coupon.discount.title} —{" "}
+                                {resolveCouponDisplayLabel(coupon)}
                               </p>
                             ) : null}
                             <div className="flex items-center gap-4 text-xs text-muted-foreground">
@@ -709,8 +715,9 @@ export default function UserDetailsPage() {
                                 type="button"
                                 className="font-mono text-primary underline-offset-2 hover:underline"
                                 onClick={() =>
-                                  router.push(
-                                    `/admin/users/${referral.recipientUserId}`
+                                  navigateTo(
+                                    `/admin/users/${referral.recipientUserId}`,
+                                    router
                                   )
                                 }
                               >

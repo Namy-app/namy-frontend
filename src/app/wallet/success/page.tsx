@@ -1,5 +1,6 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect } from "react";
 
@@ -10,20 +11,23 @@ function PaymentSuccessContent(): React.JSX.Element {
   const router = useRouter();
   const searchParams = useSearchParams();
   const paymentIntent = searchParams?.get("payment_intent");
+  const queryClient = useQueryClient();
 
   useEffect(() => {
-    // Redirect to payment page after 3 seconds
+    void queryClient.invalidateQueries({ queryKey: ["wallet"] });
+    void queryClient.invalidateQueries({ queryKey: ["walletBalance"] });
+    void queryClient.invalidateQueries({ queryKey: ["walletTransactions"] });
+
     const timer = setTimeout(() => {
-      router.push("/payment");
+      router.push("/wallet");
     }, 3000);
 
     return () => clearTimeout(timer);
-  }, [router]);
+  }, [router, queryClient]);
 
   return (
     <ProtectedRoute>
       <BasicLayout className="pb-20">
-        {/* Main Content - with padding for fixed header and bottom nav */}
         <div className="pt-14 pb-16 bg-gradient-hero flex items-center justify-center p-6 min-h-screen">
           <div className="max-w-md w-full bg-white rounded-lg shadow-xl p-8 text-center">
             <div className="mb-6">
@@ -45,16 +49,16 @@ function PaymentSuccessContent(): React.JSX.Element {
             </div>
 
             <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              Payment Successful!
+              ¡Pago Exitoso!
             </h1>
             <p className="text-gray-600 mb-6">
-              Your payment has been processed successfully and your wallet has
-              been credited.
+              Tu pago fue procesado correctamente y tu billetera ha sido
+              acreditada.
             </p>
 
             {paymentIntent ? (
               <div className="bg-gray-50 rounded-md p-3 mb-6">
-                <p className="text-xs text-gray-500 mb-1">Payment ID</p>
+                <p className="text-xs text-gray-500 mb-1">ID de Pago</p>
                 <p className="text-sm font-mono text-gray-700 break-all">
                   {paymentIntent}
                 </p>
@@ -63,13 +67,13 @@ function PaymentSuccessContent(): React.JSX.Element {
 
             <div className="space-y-3">
               <button
-                onClick={() => router.push("/payment")}
+                onClick={() => router.push("/wallet")}
                 className="w-full px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
               >
-                View Wallet
+                Ver Billetera
               </button>
               <p className="text-sm text-gray-500">
-                Redirecting in 3 seconds...
+                Redirigiendo en 3 segundos...
               </p>
             </div>
           </div>

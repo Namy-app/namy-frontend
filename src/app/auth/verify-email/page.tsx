@@ -117,110 +117,115 @@ function VerifyEmailForm(): React.JSX.Element {
   };
 
   return (
-    <div className="flex min-h-screen bg-gradient-hero items-center justify-center p-6">
-      <Card className="w-full max-w-md p-8 bg-card border-border shadow-glow">
-        <div className="text-center mb-8">
-          <Image
-            src="/namy-logo.webp"
-            alt="Ñamy Logo"
-            width={96}
-            height={96}
-            className="mx-auto mb-4 rounded-2xl shadow-glow"
-          />
-          <h1 className="text-3xl font-bold text-foreground mb-2">
-            Verify your email
-          </h1>
-          <p className="text-muted-foreground text-sm">
-            We&apos;ve sent a verification code to your email address. Please
-            enter it below to complete your registration.
-          </p>
-        </div>
-
-        <form
-          className="space-y-4"
-          onSubmit={(e) => {
-            void handleVerifyEmail(e);
-          }}
-        >
-          <div>
-            <label className="text-sm font-medium text-foreground mb-2 block">
-              Email Address
-            </label>
-            <Input
-              id="email"
-              name="email"
-              type="email"
-              autoComplete="email"
-              placeholder="your@email.com"
-              className="h-12 rounded-xl"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={verifyEmailMutation.isPending}
+    <div
+      className="overflow-y-auto bg-gradient-hero"
+      style={{ height: "calc(100dvh - var(--keyboard-height, 0px))" }}
+    >
+      <div className="flex min-h-full flex-col items-center justify-center p-6">
+        <Card className="w-full max-w-md p-8 bg-card border-border shadow-glow">
+          <div className="text-center mb-8">
+            <Image
+              src="/namy-logo.webp"
+              alt="Ñamy Logo"
+              width={96}
+              height={96}
+              className="mx-auto mb-4 rounded-2xl shadow-glow"
             />
-          </div>
-
-          <div>
-            <label className="text-sm font-medium text-foreground mb-2 block">
-              Verification Code
-            </label>
-            <Input
-              id="code"
-              name="code"
-              type="text"
-              placeholder="Enter 6-digit code"
-              className="h-12 rounded-xl text-center text-2xl tracking-widest font-mono"
-              required
-              value={code}
-              onChange={(e) => setCode(e.target.value)}
-              maxLength={6}
-              disabled={verifyEmailMutation.isPending}
-            />
-          </div>
-
-          <Button
-            type="submit"
-            className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 rounded-full font-bold shadow-glow"
-            disabled={verifyEmailMutation.isPending}
-          >
-            {verifyEmailMutation.isPending ? "Verifying..." : "Verify Email"}
-          </Button>
-
-          <div className="text-center space-y-2">
-            <p className="text-sm text-muted-foreground">
-              Didn&apos;t receive the code?
+            <h1 className="text-3xl font-bold text-foreground mb-2">
+              Verify your email
+            </h1>
+            <p className="text-muted-foreground text-sm">
+              We&apos;ve sent a verification code to your email address. Please
+              enter it below to complete your registration.
             </p>
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full h-12 rounded-full"
-              onClick={() => {
-                void handleResendVerification();
-              }}
-              disabled={
-                resendVerificationMutation.isPending || resendCooldown > 0
-              }
-            >
-              {resendCooldown > 0
-                ? `Resend in ${resendCooldown}s`
-                : resendVerificationMutation.isPending
-                  ? "Sending..."
-                  : "Resend verification email"}
-            </Button>
           </div>
 
-          <div className="text-center pt-2">
+          <form
+            className="space-y-4"
+            onSubmit={(e) => {
+              void handleVerifyEmail(e);
+            }}
+          >
+            <div>
+              <label className="text-sm font-medium text-foreground mb-2 block">
+                Email Address
+              </label>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                placeholder="your@email.com"
+                className="h-12 rounded-xl"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={verifyEmailMutation.isPending}
+              />
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-foreground mb-2 block">
+                Verification Code
+              </label>
+              <Input
+                id="code"
+                name="code"
+                type="text"
+                placeholder="Enter 6-digit code"
+                className="h-12 rounded-xl text-center text-2xl tracking-widest font-mono"
+                required
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+                maxLength={6}
+                disabled={verifyEmailMutation.isPending}
+              />
+            </div>
+
             <Button
-              type="button"
-              variant="ghost"
-              className="w-full"
-              onClick={() => router.push("/auth")}
+              type="submit"
+              className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 rounded-full font-bold shadow-glow"
+              disabled={verifyEmailMutation.isPending}
             >
-              Back to Login
+              {verifyEmailMutation.isPending ? "Verifying..." : "Verify Email"}
             </Button>
-          </div>
-        </form>
-      </Card>
+
+            <div className="text-center space-y-2">
+              <p className="text-sm text-muted-foreground">
+                Didn&apos;t receive the code?
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full h-12 rounded-full"
+                onClick={() => {
+                  void handleResendVerification();
+                }}
+                disabled={
+                  resendVerificationMutation.isPending || resendCooldown > 0
+                }
+              >
+                {resendCooldown > 0
+                  ? `Resend in ${resendCooldown}s`
+                  : resendVerificationMutation.isPending
+                    ? "Sending..."
+                    : "Resend verification email"}
+              </Button>
+            </div>
+
+            <div className="text-center pt-2">
+              <Button
+                type="button"
+                variant="ghost"
+                className="w-full"
+                onClick={() => router.push("/auth")}
+              >
+                Back to Login
+              </Button>
+            </div>
+          </form>
+        </Card>
+      </div>
     </div>
   );
 }
@@ -229,12 +234,17 @@ export default function VerifyEmailPage(): React.JSX.Element {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-screen bg-gradient-hero items-center justify-center p-6">
-          <Card className="w-full max-w-md p-8 bg-card border-border shadow-glow">
-            <div className="text-center">
-              <p className="text-muted-foreground">Loading...</p>
-            </div>
-          </Card>
+        <div
+          className="overflow-y-auto bg-gradient-hero"
+          style={{ height: "calc(100dvh - var(--keyboard-height, 0px))" }}
+        >
+          <div className="flex min-h-full flex-col items-center justify-center p-6">
+            <Card className="w-full max-w-md p-8 bg-card border-border shadow-glow">
+              <div className="text-center">
+                <p className="text-muted-foreground">Loading...</p>
+              </div>
+            </Card>
+          </div>
         </div>
       }
     >
