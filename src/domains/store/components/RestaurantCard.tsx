@@ -70,8 +70,15 @@ export const RestaurantCard = ({
 
   return (
     <div
+      role="button"
+      tabIndex={0}
       className="animate-slide-up cursor-pointer"
       onClick={() => navigateTo(`/stores/${restaurant.id}`, router)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          navigateTo(`/stores/${restaurant.id}`, router);
+        }
+      }}
     >
       <Card className="overflow-hidden cursor-pointer transition-all hover:shadow-card hover:scale-[1.02] bg-card border-border">
         {/* Restaurant Image */}
