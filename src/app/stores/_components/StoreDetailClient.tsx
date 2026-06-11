@@ -161,6 +161,7 @@ export default function StoreDetailClient(): React.JSX.Element {
   const { data: wallet } = useWallet({ userId: user?.id });
   const storeId =
     resolveCapacitorDynamicId("/stores/", params?.id as string | undefined) ??
+    (params?.id as string | undefined) ??
     "";
   const { data: store, isLoading } = useStore(storeId);
 
@@ -773,6 +774,20 @@ export default function StoreDetailClient(): React.JSX.Element {
     }, 500); // 500ms delay for better UX
   };
 
+  // Show loading if storeId is being resolved or store is loading
+  if (!storeId || isLoading) {
+    return (
+      <BasicLayout className="bg-gradient-hero pb-20">
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-center">
+            <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto mb-4" />
+            <p className="text-muted-foreground">Cargando...</p>
+          </div>
+        </div>
+      </BasicLayout>
+    );
+  }
+
   return (
     <BasicLayout className="bg-gradient-hero pb-20">
       {!parsedStore ? (
@@ -782,7 +797,7 @@ export default function StoreDetailClient(): React.JSX.Element {
               {storeCategoryType} not found
             </p>
             <Button onClick={() => router.push("/restaurants")}>
-              Back to ${storeCategoryType}s
+              Back to {storeCategoryType}s
             </Button>
           </div>
         </div>
