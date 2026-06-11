@@ -82,7 +82,7 @@ export const RestaurantCard = ({
     >
       <Card className="overflow-hidden cursor-pointer transition-all hover:shadow-card hover:scale-[1.02] bg-card border-border">
         {/* Restaurant Image */}
-        <div className="relative">
+        <div className="relative bg-linear-to-br from-slate-200 to-slate-300 h-48 flex items-center justify-center">
           <Image
             src={restaurant.image}
             alt={restaurant.name}
@@ -90,11 +90,6 @@ export const RestaurantCard = ({
             height={192}
             className="w-full h-48 object-cover"
             unoptimized
-            onError={(e) => {
-              const target = e.target as HTMLImageElement;
-              target.src =
-                "https://placehold.co/400x192/fef2f2/f87171?text=Restaurant+Image";
-            }}
           />
           {/* Discount Badge */}
           <div className="absolute top-4 right-3 bg-primary text-primary-foreground px-3 py-1 rounded-full font-bold text-sm shadow-lg">

@@ -804,7 +804,7 @@ export default function StoreDetailClient(): React.JSX.Element {
       ) : (
         <div className="pt-14 pb-16">
           <div className="mx-auto max-w-5xl px-4">
-            <div className="relative h-96 md:h-130 rounded-2xl overflow-hidden shadow-2xl">
+            <div className="relative h-96 md:h-130 rounded-2xl overflow-hidden shadow-2xl bg-linear-to-br from-slate-200 to-slate-300">
               <Image
                 src={parsedStore.images[currentImageIndex] ?? ""}
                 alt={parsedStore.name}
@@ -812,11 +812,6 @@ export default function StoreDetailClient(): React.JSX.Element {
                 className="object-cover transform-gpu scale-105 transition-transform duration-700"
                 priority
                 unoptimized
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.src =
-                    "https://placehold.co/800x520/fef2f2/f87171?text=Restaurant+Image";
-                }}
               />
               <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-black/10" />
 
