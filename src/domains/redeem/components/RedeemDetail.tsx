@@ -17,6 +17,10 @@ import {
 import { useEffect, useState, useRef } from "react";
 
 import { Emoji } from "@/components/Emoji";
+import {
+  resolveRedeemAvailabilityError,
+  type RedeemAvailabilityErrorDisplay,
+} from "@/domains/redeem/utils/redeemAvailabilityErrors";
 import { getDiscountRestrictionsFromDecodedCouponData } from "@/domains/store/utils";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -75,6 +79,8 @@ export default function RedeemDetail({
   const [showRestrictions, setShowRestrictions] = useState(false);
   const [serverDiscountMeta, setServerDiscountMeta] =
     useState<ServerDiscountMeta | null>(null);
+  const [redeemAvailabilityError, setRedeemAvailabilityError] =
+    useState<RedeemAvailabilityErrorDisplay | null>(null);
 
   const deviceId = (() => {
     if (typeof window === "undefined") {
@@ -192,6 +198,28 @@ export default function RedeemDetail({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [couponData?.expiresAt]);
 
+  const showRedemptionFailure = (message: string | null | undefined): void => {
+    const availabilityError = resolveRedeemAvailabilityError(message);
+    if (availabilityError) {
+      setRedeemAvailabilityError(availabilityError);
+      toast({
+        title: availabilityError.title,
+        description: availabilityError.description,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setRedeemAvailabilityError(null);
+    toast({
+      title: "Error al canjear",
+      description:
+        message?.trim() ||
+        "No se pudo canjear el cupón. Verifica el PIN e inténtalo de nuevo.",
+      variant: "destructive",
+    });
+  };
+
   const handleRedeem = async (): Promise<void> => {
     if (!couponData) {
       return;
@@ -205,6 +233,7 @@ export default function RedeemDetail({
       return;
     }
 
+    setRedeemAvailabilityError(null);
     setRedeeming(true);
     try {
       const result = await redeemMutation.mutateAsync({
@@ -218,18 +247,10 @@ export default function RedeemDetail({
         setRedeemed(true);
         setRedemptionResult(data);
       } else {
-        toast({
-          title: "Redemption failed",
-          description: data.message,
-          variant: "destructive",
-        });
+        showRedemptionFailure(data.message);
       }
     } catch (err) {
-      toast({
-        title: "Error",
-        description: extractErrorMessage(err),
-        variant: "destructive",
-      });
+      showRedemptionFailure(extractErrorMessage(err));
     } finally {
       setRedeeming(false);
     }
@@ -441,7 +462,10 @@ export default function RedeemDetail({
               inputMode="numeric"
               pattern="[0-9]*"
               value={storePin}
-              onChange={(e) => setStorePin(e.target.value)}
+              onChange={(e) => {
+                setStorePin(e.target.value);
+                setRedeemAvailabilityError(null);
+              }}
               placeholder="Enter your PIN"
               disabled={!canRedeem}
               className="w-full text-sm px-4 py-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary font-mono md:text-lg tracking-widest text-center disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-muted"
@@ -639,6 +663,20 @@ export default function RedeemDetail({
       </div>
 
       <div className="p-6 border-t border-border bg-muted/50">
+        {redeemAvailabilityError ? (
+          <div className="mb-4 p-4 bg-destructive/10 border border-destructive/20 rounded-xl flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-semibold text-destructive mb-1">
+                {redeemAvailabilityError.title}
+              </p>
+              <p className="text-sm text-destructive/80">
+                {redeemAvailabilityError.description}
+              </p>
+            </div>
+          </div>
+        ) : null}
+
         {/* Block Reason Alert */}
         {!canRedeem && blockReason ? (
           <div className="mb-4 p-4 bg-destructive/10 border border-destructive/20 rounded-xl flex items-center gap-3">

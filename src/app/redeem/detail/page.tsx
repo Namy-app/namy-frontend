@@ -5,6 +5,10 @@ import { MapPin, Phone, Clock, Tag, Star, AlertCircle } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, useRef, Suspense } from "react";
 
+import {
+  resolveRedeemAvailabilityError,
+  type RedeemAvailabilityErrorDisplay,
+} from "@/domains/redeem/utils/redeemAvailabilityErrors";
 import { useToast } from "@/hooks/use-toast";
 import { CouponDecoder, type DecodedCouponData } from "@/lib/coupon-decoder";
 import { graphqlRequest } from "@/lib/graphql-client";
@@ -31,6 +35,8 @@ function RedeemContent(): React.JSX.Element {
   const [redeeming, setRedeeming] = useState(false);
   const [redeemed, setRedeemed] = useState(false);
   const [isActive, setIsActive] = useState(false);
+  const [redeemAvailabilityError, setRedeemAvailabilityError] =
+    useState<RedeemAvailabilityErrorDisplay | null>(null);
   const storePinRef = useRef<HTMLInputElement | null>(null);
 
   const deviceId = (() => {
@@ -288,6 +294,28 @@ function RedeemContent(): React.JSX.Element {
     return () => clearInterval(interval);
   }, [couponData]);
 
+  const showRedemptionFailure = (message: string | null | undefined): void => {
+    const availabilityError = resolveRedeemAvailabilityError(message);
+    if (availabilityError) {
+      setRedeemAvailabilityError(availabilityError);
+      toast({
+        title: availabilityError.title,
+        description: availabilityError.description,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setRedeemAvailabilityError(null);
+    toast({
+      title: "Error al canjear",
+      description:
+        message?.trim() ||
+        "No se pudo canjear el cupón. Verifica el PIN e inténtalo de nuevo.",
+      variant: "destructive",
+    });
+  };
+
   // Handle redeem action
   const handleRedeem = async (): Promise<void> => {
     if (!couponData) {
@@ -304,6 +332,7 @@ function RedeemContent(): React.JSX.Element {
       return;
     }
 
+    setRedeemAvailabilityError(null);
     setRedeeming(true);
     try {
       const result = await redeemMutation.mutateAsync({
@@ -317,19 +346,11 @@ function RedeemContent(): React.JSX.Element {
         setRedeemed(true);
         toast({ title: "Redemption successful", description: data.message });
       } else {
-        toast({
-          title: "Redemption failed",
-          description: data.message,
-          variant: "destructive",
-        });
+        showRedemptionFailure(data.message);
       }
     } catch (err) {
       console.error("Redeem error:", err);
-      toast({
-        title: "Error",
-        description: extractErrorMessage(error),
-        variant: "destructive",
-      });
+      showRedemptionFailure(extractErrorMessage(err));
     } finally {
       setRedeeming(false);
     }
@@ -540,6 +561,20 @@ function RedeemContent(): React.JSX.Element {
               </div>
             ) : (
               <>
+                {redeemAvailabilityError ? (
+                  <div className="mb-4 p-4 bg-destructive/10 border border-destructive/20 rounded-xl flex items-start gap-3">
+                    <AlertCircle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-semibold text-destructive mb-1">
+                        {redeemAvailabilityError.title}
+                      </p>
+                      <p className="text-sm text-destructive/80">
+                        {redeemAvailabilityError.description}
+                      </p>
+                    </div>
+                  </div>
+                ) : null}
+
                 <div className="mb-3">
                   <label
                     htmlFor="storePin"
@@ -555,7 +590,10 @@ function RedeemContent(): React.JSX.Element {
                       inputMode="numeric"
                       pattern="[0-9]*"
                       value={storePin}
-                      onChange={(e) => setStorePin(e.target.value)}
+                      onChange={(e) => {
+                        setStorePin(e.target.value);
+                        setRedeemAvailabilityError(null);
+                      }}
                       placeholder="••••"
                       maxLength={6}
                       disabled={!canRedeem}
