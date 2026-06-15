@@ -524,7 +524,7 @@ export function StoreMapListingView({
               className={
                 snapPosition === "full"
                   ? "flex min-h-0 flex-1 flex-col opacity-100"
-                  : "pointer-events-none h-0 min-h-0 overflow-hidden opacity-0"
+                  : "h-0 min-h-0 overflow-hidden opacity-0"
               }
               style={MAP_LIST_MOTION_STYLE}
             >
