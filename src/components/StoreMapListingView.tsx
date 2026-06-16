@@ -132,7 +132,7 @@ export function StoreMapListingView({
   } | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [showFilterModal, setShowFilterModal] = useState(false);
-  const [snapPosition, setSnapPosition] = useState<MapSnapPosition>("peek");
+  const [snapPosition, setSnapPosition] = useState<MapSnapPosition>("full");
   const [isPinSelected, setIsPinSelected] = useState(false);
   const [mapSortBy, setMapSortBy] = useState<MapSortBy>("DISTANCE");
 
@@ -535,8 +535,6 @@ export function StoreMapListingView({
                 ref={sheetScrollRef}
                 onScroll={handleSheetScroll}
                 onWheel={handleSheetWheel}
-                onTouchStart={handleSheetTouchStart}
-                onTouchEnd={handleSheetTouchEnd}
                 className="h-0 min-h-0 flex-1 overflow-y-auto overscroll-y-contain touch-pan-y px-4 pb-4 [-webkit-overflow-scrolling:touch]"
               >
                 {loading ? (

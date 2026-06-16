@@ -2,14 +2,13 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { Emoji } from "@/components/Emoji";
 import { InfoCard } from "@/components/InfoCard";
+import { StoreNavLink } from "@/components/StoreNavLink";
 import { PlaceHolderTypeEnum } from "@/data/constants";
 import { type Store } from "@/lib/api-types";
-import { navigateTo } from "@/lib/capacitor-navigate";
 import { cn } from "@/lib/utils";
 import { Button } from "@/shared/components/Button";
 import { Card } from "@/shared/components/Card";
@@ -23,7 +22,6 @@ export function FeaturedCarousel({
   isLoading?: boolean;
   stores?: Store[];
 }): React.JSX.Element {
-  const router = useRouter();
   const allStores = stores ?? [];
   const [currentSlide, setCurrentSlide] = useState(0);
 
@@ -77,10 +75,10 @@ export function FeaturedCarousel({
                 }}
               >
                 {featuredItems.map((item) => (
-                  <div
+                  <StoreNavLink
                     key={item.id}
-                    className="shrink-0 w-[70%] sm:w-[48%] group cursor-pointer"
-                    onClick={() => navigateTo(`/stores/${item.id}`, router)}
+                    storeId={item.id}
+                    className="shrink-0 w-[70%] sm:w-[48%] group cursor-pointer block"
                   >
                     {/* Image card */}
                     <Card className="relative h-48 overflow-hidden cursor-pointer border-0 shadow-lg rounded-3xl">
@@ -148,7 +146,7 @@ export function FeaturedCarousel({
                         </p>
                       )}
                     </div>
-                  </div>
+                  </StoreNavLink>
                 ))}
               </div>
             </div>
