@@ -191,6 +191,9 @@ export function StoreMapListingView({
   const mapSheetTop =
     snapPosition === "full" ? MAP_FLOATING_HEADER_HEIGHT : peekSheetTop;
 
+  /** Map only when peek or pin selected — Google Maps iframe steals touches under full sheet on iOS. */
+  const isMapInteractive = snapPosition === "peek" || isPinSelected;
+
   useEffect(() => {
     const measureEl = sheetPeekMeasureRef.current;
     if (!measureEl) {
@@ -223,6 +226,24 @@ export function StoreMapListingView({
     );
     return sortMapStores(withDistance, mapSortBy);
   }, [allStoresResult?.data, userLocation, mapSortBy]);
+
+  /** Map center — never block the map UI waiting on GPS; use stores centroid as fallback. */
+  const mapCenter = useMemo(() => {
+    if (userLocation) {
+      return {
+        lat: userLocation.latitude,
+        lng: userLocation.longitude,
+      };
+    }
+    const withCoords = mapStoresList.filter((s) => s.lat && s.lng);
+    if (withCoords.length > 0) {
+      return {
+        lat: withCoords.reduce((sum, s) => sum + s.lat!, 0) / withCoords.length,
+        lng: withCoords.reduce((sum, s) => sum + s.lng!, 0) / withCoords.length,
+      };
+    }
+    return { lat: 19.4326, lng: -99.1332 };
+  }, [userLocation, mapStoresList]);
 
   const toggleMapSheetSnap = (): void => {
     setSnapPosition((prev) => (prev === "peek" ? "full" : "peek"));
@@ -405,34 +426,25 @@ export function StoreMapListingView({
         </div>
 
         <div className="relative z-0 min-h-0 flex-1 overflow-hidden">
-          <div
-            className={`absolute inset-x-0 inset-y-0 ${
-              isPinSelected || snapPosition === "peek"
-                ? "opacity-100"
-                : "pointer-events-none opacity-0"
-            }`}
-            style={MAP_LAYER_MOTION_STYLE}
-          >
-            <StoreMap
-              stores={mapStoresList}
-              height="h-full"
-              discountPercentage={discountPercentage}
-              onSelectedStoreChange={(store) => setIsPinSelected(!!store)}
-              center={
-                userLocation
-                  ? {
-                      lat: userLocation.latitude,
-                      lng: userLocation.longitude,
-                    }
-                  : undefined
-              }
-            />
-          </div>
+          {isMapInteractive ? (
+            <div
+              className="absolute inset-x-0 inset-y-0 opacity-100"
+              style={MAP_LAYER_MOTION_STYLE}
+            >
+              <StoreMap
+                stores={mapStoresList}
+                height="h-full"
+                discountPercentage={discountPercentage}
+                onSelectedStoreChange={(store) => setIsPinSelected(!!store)}
+                center={mapCenter}
+              />
+            </div>
+          ) : null}
         </div>
 
         {!isPinSelected ? (
           <div
-            className={`absolute inset-x-0 bottom-0 flex min-h-0 flex-col overflow-hidden bg-card ${
+            className={`absolute inset-x-0 bottom-0 flex min-h-0 flex-col overflow-hidden bg-card pointer-events-auto ${
               snapPosition === "full"
                 ? "z-30 rounded-none shadow-[0_-4px_24px_rgba(0,0,0,0.12)]"
                 : `z-20 ${MAP_SHEET_TOP_RADIUS} shadow-[0_-4px_24px_rgba(0,0,0,0.1)]`

@@ -199,7 +199,8 @@ function StoreMapInner({
   const [selectedStore, setSelectedStore] = useState<Store | null>(null);
   const [showUserInfo, setShowUserInfo] = useState(false);
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
-  const [isLoadingLocation, setIsLoadingLocation] = useState(!center);
+  const [gpsFetchPending, setGpsFetchPending] = useState(() => !center);
+  const isLoadingLocation = !center && gpsFetchPending;
   const [mapInstance, setMapInstance] = useState<google.maps.Map | null>(null);
   const [bounds, setBounds] = useState<google.maps.LatLngBounds | null>(null);
   const [mapTilesReady, setMapTilesReady] = useState(false);
@@ -243,7 +244,7 @@ function StoreMapInner({
       if (location) {
         setUserLocation(location);
       }
-      setIsLoadingLocation(false);
+      setGpsFetchPending(false);
     });
 
     return () => {
