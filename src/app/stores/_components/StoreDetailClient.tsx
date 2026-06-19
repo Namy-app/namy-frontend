@@ -161,7 +161,6 @@ export default function StoreDetailClient(): React.JSX.Element {
   const { data: wallet } = useWallet({ userId: user?.id });
   const storeId =
     resolveCapacitorDynamicId("/stores/", params?.id as string | undefined) ??
-    (params?.id as string | undefined) ??
     "";
   const { data: store, isLoading } = useStore(storeId);
 
@@ -774,20 +773,6 @@ export default function StoreDetailClient(): React.JSX.Element {
     }, 500); // 500ms delay for better UX
   };
 
-  // Show loading if storeId is being resolved or store is loading
-  if (!storeId || isLoading) {
-    return (
-      <BasicLayout className="bg-gradient-hero pb-20">
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="text-center">
-            <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto mb-4" />
-            <p className="text-muted-foreground">Cargando...</p>
-          </div>
-        </div>
-      </BasicLayout>
-    );
-  }
-
   return (
     <BasicLayout className="bg-gradient-hero pb-20">
       {!parsedStore ? (
@@ -797,14 +782,14 @@ export default function StoreDetailClient(): React.JSX.Element {
               {storeCategoryType} not found
             </p>
             <Button onClick={() => router.push("/restaurants")}>
-              Back to {storeCategoryType}s
+              Back to ${storeCategoryType}s
             </Button>
           </div>
         </div>
       ) : (
         <div className="pt-14 pb-16">
           <div className="mx-auto max-w-5xl px-4">
-            <div className="relative h-96 md:h-130 rounded-2xl overflow-hidden shadow-2xl bg-linear-to-br from-slate-200 to-slate-300">
+            <div className="relative h-96 md:h-130 rounded-2xl overflow-hidden shadow-2xl">
               <Image
                 src={parsedStore.images[currentImageIndex] ?? ""}
                 alt={parsedStore.name}
@@ -812,6 +797,11 @@ export default function StoreDetailClient(): React.JSX.Element {
                 className="object-cover transform-gpu scale-105 transition-transform duration-700"
                 priority
                 unoptimized
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.src =
+                    "https://placehold.co/800x520/fef2f2/f87171?text=Restaurant+Image";
+                }}
               />
               <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-black/10" />
 
