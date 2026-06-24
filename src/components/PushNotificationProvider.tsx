@@ -10,18 +10,17 @@ import { useAuthStore } from "@/store/useAuthStore";
 export function PushNotificationProvider(): null {
   const router = useRouter();
   const { user } = useAuthStore();
+  const hasHydrated = useAuthStore.persist.hasHydrated();
 
   useEffect(() => {
-    if (!user?.id) {
+    if (!hasHydrated || !user?.id) {
       return;
     }
-
     void initPushNotifications(user.id, (path) => navigateTo(path, router));
-
     return () => {
       resetPushHandler();
     };
-  }, [user?.id, router]);
+  }, [hasHydrated, user?.id, router]);
 
   return null;
 }

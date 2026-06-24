@@ -4,13 +4,12 @@ import { GoogleMap, useJsApiLoader, OverlayView } from "@react-google-maps/api";
 import { Heart, MapPin, Star, X } from "lucide-react";
 import dynamic from "next/dynamic";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import { useState, useEffect, useCallback, useMemo } from "react";
 
 import { GoogleMapsDiagnosticsError } from "@/components/GoogleMapsDiagnosticsError";
 import { MapLoadingView } from "@/components/MapLoadingView";
+import { StoreNavLink } from "@/components/StoreNavLink";
 import type { Store } from "@/lib/api-types";
-import { navigateTo } from "@/lib/capacitor-navigate";
 import { getGoogleMapsApiKey } from "@/lib/google-maps-api-key";
 import { MAPS_AUTH_FAILURE_EVENT } from "@/lib/google-maps-diagnostics";
 import { getUserLocationSafe, type UserLocation } from "@/lib/utils";
@@ -98,12 +97,10 @@ function MapSelectedStoreCard({
   store,
   discountPercentage,
   onClose,
-  onNavigate,
 }: {
   store: Store;
   discountPercentage: number;
   onClose: () => void;
-  onNavigate: () => void;
 }) {
   const imageUrl =
     store.imageUrl ||
@@ -121,9 +118,9 @@ function MapSelectedStoreCard({
           : "Restaurant";
 
   return (
-    <div
+    <StoreNavLink
+      storeId={store.id}
       className="flex h-[7.75rem] cursor-pointer overflow-hidden rounded-2xl bg-white shadow-[0_8px_32px_rgba(0,0,0,0.18)]"
-      onClick={onNavigate}
     >
       <div className="relative h-full w-[7.75rem] shrink-0">
         <Image
@@ -187,7 +184,7 @@ function MapSelectedStoreCard({
           </div>
         ) : null}
       </div>
-    </div>
+    </StoreNavLink>
   );
 }
 
@@ -199,11 +196,11 @@ function StoreMapInner({
   discountPercentage = 10,
   onSelectedStoreChange,
 }: StoreMapProps) {
-  const router = useRouter();
   const [selectedStore, setSelectedStore] = useState<Store | null>(null);
   const [showUserInfo, setShowUserInfo] = useState(false);
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
-  const [isLoadingLocation, setIsLoadingLocation] = useState(!center);
+  const [gpsFetchPending, setGpsFetchPending] = useState(() => !center);
+  const isLoadingLocation = !center && gpsFetchPending;
   const [mapInstance, setMapInstance] = useState<google.maps.Map | null>(null);
   const [bounds, setBounds] = useState<google.maps.LatLngBounds | null>(null);
   const [mapTilesReady, setMapTilesReady] = useState(false);
@@ -247,7 +244,7 @@ function StoreMapInner({
       if (location) {
         setUserLocation(location);
       }
-      setIsLoadingLocation(false);
+      setGpsFetchPending(false);
     });
 
     return () => {
@@ -418,7 +415,6 @@ function StoreMapInner({
             store={selectedStore}
             discountPercentage={discountPercentage}
             onClose={() => setSelectedStore(null)}
-            onNavigate={() => navigateTo(`/stores/${selectedStore.id}`, router)}
           />
         </div>
       ) : null}

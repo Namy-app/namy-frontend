@@ -1,9 +1,8 @@
 import { Star, MapPin, Clock } from "lucide-react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 
+import { StoreNavLink } from "@/components/StoreNavLink";
 import type { Store } from "@/lib/api-types";
-import { navigateTo } from "@/lib/capacitor-navigate";
 import { Card } from "@/shared/components/Card";
 
 import type { Restaurant } from "../type";
@@ -30,7 +29,6 @@ export const RestaurantCard = ({
   store: Store;
   distance?: number;
 }) => {
-  const router = useRouter();
   const restaurant: Restaurant = {
     id: store.id,
     slug: store.id,
@@ -69,12 +67,11 @@ export const RestaurantCard = ({
   };
 
   return (
-    <div
-      className="animate-slide-up cursor-pointer"
-      onClick={() => navigateTo(`/stores/${restaurant.id}`, router)}
+    <StoreNavLink
+      storeId={restaurant.id}
+      className="animate-slide-up block cursor-pointer"
     >
       <Card className="overflow-hidden cursor-pointer transition-all hover:shadow-card hover:scale-[1.02] bg-card border-border">
-        {/* Restaurant Image */}
         <div className="relative">
           <Image
             src={restaurant.image}
@@ -89,22 +86,17 @@ export const RestaurantCard = ({
                 "https://placehold.co/400x192/fef2f2/f87171?text=Restaurant+Image";
             }}
           />
-          {/* Discount Badge */}
           <div className="absolute top-4 right-3 bg-primary text-primary-foreground px-3 py-1 rounded-full font-bold text-sm shadow-lg">
             {restaurant.discount}% OFF
           </div>
-
-          {/* Availability Indicator */}
           {getAvailabilityBadge()}
         </div>
 
-        {/* Restaurant Info */}
         <div className="p-4">
           <h3 className="font-bold text-lg text-foreground mb-1">
             {restaurant.name}
           </h3>
           <div className="flex items-center justify-between text-sm text-muted-foreground">
-            {/* Rating and Category */}
             <div className="flex items-center gap-1">
               <Star className="w-4 h-4 fill-primary text-primary" />
               <span className="font-medium text-foreground">
@@ -112,7 +104,6 @@ export const RestaurantCard = ({
               </span>
               <span>• {restaurant.categoryLabel ?? "Restaurant"}</span>
             </div>
-            {/* Distance */}
             {restaurant.distance !== "N/A" && (
               <div className="flex items-center gap-1 text-muted-foreground">
                 <MapPin className="w-3 h-3" />
@@ -122,6 +113,6 @@ export const RestaurantCard = ({
           </div>
         </div>
       </Card>
-    </div>
+    </StoreNavLink>
   );
 };

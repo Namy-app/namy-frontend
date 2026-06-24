@@ -220,10 +220,12 @@ export async function initPushNotifications(
   _userId: string,
   navigateFn: (path: string) => void
 ): Promise<void> {
+  console.warn("[Push] init called");
   if (!Capacitor.isNativePlatform()) {
     return;
   }
   if (initialized) {
+    console.warn("[Push] already initialized");
     return;
   }
   initialized = true;
@@ -231,18 +233,20 @@ export async function initPushNotifications(
   const platform = Capacitor.getPlatform() === "ios" ? "apns" : "fcm";
 
   const perm = await PushNotifications.requestPermissions();
+  console.warn("[Push] permission:", JSON.stringify(perm));
   if (perm.receive !== "granted") {
     return;
   }
 
   await PushNotifications.addListener("registration", (token) => {
+    console.warn("[Push] token received:", token.value);
     graphqlRequest(REGISTER_PUSH_TOKEN, { token: token.value, platform }).catch(
       (err) => console.error("[Push] register token failed:", err)
     );
   });
 
   await PushNotifications.addListener("registrationError", (err) => {
-    console.error("[Push] registration error:", err);
+    console.error("[Push] registration error:", JSON.stringify(err));
   });
 
   // Foreground: notification arrives while app is open

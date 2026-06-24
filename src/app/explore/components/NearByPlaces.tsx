@@ -1,13 +1,12 @@
 "use client";
 
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 
 import { Emoji } from "@/components/Emoji";
 import { InfoCard } from "@/components/InfoCard";
+import { StoreNavLink } from "@/components/StoreNavLink";
 import { PlaceHolderTypeEnum } from "@/data/constants";
 import { type Store } from "@/lib/api-types";
-import { navigateTo } from "@/lib/capacitor-navigate";
 import { getInitials } from "@/lib/user.lib";
 import { Card } from "@/shared/components/Card";
 
@@ -20,8 +19,6 @@ export function NearbyPlaces({
   isLoading?: boolean;
   discountPercentage?: number;
 }): React.JSX.Element {
-  const router = useRouter();
-
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 gap-4">
@@ -46,9 +43,9 @@ export function NearbyPlaces({
           <div className="grid grid-cols-1 gap-4">
             {closestStores.map((place: Store) => (
               <Card key={place.id} className="shadow-md group">
-                <div
+                <StoreNavLink
+                  storeId={place.id}
                   className="flex items-center gap-4 p-3 cursor-pointer hover:shadow-glow transition-all border-0"
-                  onClick={() => navigateTo(`/stores/${place.id}`, router)}
                 >
                   <div className="relative w-20 h-20 rounded-lg overflow-hidden shrink-0">
                     {place.imageUrl ? (
@@ -100,7 +97,7 @@ export function NearbyPlaces({
                       </span>
                     </div>
                   </div>
-                </div>
+                </StoreNavLink>
               </Card>
             ))}
           </div>

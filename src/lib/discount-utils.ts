@@ -156,6 +156,8 @@ interface Discount {
   active?: boolean;
   startDate?: string;
   endDate?: string;
+  excludedDaysOfWeek?: number[];
+  excludedHours?: number[];
   availableDaysAndTimes?: AvailableDaysAndTimes;
 }
 
@@ -196,6 +198,10 @@ export function isWithinTimeRange(
   const startMinutes = start.hours * 60 + start.minutes;
   const endMinutes = end.hours * 60 + end.minutes;
 
+  if (endMinutes < startMinutes) {
+    return currentMinutes >= startMinutes || currentMinutes <= endMinutes;
+  }
+
   return currentMinutes >= startMinutes && currentMinutes <= endMinutes;
 }
 
@@ -216,6 +222,20 @@ export function isDiscountValid(discount?: Discount | null): boolean {
 
   if (discount.startDate && new Date(discount.startDate) > now) {
     return false;
+  }
+
+  // excludedDaysOfWeek uses Sun=0 (JS default)
+  if (discount.excludedDaysOfWeek?.length) {
+    if (discount.excludedDaysOfWeek.includes(now.getDay())) {
+      return false;
+    }
+  }
+
+  // excludedHours uses 0-23
+  if (discount.excludedHours?.length) {
+    if (discount.excludedHours.includes(now.getHours())) {
+      return false;
+    }
   }
 
   // Check day/time availability

@@ -47,6 +47,7 @@ import { BasicLayout } from "@/layouts/BasicLayout";
 import { resolveCapacitorDynamicId } from "@/lib/capacitor-navigate";
 import { convertTo12Hour } from "@/lib/date-time-utils";
 import { resolveDiscountDisplayText } from "@/lib/discount-type";
+import { isDiscountValid } from "@/lib/discount-utils";
 import { graphqlRequest } from "@/lib/graphql-client";
 import {
   GENERATE_COUPON_MUTATION,
@@ -445,6 +446,14 @@ export default function StoreDetailClient(): React.JSX.Element {
   };
 
   const handleWatchAdClick = (): void => {
+    if (!isDiscountValid(currentCarouselDiscount)) {
+      toast({
+        variant: "destructive",
+        title: "Este descuento ya no está disponible",
+      });
+      return;
+    }
+
     setShowUnlockModal(false);
     // Show video ads modal
     setShowVideoAdsModal(true);
