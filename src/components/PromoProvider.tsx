@@ -54,7 +54,10 @@ function PromoSyncBootstrap({ userId }: { userId: string | undefined }): null {
 function NovuPromoSync(): null {
   const pathname = usePathname();
   const lastSurfacedIdRef = useRef<string | null>(null);
-  const canSyncPromos = pathname !== null && isPromoBannerRoute(pathname);
+  const canSyncPromos =
+    pathname !== null &&
+    isPromoBannerRoute(pathname) &&
+    Capacitor.isNativePlatform(); // Only show promos on native apps
 
   const { notifications } = useNotifications({
     read: false,
