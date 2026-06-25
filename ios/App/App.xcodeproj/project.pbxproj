@@ -15,6 +15,7 @@
 		504EC30F1FED79650016851F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 504EC30E1FED79650016851F /* Assets.xcassets */; };
 		504EC3121FED79650016851F /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 504EC3101FED79650016851F /* LaunchScreen.storyboard */; };
 		50B271D11FEDC1A000F3C39B /* public in Resources */ = {isa = PBXBuildFile; fileRef = 50B271D01FEDC1A000F3C39B /* public */; };
+		C1F010252FE45D9D0002689C /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = C1F010242FE45D9D0002689C /* GoogleService-Info.plist */; };
 		D769A2A318A55157091490B6 /* Pods_App.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9D2097C380DFDE7471909BFF /* Pods_App.framework */; };
 /* End PBXBuildFile section */
 
@@ -175,6 +176,7 @@
 				50379B232058CBB4000EE86E /* capacitor.config.json in Resources */,
 				504EC30D1FED79650016851F /* Main.storyboard in Resources */,
 				2FAD9763203C412B000D30F8 /* config.xml in Resources */,
+				C1F010252FE45D9D0002689C /* GoogleService-Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
