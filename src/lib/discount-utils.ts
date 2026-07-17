@@ -3,6 +3,11 @@
  * Provides discount calculations based on user level
  */
 
+import { fromZonedTime, toZonedTime } from "date-fns-tz";
+
+/** Store schedule / availability is always evaluated in Cancún time. */
+export const STORE_TIMEZONE = "America/Cancun";
+
 export enum UserLevel {
   LEVEL_1 = 1, // New User - 10% discount
   LEVEL_2 = 2, // Active User - 12% discount
@@ -176,10 +181,10 @@ export function parseTime(timeString: string): {
 }
 
 /**
- * Get current day index (0 = Monday, 6 = Sunday)
+ * Get current day index in store timezone (0 = Monday, 6 = Sunday)
  */
 export function getCurrentDayIndex(): number {
-  const now = new Date();
+  const now = toZonedTime(new Date(), STORE_TIMEZONE);
   return (now.getDay() + 6) % 7; // Convert from Sunday=0 to Monday=0
 }
 
@@ -207,31 +212,33 @@ export function isWithinTimeRange(
 
 /**
  * Check if discount is currently valid based on date and time restrictions
+ * (schedule day/hour evaluated in America/Cancun, not device local time)
  */
 export function isDiscountValid(discount?: Discount | null): boolean {
   if (!discount?.active) {
     return false;
   }
 
-  const now = new Date();
+  const absoluteNow = new Date();
+  const now = toZonedTime(absoluteNow, STORE_TIMEZONE);
 
-  // Check date range
-  if (discount.endDate && new Date(discount.endDate) < now) {
+  // Check date range (ISO instants — compare in absolute time)
+  if (discount.endDate && new Date(discount.endDate) < absoluteNow) {
     return false;
   }
 
-  if (discount.startDate && new Date(discount.startDate) > now) {
+  if (discount.startDate && new Date(discount.startDate) > absoluteNow) {
     return false;
   }
 
-  // excludedDaysOfWeek uses Sun=0 (JS default)
+  // excludedDaysOfWeek uses Sun=0 (JS default) — Cancún weekday
   if (discount.excludedDaysOfWeek?.length) {
     if (discount.excludedDaysOfWeek.includes(now.getDay())) {
       return false;
     }
   }
 
-  // excludedHours uses 0-23
+  // excludedHours uses 0-23 — Cancún hour
   if (discount.excludedHours?.length) {
     if (discount.excludedHours.includes(now.getHours())) {
       return false;
@@ -265,7 +272,8 @@ export function isDiscountValid(discount?: Discount | null): boolean {
 }
 
 /**
- * Calculate the next available time for a discount
+ * Calculate the next available time for a discount.
+ * Builds the target in Cancún wall-clock, then returns a UTC instant via fromZonedTime.
  */
 export function calculateNextAvailableTime(
   discount?: Discount | null
@@ -274,7 +282,7 @@ export function calculateNextAvailableTime(
     return null;
   }
 
-  const now = new Date();
+  const now = toZonedTime(new Date(), STORE_TIMEZONE);
   const { availableDays } = discount.availableDaysAndTimes;
   const currentDayIndex = getCurrentDayIndex();
   const currentHour = now.getHours();
@@ -293,9 +301,9 @@ export function calculateNextAvailableTime(
         currentHour < start.hours ||
         (currentHour === start.hours && currentMinute < start.minutes)
       ) {
-        const nextTime = new Date(now);
-        nextTime.setHours(start.hours, start.minutes, 0, 0);
-        return nextTime;
+        const nextWallClock = new Date(now);
+        nextWallClock.setHours(start.hours, start.minutes, 0, 0);
+        return fromZonedTime(nextWallClock, STORE_TIMEZONE);
       }
     }
   }
@@ -314,10 +322,10 @@ export function calculateNextAvailableTime(
       }
 
       const start = parseTime(firstTimeRange.start);
-      const nextTime = new Date(now);
-      nextTime.setDate(now.getDate() + i);
-      nextTime.setHours(start.hours, start.minutes, 0, 0);
-      return nextTime;
+      const nextWallClock = new Date(now);
+      nextWallClock.setDate(now.getDate() + i);
+      nextWallClock.setHours(start.hours, start.minutes, 0, 0);
+      return fromZonedTime(nextWallClock, STORE_TIMEZONE);
     }
   }
 
