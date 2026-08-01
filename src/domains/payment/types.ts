@@ -98,6 +98,11 @@ export interface CheckoutSession {
   status: string;
 }
 
+export interface PremiumCheckoutSession {
+  id: string;
+  url: string;
+}
+
 // Input Types
 export interface CreateWalletInput {
   userId: string;

@@ -9,6 +9,7 @@ import {
   CREATE_WALLET,
   CREATE_PAYMENT_INTENT,
   CREATE_CHECKOUT_SESSION,
+  CREATE_PREMIUM_CHECKOUT_SESSION,
   DEPOSIT_TO_WALLET,
   WITHDRAW_FROM_WALLET,
   SPEND_FROM_WALLET,
@@ -30,6 +31,7 @@ import type {
   PaginatedTransactions,
   PaymentIntent,
   CheckoutSession,
+  PremiumCheckoutSession,
   GetWalletInput,
   GetTransactionsInput,
   CreateWalletInput,
@@ -197,6 +199,17 @@ export function useCreateCheckoutSession() {
         createCheckoutSession: CheckoutSession;
       }>(CREATE_CHECKOUT_SESSION, { input });
       return data.createCheckoutSession;
+    },
+  });
+}
+
+export function useCreatePremiumCheckoutSession() {
+  return useMutation<PremiumCheckoutSession, Error, void>({
+    mutationFn: async () => {
+      const data = await graphqlClient.request<{
+        createPremiumCheckoutSession: PremiumCheckoutSession;
+      }>(CREATE_PREMIUM_CHECKOUT_SESSION);
+      return data.createPremiumCheckoutSession;
     },
   });
 }

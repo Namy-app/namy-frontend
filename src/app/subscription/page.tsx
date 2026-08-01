@@ -1,12 +1,14 @@
 "use client";
 
+import { Browser } from "@capacitor/browser";
+import { Capacitor } from "@capacitor/core";
 import { useQueryClient } from "@tanstack/react-query";
 import { Crown, Check, X, Zap, Gift } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState, useEffect, Suspense } from "react";
+import { useEffect, Suspense } from "react";
 
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import { StripePaymentForm } from "@/domains/payment/components";
+import { useCreatePremiumCheckoutSession } from "@/domains/payment/hooks";
 import {
   useSubscriptionStatus,
   useCancelSubscription,
@@ -17,28 +19,18 @@ import { BasicLayout } from "@/layouts/BasicLayout";
 import { extractErrorMessage } from "@/lib/utils";
 import { useAuthStore } from "@/store/useAuthStore";
 
-const PREMIUM_PRICE_ID = "price_1SRJIhC26wcdh5DNWUT2Sqfs";
-const PREMIUM_AMOUNT = 9900; // $99 MXN in cents
-
-function getStripeReturnUrl(): string {
-  if (typeof window === "undefined") {
-    return "https://namyapp.com/subscription?success=true";
-  }
-  return `${window.location.origin}/subscription?success=true`;
-}
-
 function SubscriptionContent(): React.JSX.Element {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, updateUser } = useAuthStore();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [showStripeForm, setShowStripeForm] = useState(false);
 
   const { data: subscriptionData, isLoading: subscriptionLoading } =
     useSubscriptionStatus();
   const cancelSubscription = useCancelSubscription();
   const toggleAutoRenew = useToggleAutoRenew();
+  const createPremiumCheckout = useCreatePremiumCheckoutSession();
 
   const subscriptionStatus = subscriptionData?.mySubscriptionStatus;
   const hasActiveSubscription = subscriptionStatus?.isPremium || false;
@@ -61,10 +53,13 @@ function SubscriptionContent(): React.JSX.Element {
     }
   }, [subscriptionStatus, user, updateUser]);
 
-  // Handle success/cancel query parameters from Stripe 3DS redirect
+  // Handle success/cancel query parameters from Stripe Checkout redirect.
+  // Webhook may lag briefly after redirect, so invalidate immediately and again
+  // a couple seconds later so the UI picks up the real activated state.
   useEffect(() => {
     const success = searchParams?.get("success");
     const canceled = searchParams?.get("canceled");
+    let delayedRefetch: ReturnType<typeof setTimeout> | undefined;
 
     if (success === "true") {
       toast({
@@ -74,12 +69,17 @@ function SubscriptionContent(): React.JSX.Element {
         duration: 5000,
       });
 
-      setTimeout(() => {
+      void queryClient.invalidateQueries({
+        queryKey: ["subscription-status"],
+      });
+
+      delayedRefetch = setTimeout(() => {
         void queryClient.invalidateQueries({
           queryKey: ["subscription-status"],
         });
-        router.replace("/subscription");
-      }, 2000);
+      }, 2500);
+
+      router.replace("/subscription");
     } else if (canceled === "true") {
       toast({
         title: "Pago cancelado",
@@ -89,22 +89,35 @@ function SubscriptionContent(): React.JSX.Element {
       });
       router.replace("/subscription");
     }
+
+    return () => {
+      if (delayedRefetch !== undefined) {
+        clearTimeout(delayedRefetch);
+      }
+    };
   }, [searchParams, router, toast, queryClient]);
 
-  const handleStripePaymentSuccess = (_paymentIntentId: string) => {
-    setShowStripeForm(false);
-    const premiumStartDate = new Date().toISOString();
-    const premiumEndDate = new Date(
-      Date.now() + 30 * 24 * 60 * 60 * 1000
-    ).toISOString();
-    updateUser({ isPremium: true, premiumStartDate, premiumEndDate });
-    toast({
-      title: "🎉 ¡Bienvenido a Premium!",
-      description:
-        "Tu suscripción está activa. ¡Disfruta de generación instantánea de cupones y descuentos máximos!",
-      duration: 5000,
-    });
-    void queryClient.invalidateQueries({ queryKey: ["subscription-status"] });
+  const handleActivatePremium = async () => {
+    try {
+      const session = await createPremiumCheckout.mutateAsync();
+      if (!session.url) {
+        throw new Error("No se recibió la URL de pago de Stripe.");
+      }
+
+      if (Capacitor.isNativePlatform()) {
+        await Browser.open({ url: session.url });
+      } else {
+        window.location.href = session.url;
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description:
+          extractErrorMessage(error) ??
+          "No se pudo iniciar el pago. Por favor intenta de nuevo.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleCancelSubscription = async () => {
@@ -146,6 +159,8 @@ function SubscriptionContent(): React.JSX.Element {
           : "Tu suscripción no se renovará automáticamente.",
       });
     } catch (_error) {
+      // Prefer the backend message (e.g. BadRequestException when auto-renew
+      // is unavailable for legacy PaymentIntent-based purchases).
       toast({
         title: "Error",
         description:
@@ -205,6 +220,7 @@ function SubscriptionContent(): React.JSX.Element {
                       id="auto-renew"
                       checked={autoRenewEnabled}
                       onChange={() => void handleToggleAutoRenew()}
+                      disabled={toggleAutoRenew.isPending}
                       className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
                     />
                     <label
@@ -335,11 +351,18 @@ function SubscriptionContent(): React.JSX.Element {
               {!hasActiveSubscription ? (
                 <div className="space-y-3">
                   <button
-                    onClick={() => setShowStripeForm(true)}
-                    className="w-full py-4 bg-linear-to-r from-yellow-400 to-orange-500 text-white font-bold rounded-lg hover:from-yellow-500 hover:to-orange-600 transition-all shadow-lg text-lg"
+                    onClick={() => void handleActivatePremium()}
+                    disabled={createPremiumCheckout.isPending}
+                    className="w-full py-4 bg-linear-to-r from-yellow-400 to-orange-500 text-white font-bold rounded-lg hover:from-yellow-500 hover:to-orange-600 transition-all shadow-lg text-lg disabled:opacity-60 disabled:cursor-not-allowed"
                   >
-                    <Crown className="w-5 h-5 inline mr-2" />
-                    Activar Premium — $99 MXN
+                    {createPremiumCheckout.isPending ? (
+                      "Redirigiendo a Stripe..."
+                    ) : (
+                      <>
+                        <Crown className="w-5 h-5 inline mr-2" />
+                        Activar Premium — $99 MXN
+                      </>
+                    )}
                   </button>
                   <p className="text-xs text-gray-500 text-center">
                     Pago seguro con Stripe. Cancela cuando quieras.
@@ -392,50 +415,6 @@ function SubscriptionContent(): React.JSX.Element {
             </div>
           </div>
         </div>
-
-        {/* Stripe Payment Modal */}
-        {showStripeForm ? (
-          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-            <div className="bg-white rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
-              <div className="flex items-center justify-between p-6 pb-4 border-b border-gray-200">
-                <div>
-                  <h2 className="text-lg font-semibold text-gray-900">
-                    Activar Ñamy Premium
-                  </h2>
-                  <p className="text-sm text-gray-500 mt-0.5">$99 MXN / mes</p>
-                </div>
-                <button
-                  onClick={() => setShowStripeForm(false)}
-                  className="text-gray-400 hover:text-gray-600 p-1"
-                  aria-label="Cerrar"
-                >
-                  ✕
-                </button>
-              </div>
-              <div className="p-6">
-                <StripePaymentForm
-                  amount={PREMIUM_AMOUNT}
-                  currency="MXN"
-                  description="Ñamy Premium — 1 mes"
-                  metadata={{
-                    priceId: PREMIUM_PRICE_ID,
-                    type: "premium_subscription",
-                    userId: user?.id ?? "",
-                  }}
-                  returnUrl={getStripeReturnUrl()}
-                  onSuccess={handleStripePaymentSuccess}
-                  onError={(error) => {
-                    toast({
-                      title: "Pago fallido",
-                      description: error,
-                      variant: "destructive",
-                    });
-                  }}
-                />
-              </div>
-            </div>
-          </div>
-        ) : null}
       </BasicLayout>
     </ProtectedRoute>
   );

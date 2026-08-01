@@ -170,6 +170,15 @@ export const CREATE_CHECKOUT_SESSION = gql`
   }
 `;
 
+export const CREATE_PREMIUM_CHECKOUT_SESSION = gql`
+  mutation CreatePremiumCheckoutSession {
+    createPremiumCheckoutSession {
+      id
+      url
+    }
+  }
+`;
+
 export const GET_PAYMENT_INTENT = gql`
   query GetPaymentIntent($paymentIntentId: String!) {
     paymentIntent(paymentIntentId: $paymentIntentId) {
