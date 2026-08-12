@@ -21,6 +21,10 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { createPortal } from "react-dom";
 
 import { CongratulationsModal } from "@/components/CongratulationsModal";
+import {
+  CouponAnimationPreloader,
+  CouponGenerationAnimation,
+} from "@/components/CouponGenerationAnimation";
 import { MapDisplay } from "@/components/MapDisplay";
 import { UnlockDiscountModal } from "@/components/UnlockDiscountModal";
 import { VideoAdsModal } from "@/components/VideoAdsModal";
@@ -109,13 +113,13 @@ export default function StoreDetailClient(): React.JSX.Element {
   const [showVideoAdsModal, setShowVideoAdsModal] = useState(false);
   const [showCongratulations, setShowCongratulations] = useState(false);
   const [_, setShowSuccess] = useState(false);
-  const [isGeneratingCoupon, setIsGeneratingCoupon] = useState(false);
   const [couponGenerationError, setCouponGenerationError] = useState<
     string | null
   >(null);
   const [quickPayError, setQuickPayError] = useState<string | null>(null);
   const [showAddFundsAction, setShowAddFundsAction] = useState(false);
   const [showQuickPaySuccess, setShowQuickPaySuccess] = useState(false);
+  const [showCouponAnimation, setShowCouponAnimation] = useState(false);
   const [unlockToken, setUnlockToken] = useState<string | null>(null);
   const [selectedDiscount, setSelectedDiscount] = useState<{
     id: string;
@@ -490,6 +494,10 @@ export default function StoreDetailClient(): React.JSX.Element {
         return;
       }
 
+      // Show looping animation while exchanging the unlock token
+      setShowCouponAnimation(true);
+      setShowCongratulations(false);
+
       // Exchange unlock token for coupon
       const exchangeData = await graphqlRequest<{
         exchangeUnlock: {
@@ -513,12 +521,13 @@ export default function StoreDetailClient(): React.JSX.Element {
           // ignore
         }
 
-        setShowCongratulations(false);
-        setShowSuccess(true);
         setUnlockToken(null);
+        setShowCouponAnimation(false);
+        setShowSuccess(true);
       }
     } catch (error) {
       console.error("Error exchanging unlock token:", error);
+      setShowCouponAnimation(false);
       toast({
         variant: "destructive",
         title: "Error al desbloquear el cupón",
@@ -553,11 +562,11 @@ export default function StoreDetailClient(): React.JSX.Element {
       return;
     }
 
-    try {
-      // Set loading state for premium users
-      setIsGeneratingCoupon(true);
-      setCouponGenerationError(null);
+    // Show looping animation immediately — replaces the old spinner modal
+    setShowCouponAnimation(true);
+    setCouponGenerationError(null);
 
+    try {
       const data = await graphqlRequest<{
         generateCoupon: {
           code: string;
@@ -587,21 +596,23 @@ export default function StoreDetailClient(): React.JSX.Element {
       });
 
       if (data?.generateCoupon) {
-        toast({
-          title: "Cupón creado",
-          description: "Cupón agregado a Mis Cupones.",
-        });
         // Ensure coupons cache is refreshed so UI shows the new coupon
         try {
           void queryClient.invalidateQueries({ queryKey: ["coupons"] });
         } catch (_e) {
           // ignore
         }
+        setShowCouponAnimation(false);
+        toast({
+          title: "Cupón creado",
+          description: "Cupón agregado a Mis Cupones.",
+        });
         router.push("/my-coupons");
       } else {
         throw new Error("No se recibió cupón del servidor");
       }
     } catch (err) {
+      setShowCouponAnimation(false);
       const message = err instanceof Error ? err.message : String(err);
       setCouponGenerationError(message);
     }
@@ -628,9 +639,10 @@ export default function StoreDetailClient(): React.JSX.Element {
       return;
     }
 
-    try {
-      setIsGeneratingCoupon(true);
+    // Show looping animation immediately — replaces the old spinner modal
+    setShowCouponAnimation(true);
 
+    try {
       const data = await graphqlRequest<{
         quickPayForDiscount: {
           code: string;
@@ -665,14 +677,14 @@ export default function StoreDetailClient(): React.JSX.Element {
         } catch (_e) {
           // ignore
         }
-        setIsGeneratingCoupon(false);
+        setShowCouponAnimation(false);
         setShowQuickPaySuccess(true);
       } else {
-        setIsGeneratingCoupon(false);
+        setShowCouponAnimation(false);
         throw new Error("Pago Rápido falló");
       }
     } catch (err) {
-      setIsGeneratingCoupon(false);
+      setShowCouponAnimation(false);
       const message = err instanceof Error ? err.message : String(err);
 
       // Set error message for modal
@@ -1597,13 +1609,10 @@ export default function StoreDetailClient(): React.JSX.Element {
         : null}
 
       <GeneratingCouponModal
-        isOpen={isGeneratingCoupon || !!quickPayError}
-        isLoading={
-          !!(isGeneratingCoupon && !couponGenerationError && !quickPayError)
-        }
+        isOpen={!!(couponGenerationError || quickPayError)}
+        isLoading={false}
         error={couponGenerationError || quickPayError}
         onClose={() => {
-          setIsGeneratingCoupon(false);
           setCouponGenerationError(null);
           setQuickPayError(null);
           setShowAddFundsAction(false);
@@ -1617,6 +1626,9 @@ export default function StoreDetailClient(): React.JSX.Element {
             : undefined
         }
       />
+
+      <CouponAnimationPreloader />
+      <CouponGenerationAnimation isOpen={showCouponAnimation} />
 
       {/* Review Detail Modal */}
       {selectedReview && typeof window !== "undefined"

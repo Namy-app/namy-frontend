@@ -4,6 +4,10 @@ import { Check, Gift, Loader2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, Suspense } from "react";
 
+import {
+  CouponAnimationPreloader,
+  CouponGenerationAnimation,
+} from "@/components/CouponGenerationAnimation";
 import { VideoPlayer } from "@/components/VideoPlayer";
 import { useExchangeUnlock } from "@/domains/ads/hooks/mutation/useExchangeUnlock";
 import { useGetVideoAdPair, useWatchVideoAd } from "@/domains/video-ads";
@@ -34,6 +38,7 @@ function UnlockCouponContent() {
   const [currentAdIndex, setCurrentAdIndex] = useState(0);
   const [watchedAds, setWatchedAds] = useState<string[]>([]);
   const [unlockToken, setUnlockToken] = useState<string | null>(null);
+  const [showCouponAnimation, setShowCouponAnimation] = useState(false);
   const [deviceId] = useState(() => {
     // Generate or retrieve device ID
     if (typeof window !== "undefined") {
@@ -116,16 +121,20 @@ function UnlockCouponContent() {
       return;
     }
 
+    // Show looping animation immediately while API runs
+    setShowCouponAnimation(true);
+
     try {
       const coupon = await exchangeUnlockMutation.mutateAsync({
         token: unlockToken,
         discountId,
       });
 
-      // Redirect to coupon page
+      setShowCouponAnimation(false);
       router.push(`/coupon/${coupon.code}`);
     } catch (error) {
       console.error("Failed to exchange unlock:", error);
+      setShowCouponAnimation(false);
     }
   };
 
@@ -133,6 +142,7 @@ function UnlockCouponContent() {
   if (loadingAds) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
+        <CouponAnimationPreloader />
         <div className="text-center">
           <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
           <p className="text-lg text-muted-foreground">Cargando anuncios...</p>
@@ -172,6 +182,8 @@ function UnlockCouponContent() {
   if (unlockToken) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-green-50 to-green-100 dark:from-green-950 dark:to-background p-6">
+        <CouponAnimationPreloader />
+        <CouponGenerationAnimation isOpen={showCouponAnimation} />
         <div className="max-w-md w-full bg-card border border-border rounded-2xl shadow-2xl overflow-hidden">
           <div className="bg-gradient-to-r from-green-500 to-emerald-500 p-8 text-white text-center">
             <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-4">
@@ -192,10 +204,10 @@ function UnlockCouponContent() {
 
             <button
               onClick={() => void handleExchangeToken()}
-              disabled={exchangeUnlockMutation.isPending}
+              disabled={exchangeUnlockMutation.isPending || showCouponAnimation}
               className="w-full py-4 bg-gradient-to-r from-green-500 to-emerald-500 text-white font-semibold rounded-lg hover:from-green-600 hover:to-emerald-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
-              {exchangeUnlockMutation.isPending ? (
+              {exchangeUnlockMutation.isPending || showCouponAnimation ? (
                 <>
                   <Loader2 className="w-5 h-5 animate-spin" />
                   Desbloqueando cupón...
@@ -222,6 +234,7 @@ function UnlockCouponContent() {
   // Show video player for current ad
   return (
     <div className="min-h-screen bg-background p-6">
+      <CouponAnimationPreloader />
       <div className="max-w-6xl mx-auto pt-8">
         {/* Progress Header */}
         <div className="mb-8 text-center">

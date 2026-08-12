@@ -678,9 +678,9 @@ export default function ProfilePage(): React.JSX.Element | null {
 
   const getTotalForLevel = (level: number | undefined): number => {
     if (level === 3 || level === 2) {
-      return 10;
+      return 5;
     }
-    return 5;
+    return 2;
   };
 
   const handleCopyReferralCode = async () => {

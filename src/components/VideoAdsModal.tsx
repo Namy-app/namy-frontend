@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 
+import { CouponGenerationAnimation } from "@/components/CouponGenerationAnimation";
 import { VideoPlayer } from "@/components/VideoPlayer";
 import { useExchangeUnlock } from "@/domains/ads/hooks/mutation/useExchangeUnlock";
 import { useGetVideoAdPair, useWatchVideoAd } from "@/domains/video-ads";
@@ -27,6 +28,7 @@ export function VideoAdsModal({
 }: VideoAdsModalProps) {
   const [currentAdIndex, setCurrentAdIndex] = useState(0);
   const [unlockToken, setUnlockToken] = useState<string | null>(null);
+  const [showCouponAnimation, setShowCouponAnimation] = useState(false);
   const [deviceId] = useState(() => {
     if (typeof window !== "undefined") {
       let id = localStorage.getItem("deviceId");
@@ -59,10 +61,11 @@ export function VideoAdsModal({
     if (isOpen) {
       setCurrentAdIndex(0);
       setUnlockToken(null);
+      setShowCouponAnimation(false);
     }
   }, [isOpen]);
 
-  // Trigger confetti when unlock token is received
+  // Trigger confetti + exchange when unlock token is received
   useEffect(() => {
     if (unlockToken) {
       // Fire confetti from multiple positions
@@ -151,16 +154,21 @@ export function VideoAdsModal({
       return;
     }
 
+    // Looping MP4 replaces the old "Generando tu cupón..." spinner
+    setShowCouponAnimation(true);
+
     try {
       const coupon = await exchangeUnlockMutation.mutateAsync({
         token: unlockToken,
         discountId,
       });
 
+      setShowCouponAnimation(false);
       onSuccess(coupon.code as string);
       onClose();
     } catch (error) {
       console.error("Failed to exchange unlock:", error);
+      setShowCouponAnimation(false);
       // Error will be displayed via exchangeUnlockMutation.error
     }
   };
@@ -214,8 +222,8 @@ export function VideoAdsModal({
           </div>
         ) : null}
 
-        {/* Unlock success screen */}
-        {unlockToken && !loadingAds ? (
+        {/* Unlock success — animation covers this while exchanging */}
+        {unlockToken && !loadingAds && !showCouponAnimation ? (
           <div className="p-4 sm:p-6 md:p-8">
             <div className="bg-linear-to-r from-green-500 to-emerald-700 rounded-xl sm:rounded-2xl p-6 sm:p-8 text-white text-center mb-4 sm:mb-6">
               <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
@@ -226,13 +234,6 @@ export function VideoAdsModal({
               </h1>
               <p className="text-base sm:text-lg opacity-90">
                 Has visto ambos anuncios de video
-              </p>
-            </div>
-
-            <div className="text-center">
-              <Loader2 className="w-8 h-8 text-green-600 animate-spin mx-auto mb-4" />
-              <p className="text-sm sm:text-base text-muted-foreground">
-                Generando tu cupón...
               </p>
             </div>
             {exchangeUnlockMutation?.isError ? (
@@ -310,10 +311,11 @@ export function VideoAdsModal({
                 <p className="text-xs">Guardando...</p>
               </div>
             ) : null}
-            {/* </div> */}
           </div>
         )}
       </div>
+
+      <CouponGenerationAnimation isOpen={showCouponAnimation} />
     </div>
   );
 
