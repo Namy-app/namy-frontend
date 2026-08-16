@@ -158,11 +158,8 @@ export default function AuthPage(): React.JSX.Element {
   };
 
   return (
-    <div
-      className="overflow-y-auto bg-gradient-hero"
-      style={{ height: "calc(100dvh - var(--keyboard-height, 0px))" }}
-    >
-      <div className="flex min-h-full flex-col items-center justify-center px-6 py-4">
+    <div className="min-h-full bg-gradient-hero">
+      <div className="keyboard-form-scroll flex min-h-full flex-col items-center justify-center px-6 py-4">
         <div className="w-full max-w-md rounded-2xl border-border shadow-glow">
           <Card className="w-full p-8 bg-card border-none">
             <div className="text-center mb-8">

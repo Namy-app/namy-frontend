@@ -47,11 +47,8 @@ export default function ForgotPasswordPage(): React.JSX.Element {
   };
 
   return (
-    <div
-      className="overflow-y-auto bg-gradient-hero"
-      style={{ height: "calc(100dvh - var(--keyboard-height, 0px))" }}
-    >
-      <div className="flex min-h-full flex-col items-center justify-center p-6">
+    <div className="min-h-full bg-gradient-hero">
+      <div className="keyboard-form-scroll flex min-h-full flex-col items-center justify-center p-6">
         <Card className="w-full max-w-md p-8 bg-card border-border shadow-glow">
           <div className="text-center mb-8">
             <Image

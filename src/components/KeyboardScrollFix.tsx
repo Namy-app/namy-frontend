@@ -5,75 +5,111 @@ import type { PluginListenerHandle } from "@capacitor/core";
 import { Keyboard } from "@capacitor/keyboard";
 import { useEffect } from "react";
 
+const FOCUSABLE_INPUT_SELECTOR =
+  'input:not([type="hidden"]):not([disabled]), textarea:not([disabled]), select:not([disabled]), [contenteditable="true"]';
+
+function isFocusableInput(el: Element | null): el is HTMLElement {
+  if (!el || !(el instanceof HTMLElement)) {
+    return false;
+  }
+  return el.matches(FOCUSABLE_INPUT_SELECTOR);
+}
+
+function setKeyboardHeight(height: number): void {
+  const px = `${Math.max(0, Math.round(height))}px`;
+  document.documentElement.style.setProperty("--keyboard-height", px);
+  document.documentElement.style.setProperty(
+    "--keyboard-safe-height",
+    height > 0 ? `calc(100dvh - ${px})` : "100dvh"
+  );
+}
+
+function scrollActiveIntoView(): void {
+  const el = document.activeElement;
+  if (!isFocusableInput(el)) {
+    return;
+  }
+
+  const keyboardHeight = Number.parseInt(
+    getComputedStyle(document.documentElement).getPropertyValue(
+      "--keyboard-height"
+    ),
+    10
+  );
+  if (keyboardHeight > 0) {
+    el.style.scrollMarginBottom = `${Math.min(keyboardHeight + 20, 320)}px`;
+  }
+
+  el.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
+}
+
+function scheduleScrollIntoView(): void {
+  // Keyboard animation varies by platform — retry so the field stays visible
+  for (const delay of [0, 80, 180, 350]) {
+    setTimeout(scrollActiveIntoView, delay);
+  }
+}
+
 export function KeyboardScrollFix(): null {
   useEffect(() => {
     const platform = Capacitor.getPlatform();
-    if (platform !== "android" && platform !== "ios") {
-      return;
-    }
+    const isNative = platform === "android" || platform === "ios";
 
-    let keyboardVisible = false;
-    let focusTimer: ReturnType<typeof setTimeout> | null = null;
     let showHandle: PluginListenerHandle | null = null;
     let hideHandle: PluginListenerHandle | null = null;
 
-    function scrollActiveIntoView() {
-      const el = document.activeElement as HTMLElement | null;
-      if (!el || !["INPUT", "TEXTAREA"].includes(el.tagName)) {
+    function onFocusIn(e: FocusEvent): void {
+      if (!isFocusableInput(e.target as Element)) {
         return;
       }
-      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      scheduleScrollIntoView();
     }
 
-    function onFocusIn(e: FocusEvent) {
-      const el = e.target as HTMLElement | null;
-      if (!el || !["INPUT", "TEXTAREA"].includes(el.tagName)) {
+    function onViewportChange(): void {
+      const viewport = window.visualViewport;
+      if (!viewport) {
         return;
       }
-      if (!keyboardVisible) {
-        return;
+
+      const keyboardHeight = window.innerHeight - viewport.height;
+      setKeyboardHeight(keyboardHeight);
+
+      if (keyboardHeight > 0) {
+        scheduleScrollIntoView();
       }
-      if (focusTimer) {
-        clearTimeout(focusTimer);
-      }
-      focusTimer = setTimeout(scrollActiveIntoView, 80);
     }
-
-    // keyboardDidShow gives us the final keyboard height after animation.
-    // On iOS we shrink the container by setting --keyboard-height; Android's
-    // WebView already resizes via adjustResize so we leave --keyboard-height at 0.
-    void Keyboard.addListener("keyboardDidShow", (info) => {
-      keyboardVisible = true;
-      if (platform === "ios") {
-        document.documentElement.style.setProperty(
-          "--keyboard-height",
-          `${info.keyboardHeight}px`
-        );
-      }
-      setTimeout(scrollActiveIntoView, 80);
-    }).then((h) => {
-      showHandle = h;
-    });
-
-    void Keyboard.addListener("keyboardWillHide", () => {
-      keyboardVisible = false;
-      if (platform === "ios") {
-        document.documentElement.style.setProperty("--keyboard-height", "0px");
-      }
-    }).then((h) => {
-      hideHandle = h;
-    });
 
     document.addEventListener("focusin", onFocusIn);
 
+    if (isNative) {
+      void Keyboard.addListener("keyboardDidShow", (info) => {
+        // iOS: shrink scroll container. Android WebView resizes via adjustResize.
+        if (platform === "ios") {
+          setKeyboardHeight(info.keyboardHeight);
+        }
+        scheduleScrollIntoView();
+      }).then((h) => {
+        showHandle = h;
+      });
+
+      void Keyboard.addListener("keyboardWillHide", () => {
+        setKeyboardHeight(0);
+      }).then((h) => {
+        hideHandle = h;
+      });
+    } else if (window.visualViewport) {
+      window.visualViewport.addEventListener("resize", onViewportChange);
+      window.visualViewport.addEventListener("scroll", onViewportChange);
+    }
+
     return () => {
-      if (focusTimer) {
-        clearTimeout(focusTimer);
-      }
+      document.removeEventListener("focusin", onFocusIn);
       void showHandle?.remove();
       void hideHandle?.remove();
-      document.removeEventListener("focusin", onFocusIn);
+      window.visualViewport?.removeEventListener("resize", onViewportChange);
+      window.visualViewport?.removeEventListener("scroll", onViewportChange);
       document.documentElement.style.removeProperty("--keyboard-height");
+      document.documentElement.style.removeProperty("--keyboard-safe-height");
     };
   }, []);
 

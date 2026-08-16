@@ -1,7 +1,7 @@
 @import "tailwindcss";
 @import "tailwindcss/utilities";
 
-/* iOS keyboard height (px), set by KeyboardScrollFix.tsx. Zero on Android (adjustResize handles it). */
+/* Keyboard height (px), set by KeyboardScrollFix.tsx */
 :root {
   --keyboard-height: 0px;
   --keyboard-safe-height: 100dvh;
@@ -11,13 +11,37 @@
 html.capacitor-android body {
   padding-top: env(safe-area-inset-top, 0px);
   padding-bottom: env(safe-area-inset-bottom, 16px);
+}
+
+html {
+  height: 100%;
+}
+
+body {
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Global scroll container — resizes when the mobile keyboard opens */
+.app-shell {
+  height: calc(100dvh - var(--keyboard-height, 0px));
+  min-height: calc(100dvh - var(--keyboard-height, 0px));
   overflow-y: auto;
+  overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
 }
 
-html,
-body {
-  height: 100%;
+/* Web/PWA: keep focused fields above the keyboard */
+input:focus,
+textarea:focus,
+select:focus {
+  scroll-margin-bottom: 20px;
+}
+
+/* Auth / long forms: extra scroll room when keyboard is open */
+.keyboard-form-scroll {
+  overflow-y: auto;
+  padding-bottom: max(300px, var(--keyboard-height, 0px));
 }
 
 @layer base {

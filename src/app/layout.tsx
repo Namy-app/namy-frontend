@@ -78,7 +78,7 @@ export default function RootLayout({
           crossOrigin="anonymous"
         />
       </head>
-      <body className={`${poppins.variable}  font-sans`}>
+      <body className={`${poppins.variable} font-sans`}>
         <CapacitorSafeArea />
         <AndroidBackHandler />
         <KeyboardScrollFix />
@@ -86,7 +86,9 @@ export default function RootLayout({
         <ReactQueryProvider>
           <PromoProvider>
             <PushNotificationProvider />
-            <GoogleMapsProviderClient>{children}</GoogleMapsProviderClient>
+            <div id="app-shell" className="app-shell">
+              <GoogleMapsProviderClient>{children}</GoogleMapsProviderClient>
+            </div>
           </PromoProvider>
           <Toaster />
         </ReactQueryProvider>
