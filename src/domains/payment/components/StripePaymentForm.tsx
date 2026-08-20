@@ -11,6 +11,7 @@ import {
 import { loadStripe } from "@stripe/stripe-js";
 import { useState, useEffect } from "react";
 
+import { analytics } from "@/lib/analytics";
 import { extractErrorMessage } from "@/lib/utils";
 
 import { useCreatePaymentIntent } from "../hooks";
@@ -90,6 +91,7 @@ function PaymentForm({
         setIsProcessing(false);
       } else if (paymentIntent) {
         if (paymentIntent.status === "succeeded") {
+          analytics.trackDistinct("wallet_deposit_succeeded", paymentIntent.id);
           onSuccess?.(paymentIntent.id);
         } else if (paymentIntent.status === "processing") {
           setErrorMessage("Payment is being processed. Please wait...");
@@ -114,6 +116,10 @@ function PaymentForm({
             onError?.(actionError.message ?? "Authentication failed");
             setIsProcessing(false);
           } else if (confirmedIntent?.status === "succeeded") {
+            analytics.trackDistinct(
+              "wallet_deposit_succeeded",
+              confirmedIntent.id
+            );
             onSuccess?.(confirmedIntent.id);
           } else {
             setErrorMessage(

@@ -316,6 +316,7 @@ export interface UpdateDiscountInput {
 export interface DiscountFiltersInput {
   storeId?: string | null;
   active?: boolean;
+  isPromoted?: boolean;
   type?: GraphQLDiscountType;
 }
 

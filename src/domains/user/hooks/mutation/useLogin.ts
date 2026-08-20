@@ -1,5 +1,6 @@
 import { useMutation, type UseMutationResult } from "@tanstack/react-query";
 
+import { analytics } from "@/lib/analytics";
 import { type AuthResponse, type LoginInput } from "@/lib/api-types";
 import { graphqlRequest } from "@/lib/graphql-client";
 import { LOGIN_MUTATION } from "@/lib/graphql-queries";
@@ -34,6 +35,9 @@ export function useLogin(): UseMutationResult<
     onSuccess: (data) => {
       // Store auth data in Zustand store with rememberMe flag
       setAuth(data.user, data.accessToken, data.rememberMe);
+      analytics.track("login_completed", {
+        remember_me: Boolean(data.rememberMe),
+      });
     },
   });
 }

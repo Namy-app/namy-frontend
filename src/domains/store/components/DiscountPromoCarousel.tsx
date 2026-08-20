@@ -3,6 +3,7 @@
 import { ChevronLeft, ChevronRight, Gift, Loader2, Lock } from "lucide-react";
 import Image from "next/image";
 
+import { useInfinitePeekCarousel } from "@/hooks/useInfinitePeekCarousel";
 import { Button } from "@/shared/components/Button";
 
 import type { DiscountPromoSlide } from "../utils/discountPromoDisplay";
@@ -98,12 +99,18 @@ function PromoUnlockRow({
   );
 }
 
+/** Width of each slide — leaves the next card peeking on the right. */
+export const PROMO_CAROUSEL_SLIDE_WIDTH = "86%";
+export const PROMO_CAROUSEL_SLIDE_GAP = "0.75rem";
+
 function TicketPromoCard({
   slide,
   unlock,
+  onLayout,
 }: {
   slide: DiscountPromoSlide;
   unlock: UnlockState;
+  onLayout?: () => void;
 }): React.JSX.Element {
   const theme = getPromoAccentTheme(slide.accent);
   const showGiftIcon =
@@ -123,6 +130,7 @@ function TicketPromoCard({
             className="object-cover object-center"
             unoptimized
             sizes="100vw"
+            onLoad={onLayout}
           />
         </div>
         <div
@@ -164,6 +172,7 @@ function TicketPromoCard({
               className="object-cover"
               unoptimized
               sizes="56px"
+              onLoad={onLayout}
             />
           </div>
         ) : showGiftIcon ? (
@@ -217,91 +226,123 @@ function TicketPromoCard({
   );
 }
 
-/** Ticket-style promo carousel with external nav controls. */
+/** Ticket-style promo carousel with peek + infinite loop — store page only. */
 export function DiscountPromoCarousel({
   slides,
   activeIndex,
   onActiveIndexChange,
   unlock,
 }: DiscountPromoCarouselProps): React.JSX.Element | null {
+  const {
+    trackRef,
+    loopItems,
+    useInfiniteLoop,
+    enableTransition,
+    translateX,
+    handleTransitionEnd,
+    nextSlide,
+    prevSlide,
+    goToIndex,
+    updateSlideStep,
+    realIndex,
+  } = useInfinitePeekCarousel(slides, {
+    activeIndex,
+    onActiveIndexChange,
+  });
+
   if (slides.length === 0) {
     return null;
   }
 
-  const hasMultiple = slides.length > 1;
-  const slideCount = slides.length;
-  const safeIndex = Math.min(activeIndex, slideCount - 1);
-  const slideWidthPercent = 100 / slideCount;
-  const goToPrevious = (): void => {
-    onActiveIndexChange(safeIndex === 0 ? slides.length - 1 : safeIndex - 1);
-  };
-
-  const goToNext = (): void => {
-    onActiveIndexChange(safeIndex === slides.length - 1 ? 0 : safeIndex + 1);
-  };
+  const slideWidth = useInfiniteLoop ? PROMO_CAROUSEL_SLIDE_WIDTH : "100%";
+  const slideGap = useInfiniteLoop ? PROMO_CAROUSEL_SLIDE_GAP : "0px";
 
   return (
     <div className="w-full min-w-0 max-w-full">
-      <div className="relative min-w-0 overflow-hidden">
+      <div
+        className={
+          useInfiniteLoop
+            ? "relative min-w-0 overflow-hidden"
+            : "relative min-w-0"
+        }
+      >
         <div
-          className="flex transition-transform duration-500 ease-in-out will-change-transform"
+          ref={trackRef}
+          className="flex"
+          onTransitionEnd={handleTransitionEnd}
           style={{
-            width: `${slideCount * 100}%`,
-            transform: `translate3d(-${safeIndex * slideWidthPercent}%, 0, 0)`,
+            gap: slideGap,
+            transition: enableTransition
+              ? "transform 300ms ease-in-out"
+              : "none",
+            transform:
+              translateX !== 0 ? `translateX(${translateX}px)` : undefined,
           }}
         >
-          {slides.map((slide) => (
+          {loopItems.map((slide, index) => (
             <div
-              key={slide.id}
-              className="box-border min-w-0 shrink-0 px-0.5"
-              style={{ width: `${slideWidthPercent}%` }}
+              key={`${slide.id}-${index}`}
+              className="box-border min-w-0 shrink-0"
+              style={{ width: slideWidth }}
             >
-              <TicketPromoCard slide={slide} unlock={unlock} />
+              <TicketPromoCard
+                slide={slide}
+                unlock={unlock}
+                onLayout={updateSlideStep}
+              />
             </div>
           ))}
         </div>
       </div>
 
-      {hasMultiple ? (
-        <div className="mt-3 flex items-center justify-between gap-2 px-1">
-          <Button
-            type="button"
-            onClick={goToPrevious}
-            size="icon"
-            variant="outline"
-            className="h-9 w-9 shrink-0 rounded-full border-stone-200 bg-white text-stone-700 shadow-sm hover:bg-stone-50"
-            aria-label="Promoción anterior"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
+      {useInfiniteLoop ? (
+        <div className="mt-3 px-1">
+          <div className="flex items-center justify-between gap-2">
+            <Button
+              type="button"
+              onClick={prevSlide}
+              size="icon"
+              variant="outline"
+              className="h-9 w-9 shrink-0 rounded-full border-stone-200 bg-white text-stone-700 shadow-sm hover:bg-stone-50"
+              aria-label="Promoción anterior"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
 
-          <div className="flex items-center justify-center gap-1.5">
-            {slides.map((slide, index) => (
-              <button
-                key={slide.id}
-                type="button"
-                onClick={() => onActiveIndexChange(index)}
-                className={`rounded-full transition-all ${
-                  safeIndex === index
-                    ? `h-2 w-6 ${getPromoAccentTheme(slide.accent).dot}`
-                    : "h-2 w-2 bg-stone-300 hover:bg-stone-400"
-                }`}
-                aria-label={`Ir a promoción ${index + 1}`}
-                aria-current={safeIndex === index ? "true" : undefined}
-              />
-            ))}
+            <div className="flex flex-col items-center gap-1.5">
+              <div className="flex items-center justify-center gap-1.5">
+                {slides.map((slide, index) => (
+                  <button
+                    key={slide.id}
+                    type="button"
+                    onClick={() => goToIndex(index)}
+                    className={`rounded-full transition-all ${
+                      realIndex === index
+                        ? `h-2 w-6 ${getPromoAccentTheme(slide.accent).dot}`
+                        : "h-2 w-2 bg-stone-300 hover:bg-stone-400"
+                    }`}
+                    aria-label={`Ir a promoción ${index + 1}`}
+                    aria-current={realIndex === index ? "true" : undefined}
+                  />
+                ))}
+              </div>
+              <p className="text-xs font-bold text-[#F1A151]">
+                {realIndex + 1}/{slides.length}{" "}
+                {slides.length === 1 ? "cupón" : "cupones"}
+              </p>
+            </div>
+
+            <Button
+              type="button"
+              onClick={nextSlide}
+              size="icon"
+              variant="outline"
+              className="h-9 w-9 shrink-0 rounded-full border-stone-200 bg-white text-stone-700 shadow-sm hover:bg-stone-50"
+              aria-label="Siguiente promoción"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
           </div>
-
-          <Button
-            type="button"
-            onClick={goToNext}
-            size="icon"
-            variant="outline"
-            className="h-9 w-9 shrink-0 rounded-full border-stone-200 bg-white text-stone-700 shadow-sm hover:bg-stone-50"
-            aria-label="Siguiente promoción"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
         </div>
       ) : null}
     </div>

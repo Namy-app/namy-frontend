@@ -3,6 +3,7 @@
 import { Capacitor } from "@capacitor/core";
 import { PushNotifications } from "@capacitor/push-notifications";
 
+import { analytics } from "@/lib/analytics";
 import { env } from "@/lib/env";
 import { graphqlRequest } from "@/lib/graphql-client";
 import {
@@ -257,6 +258,13 @@ export async function initPushNotifications(
       return;
     }
 
+    analytics.track("notification_received", {
+      ...(typeof data?.__nvMessageId === "string"
+        ? { novu_message_id: data.__nvMessageId }
+        : {}),
+      type: typeof data?.type === "string" ? data.type : "promo_banner",
+    });
+
     const title = stripNovuPrefix(
       n.title ||
         data?.title ||
@@ -303,6 +311,15 @@ export async function initPushNotifications(
       console.warn("[Push] actionPerformed raw:", JSON.stringify(action));
       const data = action.notification.data;
       const isPromo = !data?.type || data.type === "promo_banner";
+      const deepLink = buildDeepLink(data);
+
+      analytics.track("notification_clicked", {
+        source: "push",
+        ...(typeof data?.__nvMessageId === "string"
+          ? { novu_message_id: data.__nvMessageId }
+          : {}),
+        ...(deepLink ? { deep_link: deepLink } : {}),
+      });
 
       if (isPromo) {
         const title = stripNovuPrefix(

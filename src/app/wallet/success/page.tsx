@@ -6,6 +6,7 @@ import { Suspense, useEffect } from "react";
 
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { BasicLayout } from "@/layouts/BasicLayout";
+import { analytics } from "@/lib/analytics";
 
 function PaymentSuccessContent(): React.JSX.Element {
   const router = useRouter();
@@ -14,6 +15,11 @@ function PaymentSuccessContent(): React.JSX.Element {
   const queryClient = useQueryClient();
 
   useEffect(() => {
+    analytics.trackDistinct(
+      "wallet_deposit_succeeded",
+      paymentIntent ?? "redirect"
+    );
+
     void queryClient.invalidateQueries({ queryKey: ["wallet"] });
     void queryClient.invalidateQueries({ queryKey: ["walletBalance"] });
     void queryClient.invalidateQueries({ queryKey: ["walletTransactions"] });
@@ -23,7 +29,7 @@ function PaymentSuccessContent(): React.JSX.Element {
     }, 3000);
 
     return () => clearTimeout(timer);
-  }, [router, queryClient]);
+  }, [router, queryClient, paymentIntent]);
 
   return (
     <ProtectedRoute>

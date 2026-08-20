@@ -4,6 +4,7 @@ import { X } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 
+import { analytics } from "@/lib/analytics";
 import { navigateTo } from "@/lib/capacitor-navigate";
 
 export interface PromoBannerData {
@@ -40,6 +41,10 @@ export function PromoBanner({
   }
 
   const handleCta = (): void => {
+    analytics.track("promo_banner_clicked", {
+      ...(promo.novuMessageId ? { novu_message_id: promo.novuMessageId } : {}),
+      ...(promo.deepLink ? { deep_link: promo.deepLink } : {}),
+    });
     onClose();
     if (promo.deepLink?.startsWith("/")) {
       navigateTo(promo.deepLink, router);

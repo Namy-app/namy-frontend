@@ -73,6 +73,24 @@ export interface DiscountDisplayFields {
   title?: string | null;
 }
 
+/** Promo cards: show user tier % for PERCENTAGE offers; premium keeps store value. */
+export function displayDiscountValue(
+  discount: Pick<DiscountDisplayFields, "type" | "value">,
+  userLevelPct: number,
+  isPremium: boolean = false
+): number | null | undefined {
+  const type = normalizeDiscountType(discount.type);
+  const value = discount.value;
+
+  if (type !== DiscountType.PERCENTAGE || value == null || value <= 0) {
+    return value;
+  }
+  if (isPremium) {
+    return value;
+  }
+  return userLevelPct;
+}
+
 /** Store promo label — prefer customText when value is 0 (BOGO / copy-only). */
 export function resolveDiscountDisplayText(
   options: DiscountDisplayFields

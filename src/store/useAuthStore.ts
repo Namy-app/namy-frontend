@@ -1,6 +1,8 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 
+import { captureEvent, resetUser } from "@/lib/analytics/posthog-client";
+import type { LogoutReason } from "@/lib/analytics/types";
 import { type User } from "@/lib/api-types";
 import { capacitorStorage } from "@/lib/capacitor-storage";
 import { setAuthToken, setAuthErrorCallback } from "@/lib/graphql-client";
@@ -14,7 +16,7 @@ interface AuthState {
 
   // Actions
   setAuth: (user: User, accessToken: string, rememberMe?: boolean) => void;
-  clearAuth: () => void;
+  clearAuth: (reason?: LogoutReason) => void;
   updateUser: (user: Partial<User>) => void;
   checkExpiration: () => boolean;
 }
@@ -45,7 +47,8 @@ export const useAuthStore = create<AuthState>()(
         });
       },
 
-      clearAuth: () => {
+      clearAuth: (reason) => {
+        const hadUser = Boolean(get().user);
         setAuthToken(null);
         set({
           user: null,
@@ -54,6 +57,10 @@ export const useAuthStore = create<AuthState>()(
           rememberMe: false,
           expiresAt: null,
         });
+        if (hadUser) {
+          captureEvent("logout", reason ? { reason } : {});
+          resetUser();
+        }
         // Navigation is handled by ProtectedRoute — no hard redirect here.
         // A hard window.location.href causes a full page reload which races
         // with async storage hydration and can log the user out on the next page.
@@ -68,7 +75,7 @@ export const useAuthStore = create<AuthState>()(
       checkExpiration: () => {
         const state = get();
         if (state.expiresAt && Date.now() > state.expiresAt) {
-          get().clearAuth();
+          get().clearAuth("expiry");
           return false;
         }
         return true;
@@ -83,6 +90,9 @@ export const useAuthStore = create<AuthState>()(
           // Check if session has expired
           if (state.expiresAt && Date.now() > state.expiresAt) {
             void capacitorStorage.removeItem("namy-auth-storage");
+            queueMicrotask(() => {
+              useAuthStore.getState().clearAuth("expiry");
+            });
           } else {
             setAuthToken(state.accessToken);
           }
@@ -97,6 +107,6 @@ export const useAuthStore = create<AuthState>()(
 if (typeof window !== "undefined") {
   setAuthErrorCallback(() => {
     const state = useAuthStore.getState();
-    state.clearAuth();
+    state.clearAuth("auth_error");
   });
 }

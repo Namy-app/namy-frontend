@@ -11,7 +11,7 @@ export function useLogout(): UseMutationResult<void, Error, void, unknown> {
       return Promise.resolve();
     },
     onSuccess: () => {
-      clearAuth();
+      clearAuth("user");
       window.$crisp?.push(["do", "session:reset"]);
     },
   });

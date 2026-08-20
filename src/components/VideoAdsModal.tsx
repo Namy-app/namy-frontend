@@ -4,7 +4,7 @@ import confetti from "canvas-confetti";
 import { X, Loader2, Gift } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 
 import { CouponGenerationAnimation } from "@/components/CouponGenerationAnimation";
@@ -12,6 +12,7 @@ import { VideoPlayer } from "@/components/VideoPlayer";
 import { useExchangeUnlock } from "@/domains/ads/hooks/mutation/useExchangeUnlock";
 import { useGetVideoAdPair, useWatchVideoAd } from "@/domains/video-ads";
 import type { VideoAd } from "@/domains/video-ads/types";
+import { analytics } from "@/lib/analytics";
 
 interface VideoAdsModalProps {
   isOpen: boolean;
@@ -56,6 +57,27 @@ export function VideoAdsModal({
   const sessionId = adPairData?.sessionId;
   const currentAd: VideoAd | undefined = ads[currentAdIndex];
 
+  useEffect(() => {
+    if (!isOpen || !sessionId || ads.length === 0) {
+      return;
+    }
+    analytics.trackDistinct("ad_session_started", sessionId, {
+      session_id: sessionId,
+      ad_count: ads.length,
+      ...(discountId ? { discount_id: discountId } : {}),
+    });
+  }, [isOpen, sessionId, ads.length, discountId]);
+
+  useEffect(() => {
+    if (!isOpen || !adError) {
+      return;
+    }
+    analytics.trackDistinct("ad_failed", `load:${sessionId ?? "none"}`, {
+      reason: "load_error",
+      ...(sessionId ? { session_id: sessionId } : {}),
+    });
+  }, [isOpen, adError, sessionId]);
+
   // Reset state when modal opens/closes
   useEffect(() => {
     if (isOpen) {
@@ -64,48 +86,6 @@ export function VideoAdsModal({
       setShowCouponAnimation(false);
     }
   }, [isOpen]);
-
-  // Trigger confetti + exchange when unlock token is received
-  useEffect(() => {
-    if (unlockToken) {
-      // Fire confetti from multiple positions
-      const duration = 3000;
-      const end = Date.now() + duration;
-
-      const colors = ["#10b981", "#059669", "#34d399", "#6ee7b7"];
-
-      (function frame() {
-        void confetti({
-          particleCount: 2,
-          angle: 60,
-          spread: 55,
-          origin: { x: 0 },
-          colors: colors,
-        });
-        void confetti({
-          particleCount: 2,
-          angle: 120,
-          spread: 55,
-          origin: { x: 1 },
-          colors: colors,
-        });
-
-        if (Date.now() < end) {
-          requestAnimationFrame(frame);
-        }
-      })();
-
-      // Fire a big burst in the center
-      void confetti({
-        particleCount: 100,
-        spread: 70,
-        origin: { y: 0.6 },
-        colors: colors,
-      });
-
-      void handleExchangeToken();
-    }
-  }, [unlockToken]);
 
   const isLastAd = currentAdIndex === ads.length - 1;
 
@@ -137,19 +117,30 @@ export function VideoAdsModal({
         sessionId,
       });
 
+      analytics.track("ad_completed", {
+        video_ad_id: ad.id,
+        session_id: sessionId,
+        watch_duration: Math.floor(watchDuration),
+      });
+
       // Only set unlock token if this was the last ad or if we can generate coupon
       if (result.canGenerateCoupon && result.token) {
         setUnlockToken(result.token);
       }
     } catch (error) {
       console.error("Failed to track watch:", error);
+      analytics.track("ad_failed", {
+        reason: "watch_error",
+        session_id: sessionId,
+        video_ad_id: ad.id,
+      });
       // On error, we could optionally revert to previous video
       // but for now we'll just log it to avoid bad UX
     }
   };
 
   // Exchange token for coupon
-  const handleExchangeToken = async () => {
+  const handleExchangeToken = useCallback(async () => {
     if (!unlockToken || !discountId) {
       return;
     }
@@ -163,6 +154,15 @@ export function VideoAdsModal({
         discountId,
       });
 
+      analytics.track("coupon_generated", {
+        method: "ad",
+        discount_id: discountId,
+        ...(typeof coupon.storeId === "string"
+          ? { store_id: coupon.storeId }
+          : {}),
+        ...(typeof coupon.id === "string" ? { coupon_id: coupon.id } : {}),
+      });
+
       setShowCouponAnimation(false);
       onSuccess(coupon.code as string);
       onClose();
@@ -171,7 +171,48 @@ export function VideoAdsModal({
       setShowCouponAnimation(false);
       // Error will be displayed via exchangeUnlockMutation.error
     }
-  };
+  }, [discountId, exchangeUnlockMutation, onClose, onSuccess, unlockToken]);
+
+  // Trigger confetti + exchange when unlock token is received
+  useEffect(() => {
+    if (!unlockToken) {
+      return;
+    }
+
+    const duration = 3000;
+    const end = Date.now() + duration;
+    const colors = ["#10b981", "#059669", "#34d399", "#6ee7b7"];
+
+    (function frame() {
+      void confetti({
+        particleCount: 2,
+        angle: 60,
+        spread: 55,
+        origin: { x: 0 },
+        colors: colors,
+      });
+      void confetti({
+        particleCount: 2,
+        angle: 120,
+        spread: 55,
+        origin: { x: 1 },
+        colors: colors,
+      });
+
+      if (Date.now() < end) {
+        requestAnimationFrame(frame);
+      }
+    })();
+
+    void confetti({
+      particleCount: 100,
+      spread: 70,
+      origin: { y: 0.6 },
+      colors: colors,
+    });
+
+    void handleExchangeToken();
+  }, [handleExchangeToken, unlockToken]);
 
   if (!isOpen) {
     return null;

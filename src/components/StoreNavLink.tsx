@@ -6,12 +6,17 @@ import type { PropsWithChildren } from "react";
 
 import { isCapacitorNative, navigateTo } from "@/lib/capacitor-navigate";
 
-export function getStorePath(storeId: string): string {
-  return `/stores/${storeId}`;
+export function getStorePath(storeId: string, discountId?: string): string {
+  const base = `/stores/${storeId}`;
+  if (discountId) {
+    return `${base}?discountId=${encodeURIComponent(discountId)}`;
+  }
+  return base;
 }
 
 type StoreNavLinkProps = PropsWithChildren<{
   storeId: string;
+  discountId?: string;
   className?: string;
 }>;
 
@@ -20,11 +25,12 @@ type StoreNavLinkProps = PropsWithChildren<{
  */
 export function StoreNavLink({
   storeId,
+  discountId,
   className,
   children,
 }: StoreNavLinkProps): React.JSX.Element {
   const router = useRouter();
-  const href = getStorePath(storeId);
+  const href = getStorePath(storeId, discountId);
 
   if (isCapacitorNative()) {
     return (

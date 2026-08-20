@@ -1,5 +1,6 @@
 import { useMutation, type UseMutationResult } from "@tanstack/react-query";
 
+import { analytics } from "@/lib/analytics";
 import { type AuthResponse, type SignupInput } from "@/lib/api-types";
 import { graphqlRequest } from "@/lib/graphql-client";
 import { SIGNUP_MUTATION } from "@/lib/graphql-queries";
@@ -24,9 +25,12 @@ export function useSignup(): UseMutationResult<
       });
       return data.signUp;
     },
-    onSuccess: (data) => {
+    onSuccess: (data, variables) => {
       // Store auth data in Zustand store
       setAuth(data.user, data.accessToken);
+      analytics.track("signup_completed", {
+        has_referral_code: Boolean(variables.referralCode),
+      });
     },
   });
 }

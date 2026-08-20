@@ -1,9 +1,15 @@
 import type { Discount } from "@/domains/admin";
 import {
+  displayDiscountValue,
   formatDiscountPromo,
   normalizeDiscountType,
   DiscountType,
 } from "@/lib/discount-type";
+
+export type PromoDisplayContext = {
+  userLevelPct: number;
+  isPremium?: boolean;
+};
 
 import { assignPromoAccents, type PromoAccent } from "./promoAccentPalette";
 
@@ -173,12 +179,20 @@ export function formatDiscountScheduleBadge(discount: Discount): string {
 
 function splitStubLabels(
   discount: Discount,
-  promoLabel: string
+  promoLabel: string,
+  context?: PromoDisplayContext
 ): { primary: string; secondary?: string } {
   const type = normalizeDiscountType(discount.type);
 
   if (type === DiscountType.PERCENTAGE && discount.value > 0) {
-    return { primary: `${discount.value}%`, secondary: "OFF" };
+    const pct = context
+      ? displayDiscountValue(
+          discount,
+          context.userLevelPct,
+          context.isPremium ?? false
+        )
+      : discount.value;
+    return { primary: `${pct}%`, secondary: "OFF" };
   }
 
   if (type === DiscountType.FIXED && discount.value > 0) {
@@ -260,23 +274,32 @@ export function buildPromoSlidePayload(
 
 export function buildPromoSlidesFromDiscounts(
   discounts: Discount[],
-  getLabel: (d: Discount) => string
+  getLabel: (d: Discount) => string,
+  context?: PromoDisplayContext
 ): DiscountPromoSlide[] {
   const accents = assignPromoAccents(discounts.length);
   return discounts.map((discount, index) =>
-    buildPromoSlideFromDiscount(discount, getLabel, accents[index])
+    buildPromoSlideFromDiscount(discount, getLabel, accents[index], context)
   );
 }
 
 export function buildPromoSlideFromDiscount(
   discount: Discount,
   getLabel: (d: Discount) => string,
-  accent: PromoAccent = "orange"
+  accent: PromoAccent = "orange",
+  context?: PromoDisplayContext
 ): DiscountPromoSlide {
   const mode = inferDiscountPromoDisplayMode(discount);
   const scheduleBadge = formatDiscountScheduleBadge(discount);
   const promoLabel = getLabel(discount);
-  const stub = splitStubLabels(discount, promoLabel);
+  const stub = splitStubLabels(discount, promoLabel, context);
+  const displayValue = context
+    ? displayDiscountValue(
+        discount,
+        context.userLevelPct,
+        context.isPremium ?? false
+      )
+    : discount.value;
 
   if (mode === "banner") {
     return {
@@ -296,7 +319,7 @@ export function buildPromoSlideFromDiscount(
   const headline =
     discount.customText?.trim() ||
     (discount.value > 0
-      ? formatDiscountPromo(discount.type, discount.value)
+      ? formatDiscountPromo(discount.type, displayValue ?? discount.value)
       : promoLabel);
 
   return {

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Poppins } from "next/font/google";
 
 import "../styles/globals.css";
+import { AnalyticsProvider } from "@/components/AnalyticsProvider";
 import { AndroidBackHandler } from "@/components/AndroidBackHandler";
 import { CapacitorSafeArea } from "@/components/CapacitorSafeArea";
 import { GoogleAdsense } from "@/components/GoogleAdsense";
@@ -84,13 +85,15 @@ export default function RootLayout({
         <KeyboardScrollFix />
         <SpaRedirectHandler />
         <ReactQueryProvider>
-          <PromoProvider>
-            <PushNotificationProvider />
-            <div id="app-shell" className="app-shell">
-              <GoogleMapsProviderClient>{children}</GoogleMapsProviderClient>
-            </div>
-          </PromoProvider>
-          <Toaster />
+          <AnalyticsProvider>
+            <PromoProvider>
+              <PushNotificationProvider />
+              <div id="app-shell" className="app-shell">
+                <GoogleMapsProviderClient>{children}</GoogleMapsProviderClient>
+              </div>
+            </PromoProvider>
+            <Toaster />
+          </AnalyticsProvider>
         </ReactQueryProvider>
       </body>
     </html>

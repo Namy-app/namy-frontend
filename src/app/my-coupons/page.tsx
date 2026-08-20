@@ -17,6 +17,7 @@ import type { Coupon } from "@/domains/coupon/type";
 import CouponCard from "@/domains/coupons/CouponCard";
 import { RestrictionModal } from "@/domains/coupons/RestrictionModal";
 import { BasicLayout } from "@/layouts/BasicLayout";
+import { analytics } from "@/lib/analytics";
 import { CouponDecoder, type DecodedCouponData } from "@/lib/coupon-decoder";
 import { resolveCouponDisplayLabel } from "@/lib/discount-type";
 import { graphqlRequest, setAuthToken } from "@/lib/graphql-client";
@@ -262,6 +263,11 @@ export default function MyCouponsPage(): React.JSX.Element {
 
   // Handle view QR code
   const handleViewQR = async (coupon: Coupon): Promise<void> => {
+    const storeId = coupon.storeId ?? coupon.store?.id;
+    analytics.track("coupon_qr_viewed", {
+      coupon_id: coupon.id,
+      ...(storeId ? { store_id: storeId } : {}),
+    });
     setSelectedCoupon(coupon);
 
     // Decode the coupon URL to extract restrictions

@@ -58,6 +58,7 @@ export const CreateDiscountModal = ({
       : "",
     endDate: discount?.endDate ? formatDateToYMDSafe(discount.endDate) : "",
     active: discount?.active ?? true,
+    isPromoted: discount?.isPromoted ?? false,
     excludedStartHour: discount?.excludedHours?.[0],
     excludedEndHour: discount?.excludedHours?.[1],
     maxUses: discount?.maxUses?.toString() ?? "",
@@ -160,6 +161,7 @@ export const CreateDiscountModal = ({
             startDate: formData.startDate,
             endDate: eodEndDate,
             active: formData.active,
+            isPromoted: formData.isPromoted,
             excludedDaysOfWeek: computedExcludedDaysOfWeek,
             excludedHours: parsedExcludedHours,
             ...quantityLimits,
@@ -188,6 +190,7 @@ export const CreateDiscountModal = ({
           startDate: formData.startDate,
           endDate: eodEndDate,
           active: formData.active,
+          isPromoted: formData.isPromoted,
           excludedDaysOfWeek: computedExcludedDaysOfWeek,
           excludedHours: parsedExcludedHours,
           ...quantityLimits,
@@ -696,22 +699,41 @@ export const CreateDiscountModal = ({
             </div>
 
             {/* Status */}
-            <div className="flex items-center gap-3 p-4 bg-gradient-hero rounded-lg border border-border">
-              <input
-                type="checkbox"
-                id="discount-active"
-                checked={formData.active}
-                onChange={(e) =>
-                  setFormData({ ...formData, active: e.target.checked })
-                }
-                className="w-4 h-4 text-primary border-border rounded focus:ring-primary"
-              />
-              <label
-                htmlFor="discount-active"
-                className="text-sm font-medium text-foreground"
-              >
-                El descuento está activo y disponible para los usuarios
-              </label>
+            <div className="space-y-3">
+              <div className="flex items-center gap-3 p-4 bg-gradient-hero rounded-lg border border-border">
+                <input
+                  type="checkbox"
+                  id="discount-active"
+                  checked={formData.active}
+                  onChange={(e) =>
+                    setFormData({ ...formData, active: e.target.checked })
+                  }
+                  className="w-4 h-4 text-primary border-border rounded focus:ring-primary"
+                />
+                <label
+                  htmlFor="discount-active"
+                  className="text-sm font-medium text-foreground"
+                >
+                  El descuento está activo y disponible para los usuarios
+                </label>
+              </div>
+              <div className="flex items-center gap-3 p-4 bg-gradient-hero rounded-lg border border-border">
+                <input
+                  type="checkbox"
+                  id="discount-promoted"
+                  checked={formData.isPromoted}
+                  onChange={(e) =>
+                    setFormData({ ...formData, isPromoted: e.target.checked })
+                  }
+                  className="w-4 h-4 text-primary border-border rounded focus:ring-primary"
+                />
+                <label
+                  htmlFor="discount-promoted"
+                  className="text-sm font-medium text-foreground"
+                >
+                  Feature this discount on the explore page
+                </label>
+              </div>
             </div>
           </div>
 

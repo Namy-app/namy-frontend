@@ -1,5 +1,6 @@
 import { useMutation, type UseMutationResult } from "@tanstack/react-query";
 
+import { analytics } from "@/lib/analytics";
 import { graphqlClient } from "@/lib/graphql-client";
 import { VERIFY_EMAIL_MUTATION } from "@/lib/graphql-queries";
 
@@ -27,6 +28,9 @@ export const useVerifyEmail = (): UseMutationResult<
         { input }
       );
       return response.verifyEmail;
+    },
+    onSuccess: () => {
+      analytics.track("email_verified");
     },
   });
 };

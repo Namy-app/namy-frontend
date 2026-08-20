@@ -16,6 +16,7 @@ import {
 } from "@/domains/subscription/hooks";
 import { useToast } from "@/hooks/use-toast";
 import { BasicLayout } from "@/layouts/BasicLayout";
+import { analytics } from "@/lib/analytics";
 import { extractErrorMessage } from "@/lib/utils";
 import { useAuthStore } from "@/store/useAuthStore";
 
@@ -62,6 +63,7 @@ function SubscriptionContent(): React.JSX.Element {
     let delayedRefetch: ReturnType<typeof setTimeout> | undefined;
 
     if (success === "true") {
+      analytics.trackDistinct("subscription_activated", "checkout-success");
       toast({
         title: "🎉 ¡Bienvenido a Premium!",
         description:
@@ -81,6 +83,10 @@ function SubscriptionContent(): React.JSX.Element {
 
       router.replace("/subscription");
     } else if (canceled === "true") {
+      analytics.trackDistinct(
+        "subscription_checkout_canceled",
+        "checkout-canceled"
+      );
       toast({
         title: "Pago cancelado",
         description:
@@ -103,6 +109,10 @@ function SubscriptionContent(): React.JSX.Element {
       if (!session.url) {
         throw new Error("No se recibió la URL de pago de Stripe.");
       }
+
+      analytics.track("subscription_checkout_started", undefined, {
+        sendInstantly: true,
+      });
 
       if (Capacitor.isNativePlatform()) {
         await Browser.open({ url: session.url });

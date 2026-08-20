@@ -23,6 +23,7 @@ import {
 } from "@/domains/redeem/utils/redeemAvailabilityErrors";
 import { getDiscountRestrictionsFromDecodedCouponData } from "@/domains/store/utils";
 import { useToast } from "@/hooks/use-toast";
+import { analytics } from "@/lib/analytics";
 import {
   CouponDecoder,
   resolveRedemptionPromoLabel,
@@ -246,11 +247,34 @@ export default function RedeemDetail({
       if (data.success) {
         setRedeemed(true);
         setRedemptionResult(data);
+        analytics.track("coupon_redeemed", {
+          store_id: couponData.storeId,
+          leveled_up: Boolean(data.leveledUp),
+        });
+        if (
+          data.leveledUp &&
+          typeof data.oldLevel === "number" &&
+          typeof data.newLevel === "number"
+        ) {
+          analytics.track("level_up", {
+            old_level: data.oldLevel,
+            new_level: data.newLevel,
+          });
+        }
       } else {
+        analytics.track("coupon_redeem_failed", {
+          store_id: couponData.storeId,
+          ...(data.message ? { reason: data.message } : {}),
+        });
         showRedemptionFailure(data.message);
       }
     } catch (err) {
-      showRedemptionFailure(extractErrorMessage(err));
+      const message = extractErrorMessage(err);
+      analytics.track("coupon_redeem_failed", {
+        store_id: couponData.storeId,
+        ...(message ? { reason: message } : {}),
+      });
+      showRedemptionFailure(message);
     } finally {
       setRedeeming(false);
     }

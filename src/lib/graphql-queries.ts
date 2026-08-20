@@ -408,6 +408,41 @@ export const GET_CATEGORIES_BY_STORE_TYPE_QUERY = `
 `;
 
 // ============ DISCOUNT ============
+export const GET_PROMOTED_DISCOUNTS_QUERY = `
+  query GetPromotedDiscounts(
+    $filters: DiscountFiltersInput
+    $pagination: PaginationInput
+  ) {
+    discounts(filters: $filters, pagination: $pagination) {
+      data {
+        id
+        storeId
+        title
+        type
+        value
+        customText
+        imageUrl
+        description
+        excludedDaysOfWeek
+        availableDaysAndTimes
+        store {
+          id
+          name
+          imageUrl
+        }
+      }
+      paginationInfo {
+        total
+        page
+        pageSize
+        totalPages
+        hasNextPage
+        hasPreviousPage
+      }
+    }
+  }
+`;
+
 export const GET_ALL_DISCOUNTS_QUERY = `
   query GetAllDiscounts {
     discounts {

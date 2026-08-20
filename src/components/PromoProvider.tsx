@@ -6,12 +6,17 @@ import { NovuProvider, useNotifications } from "@novu/nextjs/hooks";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
 
-import { PromoBanner } from "@/app/explore/components/PromoBanner";
+import {
+  PromoBanner,
+  type PromoBannerData,
+} from "@/app/explore/components/PromoBanner";
+import { analytics } from "@/lib/analytics";
 import { env } from "@/lib/env";
 import {
   isPromoBannerRoute,
   isPromoNotificationData,
   notificationToPromo,
+  promoId,
   surfacePromo,
 } from "@/lib/promo-storage";
 import { syncLatestNovuPromo } from "@/lib/push-handler";
@@ -110,8 +115,33 @@ function GlobalPromoBanner(): React.JSX.Element | null {
   }
 
   return (
-    <PromoBanner promo={activePromo} onClose={() => void dismissPromo()} />
+    <VisiblePromoBanner
+      promo={activePromo}
+      onDismiss={() => {
+        void dismissPromo();
+      }}
+    />
   );
+}
+
+function VisiblePromoBanner({
+  promo,
+  onDismiss,
+}: {
+  promo: PromoBannerData;
+  onDismiss: () => void;
+}): React.JSX.Element {
+  const viewedKey = promo.novuMessageId || promoId(promo);
+
+  useEffect(() => {
+    analytics.trackDistinct("promo_banner_viewed", viewedKey, {
+      ...(promo.novuMessageId ? { novu_message_id: promo.novuMessageId } : {}),
+      promo_id: promoId(promo),
+      ...(promo.deepLink ? { deep_link: promo.deepLink } : {}),
+    });
+  }, [viewedKey, promo]);
+
+  return <PromoBanner promo={promo} onClose={onDismiss} />;
 }
 
 /** Novu session, promo sync, and global banner overlay. */

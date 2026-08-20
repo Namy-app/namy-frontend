@@ -16,7 +16,7 @@ import {
   ChevronDown,
 } from "lucide-react";
 import Image from "next/image";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter, useParams, useSearchParams } from "next/navigation";
 import { useState, useEffect, useRef, useMemo } from "react";
 import { createPortal } from "react-dom";
 
@@ -48,9 +48,13 @@ import { useMyLevel } from "@/domains/user/hooks/query/useMyLevel";
 import { useToast } from "@/hooks/use-toast";
 import { useDiscountCountdown } from "@/hooks/useDiscountCountdown";
 import { BasicLayout } from "@/layouts/BasicLayout";
+import { analytics } from "@/lib/analytics";
 import { resolveCapacitorDynamicId } from "@/lib/capacitor-navigate";
 import { convertTo12Hour } from "@/lib/date-time-utils";
-import { resolveDiscountDisplayText } from "@/lib/discount-type";
+import {
+  displayDiscountValue,
+  resolveDiscountDisplayText,
+} from "@/lib/discount-type";
 import { isDiscountValid } from "@/lib/discount-utils";
 import { graphqlRequest } from "@/lib/graphql-client";
 import {
@@ -98,6 +102,7 @@ const reviewPts = getDefaultChallenge("reviews")?.points ?? 40;
 export default function StoreDetailClient(): React.JSX.Element {
   const router = useRouter();
   const params = useParams();
+  const searchParams = useSearchParams();
   const { isAuthenticated, user, accessToken } = useAuthStore();
   const { data: userLevel } = useMyLevel();
 
@@ -141,6 +146,7 @@ export default function StoreDetailClient(): React.JSX.Element {
   const [uploadPhotoError, setUploadPhotoError] = useState<string | null>(null);
   const [muralPostDone, setMuralPostDone] = useState(false);
   const reviewPhotoRef = useRef<HTMLInputElement>(null);
+  const appliedDiscountDeepLinkRef = useRef(false);
   const [selectedReview, setSelectedReview] = useState<{
     id: string;
     userId: string;
@@ -169,6 +175,18 @@ export default function StoreDetailClient(): React.JSX.Element {
     "";
   const { data: store, isLoading } = useStore(storeId);
 
+  useEffect(() => {
+    if (!store?.id || store.id === "id" || store.id === "placeholder") {
+      return;
+    }
+    const discountIdFromUrl = searchParams?.get("discountId") ?? undefined;
+    analytics.trackDistinct("restaurant_viewed", store.id, {
+      store_id: store.id,
+      ...(store.type ? { store_type: store.type } : {}),
+      ...(discountIdFromUrl ? { discount_id: discountIdFromUrl } : {}),
+    });
+  }, [store?.id, store?.type, searchParams]);
+
   const storeDiscountFilters = useMemo(
     () => (storeId ? { storeId } : undefined),
     [storeId]
@@ -188,9 +206,17 @@ export default function StoreDetailClient(): React.JSX.Element {
   const { data: reviewsData } = useStoreReviews(storeId, { first: 3 });
 
   // Active discounts only — no promotional filters
-  const visibleDiscounts: Discount[] =
-    discountsData?.data?.filter((d) => d.active === true) ?? [];
-  const fallbackDiscountPercentage = userLevel?.discountPercentage ?? 10;
+  const visibleDiscounts = useMemo(
+    () => discountsData?.data?.filter((d) => d.active === true) ?? [],
+    [discountsData?.data]
+  );
+  const userLevelPct = userLevel?.discountPercentage ?? 10;
+  const isPremiumUser = Boolean(user?.isPremium);
+  const promoDisplayContext = useMemo(
+    () => ({ userLevelPct, isPremium: isPremiumUser }),
+    [userLevelPct, isPremiumUser]
+  );
+  const fallbackDiscountPercentage = userLevelPct;
   const currentCarouselDiscount =
     visibleDiscounts[activeCardIndex] ?? visibleDiscounts[0];
 
@@ -199,7 +225,7 @@ export default function StoreDetailClient(): React.JSX.Element {
       customText: discount.customText,
       title: discount.title,
       type: discount.type,
-      value: discount.value,
+      value: displayDiscountValue(discount, userLevelPct, isPremiumUser),
     });
     return label || discount.title || "Promoción Especial";
   };
@@ -227,6 +253,24 @@ export default function StoreDetailClient(): React.JSX.Element {
       setActiveCardIndex(Math.max(0, visibleDiscounts.length - 1));
     }
   }, [visibleDiscounts.length, activeCardIndex]);
+
+  // Deep-link from Explore featured coupons (?discountId=...)
+  useEffect(() => {
+    if (appliedDiscountDeepLinkRef.current) {
+      return;
+    }
+
+    const discountIdFromUrl = searchParams?.get("discountId");
+    if (!discountIdFromUrl || visibleDiscounts.length === 0) {
+      return;
+    }
+
+    const index = visibleDiscounts.findIndex((d) => d.id === discountIdFromUrl);
+    if (index >= 0) {
+      setActiveCardIndex(index);
+      appliedDiscountDeepLinkRef.current = true;
+    }
+  }, [searchParams, visibleDiscounts]);
 
   // Show spinner while storeId is not yet available from params or query is loading
   if (!storeId || isLoading) {
@@ -440,6 +484,12 @@ export default function StoreDetailClient(): React.JSX.Element {
       setSelectedDiscount({ id: discountId });
     }
 
+    analytics.track("discount_unlock_started", {
+      store_id: storeId,
+      ...(discountId ? { discount_id: discountId } : {}),
+      is_premium: Boolean(user?.isPremium),
+    });
+
     // If user is premium, directly unlock discount
     if (user?.isPremium) {
       void handleUnlockDiscount();
@@ -596,6 +646,11 @@ export default function StoreDetailClient(): React.JSX.Element {
       });
 
       if (data?.generateCoupon) {
+        analytics.track("coupon_generated", {
+          store_id: data.generateCoupon.store?.id ?? storeId,
+          discount_id: discountId,
+          method: "premium",
+        });
         // Ensure coupons cache is refreshed so UI shows the new coupon
         try {
           void queryClient.invalidateQueries({ queryKey: ["coupons"] });
@@ -672,6 +727,11 @@ export default function StoreDetailClient(): React.JSX.Element {
       });
 
       if (data?.quickPayForDiscount) {
+        analytics.track("coupon_generated", {
+          store_id: data.quickPayForDiscount.store?.id ?? storeId,
+          discount_id: getSelectedDiscountId(),
+          method: "quick_pay",
+        });
         try {
           void queryClient.invalidateQueries({ queryKey: ["coupons"] });
         } catch (_e) {
@@ -932,7 +992,8 @@ export default function StoreDetailClient(): React.JSX.Element {
                       onActiveIndexChange={setActiveCardIndex}
                       slides={buildPromoSlidesFromDiscounts(
                         visibleDiscounts,
-                        getDiscountSlideLabel
+                        getDiscountSlideLabel,
+                        promoDisplayContext
                       )}
                       unlock={{
                         onUnlock: handleUnlockDiscountClick,

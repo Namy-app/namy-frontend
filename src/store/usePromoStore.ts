@@ -3,6 +3,7 @@
 import { create } from "zustand";
 
 import type { PromoBannerData } from "@/app/explore/components/PromoBanner";
+import { analytics } from "@/lib/analytics";
 import {
   clearPendingPromo,
   isPromoActive,
@@ -50,6 +51,11 @@ export const usePromoStore = create<PromoState>()((set, get) => ({
     if (!current) {
       return;
     }
+    analytics.track("promo_banner_dismissed", {
+      ...(current.novuMessageId
+        ? { novu_message_id: current.novuMessageId }
+        : {}),
+    });
     await markPromoDismissedForever(current);
     const userId = useAuthStore.getState().user?.id;
     if (userId && current.novuMessageId) {

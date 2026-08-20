@@ -15,6 +15,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 
+import { analytics } from "@/lib/analytics";
 import { navigateTo } from "@/lib/capacitor-navigate";
 import { env } from "@/lib/env";
 import {
@@ -35,6 +36,7 @@ export function ExploreHeader({
   const { user, clearAuth } = useAuthStore();
 
   const handleNotificationClick = (notification: {
+    id?: string;
     subject?: string;
     body?: string;
     data?: Record<string, unknown>;
@@ -42,9 +44,20 @@ export function ExploreHeader({
   }): void => {
     const data = notification.data;
     const isPromo = !data?.type || data.type === "promo_banner";
+    const promo = isPromo ? notificationToPromo(notification) : null;
+    const deepLink =
+      promo?.deepLink ??
+      (typeof data?.deepLink === "string" && data.deepLink.startsWith("/")
+        ? data.deepLink
+        : undefined);
 
-    if (isPromo) {
-      const promo = notificationToPromo(notification);
+    analytics.track("notification_clicked", {
+      source: "inbox",
+      ...(notification.id ? { novu_message_id: notification.id } : {}),
+      ...(deepLink ? { deep_link: deepLink } : {}),
+    });
+
+    if (isPromo && promo) {
       void surfacePromo(promo).then((shown) => {
         if (shown) {
           navigateTo("/explore", router);
@@ -59,8 +72,7 @@ export function ExploreHeader({
       return;
     }
 
-    const deepLink = data?.deepLink;
-    if (typeof deepLink === "string" && deepLink.startsWith("/")) {
+    if (deepLink) {
       navigateTo(deepLink, router);
     }
   };
@@ -88,7 +100,7 @@ export function ExploreHeader({
   }, [isDropdownOpen]);
 
   const handleLogout = (): void => {
-    clearAuth();
+    clearAuth("user");
     setIsDropdownOpen(false);
     router.push("/");
   };

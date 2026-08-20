@@ -1,6 +1,11 @@
 // Query hooks
 export { useStores } from "./query/useStores";
 export { useStore } from "./query/useStore";
+export { usePromotedDiscounts } from "./query/usePromotedDiscounts";
+export type {
+  PromotedDiscount,
+  PromotedDiscountStore,
+} from "./query/usePromotedDiscounts";
 export { useGetCategoryByName } from "./query/useGetCategoryByName";
 export { useGetSubCategoryByCatId } from "./query/useGetSubCategoryByCatId";
 export { useCategoriesByStoreType } from "./query/useCategoriesByStoreType";

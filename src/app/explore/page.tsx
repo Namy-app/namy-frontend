@@ -1,6 +1,7 @@
 "use client";
 
 import { useClosestStores } from "@/domains/store/hooks/query/useClosestStores";
+import { usePromotedDiscounts } from "@/domains/store/hooks/query/usePromotedDiscounts";
 import { useStores } from "@/domains/store/hooks/query/useStores";
 import { useMyLevel } from "@/domains/user/hooks/query/useMyLevel";
 import { BasicLayout } from "@/layouts/BasicLayout";
@@ -9,6 +10,7 @@ import { useAuthStore } from "@/store/useAuthStore";
 import { ActiveChallenges } from "./components/ActiveChallenges";
 import { CategoryCards } from "./components/CategoryCards";
 import { FeaturedCarousel } from "./components/FeaturedCarousel";
+import { FeaturedCouponsCarousel } from "./components/FeaturedCouponsCarousel";
 import { PageFooter } from "./components/PageFooter";
 import { UserLevelBanner } from "./components/UserLevelBanner";
 
@@ -20,6 +22,8 @@ export default function ExplorePage(): React.JSX.Element {
     {},
     { page: 1, first: 7 }
   );
+  const { data: promotedDiscounts = [], isLoading: isLoadingPromoted } =
+    usePromotedDiscounts();
   const { data: myLevel } = useMyLevel();
 
   const discountPercentage =
@@ -40,6 +44,12 @@ export default function ExplorePage(): React.JSX.Element {
           stores={closestStores?.data ?? storesResult?.data}
           discountPercentage={discountPercentage}
           isLoading={isLoadingClosestStores ? isLoadingStores : undefined}
+        />
+        <FeaturedCouponsCarousel
+          discounts={promotedDiscounts}
+          isLoading={isLoadingPromoted}
+          userLevelPct={myLevel?.discountPercentage ?? 10}
+          isPremium={Boolean(user?.isPremium)}
         />
         <ActiveChallenges />
         <PageFooter />
