@@ -1,5 +1,6 @@
 "use client";
 
+import { Capacitor } from "@capacitor/core";
 import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 
@@ -69,6 +70,8 @@ export function CouponGenerationAnimation({
     return null;
   }
 
+  const isNativeApp = Capacitor.isNativePlatform();
+
   return createPortal(
     <div
       className="fixed inset-0 z-[100] flex items-center justify-center bg-white"
@@ -79,7 +82,11 @@ export function CouponGenerationAnimation({
       <video
         ref={videoRef}
         src={COUPON_GENERATION_ANIMATION_URL}
-        className="h-full w-full object-cover"
+        className={
+          isNativeApp
+            ? "h-full w-full object-cover"
+            : "h-auto w-full max-h-[85vh] max-w-[390px] object-contain"
+        }
         autoPlay
         muted
         playsInline
