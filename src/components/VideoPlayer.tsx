@@ -34,8 +34,8 @@ export function VideoPlayer({
 
   // Cleanup effect - pause video when component unmounts
   useEffect(() => {
+    const video = videoRef.current;
     return () => {
-      const video = videoRef.current;
       if (video) {
         video.pause();
         video.currentTime = 0;
@@ -49,10 +49,14 @@ export function VideoPlayer({
       return;
     }
 
+    video.setAttribute("playsinline", "");
+    video.setAttribute("webkit-playsinline", "");
+    video.disablePictureInPicture = true;
+
     // Autoplay if enabled
     if (autoplay) {
       video.play().catch((error) => {
-        console.log("Autoplay prevented:", error);
+        console.warn("Autoplay prevented:", error);
         // If autoplay is blocked, mute and try again
         video.muted = true;
         setIsMuted(true);
@@ -163,6 +167,8 @@ export function VideoPlayer({
           playsInline
           loop={false}
           preload="auto"
+          controls={false}
+          disablePictureInPicture
         >
           Your browser does not support video playback.
         </video>
