@@ -4,7 +4,7 @@ import confetti from "canvas-confetti";
 import { X, Loader2, Gift } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 
 import { CouponGenerationAnimation } from "@/components/CouponGenerationAnimation";
@@ -52,6 +52,7 @@ export function VideoAdsModal({
 
   const watchAdMutation = useWatchVideoAd();
   const exchangeUnlockMutation = useExchangeUnlock();
+  const isExchangingRef = useRef(false);
 
   const ads = adPairData?.ads || [];
   const sessionId = adPairData?.sessionId;
@@ -144,6 +145,10 @@ export function VideoAdsModal({
     if (!unlockToken || !discountId) {
       return;
     }
+    if (isExchangingRef.current) {
+      return;
+    }
+    isExchangingRef.current = true;
 
     // Looping MP4 replaces the old "Generando tu cupón..." spinner
     setShowCouponAnimation(true);
@@ -170,8 +175,19 @@ export function VideoAdsModal({
       console.error("Failed to exchange unlock:", error);
       setShowCouponAnimation(false);
       // Error will be displayed via exchangeUnlockMutation.error
+    } finally {
+      isExchangingRef.current = false;
     }
-  }, [discountId, exchangeUnlockMutation, onClose, onSuccess, unlockToken]);
+    // Intentionally omit exchangeUnlockMutation / onSuccess / onClose:
+    // those identities change every render and re-fired this callback.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [discountId, unlockToken]);
+
+  useEffect(() => {
+    return () => {
+      isExchangingRef.current = false;
+    };
+  }, []);
 
   // Trigger confetti + exchange when unlock token is received
   useEffect(() => {
@@ -212,7 +228,10 @@ export function VideoAdsModal({
     });
 
     void handleExchangeToken();
-  }, [handleExchangeToken, unlockToken]);
+    // Intentionally depend only on unlockToken so mutation identity
+    // changes cannot re-fire exchangeUnlock.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [unlockToken]);
 
   if (!isOpen) {
     return null;
