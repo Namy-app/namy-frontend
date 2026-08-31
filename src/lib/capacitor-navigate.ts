@@ -11,8 +11,15 @@ import { Capacitor } from "@capacitor/core";
 
 const PLACEHOLDER_IDS = new Set(["id", "placeholder"]);
 
-/** Full dynamic path for client-side id resolution (e.g. /stores/<uuid>). */
+/** Full dynamic path for client-side id resolution (e.g. /stores/<uuid>?discountId=...). */
 export const CAPACITOR_DYNAMIC_PATH_KEY = "capacitor_dynamic_path";
+
+/** Dispatched when navigating to a new entity while already on a placeholder shell. */
+export const CAPACITOR_DYNAMIC_NAV_EVENT = "capacitor-dynamic-nav";
+
+function stripQueryAndHash(segment: string): string {
+  return segment.split("?")[0]?.split("#")[0] ?? segment;
+}
 
 /** One-shot redirect target set by 404.html after a failed file lookup. */
 export const SPA_REDIRECT_KEY = "spa_redirect";
@@ -58,7 +65,7 @@ export function resolveCapacitorDynamicId(
   paramsId: string | undefined
 ): string | null {
   if (paramsId && !PLACEHOLDER_IDS.has(paramsId)) {
-    return paramsId;
+    return stripQueryAndHash(paramsId);
   }
   if (typeof window === "undefined") {
     return null;
@@ -67,16 +74,59 @@ export function resolveCapacitorDynamicId(
   if (!dynamicPath?.startsWith(pathPrefix)) {
     return null;
   }
-  return dynamicPath.split("/").filter(Boolean).pop() ?? null;
+  const segment = dynamicPath.split("/").filter(Boolean).pop();
+  return segment ? stripQueryAndHash(segment) : null;
+}
+
+/** Query param from the stored Capacitor path (native has no real search string on the shell URL). */
+export function resolveCapacitorDynamicQueryParam(
+  param: string
+): string | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+  const dynamicPath = localStorage.getItem(CAPACITOR_DYNAMIC_PATH_KEY);
+  if (!dynamicPath?.includes("?")) {
+    return null;
+  }
+  const search = dynamicPath.slice(dynamicPath.indexOf("?"));
+  return new URLSearchParams(search).get(param);
+}
+
+function notifyCapacitorDynamicNavigation(): void {
+  window.dispatchEvent(new Event(CAPACITOR_DYNAMIC_NAV_EVENT));
+}
+
+function navigateCapacitorDynamicRoute(
+  path: string,
+  navigate: (target: string) => void
+): void {
+  setCapacitorDynamicPath(path);
+  const placeholder = getCapacitorPlaceholderPath(path);
+  const normalizedCurrent = window.location.pathname.replace(/\/+$/, "") || "/";
+  const normalizedPlaceholder = placeholder.replace(/\/+$/, "") || "/";
+
+  if (normalizedCurrent === normalizedPlaceholder) {
+    notifyCapacitorDynamicNavigation();
+    navigate(`${placeholder}?_cd=${Date.now()}`);
+    return;
+  }
+
+  navigate(placeholder);
 }
 
 export function navigateTo(
   path: string,
-  router: { push: (p: string) => void }
+  router: { push: (p: string) => void; replace?: (p: string) => void }
 ): void {
   if (isCapacitorNative() && isCapacitorDynamicRoute(path)) {
-    setCapacitorDynamicPath(path);
-    router.push(getCapacitorPlaceholderPath(path));
+    navigateCapacitorDynamicRoute(path, (target) => {
+      if (router.replace && target.includes("?_cd=")) {
+        router.replace(target);
+      } else {
+        router.push(target);
+      }
+    });
   } else {
     router.push(path);
   }
@@ -87,8 +137,7 @@ export function replaceTo(
   router: { replace: (p: string) => void }
 ): void {
   if (isCapacitorNative() && isCapacitorDynamicRoute(path)) {
-    setCapacitorDynamicPath(path);
-    router.replace(getCapacitorPlaceholderPath(path));
+    navigateCapacitorDynamicRoute(path, (target) => router.replace(target));
   } else {
     router.replace(path);
   }

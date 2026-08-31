@@ -49,7 +49,11 @@ import { useToast } from "@/hooks/use-toast";
 import { useDiscountCountdown } from "@/hooks/useDiscountCountdown";
 import { BasicLayout } from "@/layouts/BasicLayout";
 import { analytics } from "@/lib/analytics";
-import { resolveCapacitorDynamicId } from "@/lib/capacitor-navigate";
+import {
+  CAPACITOR_DYNAMIC_NAV_EVENT,
+  resolveCapacitorDynamicId,
+  resolveCapacitorDynamicQueryParam,
+} from "@/lib/capacitor-navigate";
 import { convertTo12Hour } from "@/lib/date-time-utils";
 import {
   displayDiscountValue,
@@ -147,6 +151,7 @@ export default function StoreDetailClient(): React.JSX.Element {
   const [muralPostDone, setMuralPostDone] = useState(false);
   const reviewPhotoRef = useRef<HTMLInputElement>(null);
   const appliedDiscountDeepLinkRef = useRef(false);
+  const [capacitorNavTick, setCapacitorNavTick] = useState(0);
   const [selectedReview, setSelectedReview] = useState<{
     id: string;
     userId: string;
@@ -169,23 +174,51 @@ export default function StoreDetailClient(): React.JSX.Element {
     };
   }, [selectedCatalogImage]);
 
+  useEffect(() => {
+    const handleCapacitorNav = (): void => {
+      setCapacitorNavTick((tick) => tick + 1);
+    };
+    window.addEventListener(CAPACITOR_DYNAMIC_NAV_EVENT, handleCapacitorNav);
+    return () => {
+      window.removeEventListener(
+        CAPACITOR_DYNAMIC_NAV_EVENT,
+        handleCapacitorNav
+      );
+    };
+  }, []);
+
   const { data: wallet } = useWallet({ userId: user?.id });
-  const storeId =
-    resolveCapacitorDynamicId("/stores/", params?.id as string | undefined) ??
-    "";
+  const storeId = useMemo(
+    () =>
+      resolveCapacitorDynamicId("/stores/", params?.id as string | undefined) ??
+      "",
+    [params?.id, capacitorNavTick]
+  );
   const { data: store, isLoading } = useStore(storeId);
+
+  const discountIdFromNavigation = useMemo(() => {
+    const fromUrl = searchParams?.get("discountId");
+    if (fromUrl) {
+      return fromUrl;
+    }
+    return resolveCapacitorDynamicQueryParam("discountId");
+  }, [searchParams, capacitorNavTick]);
+
+  useEffect(() => {
+    appliedDiscountDeepLinkRef.current = false;
+  }, [storeId]);
 
   useEffect(() => {
     if (!store?.id || store.id === "id" || store.id === "placeholder") {
       return;
     }
-    const discountIdFromUrl = searchParams?.get("discountId") ?? undefined;
+    const discountIdFromUrl = discountIdFromNavigation ?? undefined;
     analytics.trackDistinct("restaurant_viewed", store.id, {
       store_id: store.id,
       ...(store.type ? { store_type: store.type } : {}),
       ...(discountIdFromUrl ? { discount_id: discountIdFromUrl } : {}),
     });
-  }, [store?.id, store?.type, searchParams]);
+  }, [store?.id, store?.type, discountIdFromNavigation]);
 
   const storeDiscountFilters = useMemo(
     () => (storeId ? { storeId } : undefined),
@@ -260,7 +293,7 @@ export default function StoreDetailClient(): React.JSX.Element {
       return;
     }
 
-    const discountIdFromUrl = searchParams?.get("discountId");
+    const discountIdFromUrl = discountIdFromNavigation;
     if (!discountIdFromUrl || visibleDiscounts.length === 0) {
       return;
     }
@@ -270,10 +303,10 @@ export default function StoreDetailClient(): React.JSX.Element {
       setActiveCardIndex(index);
       appliedDiscountDeepLinkRef.current = true;
     }
-  }, [searchParams, visibleDiscounts]);
+  }, [discountIdFromNavigation, visibleDiscounts]);
 
   // Show spinner while storeId is not yet available from params or query is loading
-  if (!storeId || isLoading) {
+  if (!storeId || storeId === "undefined") {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
@@ -281,7 +314,15 @@ export default function StoreDetailClient(): React.JSX.Element {
     );
   }
 
-  if (!store) {
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
+      </div>
+    );
+  }
+
+  if (!store || !store.id) {
     router.push("/explore");
     return <></>;
   }

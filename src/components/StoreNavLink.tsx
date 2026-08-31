@@ -31,24 +31,36 @@ export function StoreNavLink({
 }: StoreNavLinkProps): React.JSX.Element {
   const router = useRouter();
   const href = getStorePath(storeId, discountId);
+  const isValidStoreId = Boolean(storeId && storeId !== "undefined");
+
+  const handleNavigate = (): void => {
+    if (!isValidStoreId) {
+      return;
+    }
+    navigateTo(href, router);
+  };
 
   if (isCapacitorNative()) {
     return (
       <div
         role="link"
-        tabIndex={0}
+        tabIndex={isValidStoreId ? 0 : -1}
         className={className}
-        onClick={() => navigateTo(href, router)}
+        onClick={handleNavigate}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
-            navigateTo(href, router);
+            handleNavigate();
           }
         }}
       >
         {children}
       </div>
     );
+  }
+
+  if (!isValidStoreId) {
+    return <div className={className}>{children}</div>;
   }
 
   return (
