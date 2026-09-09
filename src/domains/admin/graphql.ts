@@ -94,6 +94,29 @@ export const TOGGLE_STORE_ACTIVE_MUTATION = gql`
   }
 `;
 
+export const TOGGLE_STORE_BILLING_MUTATION = gql`
+  mutation ToggleStoreBilling($storeId: String!, $enabled: Boolean!) {
+    toggleStoreBilling(storeId: $storeId, enabled: $enabled) {
+      id
+      billingEnabled
+      billingStatus
+      billing {
+        accumulatedBalance
+      }
+    }
+  }
+`;
+
+export const CREATE_RESTAURANT_OWNER_MUTATION = gql`
+  mutation CreateRestaurantOwner($storeId: String!, $email: String!) {
+    createRestaurantOwner(storeId: $storeId, email: $email) {
+      id
+      email
+      mustChangePassword
+    }
+  }
+`;
+
 // ==================== Store Queries ====================
 
 export const GET_STORE_STATISTICS = gql`
@@ -193,6 +216,16 @@ export const GET_STORE_BY_ID = gql`
       averageRating
       reviewCounter
       additionalInfo
+      billingEnabled
+      billingStatus
+      accumulatedBalance
+      billing {
+        accumulatedBalance
+      }
+      owner {
+        id
+        email
+      }
       createdAt
       updatedAt
     }

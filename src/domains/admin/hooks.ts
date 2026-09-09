@@ -15,6 +15,8 @@ import {
   UPDATE_STORE_MUTATION,
   DELETE_STORE_MUTATION,
   TOGGLE_STORE_ACTIVE_MUTATION,
+  TOGGLE_STORE_BILLING_MUTATION,
+  CREATE_RESTAURANT_OWNER_MUTATION,
   GET_STORE_STATISTICS,
   GET_ALL_STORES,
   GET_STORE_BY_ID,
@@ -59,6 +61,7 @@ import {
   type StoreStatistics,
   type StoresResponse,
   type Store,
+  type RestaurantOwner,
   type StoreFiltersInput,
   type PaginationInput,
   type PaginationInfo,
@@ -200,6 +203,57 @@ export function useToggleStoreActive() {
       void queryClient.invalidateQueries({ queryKey: ["stores"] });
       void queryClient.invalidateQueries({ queryKey: ["store", id] });
       void queryClient.invalidateQueries({ queryKey: ["store-statistics"] });
+    },
+  });
+}
+
+export function useToggleStoreBilling() {
+  const queryClient = useQueryClient();
+
+  return useMutation<Store, Error, { storeId: string; enabled: boolean }>({
+    mutationFn: async ({ storeId, enabled }) => {
+      const data = await graphqlClient.request<{ toggleStoreBilling: Store }>(
+        TOGGLE_STORE_BILLING_MUTATION,
+        { storeId, enabled }
+      );
+      return data.toggleStoreBilling;
+    },
+    onSuccess: (_, { storeId }) => {
+      void queryClient.invalidateQueries({ queryKey: ["stores"] });
+      void queryClient.invalidateQueries({ queryKey: ["store", storeId] });
+    },
+    onError: (error, variables) => {
+      Sentry.captureException(error, {
+        tags: { domain: "store", action: "toggle_store_billing" },
+        extra: { storeId: variables.storeId, enabled: variables.enabled },
+      });
+    },
+  });
+}
+
+export function useCreateRestaurantOwner() {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    RestaurantOwner,
+    Error,
+    { storeId: string; email: string }
+  >({
+    mutationFn: async ({ storeId, email }) => {
+      const data = await graphqlClient.request<{
+        createRestaurantOwner: RestaurantOwner;
+      }>(CREATE_RESTAURANT_OWNER_MUTATION, { storeId, email });
+      return data.createRestaurantOwner;
+    },
+    onSuccess: (_, { storeId }) => {
+      void queryClient.invalidateQueries({ queryKey: ["store", storeId] });
+      void queryClient.invalidateQueries({ queryKey: ["stores"] });
+    },
+    onError: (error, variables) => {
+      Sentry.captureException(error, {
+        tags: { domain: "store", action: "create_restaurant_owner" },
+        extra: { storeId: variables.storeId, email: variables.email },
+      });
     },
   });
 }

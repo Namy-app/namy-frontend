@@ -60,6 +60,10 @@ export function EditStoreForm({
     restrictions: store.restrictions,
     lat: store.lat,
     lng: store.lng,
+    imageUrl: store.imageUrl,
+    image1Url: store.image1Url,
+    image2Url: store.image2Url,
+    image3Url: store.image3Url,
   });
 
   // Convert openDays to availableDays array format if needed
@@ -470,6 +474,62 @@ export function EditStoreForm({
                   className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                   placeholder="https://example.com"
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Image URL
+                </label>
+                <input
+                  type="url"
+                  name="imageUrl"
+                  value={formData.imageUrl || ""}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  placeholder="https://..."
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">
+                    Image 1 URL
+                  </label>
+                  <input
+                    type="url"
+                    name="image1Url"
+                    value={formData.image1Url || ""}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                    placeholder="https://..."
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">
+                    Image 2 URL
+                  </label>
+                  <input
+                    type="url"
+                    name="image2Url"
+                    value={formData.image2Url || ""}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                    placeholder="https://..."
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">
+                    Image 3 URL
+                  </label>
+                  <input
+                    type="url"
+                    name="image3Url"
+                    value={formData.image3Url || ""}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                    placeholder="https://..."
+                  />
+                </div>
               </div>
 
               <div>

@@ -24,6 +24,13 @@ export enum UserRole {
   SUPER_ADMIN = "super_admin",
 }
 
+export enum BillingStatus {
+  ACTIVE = "ACTIVE",
+  PAYMENT_FAILED = "PAYMENT_FAILED",
+  GRACE_PERIOD = "GRACE_PERIOD",
+  HIDDEN = "HIDDEN",
+}
+
 // ==================== Interfaces ====================
 
 export interface Category {
@@ -72,6 +79,15 @@ export interface OpenDaysStructure {
   availableDays: OpenDay[];
 }
 
+export interface StoreBilling {
+  accumulatedBalance?: number;
+}
+
+export interface StoreOwner {
+  id: string;
+  email: string;
+}
+
 export interface Store {
   id: string;
   name: string;
@@ -101,6 +117,11 @@ export interface Store {
   averageRating: number;
   reviewCounter: number;
   additionalInfo?: Record<string, unknown>;
+  billingEnabled?: boolean;
+  billingStatus?: BillingStatus;
+  accumulatedBalance?: number;
+  billing?: StoreBilling;
+  owner?: StoreOwner | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -115,6 +136,12 @@ export interface StoreUpdateResponse {
   store: Store;
   newPin?: string;
   message: string;
+}
+
+export interface RestaurantOwner {
+  id: string;
+  email: string;
+  mustChangePassword: boolean;
 }
 
 export interface StoreStatistics {
@@ -191,6 +218,10 @@ export interface UpdateStoreInput {
   restrictions?: string;
   additionalInfo?: Record<string, unknown>;
   regeneratePin?: boolean;
+  imageUrl?: string;
+  image1Url?: string;
+  image2Url?: string;
+  image3Url?: string;
 }
 
 export interface StoreFiltersInput {
