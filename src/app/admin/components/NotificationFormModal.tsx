@@ -58,7 +58,6 @@ interface SendPromoInput {
   storeId?: string;
   storeIds?: string[];
   userIds?: string[];
-  storeImages?: Record<string, string | undefined>;
 }
 
 interface PickerItem {
@@ -244,9 +243,7 @@ export function NotificationFormModal({
   const [isSending, setIsSending] = useState(false);
   const [sentCount, setSentCount] = useState<number | null>(null);
   const [imageUploading, setImageUploading] = useState(false);
-  const [uploadingStoreId, setUploadingStoreId] = useState<string | null>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
-  const storeImageInputRef = useRef<HTMLInputElement>(null);
 
   const [allStores, setAllStores] = useState<Store[]>([]);
   const [storesLoading, setStoresLoading] = useState(true);
@@ -266,7 +263,6 @@ export function NotificationFormModal({
     startsAt: "",
     expiresAt: "",
   });
-  const [storeImages, setStoreImages] = useState<Record<string, string>>({});
   const [scheduleEnabled, setScheduleEnabled] = useState(false);
 
   useEffect(() => {
@@ -414,57 +410,6 @@ export function NotificationFormModal({
     }
   };
 
-  const handleStoreImageUpload = async (
-    e: React.ChangeEvent<HTMLInputElement>,
-    storeId: string
-  ): Promise<void> => {
-    const file = e.target.files?.[0];
-    if (!file) {
-      return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      toast({
-        title: "Imagen demasiado grande",
-        description: "Máximo 5 MB.",
-        variant: "destructive",
-      });
-      return;
-    }
-    setUploadingStoreId(storeId);
-    try {
-      const baseUrl = (
-        process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/graphql"
-      ).replace("/graphql", "");
-      const { useAuthStore } = await import("@/store/useAuthStore");
-      const accessToken = useAuthStore.getState().accessToken;
-      const formData = new FormData();
-      formData.append("file", file);
-      const res = await fetch(`${baseUrl}/upload/mural-image`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${accessToken}` },
-        body: formData,
-      });
-      if (!res.ok) {
-        throw new Error("Upload failed");
-      }
-      const json = (await res.json()) as { url: string };
-      setStoreImages((prev) => ({ ...prev, [storeId]: json.url }));
-      toast({
-        title: "Imagen subida",
-        description: `Imagen para restaurante agregada.`,
-      });
-    } catch {
-      toast({
-        title: "Error al subir",
-        description: "No se pudo subir la imagen.",
-        variant: "destructive",
-      });
-    } finally {
-      setUploadingStoreId(null);
-      e.target.value = "";
-    }
-  };
-
   const derivedDeepLink = buildDeepLink(selectedStores);
 
   const handleSend = async () => {
@@ -497,21 +442,8 @@ export function NotificationFormModal({
 
     if (selectedStores.length === 1 && selectedStores[0]) {
       input.storeId = selectedStores[0].id;
-      if (storeImages[selectedStores[0].id]) {
-        input.imageUrl = storeImages[selectedStores[0].id];
-      }
     } else if (selectedStores.length > 1) {
       input.storeIds = selectedStores.map((s) => s.id);
-      const hasPerStoreImages = selectedStores.some((s) => storeImages[s.id]);
-      if (hasPerStoreImages) {
-        const perStoreImages: Record<string, string | undefined> = {};
-        selectedStores.forEach((store) => {
-          if (storeImages[store.id]) {
-            perStoreImages[store.id] = storeImages[store.id];
-          }
-        });
-        input.storeImages = perStoreImages;
-      }
     }
 
     if (selectedUsers.length > 0) {
@@ -547,7 +479,6 @@ export function NotificationFormModal({
         });
         setSelectedStores([]);
         setSelectedUsers([]);
-        setStoreImages({});
         setScheduleEnabled(false);
         setSentCount(null);
         onSuccess?.();
@@ -703,80 +634,6 @@ export function NotificationFormModal({
                 </p>
               </div>
             ) : null}
-
-            {selectedStores.length > 0 && (
-              <div className="mt-6 pt-6 border-t border-border">
-                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-                  Imágenes por restaurante (opcional)
-                </h4>
-                <div className="space-y-3">
-                  {selectedStores.map((store) => (
-                    <div
-                      key={store.id}
-                      className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg"
-                    >
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-foreground">
-                          {store.name}
-                        </p>
-                        {storeImages[store.id] ? (
-                          <p className="text-xs text-green-600 mt-1">
-                            ✓ Imagen agregada
-                          </p>
-                        ) : null}
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => storeImageInputRef.current?.click()}
-                        disabled={uploadingStoreId === store.id}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-background hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-xs font-medium text-foreground shrink-0"
-                      >
-                        {uploadingStoreId === store.id ? (
-                          <>
-                            <Loader2 className="w-3 h-3 animate-spin" />
-                            Subiendo…
-                          </>
-                        ) : storeImages[store.id] ? (
-                          <>
-                            <ImagePlus className="w-3 h-3" />
-                            Cambiar
-                          </>
-                        ) : (
-                          <>
-                            <ImagePlus className="w-3 h-3" />
-                            Subir
-                          </>
-                        )}
-                      </button>
-                      <input
-                        ref={storeImageInputRef}
-                        type="file"
-                        accept="image/jpeg,image/png,image/webp"
-                        className="hidden"
-                        onChange={(e) => {
-                          void handleStoreImageUpload(e, store.id);
-                        }}
-                      />
-                      {storeImages[store.id] ? (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setStoreImages((prev) => {
-                              const updated = { ...prev };
-                              delete updated[store.id];
-                              return updated;
-                            });
-                          }}
-                          className="p-1.5 rounded-lg bg-destructive/10 hover:bg-destructive/20 transition-colors text-destructive shrink-0"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                      ) : null}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
           </section>
 
           {/* User Picker */}
