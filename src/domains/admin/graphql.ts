@@ -401,6 +401,9 @@ export const GET_STORE_COUPONS = gql`
         usedAt
         createdAt
         expiresAt
+        user {
+          displayName
+        }
       }
       paginationInfo {
         total

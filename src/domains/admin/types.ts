@@ -388,6 +388,9 @@ export interface Coupon {
   usedAt?: string;
   createdAt: string;
   expiresAt: string;
+  user?: {
+    displayName?: string | null;
+  } | null;
 }
 
 export interface CouponsResponse {

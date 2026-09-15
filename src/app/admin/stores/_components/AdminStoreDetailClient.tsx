@@ -375,7 +375,7 @@ function CouponTable({ coupons }: { coupons: Coupon[] }) {
                 Código
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                ID Usuario
+                Usuario
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 Estado
@@ -400,8 +400,8 @@ function CouponTable({ coupons }: { coupons: Coupon[] }) {
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="text-sm text-muted-foreground font-mono">
-                    {coupon.userId?.slice(0, 8) ?? "—"}...
+                  <span className="text-sm text-muted-foreground">
+                    {coupon.user?.displayName || "—"}
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">

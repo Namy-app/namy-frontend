@@ -331,8 +331,13 @@ function PodiumCard({
           badge={!isFirst ? player.rank : undefined}
         />
       </div>
-      <p className="text-xs font-bold text-gray-700 text-center max-w-20 leading-tight mt-1">
+      <p className="text-xs font-bold text-gray-700 text-center max-w-24 leading-tight mt-1">
         {player.name}
+        {player.isCurrentUser ? (
+          <span className="ml-1 text-[10px] font-semibold text-orange-400">
+            (Tú)
+          </span>
+        ) : null}
       </p>
       <p className="text-sm font-black text-gray-900">{player.pts}pts</p>
     </button>
@@ -368,6 +373,11 @@ function LeaderRow({
       />
       <span className="flex-1 text-sm font-bold text-gray-800 text-left">
         {player.name}
+        {player.isCurrentUser ? (
+          <span className="ml-1.5 text-xs font-semibold text-orange-400">
+            (Tú)
+          </span>
+        ) : null}
       </span>
       <span className="text-sm font-black text-gray-800">{player.pts}pts</span>
     </button>
