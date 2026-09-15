@@ -12,11 +12,13 @@ import {
   Tag,
   X,
 } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 
 import { PRICE_SYMBOLS } from "@/data/constants";
 import {
   useCreateRestaurantOwner,
+  useOwnerStores,
   useResendStorePinEmail,
   useToggleStoreBilling,
   useUpdateStore,
@@ -86,6 +88,10 @@ export const StoreInfo = ({
   const toggleStoreBilling = useToggleStoreBilling();
   const createRestaurantOwner = useCreateRestaurantOwner();
   const updateStore = useUpdateStore();
+  const { data: ownerStores } = useOwnerStores(store.owner?.id);
+  const linkedStores = (ownerStores ?? []).filter(
+    (linkedStore) => linkedStore.id !== store.id
+  );
 
   const [ownerEmail, setOwnerEmail] = useState("");
   const [portalError, setPortalError] = useState<string | null>(null);
@@ -429,8 +435,21 @@ export const StoreInfo = ({
               </div>
             ) : null}
             <p className="text-foreground">
-              Balance acumulado: ${accumulatedBalance} MXN
+              Balance de esta ubicación: ${accumulatedBalance} MXN
             </p>
+            {store.ownerBilling ? (
+              <>
+                <p className="text-foreground">
+                  Balance combinado del propietario: $
+                  {store.ownerBilling.accumulatedBalance} MXN
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {store.ownerBilling.billingEnabledStoreCount} de{" "}
+                  {store.ownerBilling.totalStoreCount} ubicaciones con billing
+                  activado
+                </p>
+              </>
+            ) : null}
           </div>
         </div>
 
@@ -441,11 +460,33 @@ export const StoreInfo = ({
             Portal Access
           </h2>
           {store.owner?.email ? (
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0" />
-              <p className="text-foreground">
-                Propietario: {store.owner.email}
-              </p>
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0" />
+                <p className="text-foreground">
+                  Propietario: {store.owner.email}
+                </p>
+              </div>
+              {linkedStores.length > 0 ? (
+                <div>
+                  <p className="text-sm font-medium text-foreground mb-2">
+                    Este propietario también tiene acceso a:
+                  </p>
+                  <ul className="space-y-1">
+                    {linkedStores.map((linkedStore) => (
+                      <li key={linkedStore.id}>
+                        <Link
+                          href={`/admin/stores/${linkedStore.id}`}
+                          className="text-sm text-primary hover:underline"
+                        >
+                          {linkedStore.name}
+                          {linkedStore.city ? ` · ${linkedStore.city}` : ""}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
             </div>
           ) : (
             <form

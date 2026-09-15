@@ -70,7 +70,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }): React.JSX.Element {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <GoogleAdsense />
         <script
@@ -79,7 +79,10 @@ export default function RootLayout({
           crossOrigin="anonymous"
         />
       </head>
-      <body className={`${poppins.variable} font-sans`}>
+      <body
+        className={`${poppins.variable} font-sans`}
+        suppressHydrationWarning
+      >
         <CapacitorSafeArea />
         <AndroidBackHandler />
         <KeyboardScrollFix />

@@ -21,6 +21,8 @@ import {
   GET_ALL_STORES,
   GET_STORE_BY_ID,
   GET_STORE_PIN,
+  GET_OWNER_STORES,
+  GET_OWNER_BILLING_REPORT,
   RESEND_STORE_PIN_EMAIL,
   CREATE_DISCOUNT,
   UPDATE_DISCOUNT,
@@ -62,6 +64,7 @@ import {
   type StoresResponse,
   type Store,
   type RestaurantOwner,
+  type OwnerBillingReportRow,
   type StoreFiltersInput,
   type PaginationInput,
   type PaginationInfo,
@@ -247,6 +250,7 @@ export function useCreateRestaurantOwner() {
     },
     onSuccess: (_, { storeId }) => {
       void queryClient.invalidateQueries({ queryKey: ["store", storeId] });
+      void queryClient.invalidateQueries({ queryKey: ["owner-stores"] });
       void queryClient.invalidateQueries({ queryKey: ["stores"] });
     },
     onError: (error, variables) => {
@@ -315,6 +319,33 @@ export function useStorePin(id: string, enabled = false) {
       return data.storePin;
     },
     enabled: enabled && !!id,
+  });
+}
+
+export function useOwnerStores(ownerId: string | null | undefined) {
+  return useQuery<Store[]>({
+    queryKey: ["owner-stores", ownerId],
+    queryFn: async () => {
+      const data = await graphqlClient.request<{ ownerStores: Store[] }>(
+        GET_OWNER_STORES,
+        { ownerId }
+      );
+      return data.ownerStores;
+    },
+    enabled: Boolean(ownerId),
+  });
+}
+
+export function useOwnerBillingReport(month: string | null | undefined) {
+  return useQuery<OwnerBillingReportRow[]>({
+    queryKey: ["owner-billing-report", month],
+    queryFn: async () => {
+      const data = await graphqlClient.request<{
+        ownerBillingReport: OwnerBillingReportRow[];
+      }>(GET_OWNER_BILLING_REPORT, { month });
+      return data.ownerBillingReport;
+    },
+    enabled: Boolean(month),
   });
 }
 
@@ -990,10 +1021,6 @@ export function useAdminUserReferrals(
     placeholderData: keepPreviousData,
     staleTime: 0,
     queryFn: async () => {
-      console.log(
-        "[adminUserReferrals] querying with createdAtRange:",
-        filters?.referrals ?? null
-      );
       try {
         const data = await graphqlClient.request<{
           adminUserReferrals: AdminUserReferralsResponse;

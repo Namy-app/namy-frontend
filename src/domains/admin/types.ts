@@ -88,6 +88,12 @@ export interface StoreOwner {
   email: string;
 }
 
+export interface OwnerBillingAdminInfo {
+  accumulatedBalance: number;
+  billingEnabledStoreCount: number;
+  totalStoreCount: number;
+}
+
 export interface Store {
   id: string;
   name: string;
@@ -122,6 +128,7 @@ export interface Store {
   accumulatedBalance?: number;
   billing?: StoreBilling;
   owner?: StoreOwner | null;
+  ownerBilling?: OwnerBillingAdminInfo | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -142,6 +149,23 @@ export interface RestaurantOwner {
   id: string;
   email: string;
   mustChangePassword: boolean;
+}
+
+export interface OwnerInvoiceStoreBreakdown {
+  storeId: string;
+  storeName: string;
+  redemptions: number;
+  balance: number;
+}
+
+export interface OwnerBillingReportRow {
+  ownerId: string;
+  ownerEmail: string;
+  totalRedemptions: number;
+  amountCharged?: number | null;
+  accumulatedBalance?: number | null;
+  invoiceStatus?: string | null;
+  storeBreakdown: OwnerInvoiceStoreBreakdown[];
 }
 
 export interface StoreStatistics {

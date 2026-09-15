@@ -23,12 +23,37 @@ import {
   useStores,
   useDeleteStore,
   useToggleStoreActive,
+  useToggleStoreBilling,
   useCategories,
   useStoreCouponCounts,
 } from "@/domains/admin/hooks";
-import { type Store } from "@/domains/admin/types";
+import {
+  BillingStatus,
+  type Category,
+  type Store,
+} from "@/domains/admin/types";
 import { useToast } from "@/hooks/use-toast";
 import { navigateTo } from "@/lib/capacitor-navigate";
+
+const EMPTY_CATEGORIES: Category[] = [];
+
+function billingListDisplay(store: Store): { dotClass: string; label: string } {
+  if (!store.billingEnabled) {
+    return { dotClass: "bg-muted-foreground", label: "Sin billing" };
+  }
+  switch (store.billingStatus) {
+    case BillingStatus.ACTIVE:
+      return { dotClass: "bg-green-500", label: "Activo" };
+    case BillingStatus.PAYMENT_FAILED:
+      return { dotClass: "bg-red-500", label: "Pago fallido" };
+    case BillingStatus.HIDDEN:
+      return { dotClass: "bg-muted-foreground", label: "Oculto" };
+    case BillingStatus.GRACE_PERIOD:
+      return { dotClass: "bg-yellow-500", label: "Periodo de gracia" };
+    default:
+      return { dotClass: "bg-muted-foreground", label: "Sin billing" };
+  }
+}
 
 export default function AdminStoresPage() {
   const router = useRouter();
@@ -55,10 +80,11 @@ export default function AdminStoresPage() {
     useCategories(undefined, { page: 1, first: 100 });
   const deleteStore = useDeleteStore();
   const toggleStoreActive = useToggleStoreActive();
+  const toggleStoreBilling = useToggleStoreBilling();
 
   const stores = storesData?.data ?? [];
   const paginationInfo = storesData?.paginationInfo;
-  const allCategories = categoriesData?.data ?? [];
+  const allCategories = categoriesData?.data ?? EMPTY_CATEGORIES;
 
   const storeIds = stores.map((s) => s.id);
   const { totalByStore, redeemedByStore } = useStoreCouponCounts(storeIds);
@@ -135,6 +161,34 @@ export default function AdminStoresPage() {
           error instanceof Error
             ? error.message
             : "Failed to toggle store status",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleToggleStoreBilling = async (
+    store: Store,
+    e: React.MouseEvent
+  ) => {
+    e.stopPropagation();
+    try {
+      await toggleStoreBilling.mutateAsync({
+        storeId: store.id,
+        enabled: !store.billingEnabled,
+      });
+      toast({
+        title: "Billing actualizado",
+        description: `${store.name}: billing ${
+          store.billingEnabled ? "desactivado" : "activado"
+        }.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description:
+          error instanceof Error
+            ? error.message
+            : "No se pudo actualizar billing",
         variant: "destructive",
       });
     }
@@ -282,6 +336,9 @@ export default function AdminStoresPage() {
                           Status
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                          Billing
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                           Rating
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
@@ -359,6 +416,50 @@ export default function AdminStoresPage() {
                             >
                               {store.active ? "Active" : "Inactive"}
                             </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {(() => {
+                              const billing = billingListDisplay(store);
+                              return (
+                                <div className="flex items-center gap-3">
+                                  <div className="flex items-center gap-2 min-w-[118px]">
+                                    <span
+                                      className={`w-2.5 h-2.5 rounded-full ${billing.dotClass}`}
+                                    />
+                                    <span className="text-sm text-foreground">
+                                      {billing.label}
+                                    </span>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    role="switch"
+                                    aria-checked={Boolean(store.billingEnabled)}
+                                    disabled={toggleStoreBilling.isPending}
+                                    onClick={(e) =>
+                                      void handleToggleStoreBilling(store, e)
+                                    }
+                                    className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                                      store.billingEnabled
+                                        ? "bg-primary"
+                                        : "bg-muted"
+                                    }`}
+                                    title={
+                                      store.billingEnabled
+                                        ? "Desactivar billing"
+                                        : "Activar billing"
+                                    }
+                                  >
+                                    <span
+                                      className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${
+                                        store.billingEnabled
+                                          ? "translate-x-4"
+                                          : "translate-x-1"
+                                      }`}
+                                    />
+                                  </button>
+                                </div>
+                              );
+                            })()}
                           </td>
                           <td
                             className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground cursor-pointer"

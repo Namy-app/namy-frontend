@@ -171,6 +171,8 @@ export const GET_ALL_STORES = gql`
         averageRating
         reviewCounter
         additionalInfo
+        billingEnabled
+        billingStatus
         createdAt
         updatedAt
       }
@@ -226,6 +228,11 @@ export const GET_STORE_BY_ID = gql`
         id
         email
       }
+      ownerBilling {
+        accumulatedBalance
+        billingEnabledStoreCount
+        totalStoreCount
+      }
       createdAt
       updatedAt
     }
@@ -235,6 +242,36 @@ export const GET_STORE_BY_ID = gql`
 export const GET_STORE_PIN = gql`
   query GetStorePin($id: String!) {
     storePin(id: $id)
+  }
+`;
+
+export const GET_OWNER_STORES = gql`
+  query OwnerStores($ownerId: String!) {
+    ownerStores(ownerId: $ownerId) {
+      id
+      name
+      city
+      billingEnabled
+    }
+  }
+`;
+
+export const GET_OWNER_BILLING_REPORT = gql`
+  query OwnerBillingReport($month: String!) {
+    ownerBillingReport(month: $month) {
+      ownerId
+      ownerEmail
+      totalRedemptions
+      amountCharged
+      accumulatedBalance
+      invoiceStatus
+      storeBreakdown {
+        storeId
+        storeName
+        redemptions
+        balance
+      }
+    }
   }
 `;
 
