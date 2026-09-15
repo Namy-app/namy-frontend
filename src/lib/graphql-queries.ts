@@ -579,6 +579,7 @@ export const GENERATE_COUPON_MUTATION = `
       code
       qrCode
       url
+      value
       discount {
         id
         title
@@ -611,6 +612,7 @@ export const QUICK_PAY_FOR_DISCOUNT_MUTATION = `
       code
       qrCode
       url
+      value
       discount {
         id
         title

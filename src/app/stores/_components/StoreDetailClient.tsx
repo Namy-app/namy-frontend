@@ -663,6 +663,7 @@ export default function StoreDetailClient(): React.JSX.Element {
           code: string;
           qrCode: string;
           url: string;
+          value: number;
           discount: {
             id: string;
             title: string;
@@ -744,6 +745,7 @@ export default function StoreDetailClient(): React.JSX.Element {
           code: string;
           qrCode: string;
           url: string;
+          value: number;
           discount: {
             id: string;
             title: string;

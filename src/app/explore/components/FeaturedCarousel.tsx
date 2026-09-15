@@ -129,7 +129,7 @@ export function FeaturedCarousel({
       <div className="mb-8 px-6">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-xl font-bold text-foreground">
-            Destacados <Emoji cp="1f525" label="fuego" />
+            Lugares Destacados <Emoji cp="1f525" label="fuego" />
           </h2>
         </div>
         <div className="h-64 animate-pulse rounded-3xl bg-gray-300" />
@@ -142,7 +142,7 @@ export function FeaturedCarousel({
       <div className="px-6">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-xl font-bold text-foreground">
-            Destacados <Emoji cp="1f525" label="fuego" />
+            Lugares Destacados <Emoji cp="1f525" label="fuego" />
           </h2>
           <Link
             href="/restaurants"

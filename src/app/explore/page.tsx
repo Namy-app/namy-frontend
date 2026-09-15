@@ -40,16 +40,16 @@ export default function ExplorePage(): React.JSX.Element {
       >
         <UserLevelBanner />
         <CategoryCards />
-        <FeaturedCarousel
-          stores={closestStores?.data ?? storesResult?.data}
-          discountPercentage={discountPercentage}
-          isLoading={isLoadingClosestStores ? isLoadingStores : undefined}
-        />
         <FeaturedCouponsCarousel
           discounts={promotedDiscounts}
           isLoading={isLoadingPromoted}
           userLevelPct={myLevel?.discountPercentage ?? 10}
           isPremium={Boolean(user?.isPremium)}
+        />
+        <FeaturedCarousel
+          stores={closestStores?.data ?? storesResult?.data}
+          discountPercentage={discountPercentage}
+          isLoading={isLoadingClosestStores ? isLoadingStores : undefined}
         />
         <ActiveChallenges />
         <PageFooter />

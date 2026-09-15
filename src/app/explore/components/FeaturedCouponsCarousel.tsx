@@ -163,7 +163,7 @@ export function FeaturedCouponsCarousel({
       <div className="mb-8 px-6">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-xl font-bold text-foreground">
-            Cupones Destacados{" "}
+            Ofertas destacadas{" "}
             <Emoji cp="1f3ab" label="ticket" className="inline-block w-5 h-5" />
           </h2>
         </div>
@@ -181,7 +181,7 @@ export function FeaturedCouponsCarousel({
       <div className="px-6">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-xl font-bold text-foreground">
-            Cupones Destacados{" "}
+            Ofertas destacadas{" "}
             <Emoji cp="1f3ab" label="ticket" className="inline-block w-5 h-5" />
           </h2>
         </div>

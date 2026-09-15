@@ -116,26 +116,36 @@ export function resolveDiscountDisplayText(
 }
 
 export interface CouponDisplayFields {
+  /** Resolved coupon amount (user-level % for PERCENTAGE). */
   value?: number | null;
   discount?: DiscountDisplayFields | null;
 }
 
 /**
- * Coupon card / QR label — never show user tier % (coupon.value) when the store
- * promo is copy-only (discount.value === 0) or has customText.
+ * Coupon card / QR label.
+ * PERCENTAGE uses coupon.value (resolved user %). FIXED uses discount.value.
+ * Copy-only promos (value 0 + customText) still show customText.
  */
 export function resolveCouponDisplayLabel(coupon: CouponDisplayFields): string {
   const discount = coupon.discount;
   const custom = discount?.customText?.trim();
   const discountValue = discount?.value;
   const type = discount?.type;
+  const normalized = normalizeDiscountType(type);
 
-  if (custom && (discountValue == null || discountValue === 0)) {
+  const displayValue =
+    normalized === DiscountType.PERCENTAGE &&
+    coupon.value != null &&
+    coupon.value > 0
+      ? coupon.value
+      : discountValue;
+
+  if (custom && (displayValue == null || displayValue === 0)) {
     return custom;
   }
 
-  if (discountValue != null && discountValue > 0 && type) {
-    return formatDiscountPromo(type, discountValue);
+  if (displayValue != null && displayValue > 0 && type) {
+    return formatDiscountPromo(type, displayValue);
   }
 
   if (custom) {

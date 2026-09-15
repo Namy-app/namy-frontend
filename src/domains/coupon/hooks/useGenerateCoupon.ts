@@ -12,6 +12,7 @@ export interface GeneratedCoupon {
   code: string;
   qrCode: string;
   url: string;
+  value: number;
   discount: {
     id: string;
     title: string;
