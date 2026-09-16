@@ -4,6 +4,7 @@ import type {
   LeaderboardEntry,
   PointTransaction,
   UserChallenge,
+  UserPrize,
 } from "@/lib/api-types";
 import { graphqlRequest } from "@/lib/graphql-client";
 import {
@@ -11,6 +12,7 @@ import {
   GET_CURRENT_USER_QUERY,
   MY_CHALLENGES_QUERY,
   MY_POINTS_HISTORY_QUERY,
+  MY_PRIZES_QUERY,
 } from "@/lib/graphql-queries";
 import { useAuthStore } from "@/store/useAuthStore";
 
@@ -84,5 +86,20 @@ export function useLoginStreak() {
     },
     enabled: isAuthenticated,
     staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useMyPrizes() {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  return useQuery<UserPrize[]>({
+    queryKey: ["myPrizes"],
+    queryFn: async () => {
+      const data = await graphqlRequest<{ myPrizes: UserPrize[] }>(
+        MY_PRIZES_QUERY
+      );
+      return data.myPrizes;
+    },
+    enabled: isAuthenticated,
+    staleTime: 60 * 1000,
   });
 }

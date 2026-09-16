@@ -1315,8 +1315,38 @@ export const CITY_LEADERBOARD_QUERY = `
       displayName
       avatarUrl
       city
+      phone
       balance
       isCurrentUser
+    }
+  }
+`;
+
+export const MY_PRIZES_QUERY = `
+  query MyPrizes {
+    myPrizes {
+      id
+      type
+      description
+      storeIds
+      couponCode
+      status
+      claimedAt
+      expiresAt
+      createdAt
+      stores {
+        id
+        name
+        city
+        imageUrl
+      }
+      coupon {
+        id
+        code
+        qrCode
+        used
+        expiresAt
+      }
     }
   }
 `;

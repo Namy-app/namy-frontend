@@ -54,6 +54,8 @@ import {
   CREATE_CATEGORY_MUTATION,
   UPDATE_CATEGORY_MUTATION,
   DELETE_CATEGORY_MUTATION,
+  GET_PRIZES,
+  CREATE_PRIZE,
 } from "./graphql";
 import {
   type CreateStoreInput,
@@ -105,6 +107,8 @@ import {
   type CreateCategoryInput,
   type UpdateCategoryInput,
   type StoreType,
+  type Prize,
+  type PrizeType,
 } from "./types";
 
 // ==================== Store Mutations ====================
@@ -1426,6 +1430,55 @@ export function useAdminDeleteReview() {
       Sentry.captureException(error, {
         tags: { domain: "review", action: "delete_review" },
         extra: { reviewId: variables.id },
+      });
+    },
+  });
+}
+
+// ==================== Prizes ====================
+
+export function usePrizes(month?: string) {
+  return useQuery<Prize[]>({
+    queryKey: ["prizes", month],
+    queryFn: async () => {
+      const data = await graphqlClient.request<{ prizes: Prize[] }>(
+        GET_PRIZES,
+        { month: month || undefined }
+      );
+      return data.prizes;
+    },
+    staleTime: 30 * 1000,
+  });
+}
+
+export function useCreatePrize() {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    Prize,
+    Error,
+    {
+      winnerId: string;
+      type: PrizeType;
+      description: string;
+      storeIds?: string[];
+      countForBilling?: boolean;
+    }
+  >({
+    mutationFn: async (variables) => {
+      const data = await graphqlClient.request<{ createPrize: Prize }>(
+        CREATE_PRIZE,
+        variables
+      );
+      return data.createPrize;
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["prizes"] });
+    },
+    onError: (error, variables) => {
+      Sentry.captureException(error, {
+        tags: { domain: "prize", action: "create_prize" },
+        extra: { winnerId: variables.winnerId, type: variables.type },
       });
     },
   });

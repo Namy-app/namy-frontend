@@ -808,3 +808,48 @@ export interface AdminReviewsResponse {
     hasPreviousPage: boolean;
   };
 }
+
+// ==================== Prizes ====================
+
+export type PrizeType = "CUSTOM_COUPON" | "PREMIUM";
+export type PrizeStatus = "PENDING" | "CLAIMED" | "EXPIRED";
+
+export interface PrizeWinner {
+  id: string;
+  displayName?: string | null;
+  avatarUrl?: string | null;
+  phone?: string | null;
+}
+
+export interface PrizeStore {
+  id: string;
+  name: string;
+  city?: string | null;
+  imageUrl?: string | null;
+}
+
+export interface PrizeCoupon {
+  id: string;
+  code: string;
+  qrCode?: string;
+  used: boolean;
+  expiresAt: string;
+}
+
+export interface Prize {
+  id: string;
+  winnerId: string;
+  type: PrizeType;
+  description: string;
+  storeIds: string[];
+  couponCode?: string | null;
+  couponId?: string | null;
+  status: PrizeStatus;
+  countForBilling: boolean;
+  claimedAt?: string | null;
+  expiresAt: string;
+  createdAt: string;
+  winner?: PrizeWinner | null;
+  stores?: PrizeStore[] | null;
+  coupon?: PrizeCoupon | null;
+}

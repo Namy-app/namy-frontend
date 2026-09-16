@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   FolderTree,
   Trophy,
+  Gift,
   Images,
   Star,
   Menu,
@@ -153,6 +154,12 @@ export default function AdminLayout({
       icon: Trophy,
       href: "/admin/challenges",
       active: pathname?.startsWith("/admin/challenges"),
+    },
+    {
+      label: "Premios",
+      icon: Gift,
+      href: "/admin/prizes",
+      active: pathname?.startsWith("/admin/prizes"),
     },
     {
       label: "Mural",

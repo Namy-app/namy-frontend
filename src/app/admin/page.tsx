@@ -10,6 +10,7 @@ import {
   Activity,
   Video,
   Trophy,
+  Gift,
   FileSpreadsheet,
   Loader2,
   Bell,
@@ -176,6 +177,18 @@ export default function AdminDashboardPage() {
     stats: [
       { label: "Total", value: "-" },
       { label: "Active", value: "-" },
+    ],
+  });
+
+  adminSections.push({
+    title: "Premios",
+    description: "Premios del leaderboard mensual",
+    icon: Gift,
+    color: "from-amber-400 to-orange-600",
+    href: "/admin/prizes",
+    stats: [
+      { label: "Top 3", value: "Winners" },
+      { label: "Cupones", value: "Premium" },
     ],
   });
 

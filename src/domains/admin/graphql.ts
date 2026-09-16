@@ -1190,3 +1190,67 @@ export const ADMIN_DELETE_REVIEW_MUTATION = gql`
     adminDeleteReview(id: $id)
   }
 `;
+
+// ==================== Prizes ====================
+
+export const GET_PRIZES = gql`
+  query GetPrizes($month: String) {
+    prizes(month: $month) {
+      id
+      winnerId
+      type
+      description
+      storeIds
+      couponCode
+      couponId
+      status
+      countForBilling
+      claimedAt
+      expiresAt
+      createdAt
+      winner {
+        id
+        displayName
+        avatarUrl
+        phone
+      }
+      stores {
+        id
+        name
+        city
+      }
+      coupon {
+        id
+        code
+        used
+        expiresAt
+      }
+    }
+  }
+`;
+
+export const CREATE_PRIZE = gql`
+  mutation CreatePrize(
+    $winnerId: String!
+    $type: PrizeType!
+    $description: String!
+    $storeIds: [String!]
+    $countForBilling: Boolean
+  ) {
+    createPrize(
+      winnerId: $winnerId
+      type: $type
+      description: $description
+      storeIds: $storeIds
+      countForBilling: $countForBilling
+    ) {
+      id
+      winnerId
+      type
+      description
+      status
+      couponCode
+      createdAt
+    }
+  }
+`;

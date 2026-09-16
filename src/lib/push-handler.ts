@@ -32,6 +32,21 @@ function stripNovuPrefix(s: string): string {
 function buildDeepLink(
   data: Record<string, unknown> | undefined
 ): string | undefined {
+  if (!data) {
+    return undefined;
+  }
+
+  const type = typeof data.type === "string" ? data.type : undefined;
+  if (type === "prize_won" || type === "prize_expiry") {
+    const explicit = data.deepLink;
+    if (typeof explicit === "string" && explicit.startsWith("/")) {
+      return explicit;
+    }
+    return type === "prize_won" && data.prizeType === "PREMIUM"
+      ? "/profile"
+      : "/my-coupons";
+  }
+
   return buildPromoDeepLink(data);
 }
 

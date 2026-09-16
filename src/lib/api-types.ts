@@ -211,6 +211,35 @@ export interface LeaderboardEntry {
   displayName: string;
   avatarUrl?: string;
   city?: string;
+  phone?: string;
   balance: number;
   isCurrentUser: boolean;
+}
+
+export type PrizeType = "CUSTOM_COUPON" | "PREMIUM";
+export type PrizeStatus = "PENDING" | "CLAIMED" | "EXPIRED";
+
+export interface UserPrize {
+  id: string;
+  type: PrizeType;
+  description: string;
+  storeIds: string[];
+  couponCode?: string | null;
+  status: PrizeStatus;
+  claimedAt?: string | null;
+  expiresAt: string;
+  createdAt: string;
+  stores?: Array<{
+    id: string;
+    name: string;
+    city?: string | null;
+    imageUrl?: string | null;
+  }> | null;
+  coupon?: {
+    id: string;
+    code: string;
+    qrCode: string;
+    used: boolean;
+    expiresAt: string;
+  } | null;
 }

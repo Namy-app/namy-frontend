@@ -16,14 +16,91 @@ import {
 import type { Coupon } from "@/domains/coupon/type";
 import CouponCard from "@/domains/coupons/CouponCard";
 import { RestrictionModal } from "@/domains/coupons/RestrictionModal";
+import { useMyPrizes } from "@/domains/gamification/hooks";
 import { BasicLayout } from "@/layouts/BasicLayout";
 import { analytics } from "@/lib/analytics";
+import type { UserPrize } from "@/lib/api-types";
 import { CouponDecoder, type DecodedCouponData } from "@/lib/coupon-decoder";
 import { resolveCouponDisplayLabel } from "@/lib/discount-type";
 import { graphqlRequest, setAuthToken } from "@/lib/graphql-client";
 import { COUPONS_QUERY } from "@/lib/graphql-queries";
 import StatusCard from "@/shared/components/StatusCard/StatusCard";
 import { useAuthStore } from "@/store/useAuthStore";
+
+const PRIZE_STATUS_LABEL: Record<string, string> = {
+  PENDING: "Pendiente",
+  CLAIMED: "Canjeado",
+  EXPIRED: "Expirado",
+};
+
+function PrizeCard({
+  prize,
+  onViewQr,
+}: {
+  prize: UserPrize;
+  onViewQr?: (prize: UserPrize) => void;
+}) {
+  const storeNames =
+    prize.stores
+      ?.map((s) => s.name)
+      .filter(Boolean)
+      .join(", ") || "—";
+  const expiryLabel = new Date(prize.expiresAt).toLocaleDateString("es-MX", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+
+  return (
+    <div className="rounded-2xl bg-gradient-to-br from-amber-400 via-yellow-400 to-amber-500 p-[2px] shadow-md">
+      <div className="rounded-[14px] bg-white p-4">
+        <div className="flex items-center gap-2 mb-2">
+          <span className="text-xl">🏆</span>
+          <span className="text-xs font-black uppercase tracking-wide text-amber-600 bg-amber-100 px-2 py-0.5 rounded-full">
+            Premio
+          </span>
+          <span className="ml-auto text-xs font-semibold text-muted-foreground">
+            {PRIZE_STATUS_LABEL[prize.status] ?? prize.status}
+          </span>
+        </div>
+
+        <p className="text-base font-bold text-foreground mb-3">
+          {prize.description}
+        </p>
+
+        {prize.type === "PREMIUM" ? (
+          <p className="text-sm text-muted-foreground">
+            Premio: 1 mes Premium activado
+          </p>
+        ) : (
+          <>
+            {prize.couponCode || prize.coupon?.code ? (
+              <p className="font-mono text-sm font-bold text-foreground mb-2">
+                {prize.couponCode || prize.coupon?.code}
+              </p>
+            ) : null}
+            <p className="text-xs text-muted-foreground mb-1">
+              <span className="font-semibold text-foreground">Válido en:</span>{" "}
+              {storeNames}
+            </p>
+            <p className="text-xs text-muted-foreground mb-3">
+              Válido hasta {expiryLabel}
+            </p>
+            {prize.coupon?.qrCode && prize.status === "PENDING" && onViewQr ? (
+              <button
+                type="button"
+                onClick={() => onViewQr(prize)}
+                className="w-full py-2.5 rounded-xl bg-amber-500 text-white text-sm font-bold hover:bg-amber-600"
+              >
+                Ver QR
+              </button>
+            ) : null}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
 
 // ── QR modal sub-components ───────────────────────────────────────────────────
 
@@ -161,8 +238,16 @@ export default function MyCouponsPage(): React.JSX.Element {
     return "active";
   };
 
-  // Filter coupons based on active tab
+  const { data: myPrizes = [] } = useMyPrizes();
+
+  // Filter coupons based on active tab (hide prize-backed coupons — shown above)
+  const prizeCouponIds = new Set(
+    myPrizes.map((p) => p.coupon?.id).filter((id): id is string => !!id)
+  );
   const filteredCoupons = coupons.filter((coupon) => {
+    if (prizeCouponIds.has(coupon.id)) {
+      return false;
+    }
     if (activeFilter === "all") {
       return true;
     }
@@ -199,6 +284,31 @@ export default function MyCouponsPage(): React.JSX.Element {
     refetchOnWindowFocus: false,
   });
 
+  const handlePrizeQr = (prize: UserPrize): void => {
+    if (!prize.coupon) {return;}
+    setSelectedCoupon({
+      id: prize.coupon.id,
+      code: prize.coupon.code,
+      qrCode: prize.coupon.qrCode,
+      url: "",
+      used: prize.coupon.used,
+      expiresAt: prize.coupon.expiresAt,
+      createdAt: prize.createdAt,
+      storeId: prize.storeIds[0],
+      store: prize.stores?.[0]
+        ? {
+            id: prize.stores[0].id,
+            name: prize.stores[0].name,
+          }
+        : null,
+      discount: {
+        title: prize.description,
+        type: "fixed",
+        value: 0,
+        customText: prize.description,
+      },
+    } as Coupon);
+  };
   useEffect(() => {
     if (queryError) {
       setError(
@@ -363,7 +473,7 @@ export default function MyCouponsPage(): React.JSX.Element {
           />
         ) : null}
 
-        {coupons.length === 0 ? (
+        {coupons.length === 0 && myPrizes.length === 0 ? (
           <div className="pt-14 flex items-center justify-center p-8 min-h-[60vh]">
             <div className="text-center">
               <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center mx-auto mb-6">
@@ -400,52 +510,70 @@ export default function MyCouponsPage(): React.JSX.Element {
               </div>
             </div>
 
-            {/* Filter Tabs */}
-            <div className="px-4 pb-4 max-w-2xl mx-auto">
-              <div className="flex gap-2 overflow-x-auto">
-                <button
-                  onClick={() => setActiveFilter("all")}
-                  className={`px-4 py-2 rounded-xl font-semibold text-sm transition-all whitespace-nowrap ${
-                    activeFilter === "all"
-                      ? "bg-primary text-primary-foreground shadow-glow"
-                      : "bg-white text-muted-foreground hover:bg-muted"
-                  }`}
-                >
-                  Todos ({statusCounts.all})
-                </button>
-                <button
-                  onClick={() => setActiveFilter("active")}
-                  className={`px-4 py-2 rounded-xl font-semibold text-sm transition-all whitespace-nowrap ${
-                    activeFilter === "active"
-                      ? "bg-green-500 text-white shadow-glow"
-                      : "bg-white text-muted-foreground hover:bg-muted"
-                  }`}
-                >
-                  Activos ({statusCounts.active})
-                </button>
-                <button
-                  onClick={() => setActiveFilter("redeemed")}
-                  className={`px-4 py-2 rounded-xl font-semibold text-sm transition-all whitespace-nowrap ${
-                    activeFilter === "redeemed"
-                      ? "bg-blue-500 text-white shadow-glow"
-                      : "bg-white text-muted-foreground hover:bg-muted"
-                  }`}
-                >
-                  Canjeados ({statusCounts.redeemed})
-                </button>
-                <button
-                  onClick={() => setActiveFilter("expired")}
-                  className={`px-4 py-2 rounded-xl font-semibold text-sm transition-all whitespace-nowrap ${
-                    activeFilter === "expired"
-                      ? "bg-gray-500 text-white shadow-glow"
-                      : "bg-white text-muted-foreground hover:bg-muted"
-                  }`}
-                >
-                  Expirados ({statusCounts.expired})
-                </button>
+            {myPrizes.length > 0 ? (
+              <div className="px-4 pb-6 max-w-5xl mx-auto">
+                <h2 className="text-lg font-bold text-foreground mb-3">
+                  Mis Premios
+                </h2>
+                <div className="grid md:grid-cols-2 grid-cols-1 gap-4">
+                  {myPrizes.map((prize) => (
+                    <PrizeCard
+                      key={prize.id}
+                      prize={prize}
+                      onViewQr={handlePrizeQr}
+                    />
+                  ))}
+                </div>
               </div>
-            </div>
+            ) : null}
 
+            {/* Filter Tabs */}
+            {coupons.length > 0 ? (
+              <div className="px-4 pb-4 max-w-2xl mx-auto">
+                <div className="flex gap-2 overflow-x-auto">
+                  <button
+                    onClick={() => setActiveFilter("all")}
+                    className={`px-4 py-2 rounded-xl font-semibold text-sm transition-all whitespace-nowrap ${
+                      activeFilter === "all"
+                        ? "bg-primary text-primary-foreground shadow-glow"
+                        : "bg-white text-muted-foreground hover:bg-muted"
+                    }`}
+                  >
+                    Todos ({statusCounts.all})
+                  </button>
+                  <button
+                    onClick={() => setActiveFilter("active")}
+                    className={`px-4 py-2 rounded-xl font-semibold text-sm transition-all whitespace-nowrap ${
+                      activeFilter === "active"
+                        ? "bg-green-500 text-white shadow-glow"
+                        : "bg-white text-muted-foreground hover:bg-muted"
+                    }`}
+                  >
+                    Activos ({statusCounts.active})
+                  </button>
+                  <button
+                    onClick={() => setActiveFilter("redeemed")}
+                    className={`px-4 py-2 rounded-xl font-semibold text-sm transition-all whitespace-nowrap ${
+                      activeFilter === "redeemed"
+                        ? "bg-blue-500 text-white shadow-glow"
+                        : "bg-white text-muted-foreground hover:bg-muted"
+                    }`}
+                  >
+                    Canjeados ({statusCounts.redeemed})
+                  </button>
+                  <button
+                    onClick={() => setActiveFilter("expired")}
+                    className={`px-4 py-2 rounded-xl font-semibold text-sm transition-all whitespace-nowrap ${
+                      activeFilter === "expired"
+                        ? "bg-gray-500 text-white shadow-glow"
+                        : "bg-white text-muted-foreground hover:bg-muted"
+                    }`}
+                  >
+                    Expirados ({statusCounts.expired})
+                  </button>
+                </div>
+              </div>
+            ) : null}
             {/* Empty State - Filtered */}
             {filteredCoupons.length === 0 && coupons.length > 0 && (
               <div className="flex items-center justify-center p-8 min-h-[40vh]">
