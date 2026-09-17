@@ -15,6 +15,7 @@ const envSchema = z.object({
   NEXT_PUBLIC_NOVU_APPLICATION_IDENTIFIER: z.string().min(1).optional(),
   NEXT_PUBLIC_POSTHOG_KEY: z.string().min(1).optional(),
   NEXT_PUBLIC_POSTHOG_HOST: z.string().url().optional(),
+  NEXT_PUBLIC_SUPPORT_WHATSAPP: z.string().min(1).optional(),
 });
 
 // Parse + validate
@@ -33,4 +34,6 @@ export const env = envSchema.parse({
     process.env.NEXT_PUBLIC_NOVU_APPLICATION_IDENTIFIER,
   NEXT_PUBLIC_POSTHOG_KEY: process.env.NEXT_PUBLIC_POSTHOG_KEY || undefined,
   NEXT_PUBLIC_POSTHOG_HOST: process.env.NEXT_PUBLIC_POSTHOG_HOST || undefined,
+  NEXT_PUBLIC_SUPPORT_WHATSAPP:
+    process.env.NEXT_PUBLIC_SUPPORT_WHATSAPP || undefined,
 });

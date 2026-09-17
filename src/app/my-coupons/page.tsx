@@ -22,11 +22,11 @@ import { analytics } from "@/lib/analytics";
 import type { UserPrize } from "@/lib/api-types";
 import { CouponDecoder, type DecodedCouponData } from "@/lib/coupon-decoder";
 import { resolveCouponDisplayLabel } from "@/lib/discount-type";
+import { env } from "@/lib/env";
 import { graphqlRequest, setAuthToken } from "@/lib/graphql-client";
 import { COUPONS_QUERY } from "@/lib/graphql-queries";
 import StatusCard from "@/shared/components/StatusCard/StatusCard";
 import { useAuthStore } from "@/store/useAuthStore";
-
 const PRIZE_STATUS_LABEL: Record<string, string> = {
   PENDING: "Pendiente",
   CLAIMED: "Canjeado",
@@ -240,6 +240,23 @@ export default function MyCouponsPage(): React.JSX.Element {
 
   const { data: myPrizes = [] } = useMyPrizes();
 
+  const selectedIsPrize = Boolean(
+    selectedCoupon &&
+    myPrizes.some(
+      (p) =>
+        p.coupon?.id === selectedCoupon.id ||
+        p.couponCode === selectedCoupon.code ||
+        p.coupon?.code === selectedCoupon.code
+    )
+  );
+  const supportWhatsApp = env.NEXT_PUBLIC_SUPPORT_WHATSAPP?.replace(/\D/g, "");
+  const prizeSupportUrl =
+    selectedIsPrize && supportWhatsApp
+      ? `https://wa.me/${supportWhatsApp}?text=${encodeURIComponent(
+          "Hola, tengo una pregunta sobre mi premio en Ñamy"
+        )}`
+      : null;
+
   // Filter coupons based on active tab (hide prize-backed coupons — shown above)
   const prizeCouponIds = new Set(
     myPrizes.map((p) => p.coupon?.id).filter((id): id is string => !!id)
@@ -285,7 +302,9 @@ export default function MyCouponsPage(): React.JSX.Element {
   });
 
   const handlePrizeQr = (prize: UserPrize): void => {
-    if (!prize.coupon) {return;}
+    if (!prize.coupon) {
+      return;
+    }
     setSelectedCoupon({
       id: prize.coupon.id,
       code: prize.coupon.code,
@@ -690,18 +709,31 @@ export default function MyCouponsPage(): React.JSX.Element {
                 </div>
               </div>
 
-              {/* Help link */}
-              <button
-                onClick={() => {
-                  if (typeof window !== "undefined" && window.$crisp) {
-                    window.$crisp.push(["do", "chat:show"]);
-                    window.$crisp.push(["do", "chat:open"]);
-                  }
-                }}
-                className="w-full text-center text-sm font-semibold text-[#F1A151] mb-5 hover:underline"
-              >
-                ¿Problemas con tu descuento?
-              </button>
+              {/* Help link — prize coupons get WhatsApp; regular coupons keep Crisp */}
+              {selectedIsPrize ? (
+                prizeSupportUrl ? (
+                  <a
+                    href={prizeSupportUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full text-center text-sm font-semibold text-[#F1A151] mb-5 hover:underline block"
+                  >
+                    Pregunta sobre tu premio
+                  </a>
+                ) : null
+              ) : (
+                <button
+                  onClick={() => {
+                    if (typeof window !== "undefined" && window.$crisp) {
+                      window.$crisp.push(["do", "chat:show"]);
+                      window.$crisp.push(["do", "chat:open"]);
+                    }
+                  }}
+                  className="w-full text-center text-sm font-semibold text-[#F1A151] mb-5 hover:underline"
+                >
+                  ¿Problemas con tu descuento?
+                </button>
+              )}
 
               {/* Restrictions */}
               <QrRestrictions

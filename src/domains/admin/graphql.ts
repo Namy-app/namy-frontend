@@ -117,6 +117,16 @@ export const CREATE_RESTAURANT_OWNER_MUTATION = gql`
   }
 `;
 
+export const UPDATE_OWNER_EMAIL_MUTATION = gql`
+  mutation UpdateOwnerEmail($storeId: String!, $email: String!) {
+    updateOwnerEmail(storeId: $storeId, email: $email) {
+      id
+      email
+      mustChangePassword
+    }
+  }
+`;
+
 // ==================== Store Queries ====================
 
 export const GET_STORE_STATISTICS = gql`

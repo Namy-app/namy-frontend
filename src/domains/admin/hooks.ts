@@ -17,6 +17,7 @@ import {
   TOGGLE_STORE_ACTIVE_MUTATION,
   TOGGLE_STORE_BILLING_MUTATION,
   CREATE_RESTAURANT_OWNER_MUTATION,
+  UPDATE_OWNER_EMAIL_MUTATION,
   GET_STORE_STATISTICS,
   GET_ALL_STORES,
   GET_STORE_BY_ID,
@@ -260,6 +261,34 @@ export function useCreateRestaurantOwner() {
     onError: (error, variables) => {
       Sentry.captureException(error, {
         tags: { domain: "store", action: "create_restaurant_owner" },
+        extra: { storeId: variables.storeId, email: variables.email },
+      });
+    },
+  });
+}
+
+export function useUpdateOwnerEmail() {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    RestaurantOwner,
+    Error,
+    { storeId: string; email: string }
+  >({
+    mutationFn: async ({ storeId, email }) => {
+      const data = await graphqlClient.request<{
+        updateOwnerEmail: RestaurantOwner;
+      }>(UPDATE_OWNER_EMAIL_MUTATION, { storeId, email });
+      return data.updateOwnerEmail;
+    },
+    onSuccess: (_, { storeId }) => {
+      void queryClient.invalidateQueries({ queryKey: ["store", storeId] });
+      void queryClient.invalidateQueries({ queryKey: ["owner-stores"] });
+      void queryClient.invalidateQueries({ queryKey: ["stores"] });
+    },
+    onError: (error, variables) => {
+      Sentry.captureException(error, {
+        tags: { domain: "store", action: "update_owner_email" },
         extra: { storeId: variables.storeId, email: variables.email },
       });
     },

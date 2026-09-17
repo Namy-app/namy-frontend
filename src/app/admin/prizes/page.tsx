@@ -24,7 +24,9 @@ function currentMonthValue(): string {
 
 function monthLabel(ym: string): string {
   const [y, m] = ym.split("-").map(Number);
-  if (!y || !m) {return ym;}
+  if (!y || !m) {
+    return ym;
+  }
   return new Date(y, m - 1, 1).toLocaleDateString("es-MX", {
     month: "long",
     year: "numeric",
@@ -128,7 +130,9 @@ function CreatePrizeModal({
   const stores = storesData?.data ?? [];
   const filteredStores = stores.filter((s) => {
     const q = storeSearch.trim().toLowerCase();
-    if (!q) {return true;}
+    if (!q) {
+      return true;
+    }
     return (
       s.name.toLowerCase().includes(q) ||
       (s.city ?? "").toLowerCase().includes(q)
@@ -397,8 +401,11 @@ function CreatePrizeModal({
 }
 
 export default function AdminPrizesPage() {
+  const { toast } = useToast();
+  const createPrize = useCreatePrize();
   const [month, setMonth] = useState(currentMonthValue);
   const [createFor, setCreateFor] = useState<LeaderboardEntry | null>(null);
+  const [premiumFor, setPremiumFor] = useState<LeaderboardEntry | null>(null);
   const isCurrentMonth = month === currentMonthValue();
 
   const {
@@ -407,7 +414,7 @@ export default function AdminPrizesPage() {
     refetch,
   } = usePrizes(month);
   const { data: leaderboard = [], isLoading: leadersLoading } =
-    useCityLeaderboard(3);
+    useCityLeaderboard(10);
 
   const prizesByWinner = useMemo(() => {
     const map = new Map<string, Prize>();
@@ -419,7 +426,32 @@ export default function AdminPrizesPage() {
     return map;
   }, [prizes]);
 
-  const top3 = leaderboard.filter((e) => e.rank <= 3).slice(0, 3);
+  const top10 = leaderboard.filter((e) => e.rank <= 10).slice(0, 10);
+
+  const handleConfirmPremium = async () => {
+    if (!premiumFor) {return;}
+    const name = premiumFor.displayName || "usuario";
+    try {
+      await createPrize.mutateAsync({
+        winnerId: premiumFor.userId,
+        type: "PREMIUM",
+        description: "1 mes Premium gratis",
+        countForBilling: false,
+      });
+      toast({
+        title: "Premium activado",
+        description: `Premium activado para ${name}`,
+      });
+      setPremiumFor(null);
+      void refetch();
+    } catch (err) {
+      toast({
+        title: "Error",
+        description: err instanceof Error ? err.message : "Intenta de nuevo",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -441,22 +473,22 @@ export default function AdminPrizesPage() {
         />
       </div>
 
-      {/* Top 3 */}
+      {/* Top 10 */}
       <section className="mb-10">
         <h2 className="text-lg font-bold text-foreground mb-4">
-          Top 3 del leaderboard
+          Top 10 del leaderboard
         </h2>
         {leadersLoading ? (
           <div className="flex justify-center py-10">
             <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
           </div>
-        ) : top3.length === 0 ? (
+        ) : top10.length === 0 ? (
           <p className="text-sm text-muted-foreground py-6">
             Aún no hay ranking disponible.
           </p>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {top3.map((entry) => {
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+            {top10.map((entry) => {
               const existing = prizesByWinner.get(entry.userId);
               return (
                 <div
@@ -464,10 +496,10 @@ export default function AdminPrizesPage() {
                   className="bg-card rounded-2xl border border-border p-5 flex flex-col gap-3"
                 >
                   <div className="flex items-center gap-3">
-                    <span className="text-2xl">
+                    <span className="text-xl font-black text-muted-foreground w-8 text-center shrink-0">
                       {RANK_BADGES[entry.rank - 1] ?? `#${entry.rank}`}
                     </span>
-                    <div className="relative w-12 h-12 rounded-full overflow-hidden bg-muted shrink-0">
+                    <div className="relative w-11 h-11 rounded-full overflow-hidden bg-muted shrink-0">
                       {entry.avatarUrl ? (
                         <Image
                           src={entry.avatarUrl}
@@ -492,7 +524,10 @@ export default function AdminPrizesPage() {
                     </div>
                   </div>
                   {existing ? (
-                    <div className="flex items-center gap-2 flex-wrap">
+                    <div className="flex items-center gap-2 flex-wrap mt-auto">
+                      <span className="text-xs font-semibold text-amber-700 bg-amber-100 px-2 py-1 rounded-full">
+                        Premio creado
+                      </span>
                       <StatusBadge status={existing.status} />
                       {existing.winner?.phone || entry.phone ? (
                         <WhatsAppButton
@@ -507,15 +542,24 @@ export default function AdminPrizesPage() {
                       ) : null}
                     </div>
                   ) : isCurrentMonth ? (
-                    <button
-                      type="button"
-                      onClick={() => setCreateFor(entry)}
-                      className="mt-auto w-full py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-bold hover:opacity-90"
-                    >
-                      Crear Premio
-                    </button>
+                    <div className="mt-auto flex flex-col gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setCreateFor(entry)}
+                        className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-bold hover:opacity-90"
+                      >
+                        Crear Premio
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPremiumFor(entry)}
+                        className="w-full py-2.5 rounded-xl border border-violet-200 bg-violet-50 text-violet-700 text-sm font-bold hover:bg-violet-100"
+                      >
+                        🎁 Dar Premium
+                      </button>
+                    </div>
                   ) : (
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-muted-foreground mt-auto">
                       Solo se pueden crear premios del mes actual
                     </p>
                   )}
@@ -636,6 +680,46 @@ export default function AdminPrizesPage() {
           onClose={() => setCreateFor(null)}
           onCreated={() => void refetch()}
         />
+      ) : null}
+
+      {premiumFor ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
+          onClick={() => setPremiumFor(null)}
+        >
+          <div
+            className="bg-white rounded-2xl w-full max-w-sm shadow-2xl p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-bold text-foreground mb-2">
+              Dar Premium
+            </h3>
+            <p className="text-sm text-muted-foreground mb-6">
+              ¿Dar 1 mes de premium a {premiumFor.displayName}?
+            </p>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => void handleConfirmPremium()}
+                disabled={createPrize.isPending}
+                className="flex-1 py-2.5 rounded-xl bg-violet-600 text-white text-sm font-bold hover:bg-violet-700 disabled:opacity-60 flex items-center justify-center gap-2"
+              >
+                {createPrize.isPending ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : null}
+                Confirmar
+              </button>
+              <button
+                type="button"
+                onClick={() => setPremiumFor(null)}
+                disabled={createPrize.isPending}
+                className="px-4 py-2.5 rounded-xl border border-border text-sm font-medium hover:bg-muted"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
       ) : null}
     </div>
   );

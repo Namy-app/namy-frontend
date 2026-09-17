@@ -21,6 +21,7 @@ import {
   useOwnerStores,
   useResendStorePinEmail,
   useToggleStoreBilling,
+  useUpdateOwnerEmail,
   useUpdateStore,
 } from "@/domains/admin/hooks";
 import {
@@ -87,6 +88,7 @@ export const StoreInfo = ({
   const resendPinEmail = useResendStorePinEmail();
   const toggleStoreBilling = useToggleStoreBilling();
   const createRestaurantOwner = useCreateRestaurantOwner();
+  const updateOwnerEmail = useUpdateOwnerEmail();
   const updateStore = useUpdateStore();
   const { data: ownerStores } = useOwnerStores(store.owner?.id);
   const linkedStores = (ownerStores ?? []).filter(
@@ -95,6 +97,8 @@ export const StoreInfo = ({
 
   const [ownerEmail, setOwnerEmail] = useState("");
   const [portalError, setPortalError] = useState<string | null>(null);
+  const [editingOwnerEmail, setEditingOwnerEmail] = useState(false);
+  const [editOwnerEmailValue, setEditOwnerEmailValue] = useState("");
   const [showEditForm, setShowEditForm] = useState(false);
   const [editDescription, setEditDescription] = useState(
     store.description ?? ""
@@ -164,6 +168,43 @@ export const StoreInfo = ({
     } catch (error: unknown) {
       const message =
         extractErrorMessage(error) || "No se pudo crear la cuenta de portal.";
+      setPortalError(message);
+      toast({
+        title: "Error",
+        description: message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const startEditOwnerEmail = () => {
+    setEditOwnerEmailValue(store.owner?.email ?? "");
+    setPortalError(null);
+    setEditingOwnerEmail(true);
+  };
+
+  const handleSaveOwnerEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPortalError(null);
+    const email = editOwnerEmailValue.trim();
+    if (!email || !email.includes("@")) {
+      setPortalError("Ingresa un email válido");
+      return;
+    }
+
+    try {
+      await updateOwnerEmail.mutateAsync({
+        storeId: store.id,
+        email,
+      });
+      toast({
+        title: "Email actualizado",
+        description: `Propietario actualizado a ${email}`,
+      });
+      setEditingOwnerEmail(false);
+    } catch (error: unknown) {
+      const message =
+        extractErrorMessage(error) || "No se pudo actualizar el email.";
       setPortalError(message);
       toast({
         title: "Error",
@@ -461,12 +502,78 @@ export const StoreInfo = ({
           </h2>
           {store.owner?.email ? (
             <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0" />
-                <p className="text-foreground">
-                  Propietario: {store.owner.email}
-                </p>
-              </div>
+              {editingOwnerEmail ? (
+                <form
+                  onSubmit={(e) => void handleSaveOwnerEmail(e)}
+                  className="space-y-3"
+                >
+                  <div>
+                    <label
+                      htmlFor="edit-portal-owner-email"
+                      className="block text-sm font-medium text-foreground mb-2"
+                    >
+                      Email del propietario
+                    </label>
+                    <input
+                      id="edit-portal-owner-email"
+                      type="email"
+                      value={editOwnerEmailValue}
+                      onChange={(e) => {
+                        setEditOwnerEmailValue(e.target.value);
+                        setPortalError(null);
+                      }}
+                      className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                      disabled={updateOwnerEmail.isPending}
+                      autoFocus
+                    />
+                  </div>
+                  {portalError ? (
+                    <p className="text-sm text-destructive">{portalError}</p>
+                  ) : null}
+                  <div className="flex gap-2">
+                    <button
+                      type="submit"
+                      disabled={updateOwnerEmail.isPending}
+                      className="flex-1 px-4 py-2 bg-primary text-primary-foreground font-semibold rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                      {updateOwnerEmail.isPending ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Guardando...
+                        </>
+                      ) : (
+                        "Guardar"
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingOwnerEmail(false);
+                        setPortalError(null);
+                      }}
+                      disabled={updateOwnerEmail.isPending}
+                      className="px-4 py-2 border border-border rounded-lg text-sm font-medium hover:bg-muted"
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <div className="flex items-center gap-2 flex-wrap">
+                  <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0" />
+                  <p className="text-foreground">
+                    Propietario: {store.owner.email}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={startEditOwnerEmail}
+                    className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+                  >
+                    <Pencil className="w-3.5 h-3.5" />
+                    Editar
+                  </button>
+                </div>
+              )}
               {linkedStores.length > 0 ? (
                 <div>
                   <p className="text-sm font-medium text-foreground mb-2">
