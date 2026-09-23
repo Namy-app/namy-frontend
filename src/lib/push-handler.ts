@@ -7,9 +7,11 @@ import { analytics } from "@/lib/analytics";
 import { env } from "@/lib/env";
 import { graphqlRequest } from "@/lib/graphql-client";
 import {
+  bannerTypeFromData,
   buildPromoDeepLink,
   isPromoActive,
   isPromoDismissedFor,
+  isPromoNotificationData,
   notificationToPromo,
   pushPayloadToPromo,
   surfacePromo,
@@ -203,7 +205,7 @@ async function fetchLatestNovuPromo(userId: string): Promise<void> {
     };
 
     const unreadPromos = notifications.filter(
-      (n) => !n.isRead && (!n.data?.type || n.data.type === "promo_banner")
+      (n) => !n.isRead && isPromoNotificationData(n.data)
     );
 
     for (const notif of unreadPromos) {
@@ -268,8 +270,8 @@ export async function initPushNotifications(
   // Foreground: notification arrives while app is open
   await PushNotifications.addListener("pushNotificationReceived", (n) => {
     console.warn("[Push] received raw:", JSON.stringify(n));
-    const data = n.data;
-    if (data?.type && data.type !== "promo_banner") {
+    const data = n.data as Record<string, unknown> | undefined;
+    if (!isPromoNotificationData(data)) {
       return;
     }
 
@@ -277,21 +279,29 @@ export async function initPushNotifications(
       ...(typeof data?.__nvMessageId === "string"
         ? { novu_message_id: data.__nvMessageId }
         : {}),
-      type: typeof data?.type === "string" ? data.type : "promo_banner",
+      type: bannerTypeFromData(data),
     });
 
     const title = stripNovuPrefix(
       n.title ||
-        data?.title ||
-        data?.notification_title ||
-        data?.gcm_notification_title ||
+        (typeof data?.title === "string" ? data.title : "") ||
+        (typeof data?.notification_title === "string"
+          ? data.notification_title
+          : "") ||
+        (typeof data?.gcm_notification_title === "string"
+          ? data.gcm_notification_title
+          : "") ||
         ""
     );
     const body = stripNovuPrefix(
       n.body ||
-        data?.body ||
-        data?.notification_body ||
-        data?.gcm_notification_body ||
+        (typeof data?.body === "string" ? data.body : "") ||
+        (typeof data?.notification_body === "string"
+          ? data.notification_body
+          : "") ||
+        (typeof data?.gcm_notification_body === "string"
+          ? data.gcm_notification_body
+          : "") ||
         ""
     );
 
@@ -299,10 +309,16 @@ export async function initPushNotifications(
       const promo = pushPayloadToPromo({
         title,
         body,
-        imageUrl: data?.imageUrl,
+        imageUrl:
+          typeof data?.imageUrl === "string" ? data.imageUrl : undefined,
         deepLink: buildDeepLink(data),
-        expiresAt: data?.expiresAt,
-        novuMessageId: data?.__nvMessageId as string | undefined,
+        expiresAt:
+          typeof data?.expiresAt === "string" ? data.expiresAt : undefined,
+        novuMessageId:
+          typeof data?.__nvMessageId === "string"
+            ? data.__nvMessageId
+            : undefined,
+        type: bannerTypeFromData(data),
       });
       if (!isPromoActive(promo)) {
         return;
@@ -310,7 +326,10 @@ export async function initPushNotifications(
       void surfacePromo(promo);
     } else {
       // FCM stripped title/body — fetch from Novu API using messageId
-      const nvMessageId = data?.__nvMessageId as string | undefined;
+      const nvMessageId =
+        typeof data?.__nvMessageId === "string"
+          ? data.__nvMessageId
+          : undefined;
       if (nvMessageId) {
         void fetchNovuPromoAndShow(nvMessageId, () => {
           // foreground: no navigation needed, just show the banner in place
@@ -324,8 +343,10 @@ export async function initPushNotifications(
     "pushNotificationActionPerformed",
     (action) => {
       console.warn("[Push] actionPerformed raw:", JSON.stringify(action));
-      const data = action.notification.data;
-      const isPromo = !data?.type || data.type === "promo_banner";
+      const data = action.notification.data as
+        | Record<string, unknown>
+        | undefined;
+      const isBanner = isPromoNotificationData(data);
       const deepLink = buildDeepLink(data);
 
       analytics.track("notification_clicked", {
@@ -336,19 +357,27 @@ export async function initPushNotifications(
         ...(deepLink ? { deep_link: deepLink } : {}),
       });
 
-      if (isPromo) {
+      if (isBanner) {
         const title = stripNovuPrefix(
           action.notification.title ||
-            data?.title ||
-            data?.notification_title ||
-            data?.gcm_notification_title ||
+            (typeof data?.title === "string" ? data.title : "") ||
+            (typeof data?.notification_title === "string"
+              ? data.notification_title
+              : "") ||
+            (typeof data?.gcm_notification_title === "string"
+              ? data.gcm_notification_title
+              : "") ||
             ""
         );
         const body = stripNovuPrefix(
           action.notification.body ||
-            data?.body ||
-            data?.notification_body ||
-            data?.gcm_notification_body ||
+            (typeof data?.body === "string" ? data.body : "") ||
+            (typeof data?.notification_body === "string"
+              ? data.notification_body
+              : "") ||
+            (typeof data?.gcm_notification_body === "string"
+              ? data.gcm_notification_body
+              : "") ||
             ""
         );
 
@@ -356,17 +385,26 @@ export async function initPushNotifications(
           const promo = pushPayloadToPromo({
             title,
             body,
-            imageUrl: data?.imageUrl,
+            imageUrl:
+              typeof data?.imageUrl === "string" ? data.imageUrl : undefined,
             deepLink: buildDeepLink(data),
-            expiresAt: data?.expiresAt,
-            novuMessageId: data?.__nvMessageId as string | undefined,
+            expiresAt:
+              typeof data?.expiresAt === "string" ? data.expiresAt : undefined,
+            novuMessageId:
+              typeof data?.__nvMessageId === "string"
+                ? data.__nvMessageId
+                : undefined,
+            type: bannerTypeFromData(data),
           });
           void surfacePromo(promo);
           navigateFn("/explore");
         } else {
           // FCM stripped our payload (notification message, not data message).
           // Use the Novu messageId to fetch the full notification from the API.
-          const nvMessageId = data?.__nvMessageId as string | undefined;
+          const nvMessageId =
+            typeof data?.__nvMessageId === "string"
+              ? data.__nvMessageId
+              : undefined;
           if (nvMessageId) {
             void fetchNovuPromoAndShow(nvMessageId, navigateFn);
           } else {

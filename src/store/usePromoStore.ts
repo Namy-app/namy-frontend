@@ -16,8 +16,8 @@ import { useAuthStore } from "@/store/useAuthStore";
 interface PromoState {
   activePromo: PromoBannerData | null;
   /**
-   * Offer a promo for display. Silently skipped if:
-   * - type is not "promo_banner"
+   * Offer a promo/prize banner for display. Silently skipped if:
+   * - type is not a banner notification (promo_banner / prize_won / prize_expiry)
    * - already expired
    * - user has previously dismissed it
    */
@@ -32,7 +32,11 @@ export const usePromoStore = create<PromoState>()((set, get) => ({
   activePromo: null,
 
   offerPromo: async (promo) => {
-    if (promo.type !== "promo_banner") {
+    if (
+      promo.type !== "promo_banner" &&
+      promo.type !== "prize_won" &&
+      promo.type !== "prize_expiry"
+    ) {
       return;
     }
     if (!isPromoActive(promo)) {

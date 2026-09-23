@@ -7,6 +7,11 @@ import { useRouter } from "next/navigation";
 import { analytics } from "@/lib/analytics";
 import { navigateTo } from "@/lib/capacitor-navigate";
 
+export type BannerNotificationType =
+  | "promo_banner"
+  | "prize_won"
+  | "prize_expiry";
+
 export interface PromoBannerData {
   title: string;
   body: string;
@@ -16,7 +21,7 @@ export interface PromoBannerData {
   expiresAt?: string;
   /** Novu inbox message id — used to mark read when the user dismisses. */
   novuMessageId?: string;
-  type: "promo_banner";
+  type: BannerNotificationType;
 }
 
 interface PromoBannerProps {
@@ -36,10 +41,13 @@ export function PromoBanner({
     return null;
   }
 
+  const isPrize = promo.type === "prize_won" || promo.type === "prize_expiry";
+
   const handleCta = (): void => {
     analytics.track("promo_banner_clicked", {
       ...(promo.novuMessageId ? { novu_message_id: promo.novuMessageId } : {}),
       ...(promo.deepLink ? { deep_link: promo.deepLink } : {}),
+      banner_type: promo.type,
     });
     onClose();
     if (promo.deepLink?.startsWith("/")) {
@@ -48,6 +56,11 @@ export function PromoBanner({
   };
 
   const imageSrc = promo.imageUrl?.trim() || FOOD_PLACEHOLDER;
+  const ctaLabel = isPrize
+    ? promo.type === "prize_expiry"
+      ? "Ver mi cupón"
+      : "Ver mi premio"
+    : "Descubrir ahora";
 
   return (
     <div
@@ -92,7 +105,7 @@ export function PromoBanner({
             className="w-full rounded-full py-3 text-sm font-bold text-white shadow-md transition-opacity active:scale-95"
             style={{ background: "#f97316" }}
           >
-            Descubrir ahora
+            {ctaLabel}
           </button>
           <button
             onClick={onClose}

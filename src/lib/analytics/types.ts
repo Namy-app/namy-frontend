@@ -102,6 +102,7 @@ export interface AnalyticsEventMap {
   promo_banner_clicked: {
     novu_message_id?: string;
     deep_link?: string;
+    banner_type?: string;
   };
   promo_banner_dismissed: {
     novu_message_id?: string;

@@ -20,6 +20,7 @@ import { navigateTo } from "@/lib/capacitor-navigate";
 import { env } from "@/lib/env";
 import {
   isPromoActive,
+  isPromoNotificationData,
   notificationToPromo,
   surfacePromo,
 } from "@/lib/promo-storage";
@@ -43,8 +44,8 @@ export function ExploreHeader({
     redirect?: { url?: string; target?: string } | null;
   }): void => {
     const data = notification.data;
-    const isPromo = !data?.type || data.type === "promo_banner";
-    const promo = isPromo ? notificationToPromo(notification) : null;
+    const isBanner = isPromoNotificationData(data);
+    const promo = isBanner ? notificationToPromo(notification) : null;
     const deepLink =
       promo?.deepLink ??
       (typeof data?.deepLink === "string" && data.deepLink.startsWith("/")
@@ -57,7 +58,7 @@ export function ExploreHeader({
       ...(deepLink ? { deep_link: deepLink } : {}),
     });
 
-    if (isPromo && promo) {
+    if (isBanner && promo) {
       void surfacePromo(promo).then((shown) => {
         if (shown) {
           navigateTo("/explore", router);

@@ -3,7 +3,10 @@
 import { Capacitor } from "@capacitor/core";
 import { Preferences } from "@capacitor/preferences";
 
-import type { PromoBannerData } from "@/app/explore/components/PromoBanner";
+import type {
+  BannerNotificationType,
+  PromoBannerData,
+} from "@/app/explore/components/PromoBanner";
 
 const DISMISSED_KEY = "namy_dismissed_promos";
 const PENDING_PROMO_KEY = "namy_pending_promo";
@@ -251,6 +254,47 @@ export function buildPromoDeepLink(
   return undefined;
 }
 
+/** Types that should surface the full-screen in-app banner. */
+export function isBannerNotificationType(
+  type: unknown
+): type is BannerNotificationType {
+  return (
+    type === "promo_banner" || type === "prize_won" || type === "prize_expiry"
+  );
+}
+
+/** True for promo banners and prize won/expiry notifications. */
+export function isPromoNotificationData(
+  data: Record<string, unknown> | undefined
+): boolean {
+  if (!data?.type) {
+    return true;
+  }
+  return isBannerNotificationType(data.type);
+}
+
+export function bannerTypeFromData(
+  data: Record<string, unknown> | undefined
+): BannerNotificationType {
+  if (data?.type === "prize_won" || data?.type === "prize_expiry") {
+    return data.type;
+  }
+  return "promo_banner";
+}
+
+function prizeFallbackDeepLink(
+  data: Record<string, unknown> | undefined
+): string | undefined {
+  const type = data?.type;
+  if (type !== "prize_won" && type !== "prize_expiry") {
+    return undefined;
+  }
+  if (type === "prize_won" && data?.prizeType === "PREMIUM") {
+    return "/profile";
+  }
+  return "/my-coupons";
+}
+
 export function notificationToPromo(notification: {
   id?: string;
   subject?: string;
@@ -259,6 +303,7 @@ export function notificationToPromo(notification: {
   redirect?: { url?: string; target?: string } | null;
 }): PromoBannerData {
   const data = notification.data ?? {};
+  const type = bannerTypeFromData(data);
 
   const title = normalizePromoText(
     (typeof data.title === "string" && data.title) || notification.subject || ""
@@ -275,6 +320,9 @@ export function notificationToPromo(notification: {
   ) {
     deepLink = notification.redirect.url;
   }
+  if (!deepLink) {
+    deepLink = prizeFallbackDeepLink(data);
+  }
 
   return {
     title,
@@ -283,7 +331,7 @@ export function notificationToPromo(notification: {
     deepLink,
     expiresAt: typeof data.expiresAt === "string" ? data.expiresAt : undefined,
     novuMessageId: notification.id,
-    type: "promo_banner",
+    type,
   };
 }
 
@@ -295,6 +343,7 @@ export function pushPayloadToPromo(fields: {
   deepLink?: string;
   expiresAt?: string;
   novuMessageId?: string;
+  type?: BannerNotificationType;
 }): PromoBannerData {
   return {
     title: normalizePromoText(fields.title ?? ""),
@@ -303,19 +352,13 @@ export function pushPayloadToPromo(fields: {
     deepLink: fields.deepLink,
     expiresAt: fields.expiresAt,
     novuMessageId: fields.novuMessageId,
-    type: "promo_banner",
+    type: fields.type ?? "promo_banner",
   };
 }
 
-export function isPromoNotificationData(
-  data: Record<string, unknown> | undefined
-): boolean {
-  return !data?.type || data.type === "promo_banner";
-}
-
-/** Save and display a promo banner if it is still active and not dismissed. */
+/** Save and display a promo/prize banner if it is still active and not dismissed. */
 export async function surfacePromo(promo: PromoBannerData): Promise<boolean> {
-  if (promo.type !== "promo_banner" || !isPromoActive(promo)) {
+  if (!isBannerNotificationType(promo.type) || !isPromoActive(promo)) {
     return false;
   }
   if (!promo.title && !promo.body) {
