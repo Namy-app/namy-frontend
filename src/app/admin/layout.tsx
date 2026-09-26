@@ -10,6 +10,7 @@ import {
   Gift,
   Images,
   Star,
+  Ticket,
   Menu,
   X,
 } from "lucide-react";
@@ -136,6 +137,12 @@ export default function AdminLayout({
       icon: Store,
       href: "/admin/stores",
       active: pathname?.startsWith("/admin/stores"),
+    },
+    {
+      label: "Canjes",
+      icon: Ticket,
+      href: "/admin/redemptions",
+      active: pathname?.startsWith("/admin/redemptions"),
     },
     {
       label: "Categories",

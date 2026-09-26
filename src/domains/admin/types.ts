@@ -391,6 +391,11 @@ export interface Coupon {
   user?: {
     displayName?: string | null;
   } | null;
+  store?: {
+    id: string;
+    name: string;
+    city?: string | null;
+  } | null;
 }
 
 export interface CouponsResponse {

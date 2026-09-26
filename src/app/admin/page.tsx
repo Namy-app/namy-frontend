@@ -354,7 +354,10 @@ export default function AdminDashboardPage() {
         {/* Analytics — Coupon Generation vs Redemption */}
         <div className="mt-8">
           <h2 className="text-2xl font-bold text-foreground mb-6">Analytics</h2>
-          <div className="bg-card rounded-lg shadow overflow-hidden">
+          <div
+            onClick={() => router.push("/admin/redemptions")}
+            className="bg-card rounded-lg shadow overflow-hidden hover:shadow-xl cursor-pointer transition-all group w-full"
+          >
             <div className="h-2 bg-gradient-to-r from-orange-500 to-orange-600" />
             <div className="p-6">
               <div className="flex items-start justify-between mb-6">
@@ -371,6 +374,7 @@ export default function AdminDashboardPage() {
                     </p>
                   </div>
                 </div>
+                <ArrowRight className="w-6 h-6 shrink-0 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
               </div>
 
               {couponsLoading ? (

@@ -414,6 +414,11 @@ export const GET_STORE_COUPONS = gql`
         user {
           displayName
         }
+        store {
+          id
+          name
+          city
+        }
       }
       paginationInfo {
         total
