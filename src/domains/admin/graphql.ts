@@ -406,7 +406,6 @@ export const GET_STORE_COUPONS = gql`
         discountId
         storeId
         code
-        qrCode
         used
         usedAt
         createdAt
@@ -621,8 +620,6 @@ export const GET_ADMIN_USER_COUPONS = gql`
       data {
         id
         code
-        qrCode
-        url
         used
         usedAt
         value
@@ -779,8 +776,6 @@ export const GET_USER_DETAILS_WITH_ACTIVITY = gql`
       coupons {
         id
         code
-        qrCode
-        url
         used
         usedAt
         value
@@ -876,8 +871,6 @@ export const GET_USER_DETAILS_WITH_ACTIVITY_ULTRA_LEGACY = gql`
       coupons {
         id
         code
-        qrCode
-        url
         used
         usedAt
         value
