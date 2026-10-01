@@ -3,6 +3,20 @@ import { withSentryConfig } from "@sentry/nextjs";
 
 const isMobileBuild = process.env.MOBILE_BUILD === "true";
 
+// Origins allowed to embed the site in an iframe, space-separated in CSP
+// source syntax (e.g. "https://partner.com https://*.partner.com"), or "*"
+// for any origin. Unset keeps framing blocked with X-Frame-Options: DENY.
+// Read at build time, so it must be set when running `next build`.
+const frameAncestors = process.env.FRAME_ANCESTORS?.trim();
+const frameHeaders = frameAncestors
+  ? [
+      {
+        key: "Content-Security-Policy",
+        value: `frame-ancestors ${frameAncestors}`,
+      },
+    ]
+  : [{ key: "X-Frame-Options", value: "DENY" }];
+
 const nextConfig = isMobileBuild
   ? {
       // Mobile (Capacitor) static export config
@@ -83,7 +97,7 @@ const nextConfig = isMobileBuild
           {
             source: "/(.*)",
             headers: [
-              { key: "X-Frame-Options", value: "DENY" },
+              ...frameHeaders,
               { key: "X-Content-Type-Options", value: "nosniff" },
               {
                 key: "Referrer-Policy",
