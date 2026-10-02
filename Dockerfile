@@ -26,6 +26,9 @@ COPY . .
 ENV NEXT_PUBLIC_API_URL=https://api.kiyoo.online/graphql
 ENV NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_51SaD54Q4iIDsLM3GpABYZ7tyegbFw0vzwCvQTijsTC4FJJQQIA5Px5SXl3Bzl4ZNREBJjqCx22EpSLWgKSOtMuHY00vTnZNKZE
 ENV NEXT_PUBLIC_GOOGLE_ADSENSE_CLIENT_ID=ca-pub-7590000745159436
+# Origins allowed to embed the site in an iframe (see next.config.js); empty keeps X-Frame-Options: DENY
+ARG FRAME_ANCESTORS=""
+ENV FRAME_ANCESTORS=$FRAME_ANCESTORS
 
 RUN npm run build
 
