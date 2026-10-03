@@ -25,6 +25,7 @@ import { resolveCouponDisplayLabel } from "@/lib/discount-type";
 import { env } from "@/lib/env";
 import { graphqlRequest, setAuthToken } from "@/lib/graphql-client";
 import { COUPONS_QUERY } from "@/lib/graphql-queries";
+import CrispProvider from "@/providers/CrispProvider";
 import StatusCard from "@/shared/components/StatusCard/StatusCard";
 import { useAuthStore } from "@/store/useAuthStore";
 const PRIZE_STATUS_LABEL: Record<string, string> = {
@@ -770,6 +771,7 @@ export default function MyCouponsPage(): React.JSX.Element {
           />
         ) : null}
       </div>
+      <CrispProvider />
     </BasicLayout>
   );
 }
