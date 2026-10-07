@@ -1492,6 +1492,7 @@ export function useCreatePrize() {
       description: string;
       storeIds?: string[];
       countForBilling?: boolean;
+      month?: string;
     }
   >({
     mutationFn: async (variables) => {

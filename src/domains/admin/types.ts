@@ -846,6 +846,7 @@ export interface Prize {
   winnerId: string;
   type: PrizeType;
   description: string;
+  month: string;
   storeIds: string[];
   couponCode?: string | null;
   couponId?: string | null;

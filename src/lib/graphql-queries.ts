@@ -1308,8 +1308,8 @@ export const MY_POINTS_HISTORY_QUERY = `
 
 // ============ LEADERBOARD ============
 export const CITY_LEADERBOARD_QUERY = `
-  query CityLeaderboard($limit: Int) {
-    cityLeaderboard(limit: $limit) {
+  query CityLeaderboard($limit: Int, $month: String) {
+    cityLeaderboard(limit: $limit, month: $month) {
       rank
       userId
       displayName

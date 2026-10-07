@@ -1208,6 +1208,7 @@ export const GET_PRIZES = gql`
       winnerId
       type
       description
+      month
       storeIds
       couponCode
       couponId
@@ -1244,6 +1245,7 @@ export const CREATE_PRIZE = gql`
     $description: String!
     $storeIds: [String!]
     $countForBilling: Boolean
+    $month: String
   ) {
     createPrize(
       winnerId: $winnerId
@@ -1251,11 +1253,13 @@ export const CREATE_PRIZE = gql`
       description: $description
       storeIds: $storeIds
       countForBilling: $countForBilling
+      month: $month
     ) {
       id
       winnerId
       type
       description
+      month
       status
       couponCode
       createdAt

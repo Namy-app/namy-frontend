@@ -16,13 +16,16 @@ import {
 } from "@/lib/graphql-queries";
 import { useAuthStore } from "@/store/useAuthStore";
 
-export function useCityLeaderboard(limit = 20) {
+export function useCityLeaderboard(limit = 20, month?: string) {
   return useQuery<LeaderboardEntry[]>({
-    queryKey: ["cityLeaderboard", limit],
+    queryKey: ["cityLeaderboard", limit, month ?? null],
     queryFn: async () => {
       const data = await graphqlRequest<{
         cityLeaderboard: LeaderboardEntry[];
-      }>(CITY_LEADERBOARD_QUERY, { limit });
+      }>(CITY_LEADERBOARD_QUERY, {
+        limit,
+        ...(month ? { month } : {}),
+      });
       return data.cityLeaderboard;
     },
     staleTime: 60 * 1000, // 1 minute

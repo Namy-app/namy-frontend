@@ -106,10 +106,12 @@ function StatusBadge({ status }: { status: PrizeStatus }) {
 
 function CreatePrizeModal({
   winner,
+  month,
   onClose,
   onCreated,
 }: {
   winner: LeaderboardEntry;
+  month: string;
   onClose: () => void;
   onCreated: () => void;
 }) {
@@ -173,6 +175,7 @@ function CreatePrizeModal({
         description: description.trim(),
         storeIds: type === "CUSTOM_COUPON" ? selectedStoreIds : undefined,
         countForBilling: type === "CUSTOM_COUPON" ? countForBilling : false,
+        month,
       });
       toast({
         title: "Premio creado",
@@ -406,7 +409,6 @@ export default function AdminPrizesPage() {
   const [month, setMonth] = useState(currentMonthValue);
   const [createFor, setCreateFor] = useState<LeaderboardEntry | null>(null);
   const [premiumFor, setPremiumFor] = useState<LeaderboardEntry | null>(null);
-  const isCurrentMonth = month === currentMonthValue();
 
   const {
     data: prizes = [],
@@ -414,7 +416,7 @@ export default function AdminPrizesPage() {
     refetch,
   } = usePrizes(month);
   const { data: leaderboard = [], isLoading: leadersLoading } =
-    useCityLeaderboard(10);
+    useCityLeaderboard(10, month);
 
   const prizesByWinner = useMemo(() => {
     const map = new Map<string, Prize>();
@@ -429,7 +431,9 @@ export default function AdminPrizesPage() {
   const top10 = leaderboard.filter((e) => e.rank <= 10).slice(0, 10);
 
   const handleConfirmPremium = async () => {
-    if (!premiumFor) {return;}
+    if (!premiumFor) {
+      return;
+    }
     const name = premiumFor.displayName || "usuario";
     try {
       await createPrize.mutateAsync({
@@ -437,6 +441,7 @@ export default function AdminPrizesPage() {
         type: "PREMIUM",
         description: "1 mes Premium gratis",
         countForBilling: false,
+        month,
       });
       toast({
         title: "Premium activado",
@@ -541,7 +546,7 @@ export default function AdminPrizesPage() {
                         />
                       ) : null}
                     </div>
-                  ) : isCurrentMonth ? (
+                  ) : (
                     <div className="mt-auto flex flex-col gap-2">
                       <button
                         type="button"
@@ -558,10 +563,6 @@ export default function AdminPrizesPage() {
                         🎁 Dar Premium
                       </button>
                     </div>
-                  ) : (
-                    <p className="text-xs text-muted-foreground mt-auto">
-                      Solo se pueden crear premios del mes actual
-                    </p>
                   )}
                 </div>
               );
@@ -677,6 +678,7 @@ export default function AdminPrizesPage() {
       {createFor ? (
         <CreatePrizeModal
           winner={createFor}
+          month={month}
           onClose={() => setCreateFor(null)}
           onCreated={() => void refetch()}
         />
