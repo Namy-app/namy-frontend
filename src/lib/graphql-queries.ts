@@ -29,6 +29,55 @@ export const LOGIN_MUTATION = `
   }
 `;
 
+export const EXCHANGE_PARTNER_CODE_MUTATION = `
+  mutation ExchangePartnerCode($code: String!) {
+    exchangePartnerCode(code: $code) {
+      accessToken
+      user {
+        id
+        email
+        phone
+        displayName
+        avatarUrl
+        role
+        city
+        country
+        verified
+        active
+        isPremium
+        premiumStartDate
+        premiumEndDate
+        autoRenew
+        createdAt
+        updatedAt
+        lastSeen
+        referralCode
+      }
+      partner {
+        slug
+        name
+        discountLevel
+        adsDisabled
+        features
+        branding
+      }
+    }
+  }
+`;
+
+export const MY_PARTNER_CONTEXT_QUERY = `
+  query MyPartnerContext {
+    myPartnerContext {
+      slug
+      name
+      discountLevel
+      adsDisabled
+      features
+      branding
+    }
+  }
+`;
+
 export const SIGNUP_MUTATION = `
   mutation SignUp($input: CreateUserInput!) {
     signUp(input: $input) {

@@ -8,6 +8,7 @@ import { CapacitorSafeArea } from "@/components/CapacitorSafeArea";
 import { GoogleAdsense } from "@/components/GoogleAdsense";
 import { GoogleMapsProviderClient } from "@/components/GoogleMapsProviderClient";
 import { KeyboardScrollFix } from "@/components/KeyboardScrollFix";
+import { PartnerRouteGuard } from "@/components/partner/PartnerRouteGuard";
 import { PromoProvider } from "@/components/PromoProvider";
 import { PushNotificationProvider } from "@/components/PushNotificationProvider";
 import { SpaRedirectHandler } from "@/components/SpaRedirectHandler";
@@ -90,6 +91,7 @@ export default function RootLayout({
         <ReactQueryProvider>
           <AnalyticsProvider>
             <PromoProvider>
+              <PartnerRouteGuard />
               <PushNotificationProvider />
               <div id="app-shell" className="app-shell">
                 <GoogleMapsProviderClient>{children}</GoogleMapsProviderClient>
