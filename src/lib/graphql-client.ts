@@ -28,9 +28,18 @@ export const graphqlClient = new GraphQLClient(env.NEXT_PUBLIC_API_URL, {
 // Callback for handling authentication errors (set by auth store)
 let authErrorCallback: (() => void) | null = null;
 
+// Partner-mode check registered by the partner store.
+// Kept as a getter so this module does not import the store (circular import).
+let partnerModeGetter: (() => boolean) | null = null;
+
 // Register a callback to be called when authentication errors occur
 export const setAuthErrorCallback = (callback: (() => void) | null): void => {
   authErrorCallback = callback;
+};
+
+// Register a getter that reports whether a partner (white-label) session is active
+export const setPartnerModeGetter = (getter: (() => boolean) | null): void => {
+  partnerModeGetter = getter;
 };
 
 // Helper function to set authorization header
@@ -140,10 +149,16 @@ export async function graphqlRequest<T>(
             window.location.pathname.startsWith(page + "/")
         );
 
+      // Partner sessions must always surface auth errors, including on guest pages,
+      // so an expired partner token never leaves the user on a logged-out screen.
+      const partnerMode = partnerModeGetter?.() ?? false;
+
       // Call the registered callback to clear auth state only if not on guest-accessible pages
-      if (authErrorCallback && !isGuestPage) {
+      if (authErrorCallback && (partnerMode || !isGuestPage)) {
         console.error(
-          "[graphql-client] Auth error on non-guest page — triggering logout. Path:",
+          partnerMode
+            ? "[graphql-client] Auth error in partner mode — triggering logout. Path:"
+            : "[graphql-client] Auth error on non-guest page — triggering logout. Path:",
           typeof window !== "undefined" ? window.location.pathname : "unknown"
         );
         authErrorCallback();
