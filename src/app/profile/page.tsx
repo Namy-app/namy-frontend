@@ -40,11 +40,12 @@ import {
   REQUEST_AVATAR_UPLOAD_MUTATION,
   COUPONS_QUERY,
 } from "@/lib/graphql-queries";
+import { useAppTranslation } from "@/lib/i18n/useAppTranslation";
 import { getInitials, getUserLevelTitle } from "@/lib/user.lib";
 import { extractErrorMessage } from "@/lib/utils";
 import CrispProvider from "@/providers/CrispProvider";
 import { useAuthStore } from "@/store/useAuthStore";
-import { useIsPartnerMode, usePartnerStore } from "@/store/usePartnerStore";
+import { useIsPartnerMode } from "@/store/usePartnerStore";
 
 const EMOJI_AVATARS = [
   "🐶",
@@ -1020,27 +1021,24 @@ function NamyProfilePage(): React.JSX.Element | null {
 }
 
 function PartnerProfile(): React.JSX.Element {
-  const lang = usePartnerStore((state) => state.lang);
-  const english = lang === "en";
+  const { t } = useAppTranslation();
   return (
     <ProtectedRoute>
       <BasicLayout>
         <main className="mx-auto max-w-xl px-5 pt-20">
-          <h1 className="text-2xl font-bold">
-            {english ? "My coupons" : "Mis cupones"}
-          </h1>
+          <h1 className="text-2xl font-bold">{t("ui.my_coupons_partner")}</h1>
           <div className="mt-6 grid gap-4">
             <Link
               href="/my-coupons?status=active"
               className="rounded-xl border border-border p-5 text-primary font-semibold"
             >
-              {english ? "Active coupons" : "Cupones activos"}
+              {t("ui.active_coupons")}
             </Link>
             <Link
               href="/my-coupons?status=used"
               className="rounded-xl border border-border p-5 text-primary font-semibold"
             >
-              {english ? "Used coupons" : "Cupones usados"}
+              {t("ui.used_coupons")}
             </Link>
           </div>
         </main>

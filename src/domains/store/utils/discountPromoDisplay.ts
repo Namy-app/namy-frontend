@@ -5,10 +5,12 @@ import {
   normalizeDiscountType,
   DiscountType,
 } from "@/lib/discount-type";
+import { getI18n, type AppLanguage } from "@/lib/i18n/core";
 
 export type PromoDisplayContext = {
   userLevelPct: number;
   isPremium?: boolean;
+  language?: AppLanguage;
 };
 
 import { assignPromoAccents, type PromoAccent } from "./promoAccentPalette";
@@ -137,8 +139,41 @@ function formatExceptoBadge(unavailable: number[]): string {
  * | Except Tuesday  | Excepto martes     |
  * | Except Tue+Wed  | Excepto mar y mié  |
  */
-export function formatDiscountScheduleBadge(discount: Discount): string {
+export function formatDiscountScheduleBadge(
+  discount: Discount,
+  language: AppLanguage = "es"
+): string {
   const { available, unavailable } = resolveScheduleDaySets(discount);
+  if (language === "en") {
+    const t = getI18n(language).getFixedT(language);
+    const dayName = (index: number, weekday: "long" | "short" = "short") =>
+      new Intl.DateTimeFormat("en-US", { weekday, timeZone: "UTC" }).format(
+        new Date(Date.UTC(2024, 0, index + 1))
+      );
+    if (unavailable.length === 0) {
+      return t("ui.every_day");
+    }
+    if (isSameDaySet(available, MON_FRI_INDICES)) {
+      return t("ui.weekday_range");
+    }
+    if (isSameDaySet(available, WEEKEND_INDICES)) {
+      return t("ui.weekends");
+    }
+    if (available.length === 1) {
+      return t("ui.only_day", { day: dayName(available[0]!, "long") });
+    }
+    if (unavailable.length <= MAX_EXCEPTO_DAYS) {
+      return t("ui.except_days", {
+        days: unavailable.map((d) => dayName(d)).join(", "),
+      });
+    }
+    if (isConsecutiveDays(available) && available.length >= 2) {
+      return `${dayName(available[0]!)}–${dayName(available[available.length - 1]!)}`;
+    }
+    return (
+      available.map((d) => dayName(d)).join(" · ") || t("ui.limited_hours")
+    );
+  }
 
   if (unavailable.length === 0) {
     return "Todos los días";
@@ -290,7 +325,10 @@ export function buildPromoSlideFromDiscount(
   context?: PromoDisplayContext
 ): DiscountPromoSlide {
   const mode = inferDiscountPromoDisplayMode(discount);
-  const scheduleBadge = formatDiscountScheduleBadge(discount);
+  const scheduleBadge = formatDiscountScheduleBadge(
+    discount,
+    context?.language
+  );
   const promoLabel = getLabel(discount);
   const stub = splitStubLabels(discount, promoLabel, context);
   const displayValue = context

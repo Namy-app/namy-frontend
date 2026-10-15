@@ -1,21 +1,28 @@
+"use client";
+
 import { Star, MapPin, Clock } from "lucide-react";
 import Image from "next/image";
 
 import { StoreNavLink } from "@/components/StoreNavLink";
 import type { Store } from "@/lib/api-types";
+import {
+  useAppTranslation,
+  getAppTranslator,
+} from "@/lib/i18n/useAppTranslation";
 import { Card } from "@/shared/components/Card";
 
 import type { Restaurant } from "../type";
 
 function storeCategoryLabel(type?: Store["type"]): string {
+  const t = getAppTranslator();
   if (type === "RESTAURANT") {
-    return "Restaurante";
+    return t("ui.restaurant");
   }
   if (type === "SERVICE") {
-    return "Servicio";
+    return t("ui.service");
   }
   if (type === "PRODUCT") {
-    return "Tienda";
+    return t("ui.store");
   }
   return "Restaurant";
 }
@@ -29,6 +36,7 @@ export const RestaurantCard = ({
   store: Store;
   distance?: number;
 }) => {
+  const { t } = useAppTranslation();
   const restaurant: Restaurant = {
     id: store.id,
     slug: store.id,
@@ -51,14 +59,14 @@ export const RestaurantCard = ({
         return (
           <div className="absolute top-3 left-3 bg-green-500 text-white px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1">
             <Clock className="w-3 h-3" />
-            Disponible
+            {t("ui.available")}
           </div>
         );
       case "soon":
         return (
           <div className="absolute top-3 left-3 bg-yellow-500 text-white px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1">
             <Clock className="w-3 h-3" />
-            En {restaurant.availabilityText}
+            {t("ui.in_time")} {restaurant.availabilityText}
           </div>
         );
       default:
