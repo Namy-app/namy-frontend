@@ -404,6 +404,8 @@ export interface CouponsResponse {
 }
 
 export interface CouponFiltersInput {
+  partnerId?: string;
+  partnerOnly?: boolean;
   storeId?: string;
   storeIds?: string[];
   userId?: string;

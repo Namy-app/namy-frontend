@@ -18,6 +18,7 @@ import { RestrictionModal } from "@/domains/coupons/RestrictionModal";
 import { useMyPrizes } from "@/domains/gamification/hooks";
 import { BasicLayout } from "@/layouts/BasicLayout";
 import { analytics } from "@/lib/analytics";
+import { trackPartnerJourney } from "@/lib/analytics/trackPartnerJourney";
 import type { UserPrize } from "@/lib/api-types";
 import { CouponDecoder, type DecodedCouponData } from "@/lib/coupon-decoder";
 import { resolveCouponDisplayLabel } from "@/lib/discount-type";
@@ -435,6 +436,10 @@ function MyCouponsContent(): React.JSX.Element {
   const handleViewQR = async (coupon: Coupon): Promise<void> => {
     const storeId = coupon.storeId ?? coupon.store?.id;
     analytics.track("coupon_qr_viewed", {
+      coupon_id: coupon.id,
+      ...(storeId ? { store_id: storeId } : {}),
+    });
+    trackPartnerJourney("coupon_qr_viewed", {
       coupon_id: coupon.id,
       ...(storeId ? { store_id: storeId } : {}),
     });

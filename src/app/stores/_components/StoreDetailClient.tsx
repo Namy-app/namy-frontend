@@ -49,6 +49,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useDiscountCountdown } from "@/hooks/useDiscountCountdown";
 import { BasicLayout } from "@/layouts/BasicLayout";
 import { analytics } from "@/lib/analytics";
+import { trackPartnerJourney } from "@/lib/analytics/trackPartnerJourney";
 import {
   CAPACITOR_DYNAMIC_NAV_EVENT,
   resolveCapacitorDynamicId,
@@ -697,6 +698,10 @@ export default function StoreDetailClient(): React.JSX.Element {
       });
 
       if (data?.generateCoupon) {
+        trackPartnerJourney("coupon_generated", {
+          store_id: data.generateCoupon.store?.id ?? storeId,
+          discount_id: discountId,
+        });
         analytics.track("coupon_generated", {
           store_id: data.generateCoupon.store?.id ?? storeId,
           discount_id: discountId,
