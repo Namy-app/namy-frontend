@@ -254,15 +254,17 @@ function MyCouponsContent(): React.JSX.Element {
 
   const { data: myPrizes = [] } = useMyPrizes();
 
-  const selectedIsPrize = Boolean(
-    selectedCoupon &&
-    myPrizes.some(
-      (p) =>
-        p.coupon?.id === selectedCoupon.id ||
-        p.couponCode === selectedCoupon.code ||
-        p.coupon?.code === selectedCoupon.code
-    )
-  );
+  const selectedIsPrize =
+    !isPartnerMode &&
+    Boolean(
+      selectedCoupon &&
+      myPrizes.some(
+        (p) =>
+          p.coupon?.id === selectedCoupon.id ||
+          p.couponCode === selectedCoupon.code ||
+          p.coupon?.code === selectedCoupon.code
+      )
+    );
   const supportWhatsApp = env.NEXT_PUBLIC_SUPPORT_WHATSAPP?.replace(/\D/g, "");
   const prizeSupportUrl =
     selectedIsPrize && supportWhatsApp
@@ -271,12 +273,12 @@ function MyCouponsContent(): React.JSX.Element {
         )}`
       : null;
 
-  // Filter coupons based on active tab (hide prize-backed coupons — shown above)
+  // Normal Namy shows prize coupons separately; partners need them in this list.
   const prizeCouponIds = new Set(
     myPrizes.map((p) => p.coupon?.id).filter((id): id is string => !!id)
   );
   const filteredCoupons = coupons.filter((coupon) => {
-    if (prizeCouponIds.has(coupon.id)) {
+    if (!isPartnerMode && prizeCouponIds.has(coupon.id)) {
       return false;
     }
     if (activeFilter === "all") {
@@ -506,7 +508,7 @@ function MyCouponsContent(): React.JSX.Element {
           />
         ) : null}
 
-        {coupons.length === 0 && myPrizes.length === 0 ? (
+        {coupons.length === 0 && (isPartnerMode || myPrizes.length === 0) ? (
           <div className="pt-14 flex items-center justify-center p-8 min-h-[60vh]">
             <div className="text-center">
               <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center mx-auto mb-6">

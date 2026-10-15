@@ -1446,16 +1446,18 @@ export default function StoreDetailClient(): React.JSX.Element {
       />
 
       {/* Video Ads Modal */}
-      <VideoAdsModal
-        isOpen={showVideoAdsModal}
-        onClose={() => setShowVideoAdsModal(false)}
-        onSuccess={(_couponCode) => {
-          setShowVideoAdsModal(false);
-          setShowSuccess(true);
-          navigateToCouponsWithDelay();
-        }}
-        discountId={selectedDiscount?.id || ""}
-      />
+      {!partner?.adsDisabled ? (
+        <VideoAdsModal
+          isOpen={showVideoAdsModal}
+          onClose={() => setShowVideoAdsModal(false)}
+          onSuccess={(_couponCode) => {
+            setShowVideoAdsModal(false);
+            setShowSuccess(true);
+            navigateToCouponsWithDelay();
+          }}
+          discountId={selectedDiscount?.id || ""}
+        />
+      ) : null}
 
       <CongratulationsModal
         isOpen={showCongratulations}
