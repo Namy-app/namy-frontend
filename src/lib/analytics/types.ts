@@ -1,3 +1,5 @@
+import type { PartnerJourneyProperties } from "./partner-journey";
+
 export type AnalyticsPlatform = "web" | "ios" | "android";
 
 export type LogoutReason = "user" | "expiry" | "auth_error";
@@ -18,6 +20,10 @@ export interface IdentifyTraits {
 }
 
 export interface AnalyticsEventMap {
+  partner_session_started: PartnerJourneyProperties;
+  partner_reauth_requested: PartnerJourneyProperties;
+  partner_coupon_generated: PartnerJourneyProperties;
+  partner_coupon_qr_viewed: PartnerJourneyProperties;
   screen_viewed: {
     screen: string;
     path: string;

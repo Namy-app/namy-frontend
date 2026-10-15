@@ -2,6 +2,7 @@
 
 import { useState, useSyncExternalStore } from "react";
 
+import { trackPartnerJourney } from "@/lib/analytics/trackPartnerJourney";
 import { useAppTranslation } from "@/lib/i18n/useAppTranslation";
 import { isInIframe } from "@/lib/partner";
 import { usePartnerStore } from "@/store/usePartnerStore";
@@ -27,6 +28,7 @@ export function PartnerExpired(): React.JSX.Element {
 
   const handleReload = (): void => {
     const { parentOrigin, lastPath } = usePartnerStore.getState();
+    trackPartnerJourney("reauth_requested");
     window.parent.postMessage(
       { type: "namy:reauth", redirect: lastPath || "/explore" },
       parentOrigin || "*"
