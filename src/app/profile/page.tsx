@@ -44,6 +44,7 @@ import { getInitials, getUserLevelTitle } from "@/lib/user.lib";
 import { extractErrorMessage } from "@/lib/utils";
 import CrispProvider from "@/providers/CrispProvider";
 import { useAuthStore } from "@/store/useAuthStore";
+import { useIsPartnerMode, usePartnerStore } from "@/store/usePartnerStore";
 
 const EMOJI_AVATARS = [
   "🐶",
@@ -619,7 +620,7 @@ function AccountMenu({
   );
 }
 
-export default function ProfilePage(): React.JSX.Element | null {
+function NamyProfilePage(): React.JSX.Element | null {
   const router = useRouter();
   const { toast } = useToast();
   const { user, updateUser } = useAuthStore();
@@ -1016,4 +1017,39 @@ export default function ProfilePage(): React.JSX.Element | null {
       </BasicLayout>
     </ProtectedRoute>
   );
+}
+
+function PartnerProfile(): React.JSX.Element {
+  const lang = usePartnerStore((state) => state.lang);
+  const english = lang === "en";
+  return (
+    <ProtectedRoute>
+      <BasicLayout>
+        <main className="mx-auto max-w-xl px-5 pt-20">
+          <h1 className="text-2xl font-bold">
+            {english ? "My coupons" : "Mis cupones"}
+          </h1>
+          <div className="mt-6 grid gap-4">
+            <Link
+              href="/my-coupons?status=active"
+              className="rounded-xl border border-border p-5 text-primary font-semibold"
+            >
+              {english ? "Active coupons" : "Cupones activos"}
+            </Link>
+            <Link
+              href="/my-coupons?status=used"
+              className="rounded-xl border border-border p-5 text-primary font-semibold"
+            >
+              {english ? "Used coupons" : "Cupones usados"}
+            </Link>
+          </div>
+        </main>
+      </BasicLayout>
+    </ProtectedRoute>
+  );
+}
+
+export default function ProfilePage(): React.JSX.Element {
+  const isPartnerMode = useIsPartnerMode();
+  return isPartnerMode ? <PartnerProfile /> : <NamyProfilePage />;
 }

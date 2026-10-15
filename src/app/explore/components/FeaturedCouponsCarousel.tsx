@@ -106,7 +106,7 @@ function FeaturedCouponCard({
           unoptimized
           onLoad={onImageLoad}
         />
-        <div className="absolute bottom-3 left-3 max-w-[calc(100%-1.5rem)] truncate rounded-full bg-[#F1A151] px-2.5 py-1 text-xs font-bold text-white">
+        <div className="absolute bottom-3 left-3 max-w-[calc(100%-1.5rem)] truncate rounded-full bg-[var(--partner-primary,#F1A151)] px-2.5 py-1 text-xs font-bold text-white">
           {discountLabel}
         </div>
         {scheduleBadge !== "Todos los días" ? (

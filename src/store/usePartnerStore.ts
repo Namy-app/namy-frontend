@@ -1,3 +1,4 @@
+import { useSyncExternalStore } from "react";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
@@ -81,6 +82,23 @@ export function useIsPartnerMode(): boolean {
 
 export function usePartnerConfig(): PartnerConfig | null {
   return usePartnerStore((state) => state.partner);
+}
+
+const subscribeHydration = (notify: () => void): (() => void) => {
+  const start = usePartnerStore.persist.onHydrate(notify);
+  const finish = usePartnerStore.persist.onFinishHydration(notify);
+  return () => {
+    start();
+    finish();
+  };
+};
+
+export function usePartnerHydrated(): boolean {
+  return useSyncExternalStore(
+    subscribeHydration,
+    usePartnerStore.persist.hasHydrated,
+    () => false
+  );
 }
 
 if (typeof window !== "undefined") {

@@ -8,12 +8,13 @@ import {
   CouponAnimationPreloader,
   CouponGenerationAnimation,
 } from "@/components/CouponGenerationAnimation";
+import { PartnerAdRouteGuard } from "@/components/partner/PartnerAdRouteGuard";
 import { VideoPlayer } from "@/components/VideoPlayer";
 import { useExchangeUnlock } from "@/domains/ads/hooks/mutation/useExchangeUnlock";
 import { useGetVideoAdPair, useWatchVideoAd } from "@/domains/video-ads";
 import type { VideoAd } from "@/domains/video-ads/types";
 
-export default function UnlockCouponVideoAdsPage() {
+function UnlockCouponVideoAdsPageContent() {
   return (
     <Suspense
       fallback={
@@ -301,5 +302,13 @@ function UnlockCouponContent() {
         ) : null}
       </div>
     </div>
+  );
+}
+
+export default function UnlockCouponVideoAdsPage(): React.JSX.Element {
+  return (
+    <PartnerAdRouteGuard>
+      <UnlockCouponVideoAdsPageContent />
+    </PartnerAdRouteGuard>
   );
 }

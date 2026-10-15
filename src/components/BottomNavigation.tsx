@@ -3,6 +3,7 @@
 import { useRouter, usePathname } from "next/navigation";
 
 import { useAuthStore } from "@/store/useAuthStore";
+import { useIsPartnerMode } from "@/store/usePartnerStore";
 
 const ExploreIcon = () => (
   <svg
@@ -103,10 +104,15 @@ interface NavItem {
   requiresAuth?: boolean;
 }
 
-export function BottomNavigation(): React.JSX.Element {
+export function BottomNavigation(): React.JSX.Element | null {
   const router = useRouter();
   const pathname = usePathname();
   const { isAuthenticated } = useAuthStore();
+  const isPartnerMode = useIsPartnerMode();
+
+  if (isPartnerMode) {
+    return null;
+  }
 
   const navItems: NavItem[] = [
     { label: "Explorar", path: "/explore", icon: <ExploreIcon /> },

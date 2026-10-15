@@ -21,6 +21,7 @@ import {
 } from "@/lib/promo-storage";
 import { syncLatestNovuPromo } from "@/lib/push-handler";
 import { useAuthStore } from "@/store/useAuthStore";
+import { useIsPartnerMode, usePartnerHydrated } from "@/store/usePartnerStore";
 import { recoverPendingPromo, usePromoStore } from "@/store/usePromoStore";
 
 function PromoSyncBootstrap({ userId }: { userId: string | undefined }): null {
@@ -152,6 +153,12 @@ export function PromoProvider({
 }): React.JSX.Element {
   const userId = useAuthStore((s) => s.user?.id);
   const appId = env.NEXT_PUBLIC_NOVU_APPLICATION_IDENTIFIER;
+  const isPartnerMode = useIsPartnerMode();
+  const partnerHydrated = usePartnerHydrated();
+
+  if (!partnerHydrated || isPartnerMode) {
+    return <>{children}</>;
+  }
 
   if (!userId || !appId) {
     return (

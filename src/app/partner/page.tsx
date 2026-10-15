@@ -1,5 +1,6 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
 
@@ -97,6 +98,7 @@ function PartnerEntryPending(): React.JSX.Element {
 }
 
 function PartnerEntryContent(): React.JSX.Element {
+  const queryClient = useQueryClient();
   const searchParams = useSearchParams();
   const router = useRouter();
   const exchangeStartedRef = useRef<string | null>(null);
@@ -158,14 +160,16 @@ function PartnerEntryContent(): React.JSX.Element {
         if (!active) {
           return;
         }
+        // Queries from a previous normal/partner session must not survive SSO.
+        queryClient.clear();
+        usePartnerStore
+          .getState()
+          .setPartner(payload.partner, pending.lang, readParentOrigin());
         useAuthStore
           .getState()
           .setAuth(payload.user, payload.accessToken, false, {
             partner: true,
           });
-        usePartnerStore
-          .getState()
-          .setPartner(payload.partner, pending.lang, readParentOrigin());
         router.replace(pending.redirect);
       })
       .catch(() => {
@@ -178,7 +182,14 @@ function PartnerEntryContent(): React.JSX.Element {
     return () => {
       active = false;
     };
-  }, [entry.code, entry.lang, entry.redirect, missingCode, router]);
+  }, [
+    entry.code,
+    entry.lang,
+    entry.redirect,
+    missingCode,
+    queryClient,
+    router,
+  ]);
 
   if (missingCode || exchangeFailed) {
     return <PartnerExpired />;
