@@ -314,6 +314,7 @@ export const GET_STORE_DISCOUNTS = gql`
         customText
         imageUrl
         isPromoted
+        partnerId
         createdAt
         updatedAt
       }
@@ -352,6 +353,7 @@ export const CREATE_DISCOUNT = gql`
       customText
       imageUrl
       isPromoted
+      partnerId
       createdAt
       updatedAt
     }
@@ -381,8 +383,58 @@ export const UPDATE_DISCOUNT = gql`
       customText
       imageUrl
       isPromoted
+      partnerId
       createdAt
       updatedAt
+    }
+  }
+`;
+
+export const ADMIN_PARTNERS_QUERY = gql`
+  query AdminPartners {
+    adminPartners {
+      id
+      slug
+      name
+      active
+    }
+  }
+`;
+
+export const STORE_PARTNER_SETTINGS_QUERY = gql`
+  query StorePartnerSettings($storeId: String!) {
+    storePartnerSettings(storeId: $storeId) {
+      storeId
+      exclusivePartnerId
+      hiddenForPartnerIds
+    }
+  }
+`;
+
+export const SET_STORE_EXCLUSIVE_PARTNER = gql`
+  mutation SetStoreExclusivePartner($storeId: String!, $partnerId: String) {
+    setStoreExclusivePartner(storeId: $storeId, partnerId: $partnerId) {
+      storeId
+      exclusivePartnerId
+      hiddenForPartnerIds
+    }
+  }
+`;
+
+export const SET_STORE_HIDDEN_FOR_PARTNER = gql`
+  mutation SetStoreHiddenForPartner(
+    $storeId: String!
+    $partnerId: String!
+    $hidden: Boolean!
+  ) {
+    setStoreHiddenForPartner(
+      storeId: $storeId
+      partnerId: $partnerId
+      hidden: $hidden
+    ) {
+      storeId
+      exclusivePartnerId
+      hiddenForPartnerIds
     }
   }
 `;
