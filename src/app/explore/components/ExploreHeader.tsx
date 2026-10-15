@@ -18,6 +18,7 @@ import { useState, useRef, useEffect } from "react";
 import { analytics } from "@/lib/analytics";
 import { navigateTo } from "@/lib/capacitor-navigate";
 import { env } from "@/lib/env";
+import { useAppTranslation } from "@/lib/i18n/useAppTranslation";
 import {
   isPromoActive,
   isPromoNotificationData,
@@ -25,7 +26,7 @@ import {
   surfacePromo,
 } from "@/lib/promo-storage";
 import { useAuthStore } from "@/store/useAuthStore";
-import { usePartnerConfig, usePartnerStore } from "@/store/usePartnerStore";
+import { usePartnerConfig } from "@/store/usePartnerStore";
 
 interface ExploreHeaderProps {
   isAuthenticated: boolean;
@@ -36,7 +37,7 @@ export function ExploreHeader({
 }: ExploreHeaderProps): React.JSX.Element {
   const router = useRouter();
   const partner = usePartnerConfig();
-  const lang = usePartnerStore((state) => state.lang);
+  const { t } = useAppTranslation();
   const { user, clearAuth } = useAuthStore();
 
   const handleNotificationClick = (notification: {
@@ -110,7 +111,6 @@ export function ExploreHeader({
   };
 
   if (partner) {
-    const english = lang === "en";
     return (
       <header
         className="fixed top-0 left-0 right-0 z-20 bg-white/85 backdrop-blur-sm shadow-sm"
@@ -119,12 +119,12 @@ export function ExploreHeader({
         }}
       >
         <nav
-          aria-label={english ? "Partner navigation" : "Navegación del socio"}
+          aria-label={t("ui.partner_navigation")}
           className="mx-auto flex h-14 max-w-5xl items-center justify-between gap-3 px-4"
         >
           <Link
             href="/explore"
-            aria-label={english ? "Explore" : "Explorar"}
+            aria-label={t("ui.explore")}
             className="min-w-0 truncate text-primary font-semibold"
           >
             {partner.branding.logoUrl ? (
@@ -140,11 +140,9 @@ export function ExploreHeader({
             )}
           </Link>
           <div className="flex shrink-0 items-center gap-3 text-xs sm:text-sm font-medium text-primary">
-            <Link href="/explore">{english ? "Explore" : "Explorar"}</Link>
-            <Link href="/my-coupons">
-              {english ? "My coupons" : "Mis cupones"}
-            </Link>
-            <Link href="/profile">{english ? "Profile" : "Perfil"}</Link>
+            <Link href="/explore">{t("ui.explore")}</Link>
+            <Link href="/my-coupons">{t("ui.my_coupons_partner")}</Link>
+            <Link href="/profile">{t("ui.profile")}</Link>
           </div>
         </nav>
       </header>

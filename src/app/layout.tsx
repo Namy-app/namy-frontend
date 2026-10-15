@@ -8,6 +8,7 @@ import { CapacitorSafeArea } from "@/components/CapacitorSafeArea";
 import { GoogleAdsense } from "@/components/GoogleAdsense";
 import { GoogleMapsProviderClient } from "@/components/GoogleMapsProviderClient";
 import { KeyboardScrollFix } from "@/components/KeyboardScrollFix";
+import { PartnerLanguage } from "@/components/partner/PartnerLanguage";
 import { PartnerRouteGuard } from "@/components/partner/PartnerRouteGuard";
 import { PartnerTheme } from "@/components/partner/PartnerTheme";
 import { PromoProvider } from "@/components/PromoProvider";
@@ -89,6 +90,7 @@ export default function RootLayout({
             <PromoProvider>
               <PartnerRouteGuard />
               <PartnerTheme />
+              <PartnerLanguage />
               <PushNotificationProvider />
               <div id="app-shell" className="app-shell">
                 <GoogleMapsProviderClient>{children}</GoogleMapsProviderClient>

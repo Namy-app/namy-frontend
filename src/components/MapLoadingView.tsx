@@ -1,3 +1,7 @@
+"use client";
+
+import { useAppTranslation } from "@/lib/i18n/useAppTranslation";
+
 interface MapLoadingViewProps {
   message?: string;
   className?: string;
@@ -7,6 +11,7 @@ export function MapLoadingView({
   message = "Loading map…",
   className = "",
 }: MapLoadingViewProps) {
+  const { t } = useAppTranslation();
   return (
     <div
       role="status"
@@ -17,7 +22,9 @@ export function MapLoadingView({
         className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent"
         aria-hidden
       />
-      <p className="text-sm text-muted-foreground">{message}</p>
+      <p className="text-sm text-muted-foreground">
+        {message === "Loading map…" ? t("ui.map_loading") : message}
+      </p>
     </div>
   );
 }

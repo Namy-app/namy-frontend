@@ -1,8 +1,7 @@
 "use client";
-
 import { X, DollarSign, AlertCircle, Info } from "lucide-react";
 
-import { DAYS_OF_WEEK_BY_INDEX } from "@/data/constants";
+import { useAppTranslation } from "@/lib/i18n/useAppTranslation";
 
 import type { AvailableDay, AvailableDaysAndTimes } from "../admin";
 
@@ -30,6 +29,8 @@ export function RestrictionModal({
   discountTitle,
   restrictions,
 }: RestrictionModalProps) {
+  const { t } = useAppTranslation();
+
   if (!isOpen) {
     return null;
   }
@@ -85,7 +86,9 @@ export function RestrictionModal({
         {/* Header */}
         <div className="sticky top-0 bg-gradient-primary text-white p-6 flex items-start justify-between">
           <div className="flex-1">
-            <h2 className="text-2xl font-bold mb-1">Restricciones del Cupón</h2>
+            <h2 className="text-2xl font-bold mb-1">
+              {t("ui.coupon_restrictions")}
+            </h2>
             <p className="text-sm opacity-90">{storeName}</p>
             <p className="text-xs opacity-75 mt-1">{discountTitle}</p>
           </div>
@@ -106,11 +109,12 @@ export function RestrictionModal({
                 <Info className="w-8 h-8 text-green-600" />
               </div>
               <h3 className="text-lg font-semibold text-foreground mb-2">
-                Sin Restricciones
+                {t("ui.no_restrictions")}
               </h3>
               <p className="text-sm text-muted-foreground">
-                Este cupón se puede usar en cualquier momento sin condiciones
-                especiales.
+                {t(
+                  "ui.this_coupon_can_be_used_at_any_time_without_special_conditions"
+                )}
               </p>
             </div>
           ) : (
@@ -122,7 +126,7 @@ export function RestrictionModal({
                     <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
                     <div>
                       <h3 className="text-sm font-semibold text-amber-900 mb-2">
-                        Restricciones de Uso
+                        {t("ui.usage_restrictions")}
                       </h3>
                       <p className="text-sm text-amber-700">
                         {discountRestrictions}
@@ -149,10 +153,22 @@ export function RestrictionModal({
                             <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
                             <div>
                               <h3 className="text-sm font-semibold text-amber-900 mb-2">
-                                Válido en {DAYS_OF_WEEK_BY_INDEX[dayIndex]}
+                                {t("ui.valid_on")}{" "}
+                                {t(
+                                  "ui." +
+                                    [
+                                      "monday",
+                                      "tuesday",
+                                      "wednesday",
+                                      "thursday",
+                                      "friday",
+                                      "saturday",
+                                      "sunday",
+                                    ][dayIndex]
+                                )}
                               </h3>
                               <p className="text-sm text-amber-700">
-                                A las {getTimesOfDay(dayIndex) || "--"}
+                                {t("ui.at")} {getTimesOfDay(dayIndex) || "--"}
                               </p>
                             </div>
                           </div>
@@ -170,7 +186,7 @@ export function RestrictionModal({
                     <Info className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
                     <div>
                       <h3 className="text-sm font-semibold text-blue-900 mb-2">
-                        Requisitos de la Tienda
+                        {t("ui.store_requirements")}
                       </h3>
                       <p className="text-sm text-blue-700 whitespace-pre-wrap">
                         {storeRestrictions}
@@ -188,10 +204,10 @@ export function RestrictionModal({
                     <DollarSign className="w-5 h-5 text-gray-600 shrink-0 mt-0.5" />
                     <div>
                       <p className="text-sm font-medium text-foreground">
-                        Compra Mínima
+                        {t("ui.minimum_purchase")}
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        Se requiere un gasto mínimo de $
+                        {t("ui.minimum_spend_required")}
                         {minPurchaseAmount.toFixed(2)}
                       </p>
                     </div>
@@ -204,11 +220,11 @@ export function RestrictionModal({
                     <DollarSign className="w-5 h-5 text-gray-600 shrink-0 mt-0.5" />
                     <div>
                       <p className="text-sm font-medium text-foreground">
-                        Descuento Máximo
+                        {t("ui.maximum_discount")}
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        Hasta ${maxDiscountAmount.toFixed(2)} de límite de
-                        descuento
+                        {t("ui.up_to")}
+                        {maxDiscountAmount.toFixed(2)} {t("ui.discount_limit")}
                       </p>
                     </div>
                   </div>
@@ -221,7 +237,7 @@ export function RestrictionModal({
                       <Info className="w-5 h-5 text-gray-600 shrink-0 mt-0.5" />
                       <div>
                         <h3 className="text-sm font-semibold text-gray-900 mb-2">
-                          Restricciones Adicionales
+                          {t("ui.additional_restrictions")}
                         </h3>
                         {additionalRestrictions.map((restriction, index) => (
                           <p key={index} className="text-sm text-gray-700">
@@ -243,7 +259,7 @@ export function RestrictionModal({
             onClick={onClose}
             className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-semibold hover:shadow-glow transition-all"
           >
-            Entendido
+            {t("ui.got_it")}
           </button>
         </div>
       </div>
