@@ -311,6 +311,7 @@ export interface Discount {
   customText?: string | null;
   imageUrl?: string | null;
   isPromoted?: boolean;
+  partnerId?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -342,6 +343,7 @@ export interface CreateDiscountInput {
   customText?: string;
   imageUrl?: string;
   isPromoted?: boolean;
+  partnerId?: string | null;
   id?: string;
 }
 
@@ -366,6 +368,20 @@ export interface UpdateDiscountInput {
   customText?: string;
   imageUrl?: string;
   isPromoted?: boolean;
+  partnerId?: string | null;
+}
+
+export interface AdminPartner {
+  id: string;
+  slug: string;
+  name: string;
+  active: boolean;
+}
+
+export interface StorePartnerSettings {
+  storeId: string;
+  exclusivePartnerId: string | null;
+  hiddenForPartnerIds: string[];
 }
 
 export interface DiscountFiltersInput {

@@ -28,6 +28,10 @@ import {
   CREATE_DISCOUNT,
   UPDATE_DISCOUNT,
   DELETE_DISCOUNT,
+  ADMIN_PARTNERS_QUERY,
+  STORE_PARTNER_SETTINGS_QUERY,
+  SET_STORE_EXCLUSIVE_PARTNER,
+  SET_STORE_HIDDEN_FOR_PARTNER,
   GET_STORE_DISCOUNTS,
   GET_STORE_COUPONS,
   GET_USERS,
@@ -75,6 +79,8 @@ import {
   type DiscountsResponse,
   type CreateDiscountInput,
   type UpdateDiscountInput,
+  type AdminPartner,
+  type StorePartnerSettings,
   type DiscountFiltersInput,
   type CouponsResponse,
   type CouponFiltersInput,
@@ -399,6 +405,80 @@ export function useStoreDiscounts(
     },
     enabled: options?.enabled !== false,
     staleTime: options?.staleTime,
+  });
+}
+
+export function useAdminPartners() {
+  return useQuery<AdminPartner[]>({
+    queryKey: ["adminPartners"],
+    queryFn: async () => {
+      const data = await graphqlClient.request<{
+        adminPartners: AdminPartner[];
+      }>(ADMIN_PARTNERS_QUERY);
+      return data.adminPartners;
+    },
+  });
+}
+
+export function useStorePartnerSettings(storeId: string) {
+  return useQuery<StorePartnerSettings | null>({
+    queryKey: ["storePartnerSettings", storeId],
+    queryFn: async () => {
+      const data = await graphqlClient.request<{
+        storePartnerSettings: StorePartnerSettings | null;
+      }>(STORE_PARTNER_SETTINGS_QUERY, { storeId });
+      return data.storePartnerSettings;
+    },
+    enabled: Boolean(storeId),
+  });
+}
+
+function useRefreshStorePartnerSettings() {
+  const queryClient = useQueryClient();
+  return async (storeId: string): Promise<void> => {
+    await queryClient.invalidateQueries({
+      queryKey: ["storePartnerSettings", storeId],
+    });
+  };
+}
+
+export function useSetStoreExclusivePartner() {
+  const refresh = useRefreshStorePartnerSettings();
+
+  return useMutation<
+    StorePartnerSettings,
+    Error,
+    { storeId: string; partnerId: string | null }
+  >({
+    mutationFn: async ({ storeId, partnerId }) => {
+      const data = await graphqlClient.request<{
+        setStoreExclusivePartner: StorePartnerSettings;
+      }>(SET_STORE_EXCLUSIVE_PARTNER, { storeId, partnerId });
+      return data.setStoreExclusivePartner;
+    },
+    onSuccess: async (_settings, variables) => {
+      await refresh(variables.storeId);
+    },
+  });
+}
+
+export function useSetStoreHiddenForPartner() {
+  const refresh = useRefreshStorePartnerSettings();
+
+  return useMutation<
+    StorePartnerSettings,
+    Error,
+    { storeId: string; partnerId: string; hidden: boolean }
+  >({
+    mutationFn: async ({ storeId, partnerId, hidden }) => {
+      const data = await graphqlClient.request<{
+        setStoreHiddenForPartner: StorePartnerSettings;
+      }>(SET_STORE_HIDDEN_FOR_PARTNER, { storeId, partnerId, hidden });
+      return data.setStoreHiddenForPartner;
+    },
+    onSuccess: async (_settings, variables) => {
+      await refresh(variables.storeId);
+    },
   });
 }
 
