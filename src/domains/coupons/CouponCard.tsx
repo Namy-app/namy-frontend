@@ -11,6 +11,7 @@ import {
   getMsUntilExpiry,
 } from "@/domains/coupon/formatExpiryCountdown";
 import type { CouponItem } from "@/domains/coupon/type";
+import { useIsPartnerMode } from "@/store/usePartnerStore";
 
 type Props = {
   coupon: CouponItem;
@@ -41,6 +42,7 @@ export default function CouponCard({
   promoLabel,
   onViewQr,
 }: Props): React.JSX.Element {
+  const isPartnerMode = useIsPartnerMode();
   const displayLabel = promoLabel.trim() || "Promoción Especial";
   const isCompactLabel = displayLabel.length > 12;
   const [countdown, setCountdown] = useState<string | null>(null);
@@ -87,7 +89,9 @@ export default function CouponCard({
   const isRedeemed = status === "redeemed";
 
   const bgClass = isActive
-    ? `bg-gradient-to-r ${getGradient(coupon.code)}`
+    ? isPartnerMode
+      ? "bg-gradient-primary"
+      : `bg-gradient-to-r ${getGradient(coupon.code)}`
     : "bg-gradient-to-r from-gray-400 to-gray-500";
 
   const storeImage = (coupon as { store?: { imageUrl?: string | null } }).store

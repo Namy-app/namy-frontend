@@ -5,6 +5,7 @@ import Image from "next/image";
 
 import { useInfinitePeekCarousel } from "@/hooks/useInfinitePeekCarousel";
 import { Button } from "@/shared/components/Button";
+import { usePartnerConfig } from "@/store/usePartnerStore";
 
 import type { DiscountPromoSlide } from "../utils/discountPromoDisplay";
 import {
@@ -56,6 +57,7 @@ function PromoUnlockRow({
   unlock: UnlockState;
   theme: PromoAccentTheme;
 }): React.JSX.Element {
+  const partner = usePartnerConfig();
   if (unlock.isLoading) {
     return (
       <div className="flex items-center justify-center py-2">
@@ -91,9 +93,13 @@ function PromoUnlockRow({
         {unlock.isPremium ? "Desbloquear oferta ahora" : "Desbloquear oferta"}
       </button>
       <p className="mt-1.5 text-center text-xs text-stone-500">
-        {unlock.isPremium
-          ? "Acceso premium instantáneo"
-          : "Ver anuncio • Es gratis"}
+        {partner
+          ? partner.adsDisabled
+            ? "Sin anuncios"
+            : "Ver anuncio • Es gratis"
+          : unlock.isPremium
+            ? "Acceso premium instantáneo"
+            : "Ver anuncio • Es gratis"}
       </p>
     </div>
   );
@@ -112,7 +118,19 @@ function TicketPromoCard({
   unlock: UnlockState;
   onLayout?: () => void;
 }): React.JSX.Element {
-  const theme = getPromoAccentTheme(slide.accent);
+  const partner = usePartnerConfig();
+  const theme: PromoAccentTheme = partner
+    ? {
+        ...getPromoAccentTheme(slide.accent),
+        panel: "bg-secondary",
+        stub: "bg-primary",
+        scallop: "bg-secondary",
+        badge: "bg-primary/10 text-primary",
+        accentText: "text-primary",
+        unlockBtn: "bg-primary text-primary-foreground hover:opacity-90",
+        dot: "bg-primary",
+      }
+    : getPromoAccentTheme(slide.accent);
   const showGiftIcon =
     slide.mode === "text" &&
     !slide.stubSecondary &&
@@ -326,7 +344,7 @@ export function DiscountPromoCarousel({
                   />
                 ))}
               </div>
-              <p className="text-xs font-bold text-[#F1A151]">
+              <p className="text-xs font-bold text-[var(--partner-primary,#F1A151)]">
                 {realIndex + 1}/{slides.length}{" "}
                 {slides.length === 1 ? "cupón" : "cupones"}
               </p>

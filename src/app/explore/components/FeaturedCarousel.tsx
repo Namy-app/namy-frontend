@@ -51,7 +51,7 @@ function FeaturedStoreCard({
             onLoad={onImageLoad}
           />
         )}
-        <div className="absolute bottom-3 left-3 rounded-full bg-[#F1A151] px-2.5 py-1 text-xs font-bold text-white">
+        <div className="absolute bottom-3 left-3 rounded-full bg-[var(--partner-primary,#F1A151)] px-2.5 py-1 text-xs font-bold text-white">
           {discountPercentage}%
         </div>
         {store.averageRating != null ? (
@@ -61,8 +61,8 @@ function FeaturedStoreCard({
               width="12"
               height="12"
               viewBox="0 0 24 24"
-              fill="#F1A151"
-              stroke="#F1A151"
+              fill="var(--partner-primary, #F1A151)"
+              stroke="var(--partner-primary, #F1A151)"
               strokeWidth="1"
             >
               <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
@@ -146,7 +146,7 @@ export function FeaturedCarousel({
           </h2>
           <Link
             href="/restaurants"
-            className="text-sm font-semibold text-[#F1A151] hover:underline"
+            className="text-sm font-semibold text-[var(--partner-primary,#F1A151)] hover:underline"
           >
             Ver todos
           </Link>

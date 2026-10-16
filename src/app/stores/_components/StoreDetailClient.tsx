@@ -73,6 +73,7 @@ import { openInGoogleMaps } from "@/lib/maps";
 import { Button } from "@/shared/components/Button";
 import { Card } from "@/shared/components/Card";
 import { useAuthStore } from "@/store/useAuthStore";
+import { usePartnerConfig } from "@/store/usePartnerStore";
 
 // Mapping for Spanish day labels
 const DAY_LABELS: Record<string, string> = {
@@ -105,6 +106,7 @@ const reviewPts = getDefaultChallenge("reviews")?.points ?? 40;
 
 export default function StoreDetailClient(): React.JSX.Element {
   const router = useRouter();
+  const partner = usePartnerConfig();
   const params = useParams();
   const searchParams = useSearchParams();
   const { isAuthenticated, user, accessToken } = useAuthStore();
@@ -531,8 +533,8 @@ export default function StoreDetailClient(): React.JSX.Element {
       is_premium: Boolean(user?.isPremium),
     });
 
-    // If user is premium, directly unlock discount
-    if (user?.isPremium) {
+    // Premium and ad-free partner sessions generate directly.
+    if (user?.isPremium || partner?.adsDisabled) {
       void handleUnlockDiscount();
     } else {
       // Show modal for free users
@@ -550,6 +552,10 @@ export default function StoreDetailClient(): React.JSX.Element {
     }
 
     setShowUnlockModal(false);
+    if (partner?.adsDisabled) {
+      void handleUnlockDiscount();
+      return;
+    }
     // Show video ads modal
     setShowVideoAdsModal(true);
   };
@@ -691,7 +697,7 @@ export default function StoreDetailClient(): React.JSX.Element {
         analytics.track("coupon_generated", {
           store_id: data.generateCoupon.store?.id ?? storeId,
           discount_id: discountId,
-          method: "premium",
+          method: partner?.adsDisabled ? "partner" : "premium",
         });
         // Ensure coupons cache is refreshed so UI shows the new coupon
         try {
@@ -1068,7 +1074,7 @@ export default function StoreDetailClient(): React.JSX.Element {
                   parsedStore.hoursStructured.length > 0 ? (
                     <>
                       <div className="flex items-start gap-3">
-                        <Clock className="w-5 h-5 text-rose-500 mt-0.5 shrink-0" />
+                        <Clock className="w-5 h-5 text-[var(--partner-primary,#f43f5e)] mt-0.5 shrink-0" />
                         <div className="flex-1">
                           <p className="font-semibold text-foreground mb-3">
                             Horario de Hoy
@@ -1149,12 +1155,12 @@ export default function StoreDetailClient(): React.JSX.Element {
                   {parsedStore.phone.length > 0 ? (
                     <>
                       <div className="flex items-center gap-3">
-                        <Phone className="w-5 h-5 text-rose-500 shrink-0" />
+                        <Phone className="w-5 h-5 text-[var(--partner-primary,#f43f5e)] shrink-0" />
                         <div>
                           <p className="font-semibold text-foreground">Phone</p>
                           <a
                             href={`tel:${parsedStore.phone}`}
-                            className="text-sm text-rose-600 hover:underline"
+                            className="text-sm text-[var(--partner-primary,#e11d48)] hover:underline"
                           >
                             {parsedStore.phone}
                           </a>
@@ -1335,7 +1341,7 @@ export default function StoreDetailClient(): React.JSX.Element {
                               className="w-full flex items-start gap-3 bg-white border border-[#f1e9e6] rounded-2xl px-4 py-3 shadow-sm hover:bg-orange-50 hover:border-orange-200 transition-colors text-left"
                             >
                               {/* Avatar */}
-                              <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-base font-bold text-orange-500 shrink-0">
+                              <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-base font-bold text-[var(--partner-primary,#f97316)] shrink-0">
                                 {initials}
                               </div>
                               {/* Content */}
@@ -1379,7 +1385,7 @@ export default function StoreDetailClient(): React.JSX.Element {
                   ) : (
                     <button
                       onClick={() => setShowReviewModal(true)}
-                      className="w-full bg-rose-400 hover:bg-rose-500 text-white font-bold rounded-2xl py-3 text-sm transition-colors flex items-center justify-center gap-2"
+                      className="w-full bg-[var(--partner-primary,#fb7185)] hover:bg-[var(--partner-primary,#f43f5e)] text-white font-bold rounded-2xl py-3 text-sm transition-colors flex items-center justify-center gap-2"
                     >
                       <span>Escribe tu reseña</span>
                       <span>🍽️</span>
@@ -1399,7 +1405,7 @@ export default function StoreDetailClient(): React.JSX.Element {
                     <span className="text-4xl">🗺️</span>
                   </div>
                   <Button
-                    className="w-full bg-rose-500 hover:bg-rose-600 text-white"
+                    className="w-full bg-[var(--partner-primary,#f43f5e)] hover:bg-[var(--partner-primary,#e11d48)] text-white"
                     onClick={handleGetDirections}
                   >
                     Obtener indicaciones 📍
@@ -1440,16 +1446,18 @@ export default function StoreDetailClient(): React.JSX.Element {
       />
 
       {/* Video Ads Modal */}
-      <VideoAdsModal
-        isOpen={showVideoAdsModal}
-        onClose={() => setShowVideoAdsModal(false)}
-        onSuccess={(_couponCode) => {
-          setShowVideoAdsModal(false);
-          setShowSuccess(true);
-          navigateToCouponsWithDelay();
-        }}
-        discountId={selectedDiscount?.id || ""}
-      />
+      {!partner?.adsDisabled ? (
+        <VideoAdsModal
+          isOpen={showVideoAdsModal}
+          onClose={() => setShowVideoAdsModal(false)}
+          onSuccess={(_couponCode) => {
+            setShowVideoAdsModal(false);
+            setShowSuccess(true);
+            navigateToCouponsWithDelay();
+          }}
+          discountId={selectedDiscount?.id || ""}
+        />
+      ) : null}
 
       <CongratulationsModal
         isOpen={showCongratulations}
@@ -1759,7 +1767,7 @@ export default function StoreDetailClient(): React.JSX.Element {
 
                 {/* Avatar + stars */}
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center text-lg font-bold text-orange-500 shrink-0">
+                  <div className="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center text-lg font-bold text-[var(--partner-primary,#f97316)] shrink-0">
                     {selectedReview.userId.slice(0, 2).toUpperCase()}
                   </div>
                   <div>
@@ -1792,7 +1800,7 @@ export default function StoreDetailClient(): React.JSX.Element {
 
                 <button
                   onClick={() => setSelectedReview(null)}
-                  className="mt-6 w-full py-2.5 bg-rose-400 hover:bg-rose-500 text-white font-bold rounded-xl transition-colors text-sm"
+                  className="mt-6 w-full py-2.5 bg-[var(--partner-primary,#fb7185)] hover:bg-[var(--partner-primary,#f43f5e)] text-white font-bold rounded-xl transition-colors text-sm"
                 >
                   Cerrar
                 </button>
@@ -1891,125 +1899,131 @@ export default function StoreDetailClient(): React.JSX.Element {
                 </div>
 
                 {/* Post to Mural — independent of review */}
-                <div className="mb-3 border border-gray-200 rounded-xl p-3 space-y-2">
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                    Post to City Mural
-                  </p>
-                  {reviewPhotoPreview ? (
-                    <div className="relative w-full rounded-xl overflow-hidden border border-gray-200">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={reviewPhotoPreview}
-                        alt="Preview"
-                        className="w-full object-cover max-h-40"
-                      />
-                      {!!isUploadingPhoto && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-black/40">
-                          <Loader2 className="w-6 h-6 text-white animate-spin" />
-                        </div>
-                      )}
-                      {!isUploadingPhoto && !muralPostDone && (
-                        <button
-                          onClick={() => {
-                            setReviewPhotoUrl(null);
-                            setReviewPhotoPreview(null);
-                            setUploadPhotoError(null);
-                          }}
-                          className="absolute top-2 right-2 bg-black/50 text-white rounded-full p-1"
-                          aria-label="Remove photo"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                      )}
-                    </div>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => reviewPhotoRef.current?.click()}
-                      className="w-full flex items-center justify-center gap-2 border border-dashed border-gray-300 rounded-xl py-3 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
-                    >
-                      <span>📷</span>
-                      Add photo
-                      <span className="text-xs text-rose-400 font-bold">
-                        +{muralPts} pts 📸
-                      </span>
-                    </button>
-                  )}
-                  <input
-                    ref={reviewPhotoRef}
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp"
-                    className="hidden"
-                    onChange={(e) => {
-                      void (async () => {
-                        const file = e.target.files?.[0];
-                        if (!file) {
-                          return;
-                        }
-                        if (
-                          !["image/jpeg", "image/png", "image/webp"].includes(
-                            file.type
-                          )
-                        ) {
-                          setUploadPhotoError(
-                            "Only JPG, PNG, and WebP are allowed."
-                          );
-                          return;
-                        }
-                        if (file.size > 5 * 1024 * 1024) {
-                          setUploadPhotoError("Image must be under 5MB.");
-                          return;
-                        }
-                        setUploadPhotoError(null);
-                        setMuralPostDone(false);
-                        setReviewPhotoPreview(URL.createObjectURL(file));
-                        setIsUploadingPhoto(true);
-                        try {
-                          const apiUrl =
-                            process.env.NEXT_PUBLIC_API_URL ??
-                            "http://localhost:4000/graphql";
-                          const baseUrl = apiUrl.replace("/graphql", "");
-                          const formData = new FormData();
-                          formData.append("file", file);
-                          const res = await fetch(
-                            `${baseUrl}/upload/mural-image`,
-                            {
-                              method: "POST",
-                              headers: {
-                                Authorization: `Bearer ${accessToken}`,
-                                ...(apiUrl.includes("ngrok") && {
-                                  "ngrok-skip-browser-warning": "true",
-                                }),
-                              },
-                              body: formData,
-                            }
-                          );
-                          if (!res.ok) {
-                            throw new Error("Upload failed");
+                {!partner || partner.features.mural === true ? (
+                  <div className="mb-3 border border-gray-200 rounded-xl p-3 space-y-2">
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                      Post to City Mural
+                    </p>
+                    {reviewPhotoPreview ? (
+                      <div className="relative w-full rounded-xl overflow-hidden border border-gray-200">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={reviewPhotoPreview}
+                          alt="Preview"
+                          className="w-full object-cover max-h-40"
+                        />
+                        {!!isUploadingPhoto && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                            <Loader2 className="w-6 h-6 text-white animate-spin" />
+                          </div>
+                        )}
+                        {(!partner || partner.features.mural === true) &&
+                          !isUploadingPhoto &&
+                          !muralPostDone && (
+                            <button
+                              onClick={() => {
+                                setReviewPhotoUrl(null);
+                                setReviewPhotoPreview(null);
+                                setUploadPhotoError(null);
+                              }}
+                              className="absolute top-2 right-2 bg-black/50 text-white rounded-full p-1"
+                              aria-label="Remove photo"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          )}
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => reviewPhotoRef.current?.click()}
+                        className="w-full flex items-center justify-center gap-2 border border-dashed border-gray-300 rounded-xl py-3 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
+                      >
+                        <span>📷</span>
+                        Add photo
+                        <span className="text-xs text-[var(--partner-primary,#fb7185)] font-bold">
+                          +{muralPts} pts 📸
+                        </span>
+                      </button>
+                    )}
+                    <input
+                      ref={reviewPhotoRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      className="hidden"
+                      onChange={(e) => {
+                        void (async () => {
+                          const file = e.target.files?.[0];
+                          if (!file) {
+                            return;
                           }
-                          const json = (await res.json()) as { url: string };
-                          setReviewPhotoUrl(json.url);
-                        } catch {
-                          setUploadPhotoError(
-                            "Failed to upload. Please try again."
-                          );
-                          setReviewPhotoPreview(null);
-                        } finally {
-                          setIsUploadingPhoto(false);
-                        }
-                      })();
-                    }}
-                  />
-                  {!!uploadPhotoError && (
-                    <p className="text-xs text-red-500">{uploadPhotoError}</p>
-                  )}
-                </div>
+                          if (
+                            !["image/jpeg", "image/png", "image/webp"].includes(
+                              file.type
+                            )
+                          ) {
+                            setUploadPhotoError(
+                              "Only JPG, PNG, and WebP are allowed."
+                            );
+                            return;
+                          }
+                          if (file.size > 5 * 1024 * 1024) {
+                            setUploadPhotoError("Image must be under 5MB.");
+                            return;
+                          }
+                          setUploadPhotoError(null);
+                          setMuralPostDone(false);
+                          setReviewPhotoPreview(URL.createObjectURL(file));
+                          setIsUploadingPhoto(true);
+                          try {
+                            const apiUrl =
+                              process.env.NEXT_PUBLIC_API_URL ??
+                              "http://localhost:4000/graphql";
+                            const baseUrl = apiUrl.replace("/graphql", "");
+                            const formData = new FormData();
+                            formData.append("file", file);
+                            const res = await fetch(
+                              `${baseUrl}/upload/mural-image`,
+                              {
+                                method: "POST",
+                                headers: {
+                                  Authorization: `Bearer ${accessToken}`,
+                                  ...(apiUrl.includes("ngrok") && {
+                                    "ngrok-skip-browser-warning": "true",
+                                  }),
+                                },
+                                body: formData,
+                              }
+                            );
+                            if (!res.ok) {
+                              throw new Error("Upload failed");
+                            }
+                            const json = (await res.json()) as { url: string };
+                            setReviewPhotoUrl(json.url);
+                          } catch {
+                            setUploadPhotoError(
+                              "Failed to upload. Please try again."
+                            );
+                            setReviewPhotoPreview(null);
+                          } finally {
+                            setIsUploadingPhoto(false);
+                          }
+                        })();
+                      }}
+                    />
+                    {!!uploadPhotoError && (
+                      <p className="text-xs text-red-500">{uploadPhotoError}</p>
+                    )}
+                  </div>
+                ) : null}
 
                 {/* Publish review + mural post */}
                 {(() => {
                   const hasReview =
                     reviewRating > 0 && reviewTitle.trim().length >= 3;
-                  const hasMural = !!reviewPhotoUrl;
+                  const hasMural =
+                    !!reviewPhotoUrl &&
+                    (!partner || partner.features.mural === true);
                   const canSubmit =
                     (hasReview || hasMural) &&
                     !isUploadingPhoto &&
@@ -2114,7 +2128,7 @@ export default function StoreDetailClient(): React.JSX.Element {
                           }
                         })();
                       }}
-                      className="w-full bg-rose-400 hover:bg-rose-500 text-white font-bold rounded-xl py-3 disabled:opacity-50"
+                      className="w-full bg-[var(--partner-primary,#fb7185)] hover:bg-[var(--partner-primary,#f43f5e)] text-white font-bold rounded-xl py-3 disabled:opacity-50"
                     >
                       {isSubmittingReview ? (
                         <>

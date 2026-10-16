@@ -3,8 +3,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { Ticket, X, CalendarRange, CheckCircle, Clock } from "lucide-react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { useEffect, useState, useCallback } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState, useCallback } from "react";
 
 import { DAYS_OF_WEEK_BY_INDEX } from "@/data/constants";
 import type { AvailableDay } from "@/domains/admin";
@@ -28,6 +28,7 @@ import { COUPONS_QUERY } from "@/lib/graphql-queries";
 import CrispProvider from "@/providers/CrispProvider";
 import StatusCard from "@/shared/components/StatusCard/StatusCard";
 import { useAuthStore } from "@/store/useAuthStore";
+import { useIsPartnerMode, usePartnerStore } from "@/store/usePartnerStore";
 const PRIZE_STATUS_LABEL: Record<string, string> = {
   PENDING: "Pendiente",
   CLAIMED: "Canjeado",
@@ -137,7 +138,9 @@ function QrCountdown({ expiresAt }: { expiresAt: string }) {
     return <p className="text-2xl font-black text-gray-400">Expirado</p>;
   }
   return (
-    <p className="text-2xl font-black text-[#F1A151] tabular-nums">{label}</p>
+    <p className="text-2xl font-black text-[var(--partner-primary,#F1A151)] tabular-nums">
+      {label}
+    </p>
   );
 }
 
@@ -209,8 +212,11 @@ type CouponStatus = "active" | "redeemed" | "expired";
 
 type FilterTab = "all" | CouponStatus;
 
-export default function MyCouponsPage(): React.JSX.Element {
+function MyCouponsContent(): React.JSX.Element {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isPartnerMode = useIsPartnerMode();
+  const lang = usePartnerStore((state) => state.lang);
   const { isAuthenticated, accessToken, user } = useAuthStore();
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [loading, setLoading] = useState(true);
@@ -220,7 +226,14 @@ export default function MyCouponsPage(): React.JSX.Element {
     null
   );
   const [hydrated, setHydrated] = useState(false);
-  const [activeFilter, setActiveFilter] = useState<FilterTab>("all");
+  const [activeFilter, setActiveFilter] = useState<FilterTab>(() => {
+    const status = searchParams?.get("status");
+    return status === "used"
+      ? "redeemed"
+      : status === "active"
+        ? "active"
+        : "all";
+  });
   const [restrictionModalOpen, setRestrictionModalOpen] = useState(false);
   const [restrictionCoupon, setRestrictionCoupon] = useState<Coupon | null>(
     null
@@ -241,15 +254,17 @@ export default function MyCouponsPage(): React.JSX.Element {
 
   const { data: myPrizes = [] } = useMyPrizes();
 
-  const selectedIsPrize = Boolean(
-    selectedCoupon &&
-    myPrizes.some(
-      (p) =>
-        p.coupon?.id === selectedCoupon.id ||
-        p.couponCode === selectedCoupon.code ||
-        p.coupon?.code === selectedCoupon.code
-    )
-  );
+  const selectedIsPrize =
+    !isPartnerMode &&
+    Boolean(
+      selectedCoupon &&
+      myPrizes.some(
+        (p) =>
+          p.coupon?.id === selectedCoupon.id ||
+          p.couponCode === selectedCoupon.code ||
+          p.coupon?.code === selectedCoupon.code
+      )
+    );
   const supportWhatsApp = env.NEXT_PUBLIC_SUPPORT_WHATSAPP?.replace(/\D/g, "");
   const prizeSupportUrl =
     selectedIsPrize && supportWhatsApp
@@ -258,12 +273,12 @@ export default function MyCouponsPage(): React.JSX.Element {
         )}`
       : null;
 
-  // Filter coupons based on active tab (hide prize-backed coupons — shown above)
+  // Normal Namy shows prize coupons separately; partners need them in this list.
   const prizeCouponIds = new Set(
     myPrizes.map((p) => p.coupon?.id).filter((id): id is string => !!id)
   );
   const filteredCoupons = coupons.filter((coupon) => {
-    if (prizeCouponIds.has(coupon.id)) {
+    if (!isPartnerMode && prizeCouponIds.has(coupon.id)) {
       return false;
     }
     if (activeFilter === "all") {
@@ -493,7 +508,7 @@ export default function MyCouponsPage(): React.JSX.Element {
           />
         ) : null}
 
-        {coupons.length === 0 && myPrizes.length === 0 ? (
+        {coupons.length === 0 && (isPartnerMode || myPrizes.length === 0) ? (
           <div className="pt-14 flex items-center justify-center p-8 min-h-[60vh]">
             <div className="text-center">
               <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center mx-auto mb-6">
@@ -530,7 +545,7 @@ export default function MyCouponsPage(): React.JSX.Element {
               </div>
             </div>
 
-            {myPrizes.length > 0 ? (
+            {!isPartnerMode && myPrizes.length > 0 ? (
               <div className="px-4 pb-6 max-w-5xl mx-auto">
                 <h2 className="text-lg font-bold text-foreground mb-3">
                   Mis Premios
@@ -678,7 +693,7 @@ export default function MyCouponsPage(): React.JSX.Element {
               {/* White QR card */}
               <div className="bg-white rounded-3xl shadow-sm p-6 mb-4">
                 <p className="text-xs text-gray-400 mb-0.5">Negocio</p>
-                <h2 className="text-2xl font-black text-[#F1A151] mb-5">
+                <h2 className="text-2xl font-black text-[var(--partner-primary,#F1A151)] mb-5">
                   {selectedCoupon.store?.name ?? "Tienda"}
                 </h2>
 
@@ -703,12 +718,31 @@ export default function MyCouponsPage(): React.JSX.Element {
                   </div>
                   <div>
                     <p className="text-xs text-gray-400 mb-0.5">Descuento</p>
-                    <p className="text-2xl font-black text-[#F1A151]">
+                    <p className="text-2xl font-black text-[var(--partner-primary,#F1A151)]">
                       {resolveCouponDisplayLabel(selectedCoupon)}
                     </p>
                   </div>
                 </div>
               </div>
+
+              {isPartnerMode ? (
+                <div className="mb-5 text-center">
+                  <p className="mb-3 text-sm text-foreground">
+                    {lang === "en"
+                      ? "Show this Nami coupon to the staff"
+                      : "Muestra este cupón de Nami al personal"}
+                  </p>
+                  <div className="inline-flex items-center gap-2 text-xs text-muted-foreground">
+                    <Image
+                      src="/namy-logo.webp"
+                      alt="Nami"
+                      width={24}
+                      height={24}
+                    />
+                    <span>Powered by Nami</span>
+                  </div>
+                </div>
+              ) : null}
 
               {/* Help link — prize coupons get WhatsApp; regular coupons keep Crisp */}
               {selectedIsPrize ? (
@@ -717,7 +751,7 @@ export default function MyCouponsPage(): React.JSX.Element {
                     href={prizeSupportUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-full text-center text-sm font-semibold text-[#F1A151] mb-5 hover:underline block"
+                    className="w-full text-center text-sm font-semibold text-[var(--partner-primary,#F1A151)] mb-5 hover:underline block"
                   >
                     Pregunta sobre tu premio
                   </a>
@@ -730,7 +764,7 @@ export default function MyCouponsPage(): React.JSX.Element {
                       window.$crisp.push(["do", "chat:open"]);
                     }
                   }}
-                  className="w-full text-center text-sm font-semibold text-[#F1A151] mb-5 hover:underline"
+                  className="w-full text-center text-sm font-semibold text-[var(--partner-primary,#F1A151)] mb-5 hover:underline"
                 >
                   ¿Problemas con tu descuento?
                 </button>
@@ -773,5 +807,13 @@ export default function MyCouponsPage(): React.JSX.Element {
       </div>
       <CrispProvider />
     </BasicLayout>
+  );
+}
+
+export default function MyCouponsPage(): React.JSX.Element {
+  return (
+    <Suspense fallback={null}>
+      <MyCouponsContent />
+    </Suspense>
   );
 }

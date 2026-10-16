@@ -3,6 +3,7 @@ import { Capacitor } from "@capacitor/core";
 import type { PostHog } from "posthog-js";
 
 import { env } from "@/lib/env";
+import { usePartnerStore } from "@/store/usePartnerStore";
 
 import packageJson from "../../../package.json";
 
@@ -143,7 +144,10 @@ export function captureEvent<K extends AnalyticsEventName>(
   withClient((instance) => {
     instance.capture(
       event,
-      properties,
+      {
+        ...properties,
+        partner: usePartnerStore.getState().partner?.slug ?? null,
+      },
       options?.sendInstantly ? { send_instantly: true } : undefined
     );
   });
@@ -157,10 +161,11 @@ export function captureEventDistinct<K extends AnalyticsEventName>(
   if (!distinctKey) {
     return;
   }
-  if (lastDistinctKeys.get(event) === distinctKey) {
+  const sessionKey = `${usePartnerStore.getState().partner?.slug ?? "namy"}:${distinctKey}`;
+  if (lastDistinctKeys.get(event) === sessionKey) {
     return;
   }
-  lastDistinctKeys.set(event, distinctKey);
+  lastDistinctKeys.set(event, sessionKey);
   captureEvent(event, properties);
 }
 

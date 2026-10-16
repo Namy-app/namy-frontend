@@ -2,7 +2,7 @@ export type AnalyticsPlatform = "web" | "ios" | "android";
 
 export type LogoutReason = "user" | "expiry" | "auth_error";
 
-export type CouponUnlockMethod = "ad" | "quick_pay" | "premium";
+export type CouponUnlockMethod = "ad" | "quick_pay" | "premium" | "partner";
 
 export type NotificationClickSource = "push" | "inbox";
 

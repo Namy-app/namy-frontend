@@ -25,6 +25,7 @@ import {
   surfacePromo,
 } from "@/lib/promo-storage";
 import { useAuthStore } from "@/store/useAuthStore";
+import { usePartnerConfig, usePartnerStore } from "@/store/usePartnerStore";
 
 interface ExploreHeaderProps {
   isAuthenticated: boolean;
@@ -34,6 +35,8 @@ export function ExploreHeader({
   isAuthenticated,
 }: ExploreHeaderProps): React.JSX.Element {
   const router = useRouter();
+  const partner = usePartnerConfig();
+  const lang = usePartnerStore((state) => state.lang);
   const { user, clearAuth } = useAuthStore();
 
   const handleNotificationClick = (notification: {
@@ -105,6 +108,48 @@ export function ExploreHeader({
     setIsDropdownOpen(false);
     router.push("/");
   };
+
+  if (partner) {
+    const english = lang === "en";
+    return (
+      <header
+        className="fixed top-0 left-0 right-0 z-20 bg-white/85 backdrop-blur-sm shadow-sm"
+        style={{
+          paddingTop: "var(--status-bar-height, env(safe-area-inset-top, 0px))",
+        }}
+      >
+        <nav
+          aria-label={english ? "Partner navigation" : "Navegación del socio"}
+          className="mx-auto flex h-14 max-w-5xl items-center justify-between gap-3 px-4"
+        >
+          <Link
+            href="/explore"
+            aria-label={english ? "Explore" : "Explorar"}
+            className="min-w-0 truncate text-primary font-semibold"
+          >
+            {partner.branding.logoUrl ? (
+              // Partner assets may be hosted outside Next's configured image hosts.
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={partner.branding.logoUrl}
+                alt={partner.name}
+                className="h-10 max-w-24 sm:max-w-40 object-contain"
+              />
+            ) : (
+              partner.name
+            )}
+          </Link>
+          <div className="flex shrink-0 items-center gap-3 text-xs sm:text-sm font-medium text-primary">
+            <Link href="/explore">{english ? "Explore" : "Explorar"}</Link>
+            <Link href="/my-coupons">
+              {english ? "My coupons" : "Mis cupones"}
+            </Link>
+            <Link href="/profile">{english ? "Profile" : "Perfil"}</Link>
+          </div>
+        </nav>
+      </header>
+    );
+  }
 
   return (
     <header
