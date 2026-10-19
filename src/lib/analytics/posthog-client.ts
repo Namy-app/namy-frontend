@@ -1,7 +1,7 @@
 import { App } from "@capacitor/app";
-import { Capacitor } from "@capacitor/core";
 import type { PostHog } from "posthog-js";
 
+import { isNativeApp, getAppPlatform } from "@/lib/app-platform";
 import { env } from "@/lib/env";
 import { usePartnerStore } from "@/store/usePartnerStore";
 
@@ -29,7 +29,7 @@ export function getAnalyticsPlatform(): AnalyticsPlatform {
     return "web";
   }
   try {
-    const platform = Capacitor.getPlatform();
+    const platform = getAppPlatform();
     if (platform === "ios" || platform === "android") {
       return platform;
     }
@@ -47,7 +47,7 @@ async function resolveAppMeta(): Promise<{
     return { app_version: packageJson.version };
   }
   try {
-    if (Capacitor.isNativePlatform()) {
+    if (isNativeApp()) {
       const info = await App.getInfo();
       return {
         app_version: info.version,

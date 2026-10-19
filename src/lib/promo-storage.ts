@@ -1,12 +1,12 @@
 "use client";
 
-import { Capacitor } from "@capacitor/core";
 import { Preferences } from "@capacitor/preferences";
 
 import type {
   BannerNotificationType,
   PromoBannerData,
 } from "@/app/explore/components/PromoBanner";
+import { isNativeApp } from "@/lib/app-platform";
 
 const DISMISSED_KEY = "namy_dismissed_promos";
 const PENDING_PROMO_KEY = "namy_pending_promo";
@@ -16,7 +16,7 @@ const PENDING_PROMO_KEY = "namy_pending_promo";
 // ---------------------------------------------------------------------------
 
 async function storageGet(key: string): Promise<string | null> {
-  if (Capacitor.isNativePlatform()) {
+  if (isNativeApp()) {
     const { value } = await Preferences.get({ key });
     return value;
   }
@@ -24,7 +24,7 @@ async function storageGet(key: string): Promise<string | null> {
 }
 
 async function storageSet(key: string, value: string): Promise<void> {
-  if (Capacitor.isNativePlatform()) {
+  if (isNativeApp()) {
     await Preferences.set({ key, value });
   } else {
     localStorage.setItem(key, value);
@@ -32,7 +32,7 @@ async function storageSet(key: string, value: string): Promise<void> {
 }
 
 async function storageRemove(key: string): Promise<void> {
-  if (Capacitor.isNativePlatform()) {
+  if (isNativeApp()) {
     await Preferences.remove({ key });
   } else {
     localStorage.removeItem(key);

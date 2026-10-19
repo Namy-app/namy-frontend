@@ -541,7 +541,9 @@ function MyCouponsContent(): React.JSX.Element {
         ) : null}
 
         {coupons.length === 0 && (isPartnerMode || myPrizes.length === 0) ? (
-          <div className="pt-14 flex items-center justify-center p-8 min-h-[60vh]">
+          <div
+            className={`${isPartnerMode ? "pt-4" : "pt-14"} flex items-center justify-center p-8 min-h-[60vh]`}
+          >
             <div className="text-center">
               <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center mx-auto mb-6">
                 <Ticket className="w-12 h-12 text-muted-foreground" />
@@ -563,7 +565,9 @@ function MyCouponsContent(): React.JSX.Element {
         ) : (
           <div className="pb-20">
             {/* Page Title */}
-            <div className="pt-16 pb-4 max-w-2xl mx-auto px-4">
+            <div
+              className={`${isPartnerMode ? "pt-4" : "pt-16"} pb-4 max-w-2xl mx-auto px-4`}
+            >
               <div className="flex items-center justify-between">
                 <h1 className="text-2xl font-bold text-foreground">
                   {t("ui.my_coupons")}
@@ -731,7 +735,17 @@ function MyCouponsContent(): React.JSX.Element {
             </button>
 
             {/* Centred content */}
-            <div className="w-full max-w-md mx-auto px-4 pt-6 pb-16">
+            <div
+              className="w-full max-w-md mx-auto px-4 pt-6 pb-16"
+              style={
+                isPartnerMode
+                  ? {
+                      paddingBottom:
+                        "calc(7rem + env(safe-area-inset-bottom, 0px))",
+                    }
+                  : undefined
+              }
+            >
               {/* White QR card */}
               <div className="bg-white rounded-3xl shadow-sm p-6 mb-4">
                 <p className="text-xs text-gray-400 mb-0.5">
@@ -800,7 +814,7 @@ function MyCouponsContent(): React.JSX.Element {
                     {t("ui.ask_about_your_prize")}
                   </a>
                 ) : null
-              ) : (
+              ) : !isPartnerMode ? (
                 <button
                   onClick={() => {
                     if (typeof window !== "undefined" && window.$crisp) {
@@ -812,7 +826,7 @@ function MyCouponsContent(): React.JSX.Element {
                 >
                   {t("ui.need_help_with_your_discount")}
                 </button>
-              )}
+              ) : null}
 
               {/* Restrictions */}
               <QrRestrictions
@@ -851,7 +865,7 @@ function MyCouponsContent(): React.JSX.Element {
           />
         ) : null}
       </div>
-      <CrispProvider />
+      {!isPartnerMode && <CrispProvider />}
     </BasicLayout>
   );
 }
