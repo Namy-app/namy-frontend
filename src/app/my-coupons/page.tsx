@@ -3,10 +3,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { Ticket, X, CalendarRange, CheckCircle, Clock } from "lucide-react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { useEffect, useState, useCallback } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState, useCallback } from "react";
 
-import { DAYS_OF_WEEK_BY_INDEX } from "@/data/constants";
 import type { AvailableDay } from "@/domains/admin";
 import {
   formatCouponExpiryCountdown,
@@ -19,15 +18,18 @@ import { RestrictionModal } from "@/domains/coupons/RestrictionModal";
 import { useMyPrizes } from "@/domains/gamification/hooks";
 import { BasicLayout } from "@/layouts/BasicLayout";
 import { analytics } from "@/lib/analytics";
+import { trackPartnerJourney } from "@/lib/analytics/trackPartnerJourney";
 import type { UserPrize } from "@/lib/api-types";
 import { CouponDecoder, type DecodedCouponData } from "@/lib/coupon-decoder";
 import { resolveCouponDisplayLabel } from "@/lib/discount-type";
 import { env } from "@/lib/env";
 import { graphqlRequest, setAuthToken } from "@/lib/graphql-client";
 import { COUPONS_QUERY } from "@/lib/graphql-queries";
+import { useAppTranslation } from "@/lib/i18n/useAppTranslation";
 import CrispProvider from "@/providers/CrispProvider";
 import StatusCard from "@/shared/components/StatusCard/StatusCard";
 import { useAuthStore } from "@/store/useAuthStore";
+import { useIsPartnerMode } from "@/store/usePartnerStore";
 const PRIZE_STATUS_LABEL: Record<string, string> = {
   PENDING: "Pendiente",
   CLAIMED: "Canjeado",
@@ -41,12 +43,14 @@ function PrizeCard({
   prize: UserPrize;
   onViewQr?: (prize: UserPrize) => void;
 }) {
+  const { t, locale } = useAppTranslation();
+
   const storeNames =
     prize.stores
       ?.map((s) => s.name)
       .filter(Boolean)
       .join(", ") || "—";
-  const expiryLabel = new Date(prize.expiresAt).toLocaleDateString("es-MX", {
+  const expiryLabel = new Date(prize.expiresAt).toLocaleDateString(locale, {
     day: "numeric",
     month: "short",
     year: "numeric",
@@ -58,7 +62,7 @@ function PrizeCard({
         <div className="flex items-center gap-2 mb-2">
           <span className="text-xl">🏆</span>
           <span className="text-xs font-black uppercase tracking-wide text-amber-600 bg-amber-100 px-2 py-0.5 rounded-full">
-            Premio
+            {t("ui.prize")}
           </span>
           <span className="ml-auto text-xs font-semibold text-muted-foreground">
             {PRIZE_STATUS_LABEL[prize.status] ?? prize.status}
@@ -71,7 +75,7 @@ function PrizeCard({
 
         {prize.type === "PREMIUM" ? (
           <p className="text-sm text-muted-foreground">
-            Premio: 1 mes Premium activado
+            {t("ui.prize_1_month_of_premium_activated")}
           </p>
         ) : (
           <>
@@ -81,11 +85,13 @@ function PrizeCard({
               </p>
             ) : null}
             <p className="text-xs text-muted-foreground mb-1">
-              <span className="font-semibold text-foreground">Válido en:</span>{" "}
+              <span className="font-semibold text-foreground">
+                {t("ui.valid_at")}
+              </span>{" "}
               {storeNames}
             </p>
             <p className="text-xs text-muted-foreground mb-3">
-              Válido hasta {expiryLabel}
+              {t("ui.valid_until")} {expiryLabel}
             </p>
             {prize.coupon?.qrCode && prize.status === "PENDING" && onViewQr ? (
               <button
@@ -93,7 +99,7 @@ function PrizeCard({
                 onClick={() => onViewQr(prize)}
                 className="w-full py-2.5 rounded-xl bg-amber-500 text-white text-sm font-bold hover:bg-amber-600"
               >
-                Ver QR
+                {t("ui.view_qr")}
               </button>
             ) : null}
           </>
@@ -106,6 +112,8 @@ function PrizeCard({
 // ── QR modal sub-components ───────────────────────────────────────────────────
 
 function QrCountdown({ expiresAt }: { expiresAt: string }) {
+  const { t } = useAppTranslation();
+
   const calc = useCallback(
     () => formatCouponExpiryCountdown(getMsUntilExpiry(expiresAt)),
     [expiresAt]
@@ -134,10 +142,14 @@ function QrCountdown({ expiresAt }: { expiresAt: string }) {
   }, [expiresAt]);
 
   if (!label) {
-    return <p className="text-2xl font-black text-gray-400">Expirado</p>;
+    return (
+      <p className="text-2xl font-black text-gray-400">{t("ui.expired")}</p>
+    );
   }
   return (
-    <p className="text-2xl font-black text-[#F1A151] tabular-nums">{label}</p>
+    <p className="text-2xl font-black text-[var(--partner-primary,#F1A151)] tabular-nums">
+      {label}
+    </p>
   );
 }
 
@@ -148,6 +160,8 @@ function QrRestrictions({
   coupon: Coupon;
   decodedData: DecodedCouponData | null;
 }) {
+  const { t } = useAppTranslation();
+
   const additionalRestrictions = coupon.discount?.additionalRestrictions ?? [];
   const storeRestrictions = coupon.store?.restrictions;
   const discountRestrictions =
@@ -169,7 +183,9 @@ function QrRestrictions({
 
   return (
     <div>
-      <h3 className="text-2xl font-black text-gray-900 mb-4">Restricciones</h3>
+      <h3 className="text-2xl font-black text-gray-900 mb-4">
+        {t("ui.restrictions")}
+      </h3>
       <div className="space-y-3">
         {textRestrictions.map((r, i) => (
           <div key={i} className="flex items-start gap-3">
@@ -183,14 +199,26 @@ function QrRestrictions({
             <div className="flex items-center gap-3 mb-2">
               <CalendarRange className="w-5 h-5 text-green-600 shrink-0" />
               <span className="text-base text-gray-700 font-semibold">
-                Horarios disponibles
+                {t("ui.available_times")}
               </span>
             </div>
             <div className="pl-8 space-y-1">
               {availableDaysAndTimes!.availableDays.map(
                 (d: AvailableDay, i: number) => (
                   <p key={i} className="text-base text-gray-700">
-                    {DAYS_OF_WEEK_BY_INDEX[d.dayIndex]}:{" "}
+                    {t(
+                      "ui." +
+                        [
+                          "monday",
+                          "tuesday",
+                          "wednesday",
+                          "thursday",
+                          "friday",
+                          "saturday",
+                          "sunday",
+                        ][d.dayIndex]
+                    )}
+                    :{" "}
                     {d.timeRanges
                       .map((r) => `${r.start} - ${r.end}`)
                       .join(", ")}
@@ -209,8 +237,12 @@ type CouponStatus = "active" | "redeemed" | "expired";
 
 type FilterTab = "all" | CouponStatus;
 
-export default function MyCouponsPage(): React.JSX.Element {
+function MyCouponsContent(): React.JSX.Element {
+  const { t } = useAppTranslation();
+
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isPartnerMode = useIsPartnerMode();
   const { isAuthenticated, accessToken, user } = useAuthStore();
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [loading, setLoading] = useState(true);
@@ -220,7 +252,14 @@ export default function MyCouponsPage(): React.JSX.Element {
     null
   );
   const [hydrated, setHydrated] = useState(false);
-  const [activeFilter, setActiveFilter] = useState<FilterTab>("all");
+  const [activeFilter, setActiveFilter] = useState<FilterTab>(() => {
+    const status = searchParams?.get("status");
+    return status === "used"
+      ? "redeemed"
+      : status === "active"
+        ? "active"
+        : "all";
+  });
   const [restrictionModalOpen, setRestrictionModalOpen] = useState(false);
   const [restrictionCoupon, setRestrictionCoupon] = useState<Coupon | null>(
     null
@@ -241,15 +280,17 @@ export default function MyCouponsPage(): React.JSX.Element {
 
   const { data: myPrizes = [] } = useMyPrizes();
 
-  const selectedIsPrize = Boolean(
-    selectedCoupon &&
-    myPrizes.some(
-      (p) =>
-        p.coupon?.id === selectedCoupon.id ||
-        p.couponCode === selectedCoupon.code ||
-        p.coupon?.code === selectedCoupon.code
-    )
-  );
+  const selectedIsPrize =
+    !isPartnerMode &&
+    Boolean(
+      selectedCoupon &&
+      myPrizes.some(
+        (p) =>
+          p.coupon?.id === selectedCoupon.id ||
+          p.couponCode === selectedCoupon.code ||
+          p.coupon?.code === selectedCoupon.code
+      )
+    );
   const supportWhatsApp = env.NEXT_PUBLIC_SUPPORT_WHATSAPP?.replace(/\D/g, "");
   const prizeSupportUrl =
     selectedIsPrize && supportWhatsApp
@@ -258,12 +299,12 @@ export default function MyCouponsPage(): React.JSX.Element {
         )}`
       : null;
 
-  // Filter coupons based on active tab (hide prize-backed coupons — shown above)
+  // Normal Namy shows prize coupons separately; partners need them in this list.
   const prizeCouponIds = new Set(
     myPrizes.map((p) => p.coupon?.id).filter((id): id is string => !!id)
   );
   const filteredCoupons = coupons.filter((coupon) => {
-    if (prizeCouponIds.has(coupon.id)) {
+    if (!isPartnerMode && prizeCouponIds.has(coupon.id)) {
       return false;
     }
     if (activeFilter === "all") {
@@ -364,8 +405,8 @@ export default function MyCouponsPage(): React.JSX.Element {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: "Mi Cupón",
-          text: `Canjea este cupón: ${coupon.code}`,
+          title: t("ui.my_coupon"),
+          text: t("ui.redeem_code", { code: coupon.code }),
           url: coupon.url,
         });
       } catch (err) {
@@ -374,27 +415,31 @@ export default function MyCouponsPage(): React.JSX.Element {
     } else {
       // Fallback: copy to clipboard
       void navigator.clipboard.writeText(coupon.url);
-      alert("¡URL del cupón copiada al portapapeles!");
+      alert(t("ui.coupon_url_copied_to_clipboard"));
     }
   };
 
   // Handle delete
   const handleDelete = async (coupon: Coupon): Promise<void> => {
     const confirmDelete = confirm(
-      `¿Estás seguro de que deseas eliminar el cupón ${coupon.code}?`
+      t("ui.delete_coupon_confirmation", { code: coupon.code })
     );
     if (!confirmDelete) {
       return;
     }
 
     // TODO: Implement delete mutation
-    alert("¡La funcionalidad de eliminación estará disponible próximamente!");
+    alert(t("ui.coupon_deletion_will_be_available_soon"));
   };
 
   // Handle view QR code
   const handleViewQR = async (coupon: Coupon): Promise<void> => {
     const storeId = coupon.storeId ?? coupon.store?.id;
     analytics.track("coupon_qr_viewed", {
+      coupon_id: coupon.id,
+      ...(storeId ? { store_id: storeId } : {}),
+    });
+    trackPartnerJourney("coupon_qr_viewed", {
       coupon_id: coupon.id,
       ...(storeId ? { store_id: storeId } : {}),
     });
@@ -471,7 +516,9 @@ export default function MyCouponsPage(): React.JSX.Element {
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-center">
             <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-            <p className="text-muted-foreground">Cargando tus cupones...</p>
+            <p className="text-muted-foreground">
+              {t("ui.loading_your_coupons")}
+            </p>
           </div>
         </div>
       </BasicLayout>
@@ -484,56 +531,60 @@ export default function MyCouponsPage(): React.JSX.Element {
         {error ? (
           <StatusCard
             variant="error"
-            title="¡Ups! Algo salió mal"
+            title={t("ui.something_went_wrong")}
             message={error}
             primaryAction={{
-              label: "Explorar Descuentos",
+              label: t("ui.explore_discounts"),
               onClick: () => router.push("/explore"),
             }}
           />
         ) : null}
 
-        {coupons.length === 0 && myPrizes.length === 0 ? (
-          <div className="pt-14 flex items-center justify-center p-8 min-h-[60vh]">
+        {coupons.length === 0 && (isPartnerMode || myPrizes.length === 0) ? (
+          <div
+            className={`${isPartnerMode ? "pt-4" : "pt-14"} flex items-center justify-center p-8 min-h-[60vh]`}
+          >
             <div className="text-center">
               <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center mx-auto mb-6">
                 <Ticket className="w-12 h-12 text-muted-foreground" />
               </div>
               <h2 className="text-2xl font-bold text-foreground mb-2">
-                Aún no tienes cupones
+                {t("ui.you_have_no_coupons_yet")}
               </h2>
               <p className="text-muted-foreground mb-6">
-                ¡Explora descuentos y genera tu primer cupón!
+                {t("ui.explore_discounts_and_generate_your_first_coupon")}
               </p>
               <button
                 onClick={() => router.push("/explore")}
                 className="px-6 py-3 bg-primary text-primary-foreground rounded-xl font-semibold hover:shadow-glow transition-all"
               >
-                Explorar Descuentos
+                {t("ui.explore_discounts")}
               </button>
             </div>
           </div>
         ) : (
           <div className="pb-20">
             {/* Page Title */}
-            <div className="pt-16 pb-4 max-w-2xl mx-auto px-4">
+            <div
+              className={`${isPartnerMode ? "pt-4" : "pt-16"} pb-4 max-w-2xl mx-auto px-4`}
+            >
               <div className="flex items-center justify-between">
                 <h1 className="text-2xl font-bold text-foreground">
-                  Mis Cupones
+                  {t("ui.my_coupons")}
                 </h1>
                 <div className="bg-primary/10 px-3 py-1 rounded-full">
                   <span className="text-sm font-semibold text-primary">
                     {filteredCoupons.length}{" "}
-                    {filteredCoupons.length === 1 ? "Cupón" : "Cupones"}
+                    {t("ui.coupon", { count: filteredCoupons.length })}
                   </span>
                 </div>
               </div>
             </div>
 
-            {myPrizes.length > 0 ? (
+            {!isPartnerMode && myPrizes.length > 0 ? (
               <div className="px-4 pb-6 max-w-5xl mx-auto">
                 <h2 className="text-lg font-bold text-foreground mb-3">
-                  Mis Premios
+                  {t("ui.my_prizes")}
                 </h2>
                 <div className="grid md:grid-cols-2 grid-cols-1 gap-4">
                   {myPrizes.map((prize) => (
@@ -559,7 +610,8 @@ export default function MyCouponsPage(): React.JSX.Element {
                         : "bg-white text-muted-foreground hover:bg-muted"
                     }`}
                   >
-                    Todos ({statusCounts.all})
+                    {t("ui.all")}
+                    {statusCounts.all})
                   </button>
                   <button
                     onClick={() => setActiveFilter("active")}
@@ -569,7 +621,8 @@ export default function MyCouponsPage(): React.JSX.Element {
                         : "bg-white text-muted-foreground hover:bg-muted"
                     }`}
                   >
-                    Activos ({statusCounts.active})
+                    {t("ui.active")}
+                    {statusCounts.active})
                   </button>
                   <button
                     onClick={() => setActiveFilter("redeemed")}
@@ -579,7 +632,8 @@ export default function MyCouponsPage(): React.JSX.Element {
                         : "bg-white text-muted-foreground hover:bg-muted"
                     }`}
                   >
-                    Canjeados ({statusCounts.redeemed})
+                    {t("ui.used")}
+                    {statusCounts.redeemed})
                   </button>
                   <button
                     onClick={() => setActiveFilter("expired")}
@@ -589,7 +643,8 @@ export default function MyCouponsPage(): React.JSX.Element {
                         : "bg-white text-muted-foreground hover:bg-muted"
                     }`}
                   >
-                    Expirados ({statusCounts.expired})
+                    {t("ui.expired_alt")}
+                    {statusCounts.expired})
                   </button>
                 </div>
               </div>
@@ -613,23 +668,29 @@ export default function MyCouponsPage(): React.JSX.Element {
                     )}
                   </div>
                   <h3 className="text-xl font-bold text-foreground mb-2">
-                    {activeFilter === "active" && "No hay cupones activos"}
-                    {activeFilter === "redeemed" && "No hay cupones canjeados"}
-                    {activeFilter === "expired" && "No hay cupones expirados"}
+                    {activeFilter === "active" && t("ui.no_active_coupons")}
+                    {activeFilter === "redeemed" && t("ui.no_used_coupons")}
+                    {activeFilter === "expired" && t("ui.no_expired_coupons")}
                   </h3>
                   <p className="text-muted-foreground mb-6">
                     {activeFilter === "active" &&
-                      "No tienes cupones activos en este momento. ¡Genera nuevos cupones desde los descuentos disponibles!"}
+                      t(
+                        "ui.you_have_no_active_coupons_generate_one_from_the_available_discounts"
+                      )}
                     {activeFilter === "redeemed" &&
-                      "Aún no has canjeado ningún cupón. ¡Visita las tiendas y comienza a ahorrar!"}
+                      t(
+                        "ui.you_have_not_redeemed_a_coupon_yet_visit_a_store_and_start_saving"
+                      )}
                     {activeFilter === "expired" &&
-                      "No se encontraron cupones expirados. ¡Tus cupones activos siguen siendo válidos!"}
+                      t(
+                        "ui.no_expired_coupons_found_your_active_coupons_are_still_valid"
+                      )}
                   </p>
                   <button
                     onClick={() => setActiveFilter("all")}
                     className="px-6 py-3 bg-primary text-primary-foreground rounded-xl font-semibold hover:shadow-glow transition-all"
                   >
-                    Ver todos los cupones
+                    {t("ui.view_all_coupons")}
                   </button>
                 </div>
               </div>
@@ -668,25 +729,37 @@ export default function MyCouponsPage(): React.JSX.Element {
                 setDecodedData(null);
               }}
               className="fixed top-4 right-4 z-10 w-9 h-9 flex items-center justify-center rounded-full bg-white shadow-md text-gray-500 hover:text-gray-800"
-              aria-label="Cerrar"
+              aria-label={t("ui.close")}
             >
               <X className="w-4 h-4" />
             </button>
 
             {/* Centred content */}
-            <div className="w-full max-w-md mx-auto px-4 pt-6 pb-16">
+            <div
+              className="w-full max-w-md mx-auto px-4 pt-6 pb-16"
+              style={
+                isPartnerMode
+                  ? {
+                      paddingBottom:
+                        "calc(7rem + env(safe-area-inset-bottom, 0px))",
+                    }
+                  : undefined
+              }
+            >
               {/* White QR card */}
               <div className="bg-white rounded-3xl shadow-sm p-6 mb-4">
-                <p className="text-xs text-gray-400 mb-0.5">Negocio</p>
-                <h2 className="text-2xl font-black text-[#F1A151] mb-5">
-                  {selectedCoupon.store?.name ?? "Tienda"}
+                <p className="text-xs text-gray-400 mb-0.5">
+                  {t("ui.business")}
+                </p>
+                <h2 className="text-2xl font-black text-[var(--partner-primary,#F1A151)] mb-5">
+                  {selectedCoupon.store?.name ?? t("ui.store")}
                 </h2>
 
                 {/* QR Code */}
                 <div className="flex justify-center mb-6">
                   <Image
                     src={selectedCoupon.qrCode}
-                    alt="Coupon QR Code"
+                    alt={t("ui.coupon_qr_code")}
                     width={260}
                     height={260}
                     className="object-contain"
@@ -697,18 +770,37 @@ export default function MyCouponsPage(): React.JSX.Element {
                 <div className="flex justify-between">
                   <div>
                     <p className="text-xs text-gray-400 mb-0.5">
-                      Tiempo restante
+                      {t("ui.time_remaining")}
                     </p>
                     <QrCountdown expiresAt={selectedCoupon.expiresAt} />
                   </div>
                   <div>
-                    <p className="text-xs text-gray-400 mb-0.5">Descuento</p>
-                    <p className="text-2xl font-black text-[#F1A151]">
+                    <p className="text-xs text-gray-400 mb-0.5">
+                      {t("ui.discount")}
+                    </p>
+                    <p className="text-2xl font-black text-[var(--partner-primary,#F1A151)]">
                       {resolveCouponDisplayLabel(selectedCoupon)}
                     </p>
                   </div>
                 </div>
               </div>
+
+              {isPartnerMode ? (
+                <div className="mb-5 text-center">
+                  <p className="mb-3 text-sm text-foreground">
+                    {t("ui.staff_hint")}
+                  </p>
+                  <div className="inline-flex items-center gap-2 text-xs text-muted-foreground">
+                    <Image
+                      src="/namy-logo.webp"
+                      alt="Nami"
+                      width={24}
+                      height={24}
+                    />
+                    <span>{t("ui.powered_by_nami")}</span>
+                  </div>
+                </div>
+              ) : null}
 
               {/* Help link — prize coupons get WhatsApp; regular coupons keep Crisp */}
               {selectedIsPrize ? (
@@ -717,12 +809,12 @@ export default function MyCouponsPage(): React.JSX.Element {
                     href={prizeSupportUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-full text-center text-sm font-semibold text-[#F1A151] mb-5 hover:underline block"
+                    className="w-full text-center text-sm font-semibold text-[var(--partner-primary,#F1A151)] mb-5 hover:underline block"
                   >
-                    Pregunta sobre tu premio
+                    {t("ui.ask_about_your_prize")}
                   </a>
                 ) : null
-              ) : (
+              ) : !isPartnerMode ? (
                 <button
                   onClick={() => {
                     if (typeof window !== "undefined" && window.$crisp) {
@@ -730,11 +822,11 @@ export default function MyCouponsPage(): React.JSX.Element {
                       window.$crisp.push(["do", "chat:open"]);
                     }
                   }}
-                  className="w-full text-center text-sm font-semibold text-[#F1A151] mb-5 hover:underline"
+                  className="w-full text-center text-sm font-semibold text-[var(--partner-primary,#F1A151)] mb-5 hover:underline"
                 >
-                  ¿Problemas con tu descuento?
+                  {t("ui.need_help_with_your_discount")}
                 </button>
-              )}
+              ) : null}
 
               {/* Restrictions */}
               <QrRestrictions
@@ -753,8 +845,10 @@ export default function MyCouponsPage(): React.JSX.Element {
               setRestrictionModalOpen(false);
               setRestrictionCoupon(null);
             }}
-            storeName={restrictionCoupon.store?.name ?? "Tienda"}
-            discountTitle={restrictionCoupon.discount?.title ?? "Descuento"}
+            storeName={restrictionCoupon.store?.name ?? t("ui.store")}
+            discountTitle={
+              restrictionCoupon.discount?.title ?? t("ui.discount")
+            }
             restrictions={{
               storeRestrictions: restrictionCoupon.store?.restrictions,
               discountRestrictions: restrictionCoupon.discount?.restrictions,
@@ -771,7 +865,15 @@ export default function MyCouponsPage(): React.JSX.Element {
           />
         ) : null}
       </div>
-      <CrispProvider />
+      {!isPartnerMode && <CrispProvider />}
     </BasicLayout>
+  );
+}
+
+export default function MyCouponsPage(): React.JSX.Element {
+  return (
+    <Suspense fallback={null}>
+      <MyCouponsContent />
+    </Suspense>
   );
 }

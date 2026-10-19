@@ -1,9 +1,11 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
 
 import { PartnerExpired } from "@/components/partner/PartnerExpired";
+import { trackPartnerJourney } from "@/lib/analytics/trackPartnerJourney";
 import type { User } from "@/lib/api-types";
 import { graphqlRequest } from "@/lib/graphql-client";
 import { EXCHANGE_PARTNER_CODE_MUTATION } from "@/lib/graphql-queries";
@@ -97,6 +99,7 @@ function PartnerEntryPending(): React.JSX.Element {
 }
 
 function PartnerEntryContent(): React.JSX.Element {
+  const queryClient = useQueryClient();
   const searchParams = useSearchParams();
   const router = useRouter();
   const exchangeStartedRef = useRef<string | null>(null);
@@ -158,14 +161,17 @@ function PartnerEntryContent(): React.JSX.Element {
         if (!active) {
           return;
         }
+        // Queries from a previous normal/partner session must not survive SSO.
+        queryClient.clear();
+        usePartnerStore
+          .getState()
+          .setPartner(payload.partner, pending.lang, readParentOrigin());
         useAuthStore
           .getState()
           .setAuth(payload.user, payload.accessToken, false, {
             partner: true,
           });
-        usePartnerStore
-          .getState()
-          .setPartner(payload.partner, pending.lang, readParentOrigin());
+        trackPartnerJourney("session_started");
         router.replace(pending.redirect);
       })
       .catch(() => {
@@ -178,7 +184,14 @@ function PartnerEntryContent(): React.JSX.Element {
     return () => {
       active = false;
     };
-  }, [entry.code, entry.lang, entry.redirect, missingCode, router]);
+  }, [
+    entry.code,
+    entry.lang,
+    entry.redirect,
+    missingCode,
+    queryClient,
+    router,
+  ]);
 
   if (missingCode || exchangeFailed) {
     return <PartnerExpired />;

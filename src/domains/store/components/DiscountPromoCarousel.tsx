@@ -4,7 +4,9 @@ import { ChevronLeft, ChevronRight, Gift, Loader2, Lock } from "lucide-react";
 import Image from "next/image";
 
 import { useInfinitePeekCarousel } from "@/hooks/useInfinitePeekCarousel";
+import { useAppTranslation } from "@/lib/i18n/useAppTranslation";
 import { Button } from "@/shared/components/Button";
+import { usePartnerConfig } from "@/store/usePartnerStore";
 
 import type { DiscountPromoSlide } from "../utils/discountPromoDisplay";
 import {
@@ -56,6 +58,9 @@ function PromoUnlockRow({
   unlock: UnlockState;
   theme: PromoAccentTheme;
 }): React.JSX.Element {
+  const { t } = useAppTranslation();
+
+  const partner = usePartnerConfig();
   if (unlock.isLoading) {
     return (
       <div className="flex items-center justify-center py-2">
@@ -68,11 +73,11 @@ function PromoUnlockRow({
     return (
       <div className="py-1 text-center">
         <p className="text-sm font-semibold text-stone-700">
-          No disponible en este momento
+          {t("ui.currently_unavailable")}
         </p>
         {unlock.countdown ? (
           <p className="mt-0.5 text-xs text-stone-500">
-            Disponible en:{" "}
+            {t("ui.available_in")}{" "}
             <span className="font-mono font-bold">{unlock.countdown}</span>
           </p>
         ) : null}
@@ -88,12 +93,16 @@ function PromoUnlockRow({
         className={`flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold shadow-sm transition-colors ${theme.unlockBtn}`}
       >
         <Lock className="h-4 w-4 shrink-0" strokeWidth={2.5} />
-        {unlock.isPremium ? "Desbloquear oferta ahora" : "Desbloquear oferta"}
+        {unlock.isPremium ? t("ui.unlock_offer_now") : t("ui.unlock_offer")}
       </button>
       <p className="mt-1.5 text-center text-xs text-stone-500">
-        {unlock.isPremium
-          ? "Acceso premium instantáneo"
-          : "Ver anuncio • Es gratis"}
+        {partner
+          ? partner.adsDisabled
+            ? t("ui.no_ads")
+            : t("ui.watch_an_ad_it_s_free")
+          : unlock.isPremium
+            ? t("ui.instant_premium_access")
+            : t("ui.watch_an_ad_it_s_free")}
       </p>
     </div>
   );
@@ -112,7 +121,19 @@ function TicketPromoCard({
   unlock: UnlockState;
   onLayout?: () => void;
 }): React.JSX.Element {
-  const theme = getPromoAccentTheme(slide.accent);
+  const partner = usePartnerConfig();
+  const theme: PromoAccentTheme = partner
+    ? {
+        ...getPromoAccentTheme(slide.accent),
+        panel: "bg-secondary",
+        stub: "bg-primary",
+        scallop: "bg-secondary",
+        badge: "bg-primary/10 text-primary",
+        accentText: "text-primary",
+        unlockBtn: "bg-primary text-primary-foreground hover:opacity-90",
+        dot: "bg-primary",
+      }
+    : getPromoAccentTheme(slide.accent);
   const showGiftIcon =
     slide.mode === "text" &&
     !slide.stubSecondary &&
@@ -233,6 +254,8 @@ export function DiscountPromoCarousel({
   onActiveIndexChange,
   unlock,
 }: DiscountPromoCarouselProps): React.JSX.Element | null {
+  const { t } = useAppTranslation();
+
   const {
     trackRef,
     loopItems,
@@ -304,7 +327,7 @@ export function DiscountPromoCarousel({
               size="icon"
               variant="outline"
               className="h-9 w-9 shrink-0 rounded-full border-stone-200 bg-white text-stone-700 shadow-sm hover:bg-stone-50"
-              aria-label="Promoción anterior"
+              aria-label={t("ui.previous_offer")}
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
@@ -326,7 +349,7 @@ export function DiscountPromoCarousel({
                   />
                 ))}
               </div>
-              <p className="text-xs font-bold text-[#F1A151]">
+              <p className="text-xs font-bold text-[var(--partner-primary,#F1A151)]">
                 {realIndex + 1}/{slides.length}{" "}
                 {slides.length === 1 ? "cupón" : "cupones"}
               </p>
@@ -338,7 +361,7 @@ export function DiscountPromoCarousel({
               size="icon"
               variant="outline"
               className="h-9 w-9 shrink-0 rounded-full border-stone-200 bg-white text-stone-700 shadow-sm hover:bg-stone-50"
-              aria-label="Siguiente promoción"
+              aria-label={t("ui.next_offer")}
             >
               <ChevronRight className="h-4 w-4" />
             </Button>

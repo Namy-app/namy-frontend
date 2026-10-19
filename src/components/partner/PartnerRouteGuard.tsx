@@ -3,7 +3,11 @@
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 
-import { useIsPartnerMode, usePartnerStore } from "@/store/usePartnerStore";
+import {
+  useIsPartnerMode,
+  usePartnerConfig,
+  usePartnerStore,
+} from "@/store/usePartnerStore";
 
 /**
  * Keeps a partner session out of Namy auth screens and remembers the last
@@ -13,6 +17,7 @@ export function PartnerRouteGuard(): null {
   const pathname = usePathname();
   const router = useRouter();
   const isPartnerMode = useIsPartnerMode();
+  const partner = usePartnerConfig();
 
   useEffect(() => {
     if (!isPartnerMode) {
@@ -24,13 +29,38 @@ export function PartnerRouteGuard(): null {
       return;
     }
 
+    if (pathname === "/profile" || pathname.startsWith("/profile/")) {
+      router.replace("/my-coupons");
+      return;
+    }
+
+    const excluded = [
+      "/reviews",
+      "/league",
+      "/wallet",
+      "/subscription",
+      "/referrals",
+      "/premium",
+    ];
+    if (
+      pathname === "/" ||
+      excluded.some(
+        (route) => pathname === route || pathname.startsWith(`${route}/`)
+      ) ||
+      ((pathname === "/mural" || pathname.startsWith("/mural/")) &&
+        partner?.features.mural !== true)
+    ) {
+      router.replace("/explore");
+      return;
+    }
+
     if (!pathname.startsWith("/partner")) {
       const search = window.location.search;
       usePartnerStore
         .getState()
         .setLastPath(search ? `${pathname}${search}` : pathname);
     }
-  }, [isPartnerMode, pathname, router]);
+  }, [isPartnerMode, partner, pathname, router]);
 
   return null;
 }

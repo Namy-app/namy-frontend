@@ -4,10 +4,15 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 
 import { useCurrentUser } from "@/domains/user/hooks/query/useCurrentUser";
+import { useAppTranslation } from "@/lib/i18n/useAppTranslation";
 import { Card } from "@/shared/components/Card";
+import { useIsPartnerMode } from "@/store/usePartnerStore";
 
 export function CategoryCards(): React.JSX.Element {
+  const { t } = useAppTranslation();
+
   const router = useRouter();
+  const isPartnerMode = useIsPartnerMode();
   const { data: user, isLoading } = useCurrentUser();
 
   return (
@@ -36,11 +41,11 @@ export function CategoryCards(): React.JSX.Element {
                 />
               </div>
               <div className="flex-1 text-center sm:text-left">
-                <p className="text-xs sm:text-lg font-extrabold text-[#F1A151]">
-                  Descuentos en
+                <p className="text-xs sm:text-lg font-extrabold text-[var(--partner-primary,#F1A151)]">
+                  {t("ui.discounts_on")}
                 </p>
                 <h2 className="text-xl sm:text-xl md:text-2xl font-bold text-[#423A33] mb-1 sm:mb-2">
-                  Restaurantes
+                  {t("ui.restaurants")}
                 </h2>
               </div>
             </div>
@@ -71,13 +76,13 @@ export function CategoryCards(): React.JSX.Element {
               </div>
               <div className="flex-1 text-center sm:text-left">
                 <p
-                  className="text-xs sm:text-sm font-extrabold text-[#A07BF8];
+                  className="text-xs sm:text-sm font-extrabold text-[var(--partner-primary,#A07BF8)];
 "
                 >
-                  Descuentos en{" "}
+                  {t("ui.discounts_on")}{" "}
                 </p>{" "}
                 <h2 className="text-xl sm:text-xl md:text-2xl font-bold text-[#423A33] mb-1 sm:mb-2 ">
-                  Servicios
+                  {t("ui.services")}
                 </h2>
               </div>
             </div>
@@ -85,7 +90,7 @@ export function CategoryCards(): React.JSX.Element {
         </button>
       </div>
 
-      {!isLoading && !user?.isPremium && (
+      {!isPartnerMode && !isLoading && !user?.isPremium && (
         <div className="w-full mx-auto mt-4 sm:mt-5">
           <Card className="p-6 sm:p-8 bg-black hover:shadow-glow transition-all group border-0 shadow-lg rounded-3xl">
             <div className="flex sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-6">
@@ -98,21 +103,21 @@ export function CategoryCards(): React.JSX.Element {
               />
               <div className="text-center">
                 <h2 className="sm:text-xl text-lg font-bold text-white mb-0 sm:mb-1">
-                  Más Descuentos Sin anuncios
+                  {t("ui.more_discounts_without_ads")}
                 </h2>
                 <button
                   onClick={() => router.push("/subscription")}
-                  className="w-fit sm:hidden sm:w-fit mt-2 text px-4 sm:px-6 py-2 sm:py-3 bg-[#6C63FF] hover:bg-[#5B52E8] text-white font-semibold rounded-full transition-colors text-sm sm:text-md"
+                  className="w-fit sm:hidden sm:w-fit mt-2 text px-4 sm:px-6 py-2 sm:py-3 bg-[var(--partner-primary,#6C63FF)] hover:bg-[var(--partner-primary,#5B52E8)] text-white font-semibold rounded-full transition-colors text-sm sm:text-md"
                 >
-                  Hazte Premium
+                  {t("ui.go_premium")}
                 </button>
                 {/* </div> */}
               </div>
               <button
                 onClick={() => router.push("/subscription")}
-                className="w-full hidden sm:block sm:w-auto shrink-0 px-6 sm:px-8 py-3 sm:py-4 bg-[#6C63FF] hover:bg-[#5B52E8] text-white font-semibold rounded-full transition-colors text-base sm:text-lg"
+                className="w-full hidden sm:block sm:w-auto shrink-0 px-6 sm:px-8 py-3 sm:py-4 bg-[var(--partner-primary,#6C63FF)] hover:bg-[var(--partner-primary,#5B52E8)] text-white font-semibold rounded-full transition-colors text-base sm:text-lg"
               >
-                Hazte Premium
+                {t("ui.go_premium")}
               </button>
             </div>
           </Card>

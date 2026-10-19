@@ -14,6 +14,7 @@ import { type StoreFilters } from "@/domains/store/type";
 import { useMyLevel } from "@/domains/user/hooks/query/useMyLevel";
 import { BasicLayout } from "@/layouts/BasicLayout";
 import type { Store } from "@/lib/api-types";
+import { useAppTranslation } from "@/lib/i18n/useAppTranslation";
 import { getUserLocationSafe } from "@/lib/utils";
 import { Button } from "@/shared/components/Button";
 import { Input } from "@/shared/components/Input";
@@ -107,6 +108,8 @@ export function StoreMapListingView({
   promoIds,
   promoListPath,
 }: StoreMapListingViewProps): React.JSX.Element {
+  const { t } = useAppTranslation();
+
   const router = useRouter();
   const { data: categoriesData, isLoading: categoriesLoading } =
     useCategoriesByStoreType(storeType);
@@ -416,7 +419,7 @@ export function StoreMapListingView({
               type="search"
               enterKeyHint="search"
               autoComplete="off"
-              placeholder="Busca lugares o categorias"
+              placeholder={t("ui.search_places_or_categories")}
               value={searchQuery}
               onChange={(e) => handleMapSearchChange(e.target.value)}
               onFocus={() => setSnapPosition("full")}
@@ -460,7 +463,7 @@ export function StoreMapListingView({
               <button
                 type="button"
                 aria-label={
-                  snapPosition === "peek" ? "Mostrar lista" : "Mostrar mapa"
+                  snapPosition === "peek" ? t("ui.show_list") : t("ui.show_map")
                 }
                 onPointerDown={handleSheetHandlePointerDown}
                 onPointerMove={handleSheetHandlePointerMove}
@@ -484,7 +487,7 @@ export function StoreMapListingView({
                       }`}
                     >
                       <Map className="h-4 w-4 shrink-0" />
-                      Distancia
+                      {t("ui.distance")}
                     </button>
                     <button
                       type="button"
@@ -496,17 +499,17 @@ export function StoreMapListingView({
                       }`}
                     >
                       <Star className="h-4 w-4 shrink-0 fill-current" />
-                      Mejor valorado
+                      {t("ui.top_rated")}
                     </button>
                   </div>
                 </div>
 
                 <CategoryFilterPills
+                  allLabel={t("ui.all_filter")}
                   categories={categories}
                   selectedCategoryIds={selectedCategoryIds}
                   onCategoryClick={handleCategoryClick}
                   isLoading={categoriesLoading}
-                  allLabel="Todos"
                   loadingLabel={categoriesLoadingLabel}
                   className="pb-2"
                   defaultPlaceholderService={defaultPlaceholderService}
@@ -516,7 +519,8 @@ export function StoreMapListingView({
                   <div className="mx-4 mb-2 flex items-center justify-between gap-2 rounded-xl border border-orange-200 bg-orange-50 px-3 py-2">
                     <p className="text-xs font-medium text-orange-700">
                       {promoIds.length} {entityLabelPlural.replace(/es$/, "")}
-                      {promoIds.length !== 1 ? "s" : ""} de la promoción
+                      {promoIds.length !== 1 ? "s" : ""}{" "}
+                      {t("ui.from_the_promotion")}
                     </p>
                     {promoListPath ? (
                       <button
@@ -524,7 +528,7 @@ export function StoreMapListingView({
                         onClick={() => router.replace(promoListPath)}
                         className="shrink-0 text-xs text-orange-500 underline"
                       >
-                        Ver todos
+                        {t("ui.view_all")}
                       </button>
                     ) : null}
                   </div>
@@ -562,7 +566,7 @@ export function StoreMapListingView({
                       {emptyMessage}
                     </p>
                     <Button onClick={clearFilters} variant="outline">
-                      Limpiar filtros
+                      {t("ui.clear_filters")}
                     </Button>
                   </div>
                 ) : (
@@ -593,25 +597,27 @@ export function StoreMapListingView({
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-bold text-foreground">Filtros</h3>
+              <h3 className="text-xl font-bold text-foreground">
+                {t("ui.filters")}
+              </h3>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowFilterModal(false)}
               >
-                Listo
+                {t("ui.done")}
               </Button>
             </div>
 
             <div className="space-y-4">
               <div>
                 <label className="text-sm font-semibold text-foreground mb-2 block">
-                  Ordenar por
+                  {t("ui.sort_by")}
                 </label>
                 <div className="space-y-2">
                   {[
-                    { value: "NEWEST", label: "Más recientes" },
-                    { value: "DISTANCE", label: "Más cercano" },
+                    { value: "NEWEST", label: t("ui.newest") },
+                    { value: "DISTANCE", label: t("ui.nearest") },
                   ].map((option) => (
                     <button
                       key={option.value}
@@ -632,12 +638,12 @@ export function StoreMapListingView({
 
               <div>
                 <label className="text-sm font-semibold text-foreground mb-2 block">
-                  Disponibilidad
+                  {t("ui.availability")}
                 </label>
                 <div className="space-y-2">
                   {[
                     { value: "all", label: "Todos" },
-                    { value: "available", label: "Disponible ahora" },
+                    { value: "available", label: t("ui.available_now") },
                   ].map((option) => (
                     <button
                       key={option.value}
@@ -663,7 +669,7 @@ export function StoreMapListingView({
                 variant="outline"
                 className="w-full"
               >
-                Limpiar todos los filtros
+                {t("ui.clear_all_filters")}
               </Button>
             </div>
           </div>

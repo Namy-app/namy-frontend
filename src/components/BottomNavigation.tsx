@@ -2,7 +2,9 @@
 
 import { useRouter, usePathname } from "next/navigation";
 
+import { useAppTranslation } from "@/lib/i18n/useAppTranslation";
 import { useAuthStore } from "@/store/useAuthStore";
+import { useIsPartnerMode, usePartnerHydrated } from "@/store/usePartnerStore";
 
 const ExploreIcon = () => (
   <svg
@@ -103,10 +105,18 @@ interface NavItem {
   requiresAuth?: boolean;
 }
 
-export function BottomNavigation(): React.JSX.Element {
+export function BottomNavigation(): React.JSX.Element | null {
   const router = useRouter();
   const pathname = usePathname();
   const { isAuthenticated } = useAuthStore();
+  const isPartnerMode = useIsPartnerMode();
+
+  const { t } = useAppTranslation();
+  const hydrated = usePartnerHydrated();
+
+  if (!hydrated) {
+    return null;
+  }
 
   const navItems: NavItem[] = [
     { label: "Explorar", path: "/explore", icon: <ExploreIcon /> },
@@ -131,28 +141,69 @@ export function BottomNavigation(): React.JSX.Element {
     },
   ];
 
-  const visibleItems = navItems.filter(
-    (item) => !item.requiresAuth || isAuthenticated
-  );
+  const partnerItems: NavItem[] = [
+    { label: t("ui.explore"), path: "/explore", icon: <ExploreIcon /> },
+    {
+      label: t("ui.my_coupons_partner"),
+      path: "/my-coupons",
+      icon: <CouponsIcon />,
+    },
+  ];
+
+  const visibleItems = isPartnerMode
+    ? partnerItems
+    : navItems.filter((item) => !item.requiresAuth || isAuthenticated);
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-sm border-t border-gray-100 shadow-lg z-50">
+    <nav
+      className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-sm border-t border-gray-100 shadow-lg z-50"
+      aria-label={isPartnerMode ? t("ui.partner_navigation") : undefined}
+      style={
+        isPartnerMode
+          ? { paddingBottom: "env(safe-area-inset-bottom, 0px)" }
+          : undefined
+      }
+    >
       <div className="flex justify-around items-center h-16 max-w-5xl mx-auto px-2">
         {visibleItems.map((item) => {
-          const active = pathname === item.path;
+          const active =
+            pathname === item.path ||
+            (isPartnerMode &&
+              item.path === "/explore" &&
+              (pathname.startsWith("/stores/") ||
+                pathname === "/search" ||
+                pathname === "/map"));
           return (
             <button
               key={item.path}
+              aria-label={item.label}
+              aria-current={active ? "page" : undefined}
               onClick={() => router.push(item.path)}
               className="flex items-center justify-center transition-all"
             >
               {active ? (
-                <span className="flex items-center gap-1.5 bg-orange-500 text-white rounded-full px-4 py-2 font-bold text-sm">
+                <span
+                  className="flex items-center gap-1.5 bg-orange-500 text-white rounded-full px-4 py-2 font-bold text-sm"
+                  style={
+                    isPartnerMode
+                      ? { backgroundColor: "var(--partner-primary, #f97316)" }
+                      : undefined
+                  }
+                >
                   {item.icon}
                   {item.label}
                 </span>
               ) : (
-                <span className="text-orange-400 p-2">{item.icon}</span>
+                <span
+                  className="text-orange-400 p-2"
+                  style={
+                    isPartnerMode
+                      ? { color: "var(--partner-primary, #fb923c)" }
+                      : undefined
+                  }
+                >
+                  {item.icon}
+                </span>
               )}
             </button>
           );

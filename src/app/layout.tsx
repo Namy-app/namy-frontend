@@ -8,7 +8,9 @@ import { CapacitorSafeArea } from "@/components/CapacitorSafeArea";
 import { GoogleAdsense } from "@/components/GoogleAdsense";
 import { GoogleMapsProviderClient } from "@/components/GoogleMapsProviderClient";
 import { KeyboardScrollFix } from "@/components/KeyboardScrollFix";
+import { PartnerLanguage } from "@/components/partner/PartnerLanguage";
 import { PartnerRouteGuard } from "@/components/partner/PartnerRouteGuard";
+import { PartnerTheme } from "@/components/partner/PartnerTheme";
 import { PromoProvider } from "@/components/PromoProvider";
 import { PushNotificationProvider } from "@/components/PushNotificationProvider";
 import { SpaRedirectHandler } from "@/components/SpaRedirectHandler";
@@ -74,11 +76,6 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         <GoogleAdsense />
-        <script
-          async
-          src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${process.env.NEXT_PUBLIC_GOOGLE_ADSENSE_CLIENT_ID}`}
-          crossOrigin="anonymous"
-        />
       </head>
       <body
         className={`${poppins.variable} font-sans`}
@@ -92,6 +89,8 @@ export default function RootLayout({
           <AnalyticsProvider>
             <PromoProvider>
               <PartnerRouteGuard />
+              <PartnerTheme />
+              <PartnerLanguage />
               <PushNotificationProvider />
               <div id="app-shell" className="app-shell">
                 <GoogleMapsProviderClient>{children}</GoogleMapsProviderClient>
