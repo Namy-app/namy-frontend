@@ -10,6 +10,7 @@ import {
   getAppTranslator,
 } from "@/lib/i18n/useAppTranslation";
 import { Card } from "@/shared/components/Card";
+import { useIsPartnerMode } from "@/store/usePartnerStore";
 
 import type { Restaurant } from "../type";
 
@@ -37,6 +38,7 @@ export const RestaurantCard = ({
   distance?: number;
 }) => {
   const { t } = useAppTranslation();
+  const isPartnerMode = useIsPartnerMode();
   const restaurant: Restaurant = {
     id: store.id,
     slug: store.id,
@@ -105,13 +107,15 @@ export const RestaurantCard = ({
             {restaurant.name}
           </h3>
           <div className="flex items-center justify-between text-sm text-muted-foreground">
-            <div className="flex items-center gap-1">
-              <Star className="w-4 h-4 fill-primary text-primary" />
-              <span className="font-medium text-foreground">
-                {restaurant.rating}
-              </span>
-              <span>• {restaurant.categoryLabel ?? "Restaurant"}</span>
-            </div>
+            {!isPartnerMode && (
+              <div className="flex items-center gap-1">
+                <Star className="w-4 h-4 fill-primary text-primary" />
+                <span className="font-medium text-foreground">
+                  {restaurant.rating}
+                </span>
+                <span>• {restaurant.categoryLabel ?? "Restaurant"}</span>
+              </div>
+            )}
             {restaurant.distance !== "N/A" && (
               <div className="flex items-center gap-1 text-muted-foreground">
                 <MapPin className="w-3 h-3" />

@@ -1,7 +1,6 @@
 "use client";
 
 import { Browser } from "@capacitor/browser";
-import { Capacitor } from "@capacitor/core";
 import {
   Elements,
   PaymentElement,
@@ -12,6 +11,7 @@ import { loadStripe } from "@stripe/stripe-js";
 import { useState, useEffect } from "react";
 
 import { analytics } from "@/lib/analytics";
+import { isNativeApp } from "@/lib/app-platform";
 import { extractErrorMessage } from "@/lib/utils";
 
 import { useCreatePaymentIntent } from "../hooks";
@@ -102,7 +102,7 @@ function PaymentForm({
           // 3DS needed — open in Capacitor Browser on native to avoid
           // navigating the WebView away from the current screen.
           const redirectUrl = paymentIntent.next_action?.redirect_to_url?.url;
-          if (Capacitor.isNativePlatform() && redirectUrl) {
+          if (isNativeApp() && redirectUrl) {
             await Browser.open({ url: redirectUrl });
             setIsProcessing(false);
             return;

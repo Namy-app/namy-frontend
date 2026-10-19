@@ -29,7 +29,13 @@ export function PartnerRouteGuard(): null {
       return;
     }
 
+    if (pathname === "/profile" || pathname.startsWith("/profile/")) {
+      router.replace("/my-coupons");
+      return;
+    }
+
     const excluded = [
+      "/reviews",
       "/league",
       "/wallet",
       "/subscription",

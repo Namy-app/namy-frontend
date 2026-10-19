@@ -34,10 +34,11 @@ export default function ExplorePage(): React.JSX.Element {
   return (
     <BasicLayout className="bg-gradient-hero">
       <div
-        className="mx-auto mt-10 w-full min-w-0 max-w-5xl pb-16"
+        className={`mx-auto ${isPartnerMode ? "mt-0" : "mt-10"} w-full min-w-0 max-w-5xl pb-16`}
         style={{
-          paddingTop:
-            "calc(3.5rem + var(--status-bar-height, env(safe-area-inset-top, 0px)))",
+          paddingTop: isPartnerMode
+            ? "1rem"
+            : "calc(3.5rem + var(--status-bar-height, env(safe-area-inset-top, 0px)))",
         }}
       >
         {!isPartnerMode && <UserLevelBanner />}

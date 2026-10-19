@@ -18,7 +18,6 @@ import { useState, useRef, useEffect } from "react";
 import { analytics } from "@/lib/analytics";
 import { navigateTo } from "@/lib/capacitor-navigate";
 import { env } from "@/lib/env";
-import { useAppTranslation } from "@/lib/i18n/useAppTranslation";
 import {
   isPromoActive,
   isPromoNotificationData,
@@ -34,10 +33,9 @@ interface ExploreHeaderProps {
 
 export function ExploreHeader({
   isAuthenticated,
-}: ExploreHeaderProps): React.JSX.Element {
+}: ExploreHeaderProps): React.JSX.Element | null {
   const router = useRouter();
   const partner = usePartnerConfig();
-  const { t } = useAppTranslation();
   const { user, clearAuth } = useAuthStore();
 
   const handleNotificationClick = (notification: {
@@ -111,42 +109,7 @@ export function ExploreHeader({
   };
 
   if (partner) {
-    return (
-      <header
-        className="fixed top-0 left-0 right-0 z-20 bg-white/85 backdrop-blur-sm shadow-sm"
-        style={{
-          paddingTop: "var(--status-bar-height, env(safe-area-inset-top, 0px))",
-        }}
-      >
-        <nav
-          aria-label={t("ui.partner_navigation")}
-          className="mx-auto flex h-14 max-w-5xl items-center justify-between gap-3 px-4"
-        >
-          <Link
-            href="/explore"
-            aria-label={t("ui.explore")}
-            className="min-w-0 truncate text-primary font-semibold"
-          >
-            {partner.branding.logoUrl ? (
-              // Partner assets may be hosted outside Next's configured image hosts.
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={partner.branding.logoUrl}
-                alt={partner.name}
-                className="h-10 max-w-24 sm:max-w-40 object-contain"
-              />
-            ) : (
-              partner.name
-            )}
-          </Link>
-          <div className="flex shrink-0 items-center gap-3 text-xs sm:text-sm font-medium text-primary">
-            <Link href="/explore">{t("ui.explore")}</Link>
-            <Link href="/my-coupons">{t("ui.my_coupons_partner")}</Link>
-            <Link href="/profile">{t("ui.profile")}</Link>
-          </div>
-        </nav>
-      </header>
-    );
+    return null;
   }
 
   return (

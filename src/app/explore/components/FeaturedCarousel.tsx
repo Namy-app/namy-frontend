@@ -13,6 +13,7 @@ import { type Store } from "@/lib/api-types";
 import { useAppTranslation } from "@/lib/i18n/useAppTranslation";
 import { Button } from "@/shared/components/Button";
 import { Card } from "@/shared/components/Card";
+import { useIsPartnerMode } from "@/store/usePartnerStore";
 
 const MAX_FEATURED_STORES = 6;
 
@@ -25,6 +26,7 @@ function FeaturedStoreCard({
   discountPercentage: number;
   onImageLoad?: () => void;
 }): React.JSX.Element {
+  const isPartnerMode = useIsPartnerMode();
   return (
     <StoreNavLink
       storeId={store.id}
@@ -55,7 +57,7 @@ function FeaturedStoreCard({
         <div className="absolute bottom-3 left-3 rounded-full bg-[var(--partner-primary,#F1A151)] px-2.5 py-1 text-xs font-bold text-white">
           {discountPercentage}%
         </div>
-        {store.averageRating != null ? (
+        {!isPartnerMode && store.averageRating != null ? (
           <div className="absolute bottom-3 right-3 flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-[#423A33] shadow">
             <svg
               xmlns="http://www.w3.org/2000/svg"

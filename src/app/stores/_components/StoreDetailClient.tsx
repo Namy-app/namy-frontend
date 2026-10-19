@@ -111,6 +111,8 @@ export default function StoreDetailClient(): React.JSX.Element {
 
   const router = useRouter();
   const partner = usePartnerConfig();
+  const isPartnerMode = partner != null;
+  const canPostMural = !partner || partner.features.mural === true;
   const params = useParams();
   const searchParams = useSearchParams();
   const { isAuthenticated, user, accessToken } = useAuthStore();
@@ -242,7 +244,11 @@ export default function StoreDetailClient(): React.JSX.Element {
   const { data: catalogs = [] } = useStoreCatalogs(storeId || "");
 
   // Fetch reviews for this store
-  const { data: reviewsData } = useStoreReviews(storeId, { first: 3 });
+  const { data: reviewsData } = useStoreReviews(
+    storeId,
+    { first: 3 },
+    { enabled: !isPartnerMode }
+  );
 
   // Active discounts only — no promotional filters
   const visibleDiscounts = useMemo(
@@ -927,7 +933,7 @@ export default function StoreDetailClient(): React.JSX.Element {
           </div>
         </div>
       ) : (
-        <div className="pt-14 pb-16">
+        <div className={`${isPartnerMode ? "pt-0" : "pt-14"} pb-16`}>
           <div className="mx-auto max-w-5xl px-4">
             <div className="relative h-96 md:h-130 rounded-2xl overflow-hidden shadow-2xl">
               <Image
@@ -1026,15 +1032,21 @@ export default function StoreDetailClient(): React.JSX.Element {
                       {parsedStore.categoryLabel ?? "Store"}
                     </span>
                   </div>
-                  <div className="inline-flex items-center gap-2">
-                    <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                    <span className="font-semibold">{parsedStore.rating}</span>
-                    <span className="text-sm">
-                      (
-                      {t("ui.review_count", { count: parsedStore.reviewCount })}
-                      )
-                    </span>
-                  </div>
+                  {!isPartnerMode && (
+                    <div className="inline-flex items-center gap-2">
+                      <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                      <span className="font-semibold">
+                        {parsedStore.rating}
+                      </span>
+                      <span className="text-sm">
+                        (
+                        {t("ui.review_count", {
+                          count: parsedStore.reviewCount,
+                        })}
+                        )
+                      </span>
+                    </div>
+                  )}
                 </div>
                 {parsedStore.isAdPartner ? (
                   <div className="mt-3 inline-block bg-yellow-400 text-black px-3 py-1 rounded-full text-xs font-bold">
@@ -1341,84 +1353,86 @@ export default function StoreDetailClient(): React.JSX.Element {
                 </Card>
 
                 {/* ── Opiniones ── */}
-                <div>
-                  <h2 className="text-xl font-bold text-foreground mb-1">
-                    {t("ui.reviews")}
-                  </h2>
-                  <p className="text-sm text-muted-foreground mb-3">
-                    {t(
-                      "ui.visit_the_business_and_use_a_discount_to_leave_a_review"
-                    )}
-                  </p>
-
-                  {(reviewsData?.data?.length ?? 0) > 0 ? (
-                    <>
-                      <div className="space-y-3 mb-3">
-                        {reviewsData!.data.map((review) => {
-                          const initials = review.userId
-                            .slice(0, 2)
-                            .toUpperCase();
-                          return (
-                            <button
-                              key={review.id}
-                              onClick={() => setSelectedReview(review)}
-                              className="w-full flex items-start gap-3 bg-white border border-[#f1e9e6] rounded-2xl px-4 py-3 shadow-sm hover:bg-orange-50 hover:border-orange-200 transition-colors text-left"
-                            >
-                              {/* Avatar */}
-                              <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-base font-bold text-[var(--partner-primary,#f97316)] shrink-0">
-                                {initials}
-                              </div>
-                              {/* Content */}
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-bold text-gray-800 truncate">
-                                  {review.title}
-                                </p>
-                                {review.description ? (
-                                  <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">
-                                    {review.description}
-                                  </p>
-                                ) : null}
-                              </div>
-                              {/* Stars */}
-                              <div className="flex gap-0.5 shrink-0">
-                                {[1, 2, 3, 4, 5].map((s) => (
-                                  <Star
-                                    key={s}
-                                    className={`w-3.5 h-3.5 ${s <= review.rating ? "fill-yellow-400 text-yellow-400" : "text-gray-200"}`}
-                                  />
-                                ))}
-                              </div>
-                            </button>
-                          );
-                        })}
-                      </div>
-
-                      {reviewsData!.paginationInfo.total > 3 && (
-                        <button className="w-full border border-gray-300 rounded-2xl py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors mb-3">
-                          {t("ui.view_all_reviews")}
-                          {reviewsData!.paginationInfo.total})
-                        </button>
+                {!isPartnerMode && (
+                  <div>
+                    <h2 className="text-xl font-bold text-foreground mb-1">
+                      {t("ui.reviews")}
+                    </h2>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      {t(
+                        "ui.visit_the_business_and_use_a_discount_to_leave_a_review"
                       )}
-                    </>
-                  ) : null}
-
-                  {reviewsData?.data?.some((r) => r.userId === user?.id) ? (
-                    <p className="w-full text-center text-sm font-semibold text-gray-400 py-3">
-                      {t("ui.you_have_already_reviewed_this_place")}
                     </p>
-                  ) : (
-                    <button
-                      onClick={() => setShowReviewModal(true)}
-                      className="w-full bg-[var(--partner-primary,#fb7185)] hover:bg-[var(--partner-primary,#f43f5e)] text-white font-bold rounded-2xl py-3 text-sm transition-colors flex items-center justify-center gap-2"
-                    >
-                      <span>{t("ui.write_your_review")}</span>
-                      <span>🍽️</span>
-                      <span className="text-xs font-semibold opacity-90">
-                        +{reviewPts} pts ⭐
-                      </span>
-                    </button>
-                  )}
-                </div>
+
+                    {(reviewsData?.data?.length ?? 0) > 0 ? (
+                      <>
+                        <div className="space-y-3 mb-3">
+                          {reviewsData!.data.map((review) => {
+                            const initials = review.userId
+                              .slice(0, 2)
+                              .toUpperCase();
+                            return (
+                              <button
+                                key={review.id}
+                                onClick={() => setSelectedReview(review)}
+                                className="w-full flex items-start gap-3 bg-white border border-[#f1e9e6] rounded-2xl px-4 py-3 shadow-sm hover:bg-orange-50 hover:border-orange-200 transition-colors text-left"
+                              >
+                                {/* Avatar */}
+                                <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-base font-bold text-[var(--partner-primary,#f97316)] shrink-0">
+                                  {initials}
+                                </div>
+                                {/* Content */}
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-bold text-gray-800 truncate">
+                                    {review.title}
+                                  </p>
+                                  {review.description ? (
+                                    <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">
+                                      {review.description}
+                                    </p>
+                                  ) : null}
+                                </div>
+                                {/* Stars */}
+                                <div className="flex gap-0.5 shrink-0">
+                                  {[1, 2, 3, 4, 5].map((s) => (
+                                    <Star
+                                      key={s}
+                                      className={`w-3.5 h-3.5 ${s <= review.rating ? "fill-yellow-400 text-yellow-400" : "text-gray-200"}`}
+                                    />
+                                  ))}
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+
+                        {reviewsData!.paginationInfo.total > 3 && (
+                          <button className="w-full border border-gray-300 rounded-2xl py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors mb-3">
+                            {t("ui.view_all_reviews")}
+                            {reviewsData!.paginationInfo.total})
+                          </button>
+                        )}
+                      </>
+                    ) : null}
+
+                    {reviewsData?.data?.some((r) => r.userId === user?.id) ? (
+                      <p className="w-full text-center text-sm font-semibold text-gray-400 py-3">
+                        {t("ui.you_have_already_reviewed_this_place")}
+                      </p>
+                    ) : (
+                      <button
+                        onClick={() => setShowReviewModal(true)}
+                        className="w-full bg-[var(--partner-primary,#fb7185)] hover:bg-[var(--partner-primary,#f43f5e)] text-white font-bold rounded-2xl py-3 text-sm transition-colors flex items-center justify-center gap-2"
+                      >
+                        <span>{t("ui.write_your_review")}</span>
+                        <span>🍽️</span>
+                        <span className="text-xs font-semibold opacity-90">
+                          +{reviewPts} pts ⭐
+                        </span>
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
 
               <aside className="space-y-6">
@@ -1779,7 +1793,7 @@ export default function StoreDetailClient(): React.JSX.Element {
       <CouponGenerationAnimation isOpen={showCouponAnimation} />
 
       {/* Review Detail Modal */}
-      {selectedReview && typeof window !== "undefined"
+      {!isPartnerMode && selectedReview && typeof window !== "undefined"
         ? createPortal(
             <div
               className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
@@ -1849,7 +1863,7 @@ export default function StoreDetailClient(): React.JSX.Element {
         : null}
 
       {/* Review Modal */}
-      {showReviewModal && typeof window !== "undefined"
+      {!isPartnerMode && showReviewModal && typeof window !== "undefined"
         ? createPortal(
             <div
               className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
@@ -1937,7 +1951,7 @@ export default function StoreDetailClient(): React.JSX.Element {
                 </div>
 
                 {/* Post to Mural — independent of review */}
-                {!partner || partner.features.mural === true ? (
+                {canPostMural ? (
                   <div className="mb-3 border border-gray-200 rounded-xl p-3 space-y-2">
                     <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
                       {t("ui.post_to_city_mural")}
@@ -1955,7 +1969,7 @@ export default function StoreDetailClient(): React.JSX.Element {
                             <Loader2 className="w-6 h-6 text-white animate-spin" />
                           </div>
                         )}
-                        {(!partner || partner.features.mural === true) &&
+                        {!!canPostMural &&
                           !isUploadingPhoto &&
                           !muralPostDone && (
                             <button
@@ -2061,9 +2075,7 @@ export default function StoreDetailClient(): React.JSX.Element {
                 {(() => {
                   const hasReview =
                     reviewRating > 0 && reviewTitle.trim().length >= 3;
-                  const hasMural =
-                    !!reviewPhotoUrl &&
-                    (!partner || partner.features.mural === true);
+                  const hasMural = !!reviewPhotoUrl && canPostMural;
                   const canSubmit =
                     (hasReview || hasMural) &&
                     !isUploadingPhoto &&

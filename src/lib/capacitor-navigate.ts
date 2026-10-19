@@ -1,6 +1,6 @@
 "use client";
 
-import { Capacitor } from "@capacitor/core";
+import { isNativeApp } from "@/lib/app-platform";
 
 /**
  * In Capacitor static export (iOS + Android), navigating to a dynamic route
@@ -26,7 +26,7 @@ export const SPA_REDIRECT_KEY = "spa_redirect";
 
 /** True in the native iOS/Android shell, false on web. */
 export function isCapacitorNative(): boolean {
-  return typeof window !== "undefined" && Capacitor.isNativePlatform();
+  return typeof window !== "undefined" && isNativeApp();
 }
 
 export function isCapacitorDynamicRoute(path: string): boolean {
@@ -167,7 +167,7 @@ function shouldResetRestoredShell(path: string): boolean {
  * stale localStorage and fetched the wrong store.
  */
 export function runCapacitorColdStartSync(): void {
-  if (typeof window === "undefined" || !Capacitor.isNativePlatform()) {
+  if (typeof window === "undefined" || !isNativeApp()) {
     return;
   }
   if (sessionStorage.getItem(APP_BOOT_KEY)) {
