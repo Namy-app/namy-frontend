@@ -10,8 +10,10 @@ import { StoreNavLink } from "@/components/StoreNavLink";
 import { PlaceHolderTypeEnum } from "@/data/constants";
 import { useInfinitePeekCarousel } from "@/hooks/useInfinitePeekCarousel";
 import { type Store } from "@/lib/api-types";
+import { useAppTranslation } from "@/lib/i18n/useAppTranslation";
 import { Button } from "@/shared/components/Button";
 import { Card } from "@/shared/components/Card";
+import { useIsPartnerMode } from "@/store/usePartnerStore";
 
 const MAX_FEATURED_STORES = 6;
 
@@ -24,6 +26,7 @@ function FeaturedStoreCard({
   discountPercentage: number;
   onImageLoad?: () => void;
 }): React.JSX.Element {
+  const isPartnerMode = useIsPartnerMode();
   return (
     <StoreNavLink
       storeId={store.id}
@@ -54,7 +57,7 @@ function FeaturedStoreCard({
         <div className="absolute bottom-3 left-3 rounded-full bg-[var(--partner-primary,#F1A151)] px-2.5 py-1 text-xs font-bold text-white">
           {discountPercentage}%
         </div>
-        {store.averageRating != null ? (
+        {!isPartnerMode && store.averageRating != null ? (
           <div className="absolute bottom-3 right-3 flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-[#423A33] shadow">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -106,6 +109,8 @@ export function FeaturedCarousel({
   isLoading?: boolean;
   stores?: Store[];
 }): React.JSX.Element {
+  const { t } = useAppTranslation();
+
   const featuredItems = useMemo(
     () => (stores ?? []).slice(0, MAX_FEATURED_STORES),
     [stores]
@@ -129,7 +134,7 @@ export function FeaturedCarousel({
       <div className="mb-8 px-6">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-xl font-bold text-foreground">
-            Lugares Destacados <Emoji cp="1f525" label="fuego" />
+            {t("ui.featured_places")} <Emoji cp="1f525" label="fuego" />
           </h2>
         </div>
         <div className="h-64 animate-pulse rounded-3xl bg-gray-300" />
@@ -142,13 +147,13 @@ export function FeaturedCarousel({
       <div className="px-6">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-xl font-bold text-foreground">
-            Lugares Destacados <Emoji cp="1f525" label="fuego" />
+            {t("ui.featured_places")} <Emoji cp="1f525" label="fuego" />
           </h2>
           <Link
             href="/restaurants"
             className="text-sm font-semibold text-[var(--partner-primary,#F1A151)] hover:underline"
           >
-            Ver todos
+            {t("ui.view_all")}
           </Link>
         </div>
         {itemCount > 0 ? (
@@ -186,7 +191,7 @@ export function FeaturedCarousel({
                   size="icon"
                   onClick={prevSlide}
                   className="absolute top-24 left-2 z-10 h-10 w-10 -translate-y-1/2 rounded-full border-2 border-border bg-white shadow-lg transition-all hover:scale-110 hover:bg-white"
-                  aria-label="Tienda anterior"
+                  aria-label={t("ui.previous_store")}
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -210,7 +215,7 @@ export function FeaturedCarousel({
                   size="icon"
                   onClick={nextSlide}
                   className="absolute top-24 right-2 z-10 h-10 w-10 -translate-y-1/2 rounded-full border-2 border-border bg-white shadow-lg transition-all hover:scale-110 hover:bg-white"
-                  aria-label="Siguiente tienda"
+                  aria-label={t("ui.next_store")}
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -233,8 +238,8 @@ export function FeaturedCarousel({
           </div>
         ) : (
           <InfoCard
-            title="No hay tiendas destacadas"
-            summary="Vuelve pronto para ver tiendas destacadas disponibles"
+            title={t("ui.no_featured_stores")}
+            summary={t("ui.check_back_soon_for_featured_stores")}
           />
         )}
       </div>

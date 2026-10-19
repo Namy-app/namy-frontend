@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
 
 import { PartnerExpired } from "@/components/partner/PartnerExpired";
+import { trackPartnerJourney } from "@/lib/analytics/trackPartnerJourney";
 import type { User } from "@/lib/api-types";
 import { graphqlRequest } from "@/lib/graphql-client";
 import { EXCHANGE_PARTNER_CODE_MUTATION } from "@/lib/graphql-queries";
@@ -170,6 +171,7 @@ function PartnerEntryContent(): React.JSX.Element {
           .setAuth(payload.user, payload.accessToken, false, {
             partner: true,
           });
+        trackPartnerJourney("session_started");
         router.replace(pending.redirect);
       })
       .catch(() => {

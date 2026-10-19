@@ -1,6 +1,7 @@
-import { Capacitor } from "@capacitor/core";
 import { Directory, Filesystem } from "@capacitor/filesystem";
 import { Share } from "@capacitor/share";
+
+import { isNativeApp } from "@/lib/app-platform";
 
 function blobToBase64(blob: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -56,7 +57,7 @@ export async function downloadBlobFile(
   blob: Blob,
   filename: string
 ): Promise<void> {
-  if (Capacitor.isNativePlatform()) {
+  if (isNativeApp()) {
     try {
       await shareBlobOnNative(blob, filename);
     } catch (error) {

@@ -1,9 +1,9 @@
 "use client";
 
 import { App } from "@capacitor/app";
-import { Capacitor } from "@capacitor/core";
 import { useEffect } from "react";
 
+import { isNativeApp } from "@/lib/app-platform";
 import { recoverPendingPromo } from "@/store/usePromoStore";
 
 /**
@@ -19,7 +19,7 @@ export function usePromoRecovery(): void {
     // Recover any promo that arrived before the app opened
     void recoverPendingPromo();
 
-    if (!Capacitor.isNativePlatform()) {
+    if (!isNativeApp()) {
       return;
     }
 

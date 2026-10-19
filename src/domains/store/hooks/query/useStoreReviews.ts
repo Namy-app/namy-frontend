@@ -30,7 +30,8 @@ interface StoreReviewsResponse {
 
 export function useStoreReviews(
   storeId?: string | null,
-  pagination?: { page?: number; first?: number }
+  pagination?: { page?: number; first?: number },
+  options?: { enabled?: boolean }
 ): UseQueryResult<PaginatedReviewsResponse, Error> {
   return useQuery({
     queryKey: ["storeReviews", storeId, pagination],
@@ -53,6 +54,6 @@ export function useStoreReviews(
       );
     },
     staleTime: 2 * 60 * 1000, // 2 minutes
-    enabled: !!storeId,
+    enabled: !!storeId && options?.enabled !== false,
   });
 }

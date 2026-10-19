@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight, Gift, Loader2, Lock } from "lucide-react";
 import Image from "next/image";
 
 import { useInfinitePeekCarousel } from "@/hooks/useInfinitePeekCarousel";
+import { useAppTranslation } from "@/lib/i18n/useAppTranslation";
 import { Button } from "@/shared/components/Button";
 import { usePartnerConfig } from "@/store/usePartnerStore";
 
@@ -57,6 +58,8 @@ function PromoUnlockRow({
   unlock: UnlockState;
   theme: PromoAccentTheme;
 }): React.JSX.Element {
+  const { t } = useAppTranslation();
+
   const partner = usePartnerConfig();
   if (unlock.isLoading) {
     return (
@@ -70,11 +73,11 @@ function PromoUnlockRow({
     return (
       <div className="py-1 text-center">
         <p className="text-sm font-semibold text-stone-700">
-          No disponible en este momento
+          {t("ui.currently_unavailable")}
         </p>
         {unlock.countdown ? (
           <p className="mt-0.5 text-xs text-stone-500">
-            Disponible en:{" "}
+            {t("ui.available_in")}{" "}
             <span className="font-mono font-bold">{unlock.countdown}</span>
           </p>
         ) : null}
@@ -90,16 +93,16 @@ function PromoUnlockRow({
         className={`flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold shadow-sm transition-colors ${theme.unlockBtn}`}
       >
         <Lock className="h-4 w-4 shrink-0" strokeWidth={2.5} />
-        {unlock.isPremium ? "Desbloquear oferta ahora" : "Desbloquear oferta"}
+        {unlock.isPremium ? t("ui.unlock_offer_now") : t("ui.unlock_offer")}
       </button>
       <p className="mt-1.5 text-center text-xs text-stone-500">
         {partner
           ? partner.adsDisabled
-            ? "Sin anuncios"
-            : "Ver anuncio • Es gratis"
+            ? t("ui.no_ads")
+            : t("ui.watch_an_ad_it_s_free")
           : unlock.isPremium
-            ? "Acceso premium instantáneo"
-            : "Ver anuncio • Es gratis"}
+            ? t("ui.instant_premium_access")
+            : t("ui.watch_an_ad_it_s_free")}
       </p>
     </div>
   );
@@ -251,6 +254,8 @@ export function DiscountPromoCarousel({
   onActiveIndexChange,
   unlock,
 }: DiscountPromoCarouselProps): React.JSX.Element | null {
+  const { t } = useAppTranslation();
+
   const {
     trackRef,
     loopItems,
@@ -322,7 +327,7 @@ export function DiscountPromoCarousel({
               size="icon"
               variant="outline"
               className="h-9 w-9 shrink-0 rounded-full border-stone-200 bg-white text-stone-700 shadow-sm hover:bg-stone-50"
-              aria-label="Promoción anterior"
+              aria-label={t("ui.previous_offer")}
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
@@ -356,7 +361,7 @@ export function DiscountPromoCarousel({
               size="icon"
               variant="outline"
               className="h-9 w-9 shrink-0 rounded-full border-stone-200 bg-white text-stone-700 shadow-sm hover:bg-stone-50"
-              aria-label="Siguiente promoción"
+              aria-label={t("ui.next_offer")}
             >
               <ChevronRight className="h-4 w-4" />
             </Button>

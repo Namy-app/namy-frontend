@@ -3,17 +3,13 @@
 import { ChevronLeft, ChevronRight, Ticket } from "lucide-react";
 import { useMemo, useState } from "react";
 
-import { useStoreCoupons } from "@/domains/admin/hooks";
+import {
+  buildRedemptionFilters,
+  redemptionSourceLabel,
+} from "@/domains/admin/partnerReporting";
+import { usePartnerRedemptions } from "@/domains/admin/usePartnerRedemptions";
 
 const PAGE_SIZE = 25;
-
-function startOfDay(date: string): string {
-  return `${date}T00:00:00`;
-}
-
-function endOfDay(date: string): string {
-  return `${date}T23:59:59.999`;
-}
 
 function formatRedeemedAt(value?: string | null): string {
   if (!value) {
@@ -31,35 +27,37 @@ export default function AdminRedemptionsPage(): React.JSX.Element {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [page, setPage] = useState(1);
+  const [sourceDraft, setSourceDraft] = useState("all");
+  const [source, setSource] = useState("all");
 
   const filters = useMemo(
-    () => ({
-      used: true as const,
-      includeExpired: true,
-      ...(from ? { usedAtFrom: startOfDay(from) } : {}),
-      ...(to ? { usedAtTo: endOfDay(to) } : {}),
-    }),
-    [from, to]
+    () => buildRedemptionFilters(from, to, source),
+    [from, to, source]
   );
-
-  const { data, isLoading, isError, error } = useStoreCoupons(
-    filters,
-    { page, first: PAGE_SIZE },
-    { enabled: true }
-  );
+  const {
+    data: result,
+    isLoading,
+    isError,
+    error,
+  } = usePartnerRedemptions(filters, { page, first: PAGE_SIZE });
+  const data = result?.coupons;
+  const partners = result?.adminCouponPartners ?? [];
 
   const rows = data?.data ?? [];
   const total = data?.paginationInfo.total ?? 0;
   const totalPages = data?.paginationInfo.totalPages ?? 1;
-  const rangeActive = Boolean(from || to);
+  const rangeActive = Boolean(from || to || source !== "all");
 
   const applyRange = (): void => {
+    setSource(sourceDraft);
     setFrom(fromDraft);
     setTo(toDraft);
     setPage(1);
   };
 
   const clearRange = (): void => {
+    setSourceDraft("all");
+    setSource("all");
     setFromDraft("");
     setToDraft("");
     setFrom("");
@@ -76,7 +74,7 @@ export default function AdminRedemptionsPage(): React.JSX.Element {
         </h1>
         <p className="text-muted-foreground mt-1">
           {rangeActive
-            ? "Filtrados por fecha de canje"
+            ? "Filtrados por fecha y origen"
             : "Todos los canjes hasta hoy"}
           {isLoading ? "" : ` · ${total}`}
         </p>
@@ -101,6 +99,24 @@ export default function AdminRedemptionsPage(): React.JSX.Element {
             className="rounded-lg border border-border bg-background px-3 py-2 text-foreground"
           />
         </label>
+        <label className="flex flex-col gap-1 text-sm text-muted-foreground">
+          Origen del cupón
+          <select
+            value={sourceDraft}
+            onChange={(event) => setSourceDraft(event.target.value)}
+            className="rounded-lg border border-border bg-background px-3 py-2 text-foreground"
+          >
+            <option value="all">Todos los orígenes</option>
+            <option value="namy">Namy</option>
+            <option value="partners">Todos los socios</option>
+            {partners.map((partner) => (
+              <option key={partner.id} value={partner.id}>
+                {partner.name}
+                {partner.active ? "" : " (inactivo)"}
+              </option>
+            ))}
+          </select>
+        </label>
         <button
           type="button"
           onClick={applyRange}
@@ -108,7 +124,7 @@ export default function AdminRedemptionsPage(): React.JSX.Element {
         >
           Filtrar
         </button>
-        {rangeActive || fromDraft || toDraft ? (
+        {rangeActive || fromDraft || toDraft || sourceDraft !== "all" ? (
           <button
             type="button"
             onClick={clearRange}
@@ -132,7 +148,7 @@ export default function AdminRedemptionsPage(): React.JSX.Element {
       ) : rows.length === 0 ? (
         <div className="bg-card rounded-xl border border-border p-10 text-center text-muted-foreground">
           {rangeActive
-            ? "No hay canjes en ese rango de fechas."
+            ? "No hay canjes con esos filtros."
             : "Aún no hay cupones canjeados."}
         </div>
       ) : (
@@ -144,6 +160,7 @@ export default function AdminRedemptionsPage(): React.JSX.Element {
                   <th className="px-4 py-3 font-medium">Fecha</th>
                   <th className="px-4 py-3 font-medium">Quién</th>
                   <th className="px-4 py-3 font-medium">Dónde</th>
+                  <th className="px-4 py-3 font-medium">Origen</th>
                 </tr>
               </thead>
               <tbody>
@@ -163,6 +180,9 @@ export default function AdminRedemptionsPage(): React.JSX.Element {
                           · {coupon.store.city}
                         </span>
                       ) : null}
+                    </td>
+                    <td className="px-4 py-3 text-foreground">
+                      {redemptionSourceLabel(coupon)}
                     </td>
                   </tr>
                 ))}

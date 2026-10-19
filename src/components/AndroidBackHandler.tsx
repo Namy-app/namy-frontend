@@ -1,9 +1,10 @@
 "use client";
 
 import { App } from "@capacitor/app";
-import { Capacitor } from "@capacitor/core";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+
+import { getAppPlatform } from "@/lib/app-platform";
 
 /**
  * Handles the Android hardware back button.
@@ -17,7 +18,7 @@ export function AndroidBackHandler(): null {
   const router = useRouter();
 
   useEffect(() => {
-    if (Capacitor.getPlatform() !== "android") {
+    if (getAppPlatform() !== "android") {
       return;
     }
 

@@ -49,6 +49,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useDiscountCountdown } from "@/hooks/useDiscountCountdown";
 import { BasicLayout } from "@/layouts/BasicLayout";
 import { analytics } from "@/lib/analytics";
+import { trackPartnerJourney } from "@/lib/analytics/trackPartnerJourney";
 import {
   CAPACITOR_DYNAMIC_NAV_EVENT,
   resolveCapacitorDynamicId,
@@ -68,6 +69,7 @@ import {
   CREATE_REVIEW_MUTATION,
   CREATE_MURAL_POST_MUTATION,
 } from "@/lib/graphql-queries";
+import { useAppTranslation } from "@/lib/i18n/useAppTranslation";
 import { contentfulImageLoader } from "@/lib/image-utils";
 import { openInGoogleMaps } from "@/lib/maps";
 import { Button } from "@/shared/components/Button";
@@ -105,8 +107,12 @@ const muralPts = getDefaultChallenge("mural_posts")?.points ?? 50;
 const reviewPts = getDefaultChallenge("reviews")?.points ?? 40;
 
 export default function StoreDetailClient(): React.JSX.Element {
+  const { t, i18n } = useAppTranslation();
+
   const router = useRouter();
   const partner = usePartnerConfig();
+  const isPartnerMode = partner != null;
+  const canPostMural = !partner || partner.features.mural === true;
   const params = useParams();
   const searchParams = useSearchParams();
   const { isAuthenticated, user, accessToken } = useAuthStore();
@@ -238,7 +244,11 @@ export default function StoreDetailClient(): React.JSX.Element {
   const { data: catalogs = [] } = useStoreCatalogs(storeId || "");
 
   // Fetch reviews for this store
-  const { data: reviewsData } = useStoreReviews(storeId, { first: 3 });
+  const { data: reviewsData } = useStoreReviews(
+    storeId,
+    { first: 3 },
+    { enabled: !isPartnerMode }
+  );
 
   // Active discounts only — no promotional filters
   const visibleDiscounts = useMemo(
@@ -248,8 +258,12 @@ export default function StoreDetailClient(): React.JSX.Element {
   const userLevelPct = userLevel?.discountPercentage ?? 10;
   const isPremiumUser = Boolean(user?.isPremium);
   const promoDisplayContext = useMemo(
-    () => ({ userLevelPct, isPremium: isPremiumUser }),
-    [userLevelPct, isPremiumUser]
+    () => ({
+      userLevelPct,
+      isPremium: isPremiumUser,
+      language: i18n.language === "en" ? ("en" as const) : ("es" as const),
+    }),
+    [userLevelPct, isPremiumUser, i18n.language]
   );
   const fallbackDiscountPercentage = userLevelPct;
   const currentCarouselDiscount =
@@ -262,7 +276,7 @@ export default function StoreDetailClient(): React.JSX.Element {
       type: discount.type,
       value: displayDiscountValue(discount, userLevelPct, isPremiumUser),
     });
-    return label || discount.title || "Promoción Especial";
+    return label || discount.title || t("ui.special_offer");
   };
 
   const getSelectedDiscountId = (): string | undefined => {
@@ -371,7 +385,7 @@ export default function StoreDetailClient(): React.JSX.Element {
                         const dayLabel =
                           DAY_LABELS[day.day.toLowerCase()] || day.day;
                         return day.closed
-                          ? `${dayLabel}: Cerrado`
+                          ? `${dayLabel}: ${t("ui.closed")}`
                           : `${dayLabel}: ${day.startTime} - ${day.endTime}`;
                       }
                     )
@@ -407,9 +421,9 @@ export default function StoreDetailClient(): React.JSX.Element {
                   .filter(Boolean)
                   .join(", ");
 
-                return formattedHours || "Horario no disponible";
+                return formattedHours || t("ui.hours_unavailable");
               })()
-            : "Horario no disponible",
+            : t("ui.hours_unavailable"),
         hoursStructured:
           store.openDays && typeof store.openDays === "object"
             ? (() => {
@@ -431,7 +445,7 @@ export default function StoreDetailClient(): React.JSX.Element {
                       return {
                         day: dayLabel,
                         hours: day.closed
-                          ? "Cerrado"
+                          ? t("ui.closed")
                           : `${convertTo12Hour(day.startTime || "")} - ${convertTo12Hour(day.endTime || "")}`,
                       };
                     }
@@ -474,13 +488,13 @@ export default function StoreDetailClient(): React.JSX.Element {
               })()
             : undefined,
         location: {
-          address: store.address || "Dirección no disponible",
-          city: store.city || "Ciudad no disponible",
+          address: store.address || t("ui.address_unavailable"),
+          city: store.city || t("ui.city_unavailable"),
           lat: store.lat,
           lng: store.lng,
           placeId: store.placeId,
         },
-        phone: store.phoneNumber || "Teléfono no disponible",
+        phone: store.phoneNumber || t("ui.phone_unavailable"),
         images: (() => {
           const allImages = [
             store.imageUrl, // Main image first
@@ -507,7 +521,7 @@ export default function StoreDetailClient(): React.JSX.Element {
           )
             ? ((store.additionalInfo as { amenities: string[] })
                 .amenities as string[])
-            : ["Comodidades no disponibles"],
+            : [t("ui.amenities_unavailable")],
       }
     : null;
 
@@ -515,8 +529,8 @@ export default function StoreDetailClient(): React.JSX.Element {
     if (!isAuthenticated) {
       toast({
         variant: "default",
-        title: "Inicio de sesión requerido",
-        description: "Por favor inicia sesión para desbloquear descuentos.",
+        title: t("ui.login_required"),
+        description: t("ui.please_log_in_to_unlock_discounts"),
       });
       router.push("/");
       return;
@@ -546,7 +560,7 @@ export default function StoreDetailClient(): React.JSX.Element {
     if (!isDiscountValid(currentCarouselDiscount)) {
       toast({
         variant: "destructive",
-        title: "Este descuento ya no está disponible",
+        title: t("ui.this_discount_is_no_longer_available"),
       });
       return;
     }
@@ -570,8 +584,7 @@ export default function StoreDetailClient(): React.JSX.Element {
       toast({
         variant: "destructive",
         title: "Error",
-        description:
-          "Token de desbloqueo faltante. Por favor intenta de nuevo.",
+        description: t("ui.unlock_token_missing_please_try_again"),
       });
       setShowCongratulations(false);
       return;
@@ -583,9 +596,8 @@ export default function StoreDetailClient(): React.JSX.Element {
       if (!discountId) {
         toast({
           variant: "destructive",
-          title: "No hay descuentos disponibles",
-          description:
-            "Esta tienda no tiene descuentos activos en este momento.",
+          title: t("ui.no_discounts_available"),
+          description: t("ui.this_store_has_no_active_discounts_right_now"),
         });
         setShowCongratulations(false);
         return;
@@ -627,11 +639,9 @@ export default function StoreDetailClient(): React.JSX.Element {
       setShowCouponAnimation(false);
       toast({
         variant: "destructive",
-        title: "Error al desbloquear el cupón",
+        title: t("ui.unable_to_unlock_coupon"),
         description:
-          error instanceof Error
-            ? error.message
-            : "Por favor intenta de nuevo.",
+          error instanceof Error ? error.message : t("ui.please_try_again"),
       });
       setShowCongratulations(false);
     }
@@ -641,8 +651,8 @@ export default function StoreDetailClient(): React.JSX.Element {
     if (!isAuthenticated) {
       toast({
         variant: "default",
-        title: "Inicio de sesión requerido",
-        description: "Por favor inicia sesión para desbloquear descuentos.",
+        title: t("ui.login_required"),
+        description: t("ui.please_log_in_to_unlock_discounts"),
       });
       router.push("/");
       return;
@@ -653,8 +663,8 @@ export default function StoreDetailClient(): React.JSX.Element {
     if (!discountId) {
       toast({
         variant: "destructive",
-        title: "No hay descuentos disponibles",
-        description: "Esta tienda no tiene descuentos activos en este momento.",
+        title: t("ui.no_discounts_available"),
+        description: t("ui.this_store_has_no_active_discounts_right_now"),
       });
       return;
     }
@@ -694,6 +704,10 @@ export default function StoreDetailClient(): React.JSX.Element {
       });
 
       if (data?.generateCoupon) {
+        trackPartnerJourney("coupon_generated", {
+          store_id: data.generateCoupon.store?.id ?? storeId,
+          discount_id: discountId,
+        });
         analytics.track("coupon_generated", {
           store_id: data.generateCoupon.store?.id ?? storeId,
           discount_id: discountId,
@@ -707,12 +721,12 @@ export default function StoreDetailClient(): React.JSX.Element {
         }
         setShowCouponAnimation(false);
         toast({
-          title: "Cupón creado",
-          description: "Cupón agregado a Mis Cupones.",
+          title: t("ui.coupon_created"),
+          description: t("ui.coupon_added_to_my_coupons"),
         });
         router.push("/my-coupons");
       } else {
-        throw new Error("No se recibió cupón del servidor");
+        throw new Error(t("ui.no_coupon_received_from_the_server"));
       }
     } catch (err) {
       setShowCouponAnimation(false);
@@ -725,8 +739,8 @@ export default function StoreDetailClient(): React.JSX.Element {
     if (!isAuthenticated) {
       toast({
         variant: "default",
-        title: "Inicio de sesión requerido",
-        description: "Por favor inicia sesión para usar Pago Rápido.",
+        title: t("ui.login_required"),
+        description: t("ui.please_log_in_to_use_quick_pay"),
       });
       router.push("/");
       return;
@@ -790,7 +804,7 @@ export default function StoreDetailClient(): React.JSX.Element {
         setShowQuickPaySuccess(true);
       } else {
         setShowCouponAnimation(false);
-        throw new Error("Pago Rápido falló");
+        throw new Error(t("ui.quick_pay_failed"));
       }
     } catch (err) {
       setShowCouponAnimation(false);
@@ -845,7 +859,7 @@ export default function StoreDetailClient(): React.JSX.Element {
         .writeText(text)
         .then(() => {
           toast({
-            title: "Copied to clipboard!",
+            title: t("ui.copied_to_clipboard"),
             description: `${storeCategoryType} details have been copied. Share them with friends!`,
           });
         })
@@ -853,15 +867,17 @@ export default function StoreDetailClient(): React.JSX.Element {
           console.error("Error copying to clipboard:", error);
           toast({
             variant: "destructive",
-            title: "Copy failed",
-            description: "Unable to copy to clipboard. Please copy manually.",
+            title: t("ui.copy_failed"),
+            description: t(
+              "ui.unable_to_copy_to_clipboard_please_copy_manually"
+            ),
           });
         });
     } else {
       // Fallback for browsers without clipboard API
       toast({
         variant: "destructive",
-        title: "Share not supported",
+        title: t("ui.sharing_is_not_supported"),
         description: `Please copy the ${storeCategoryType.toLowerCase()} details manually.`,
       });
     }
@@ -874,7 +890,7 @@ export default function StoreDetailClient(): React.JSX.Element {
           <div className="text-center">
             <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
             <p className="text-muted-foreground">
-              Loading restaurant details...
+              {t("ui.loading_restaurant_details")}
             </p>
           </div>
         </div>
@@ -909,15 +925,15 @@ export default function StoreDetailClient(): React.JSX.Element {
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-center">
             <p className="text-muted-foreground text-lg mb-4">
-              {storeCategoryType} not found
+              {t("ui.place_not_found", { type: storeCategoryType })}
             </p>
             <Button onClick={() => router.push("/restaurants")}>
-              Back to ${storeCategoryType}s
+              {t("ui.back_to_places", { type: storeCategoryType })}
             </Button>
           </div>
         </div>
       ) : (
-        <div className="pt-14 pb-16">
+        <div className={`${isPartnerMode ? "pt-0" : "pt-14"} pb-16`}>
           <div className="mx-auto max-w-5xl px-4">
             <div className="relative h-96 md:h-130 rounded-2xl overflow-hidden shadow-2xl">
               <Image
@@ -1016,17 +1032,25 @@ export default function StoreDetailClient(): React.JSX.Element {
                       {parsedStore.categoryLabel ?? "Store"}
                     </span>
                   </div>
-                  <div className="inline-flex items-center gap-2">
-                    <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                    <span className="font-semibold">{parsedStore.rating}</span>
-                    <span className="text-sm">
-                      ({parsedStore.reviewCount} reviews)
-                    </span>
-                  </div>
+                  {!isPartnerMode && (
+                    <div className="inline-flex items-center gap-2">
+                      <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                      <span className="font-semibold">
+                        {parsedStore.rating}
+                      </span>
+                      <span className="text-sm">
+                        (
+                        {t("ui.review_count", {
+                          count: parsedStore.reviewCount,
+                        })}
+                        )
+                      </span>
+                    </div>
+                  )}
                 </div>
                 {parsedStore.isAdPartner ? (
                   <div className="mt-3 inline-block bg-yellow-400 text-black px-3 py-1 rounded-full text-xs font-bold">
-                    ⭐ Ad Partner
+                    {t("ui.ad_partner")}
                   </div>
                 ) : null}
               </div>
@@ -1077,7 +1101,7 @@ export default function StoreDetailClient(): React.JSX.Element {
                         <Clock className="w-5 h-5 text-[var(--partner-primary,#f43f5e)] mt-0.5 shrink-0" />
                         <div className="flex-1">
                           <p className="font-semibold text-foreground mb-3">
-                            Horario de Hoy
+                            {t("ui.today_s_hours")}
                           </p>
                           <div className="space-y-2">
                             {(() => {
@@ -1092,7 +1116,14 @@ export default function StoreDetailClient(): React.JSX.Element {
                               return todayHours ? (
                                 <div className="flex justify-between text-sm">
                                   <span className="font-medium text-foreground">
-                                    {todayHours.day}
+                                    {t(
+                                      "ui." +
+                                        (Object.keys(DAY_LABELS).find(
+                                          (key) =>
+                                            DAY_LABELS[key] === todayHours.day
+                                        ) ?? ""),
+                                      { defaultValue: todayHours.day }
+                                    )}
                                   </span>
                                   <span className="text-muted-foreground">
                                     {todayHours.hours}
@@ -1100,7 +1131,7 @@ export default function StoreDetailClient(): React.JSX.Element {
                                 </div>
                               ) : (
                                 <p className="text-sm text-muted-foreground">
-                                  No hay horario para hoy
+                                  {t("ui.no_hours_listed_for_today")}
                                 </p>
                               );
                             })()}
@@ -1109,7 +1140,7 @@ export default function StoreDetailClient(): React.JSX.Element {
                             onClick={() => setShowAllHours(true)}
                             className="mt-3 text-sm text-primary hover:text-primary/80 transition-colors underline"
                           >
-                            Ver todos los horarios
+                            {t("ui.view_all_hours")}
                           </button>
                         </div>
                       </div>
@@ -1121,7 +1152,9 @@ export default function StoreDetailClient(): React.JSX.Element {
                   <div className="flex items-start gap-3">
                     <MapPin className="w-5 h-5 text-primary mt-0.5 shrink-0" />
                     <div className="flex-1">
-                      <p className="font-semibold text-foreground">Location</p>
+                      <p className="font-semibold text-foreground">
+                        {t("ui.location")}
+                      </p>
                       <p className="text-sm text-muted-foreground mb-2">
                         {parsedStore.location.address},{" "}
                         {parsedStore.location.city}
@@ -1145,7 +1178,7 @@ export default function StoreDetailClient(): React.JSX.Element {
                         className="text-xs"
                         onClick={handleGetDirections}
                       >
-                        Obtener indicaciones 📍
+                        {t("ui.get_directions")}
                       </Button>
                     </div>
                   </div>
@@ -1157,7 +1190,9 @@ export default function StoreDetailClient(): React.JSX.Element {
                       <div className="flex items-center gap-3">
                         <Phone className="w-5 h-5 text-[var(--partner-primary,#f43f5e)] shrink-0" />
                         <div>
-                          <p className="font-semibold text-foreground">Phone</p>
+                          <p className="font-semibold text-foreground">
+                            {t("ui.phone")}
+                          </p>
                           <a
                             href={`tel:${parsedStore.phone}`}
                             className="text-sm text-[var(--partner-primary,#e11d48)] hover:underline"
@@ -1173,7 +1208,7 @@ export default function StoreDetailClient(): React.JSX.Element {
                         className="w-full bg-green-500 hover:bg-green-600 text-white"
                       >
                         <MessageCircle className="w-4 h-4 mr-2" />
-                        Contact via WhatsApp
+                        {t("ui.contact_via_whatsapp")}
                       </Button>
                     </>
                   ) : null}
@@ -1224,7 +1259,7 @@ export default function StoreDetailClient(): React.JSX.Element {
                 {parsedStore.menuItems.length > 0 ? (
                   <div>
                     <h2 className="text-2xl font-bold text-foreground mb-4">
-                      📖 Menu
+                      {t("ui.menu")}
                     </h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                       {parsedStore.menuItems.map((item, idx) => (
@@ -1253,7 +1288,7 @@ export default function StoreDetailClient(): React.JSX.Element {
 
                 <Card className="p-5 bg-white border border-[#f1e9e6] rounded-xl">
                   <h2 className="text-xl font-bold text-foreground mb-4">
-                    🕑 Discount Restrictions
+                    {t("ui.discount_restrictions")}
                   </h2>
                   <ul className="space-y-3">
                     {discountRestrictions.map(
@@ -1273,7 +1308,7 @@ export default function StoreDetailClient(): React.JSX.Element {
                               >
                                 <span className="text-base mt-0.5">{icon}</span>
                                 <span className="text-muted-foreground flex-1 text-left">
-                                  Ver horarios disponibles
+                                  {t("ui.view_available_times")}
                                 </span>
                                 <ChevronDown
                                   className={`w-4 h-4 text-muted-foreground transition-transform shrink-0 mt-0.5 ${
@@ -1318,88 +1353,91 @@ export default function StoreDetailClient(): React.JSX.Element {
                 </Card>
 
                 {/* ── Opiniones ── */}
-                <div>
-                  <h2 className="text-xl font-bold text-foreground mb-1">
-                    ⭐ Opiniones
-                  </h2>
-                  <p className="text-sm text-muted-foreground mb-3">
-                    Visita el negocio y usa un descuento para poder dejar tu
-                    reseña
-                  </p>
-
-                  {(reviewsData?.data?.length ?? 0) > 0 ? (
-                    <>
-                      <div className="space-y-3 mb-3">
-                        {reviewsData!.data.map((review) => {
-                          const initials = review.userId
-                            .slice(0, 2)
-                            .toUpperCase();
-                          return (
-                            <button
-                              key={review.id}
-                              onClick={() => setSelectedReview(review)}
-                              className="w-full flex items-start gap-3 bg-white border border-[#f1e9e6] rounded-2xl px-4 py-3 shadow-sm hover:bg-orange-50 hover:border-orange-200 transition-colors text-left"
-                            >
-                              {/* Avatar */}
-                              <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-base font-bold text-[var(--partner-primary,#f97316)] shrink-0">
-                                {initials}
-                              </div>
-                              {/* Content */}
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-bold text-gray-800 truncate">
-                                  {review.title}
-                                </p>
-                                {review.description ? (
-                                  <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">
-                                    {review.description}
-                                  </p>
-                                ) : null}
-                              </div>
-                              {/* Stars */}
-                              <div className="flex gap-0.5 shrink-0">
-                                {[1, 2, 3, 4, 5].map((s) => (
-                                  <Star
-                                    key={s}
-                                    className={`w-3.5 h-3.5 ${s <= review.rating ? "fill-yellow-400 text-yellow-400" : "text-gray-200"}`}
-                                  />
-                                ))}
-                              </div>
-                            </button>
-                          );
-                        })}
-                      </div>
-
-                      {reviewsData!.paginationInfo.total > 3 && (
-                        <button className="w-full border border-gray-300 rounded-2xl py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors mb-3">
-                          Ver todas las reseñas (
-                          {reviewsData!.paginationInfo.total})
-                        </button>
+                {!isPartnerMode && (
+                  <div>
+                    <h2 className="text-xl font-bold text-foreground mb-1">
+                      {t("ui.reviews")}
+                    </h2>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      {t(
+                        "ui.visit_the_business_and_use_a_discount_to_leave_a_review"
                       )}
-                    </>
-                  ) : null}
-
-                  {reviewsData?.data?.some((r) => r.userId === user?.id) ? (
-                    <p className="w-full text-center text-sm font-semibold text-gray-400 py-3">
-                      ✓ Ya dejaste una reseña aquí
                     </p>
-                  ) : (
-                    <button
-                      onClick={() => setShowReviewModal(true)}
-                      className="w-full bg-[var(--partner-primary,#fb7185)] hover:bg-[var(--partner-primary,#f43f5e)] text-white font-bold rounded-2xl py-3 text-sm transition-colors flex items-center justify-center gap-2"
-                    >
-                      <span>Escribe tu reseña</span>
-                      <span>🍽️</span>
-                      <span className="text-xs font-semibold opacity-90">
-                        +{reviewPts} pts ⭐
-                      </span>
-                    </button>
-                  )}
-                </div>
+
+                    {(reviewsData?.data?.length ?? 0) > 0 ? (
+                      <>
+                        <div className="space-y-3 mb-3">
+                          {reviewsData!.data.map((review) => {
+                            const initials = review.userId
+                              .slice(0, 2)
+                              .toUpperCase();
+                            return (
+                              <button
+                                key={review.id}
+                                onClick={() => setSelectedReview(review)}
+                                className="w-full flex items-start gap-3 bg-white border border-[#f1e9e6] rounded-2xl px-4 py-3 shadow-sm hover:bg-orange-50 hover:border-orange-200 transition-colors text-left"
+                              >
+                                {/* Avatar */}
+                                <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-base font-bold text-[var(--partner-primary,#f97316)] shrink-0">
+                                  {initials}
+                                </div>
+                                {/* Content */}
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-bold text-gray-800 truncate">
+                                    {review.title}
+                                  </p>
+                                  {review.description ? (
+                                    <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">
+                                      {review.description}
+                                    </p>
+                                  ) : null}
+                                </div>
+                                {/* Stars */}
+                                <div className="flex gap-0.5 shrink-0">
+                                  {[1, 2, 3, 4, 5].map((s) => (
+                                    <Star
+                                      key={s}
+                                      className={`w-3.5 h-3.5 ${s <= review.rating ? "fill-yellow-400 text-yellow-400" : "text-gray-200"}`}
+                                    />
+                                  ))}
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+
+                        {reviewsData!.paginationInfo.total > 3 && (
+                          <button className="w-full border border-gray-300 rounded-2xl py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors mb-3">
+                            {t("ui.view_all_reviews")}
+                            {reviewsData!.paginationInfo.total})
+                          </button>
+                        )}
+                      </>
+                    ) : null}
+
+                    {reviewsData?.data?.some((r) => r.userId === user?.id) ? (
+                      <p className="w-full text-center text-sm font-semibold text-gray-400 py-3">
+                        {t("ui.you_have_already_reviewed_this_place")}
+                      </p>
+                    ) : (
+                      <button
+                        onClick={() => setShowReviewModal(true)}
+                        className="w-full bg-[var(--partner-primary,#fb7185)] hover:bg-[var(--partner-primary,#f43f5e)] text-white font-bold rounded-2xl py-3 text-sm transition-colors flex items-center justify-center gap-2"
+                      >
+                        <span>{t("ui.write_your_review")}</span>
+                        <span>🍽️</span>
+                        <span className="text-xs font-semibold opacity-90">
+                          +{reviewPts} pts ⭐
+                        </span>
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
 
               <aside className="space-y-6">
                 <Card className="p-5 bg-white border border-[#f1e9e6] rounded-xl shadow-md">
-                  <h3 className="font-semibold mb-3">📍 Location</h3>
+                  <h3 className="font-semibold mb-3">{t("ui.location_alt")}</h3>
                   {/* Hide until we sort out the map */}
                   <div className="aspect-video hidden bg-[#fbf7f6] rounded-xl mb-3 flex items-center justify-center">
                     <span className="text-4xl">🗺️</span>
@@ -1408,7 +1446,7 @@ export default function StoreDetailClient(): React.JSX.Element {
                     className="w-full bg-[var(--partner-primary,#f43f5e)] hover:bg-[var(--partner-primary,#e11d48)] text-white"
                     onClick={handleGetDirections}
                   >
-                    Obtener indicaciones 📍
+                    {t("ui.get_directions")}
                   </Button>
 
                   <div className="mt-4 flex flex-wrap gap-2">
@@ -1428,7 +1466,7 @@ export default function StoreDetailClient(): React.JSX.Element {
                     onClick={handleShareContact}
                     className="w-full bg-white hover:bg-gray-200 text-gray-800 border border-gray-300"
                   >
-                    Compartir
+                    {t("ui.share")}
                   </Button>
                 </Card>
               </aside>
@@ -1486,7 +1524,7 @@ export default function StoreDetailClient(): React.JSX.Element {
                     onClick={() => setShowQuickPaySuccess(false)}
                     className="w-full text-gray-700 bg-gray-200 font-semibold py-3 sm:py-4 px-4 sm:px-6 rounded-xl hover:bg-gray-300 transition-colors shadow-lg text-sm sm:text-base"
                   >
-                    Cancelar
+                    {t("ui.cancel")}
                   </button>
                   <button
                     onClick={() => {
@@ -1495,7 +1533,7 @@ export default function StoreDetailClient(): React.JSX.Element {
                     }}
                     className="w-full text-white bg-green-600 font-semibold py-3 sm:py-4 px-4 sm:px-6 rounded-xl hover:bg-green-400 transition-colors shadow-lg text-sm sm:text-base"
                   >
-                    Ver Mis Cupones
+                    {t("ui.view_my_coupons")}
                   </button>
                 </div>
               </div>
@@ -1522,7 +1560,7 @@ export default function StoreDetailClient(): React.JSX.Element {
                   <div className="flex items-center gap-3">
                     <Clock className="w-6 h-6 text-primary" />
                     <h2 className="text-xl font-bold text-foreground">
-                      Horario de Apertura
+                      {t("ui.opening_hours")}
                     </h2>
                   </div>
                   <button
@@ -1543,7 +1581,13 @@ export default function StoreDetailClient(): React.JSX.Element {
 
                     return (
                       <div
-                        key={item.day}
+                        key={t(
+                          "ui." +
+                            (Object.keys(DAY_LABELS).find(
+                              (key) => DAY_LABELS[key] === item.day
+                            ) ?? ""),
+                          { defaultValue: item.day }
+                        )}
                         className={`flex justify-between p-3 rounded-lg transition-colors ${
                           isToday
                             ? "bg-primary/10 border-2 border-primary"
@@ -1555,10 +1599,16 @@ export default function StoreDetailClient(): React.JSX.Element {
                             isToday ? "text-primary" : "text-foreground"
                           }`}
                         >
-                          {item.day}
+                          {t(
+                            "ui." +
+                              (Object.keys(DAY_LABELS).find(
+                                (key) => DAY_LABELS[key] === item.day
+                              ) ?? ""),
+                            { defaultValue: item.day }
+                          )}
                           {isToday ? (
                             <span className="ml-2 text-xs font-semibold">
-                              (Hoy)
+                              {t("ui.today")}
                             </span>
                           ) : null}
                         </span>
@@ -1582,7 +1632,7 @@ export default function StoreDetailClient(): React.JSX.Element {
                     onClick={() => setShowAllHours(false)}
                     className="w-full px-4 py-3 bg-primary text-primary-foreground font-semibold rounded-lg hover:opacity-90 transition-colors"
                   >
-                    Cerrar
+                    {t("ui.close")}
                   </button>
                 </div>
               </div>
@@ -1637,7 +1687,7 @@ export default function StoreDetailClient(): React.JSX.Element {
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             src={selectedCatalogImage}
-                            alt="Catalog image"
+                            alt={t("ui.catalog_image")}
                             className="w-full h-auto rounded-lg"
                           />
 
@@ -1655,7 +1705,7 @@ export default function StoreDetailClient(): React.JSX.Element {
                                     );
                                   }}
                                   className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white p-3 rounded-full transition-all shadow-lg"
-                                  aria-label="Previous image"
+                                  aria-label={t("ui.previous_image")}
                                 >
                                   <ChevronLeft className="w-6 h-6" />
                                 </button>
@@ -1672,7 +1722,7 @@ export default function StoreDetailClient(): React.JSX.Element {
                                     );
                                   }}
                                   className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white p-3 rounded-full transition-all shadow-lg"
-                                  aria-label="Next image"
+                                  aria-label={t("ui.next_image")}
                                 >
                                   <ChevronRight className="w-6 h-6" />
                                 </button>
@@ -1732,7 +1782,7 @@ export default function StoreDetailClient(): React.JSX.Element {
         actionButton={
           showAddFundsAction
             ? {
-                label: "Agregar Fondos",
+                label: t("ui.add_funds"),
                 onClick: () => router.push("/wallet"),
               }
             : undefined
@@ -1743,7 +1793,7 @@ export default function StoreDetailClient(): React.JSX.Element {
       <CouponGenerationAnimation isOpen={showCouponAnimation} />
 
       {/* Review Detail Modal */}
-      {selectedReview && typeof window !== "undefined"
+      {!isPartnerMode && selectedReview && typeof window !== "undefined"
         ? createPortal(
             <div
               className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
@@ -1755,11 +1805,13 @@ export default function StoreDetailClient(): React.JSX.Element {
               >
                 {/* Header */}
                 <div className="flex items-center justify-between mb-5">
-                  <h2 className="text-lg font-black text-gray-900">Reseña</h2>
+                  <h2 className="text-lg font-black text-gray-900">
+                    {t("ui.review")}
+                  </h2>
                   <button
                     onClick={() => setSelectedReview(null)}
                     className="p-1.5 hover:bg-gray-100 rounded-full transition-colors"
-                    aria-label="Cerrar"
+                    aria-label={t("ui.close")}
                   >
                     <X className="w-5 h-5 text-gray-500" />
                   </button>
@@ -1794,7 +1846,7 @@ export default function StoreDetailClient(): React.JSX.Element {
                   </p>
                 ) : (
                   <p className="text-sm text-gray-400 italic">
-                    Sin descripción adicional.
+                    {t("ui.no_additional_description")}
                   </p>
                 )}
 
@@ -1802,7 +1854,7 @@ export default function StoreDetailClient(): React.JSX.Element {
                   onClick={() => setSelectedReview(null)}
                   className="mt-6 w-full py-2.5 bg-[var(--partner-primary,#fb7185)] hover:bg-[var(--partner-primary,#f43f5e)] text-white font-bold rounded-xl transition-colors text-sm"
                 >
-                  Cerrar
+                  {t("ui.close")}
                 </button>
               </div>
             </div>,
@@ -1811,7 +1863,7 @@ export default function StoreDetailClient(): React.JSX.Element {
         : null}
 
       {/* Review Modal */}
-      {showReviewModal && typeof window !== "undefined"
+      {!isPartnerMode && showReviewModal && typeof window !== "undefined"
         ? createPortal(
             <div
               className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
@@ -1830,7 +1882,7 @@ export default function StoreDetailClient(): React.JSX.Element {
                 {/* Header */}
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-lg font-black text-gray-900">
-                    Leave your review
+                    {t("ui.leave_your_review")}
                   </h2>
                   <button
                     onClick={() => {
@@ -1848,7 +1900,7 @@ export default function StoreDetailClient(): React.JSX.Element {
 
                 {/* Store name prompt */}
                 <p className="text-sm text-gray-500 mb-4">
-                  ¿Cómo fue tu experiencia en{" "}
+                  {t("ui.how_was_your_experience_at")}{" "}
                   <span className="font-bold text-gray-800">
                     {parsedStore?.name}
                   </span>
@@ -1881,7 +1933,7 @@ export default function StoreDetailClient(): React.JSX.Element {
                   <input
                     value={reviewTitle}
                     onChange={(e) => setReviewTitle(e.target.value)}
-                    placeholder="Título de tu reseña (mínimo 3 caracteres)"
+                    placeholder={t("ui.review_title_at_least_3_characters")}
                     maxLength={100}
                     className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-rose-300"
                   />
@@ -1892,17 +1944,17 @@ export default function StoreDetailClient(): React.JSX.Element {
                   <textarea
                     value={reviewText}
                     onChange={(e) => setReviewText(e.target.value)}
-                    placeholder="Cuéntanos más (opcional)..."
+                    placeholder={t("ui.tell_us_more_optional")}
                     rows={3}
                     className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-700 placeholder-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-rose-300"
                   />
                 </div>
 
                 {/* Post to Mural — independent of review */}
-                {!partner || partner.features.mural === true ? (
+                {canPostMural ? (
                   <div className="mb-3 border border-gray-200 rounded-xl p-3 space-y-2">
                     <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                      Post to City Mural
+                      {t("ui.post_to_city_mural")}
                     </p>
                     {reviewPhotoPreview ? (
                       <div className="relative w-full rounded-xl overflow-hidden border border-gray-200">
@@ -1917,7 +1969,7 @@ export default function StoreDetailClient(): React.JSX.Element {
                             <Loader2 className="w-6 h-6 text-white animate-spin" />
                           </div>
                         )}
-                        {(!partner || partner.features.mural === true) &&
+                        {!!canPostMural &&
                           !isUploadingPhoto &&
                           !muralPostDone && (
                             <button
@@ -1927,7 +1979,7 @@ export default function StoreDetailClient(): React.JSX.Element {
                                 setUploadPhotoError(null);
                               }}
                               className="absolute top-2 right-2 bg-black/50 text-white rounded-full p-1"
-                              aria-label="Remove photo"
+                              aria-label={t("ui.remove_photo")}
                             >
                               <X className="w-3 h-3" />
                             </button>
@@ -1940,7 +1992,7 @@ export default function StoreDetailClient(): React.JSX.Element {
                         className="w-full flex items-center justify-center gap-2 border border-dashed border-gray-300 rounded-xl py-3 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
                       >
                         <span>📷</span>
-                        Add photo
+                        {t("ui.add_photo")}
                         <span className="text-xs text-[var(--partner-primary,#fb7185)] font-bold">
                           +{muralPts} pts 📸
                         </span>
@@ -1963,12 +2015,14 @@ export default function StoreDetailClient(): React.JSX.Element {
                             )
                           ) {
                             setUploadPhotoError(
-                              "Only JPG, PNG, and WebP are allowed."
+                              t("ui.only_jpg_png_and_webp_are_allowed")
                             );
                             return;
                           }
                           if (file.size > 5 * 1024 * 1024) {
-                            setUploadPhotoError("Image must be under 5MB.");
+                            setUploadPhotoError(
+                              t("ui.image_must_be_under_5mb")
+                            );
                             return;
                           }
                           setUploadPhotoError(null);
@@ -2002,7 +2056,7 @@ export default function StoreDetailClient(): React.JSX.Element {
                             setReviewPhotoUrl(json.url);
                           } catch {
                             setUploadPhotoError(
-                              "Failed to upload. Please try again."
+                              t("ui.upload_failed_please_try_again")
                             );
                             setReviewPhotoPreview(null);
                           } finally {
@@ -2021,9 +2075,7 @@ export default function StoreDetailClient(): React.JSX.Element {
                 {(() => {
                   const hasReview =
                     reviewRating > 0 && reviewTitle.trim().length >= 3;
-                  const hasMural =
-                    !!reviewPhotoUrl &&
-                    (!partner || partner.features.mural === true);
+                  const hasMural = !!reviewPhotoUrl && canPostMural;
                   const canSubmit =
                     (hasReview || hasMural) &&
                     !isUploadingPhoto &&
@@ -2077,20 +2129,23 @@ export default function StoreDetailClient(): React.JSX.Element {
                               toast({
                                 variant: "destructive",
                                 title: isDuplicate
-                                  ? "Ya dejaste una reseña"
-                                  : "Error al publicar reseña",
+                                  ? t("ui.you_have_already_left_a_review")
+                                  : t("ui.unable_to_post_review"),
                                 description: isDuplicate
-                                  ? "Solo puedes dejar una reseña por lugar."
-                                  : "Intenta de nuevo.",
+                                  ? t(
+                                      "ui.you_can_only_leave_one_review_per_place"
+                                    )
+                                  : t("ui.try_again"),
                               });
                             }
 
                             if (muralResult?.status === "rejected") {
                               toast({
                                 variant: "destructive",
-                                title: "Error al publicar foto",
-                                description:
-                                  "La foto no pudo subirse al mural.",
+                                title: t("ui.unable_to_post_photo"),
+                                description: t(
+                                  "ui.the_photo_could_not_be_posted_to_the_mural"
+                                ),
                               });
                             }
 
@@ -2101,11 +2156,13 @@ export default function StoreDetailClient(): React.JSX.Element {
                               toast({
                                 title:
                                   hasReview && hasMural
-                                    ? "¡Reseña y foto publicadas!"
+                                    ? t("ui.review_and_photo_posted")
                                     : hasReview
-                                      ? "Reseña publicada"
-                                      : "Foto publicada en el mural",
-                                description: "¡Gracias por tu aportación!",
+                                      ? t("ui.review_posted")
+                                      : t("ui.photo_posted_to_the_mural"),
+                                description: t(
+                                  "ui.thanks_for_your_contribution"
+                                ),
                               });
                             }
 
@@ -2133,32 +2190,32 @@ export default function StoreDetailClient(): React.JSX.Element {
                       {isSubmittingReview ? (
                         <>
                           <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                          Publicando...
+                          {t("ui.posting")}
                         </>
                       ) : (
                         <>
                           {hasReview && hasMural ? (
                             <>
-                              Publicar reseña y foto{" "}
+                              {t("ui.post_review_and_photo")}{" "}
                               <span className="ml-1 text-xs">+60 pts 📸</span>
                             </>
                           ) : hasReview ? (
                             <>
-                              Publicar reseña{" "}
+                              {t("ui.post_review")}{" "}
                               <span className="ml-1 text-xs">
                                 +10 pts Yummy
                               </span>
                             </>
                           ) : hasMural ? (
                             <>
-                              Publicar foto al mural{" "}
+                              {t("ui.post_photo_to_the_mural")}{" "}
                               <span className="ml-1 text-xs">
                                 +{muralPts} pts 📸
                               </span>
                             </>
                           ) : (
                             <>
-                              Publicar reseña{" "}
+                              {t("ui.post_review")}{" "}
                               <span className="ml-1 text-xs">
                                 +10 pts Yummy
                               </span>

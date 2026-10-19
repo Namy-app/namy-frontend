@@ -1,5 +1,4 @@
-import { Capacitor } from "@capacitor/core";
-
+import { getAppPlatform } from "@/lib/app-platform";
 import { env } from "@/lib/env";
 
 /** Which env var supplied the resolved key (for dev logging). */
@@ -40,7 +39,7 @@ function logDevGoogleMapsKey(
  * `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY`.
  *
  * Map UI should load with `dynamic(..., { ssr: false })` or equivalent so this
- * runs in the browser where `Capacitor.getPlatform()` is accurate for native.
+ * runs in the browser where `getAppPlatform()` is accurate for native.
  */
 export function getGoogleMapsApiKey(): string {
   const legacy = env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "";
@@ -51,7 +50,7 @@ export function getGoogleMapsApiKey(): string {
   let runtime: "ios" | "android" | "web" = "web";
   if (typeof window !== "undefined") {
     try {
-      runtime = Capacitor.getPlatform() as "ios" | "android" | "web";
+      runtime = getAppPlatform() as "ios" | "android" | "web";
     } catch {
       runtime = "web";
     }
