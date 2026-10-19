@@ -1,7 +1,6 @@
 "use client";
 
 import { App } from "@capacitor/app";
-import { Capacitor } from "@capacitor/core";
 import { NovuProvider, useNotifications } from "@novu/nextjs/hooks";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
@@ -11,6 +10,7 @@ import {
   type PromoBannerData,
 } from "@/app/explore/components/PromoBanner";
 import { analytics } from "@/lib/analytics";
+import { isNativeApp } from "@/lib/app-platform";
 import { env } from "@/lib/env";
 import {
   isPromoBannerRoute,
@@ -38,7 +38,7 @@ function PromoSyncBootstrap({ userId }: { userId: string | undefined }): null {
   }, [canSyncPromos, userId]);
 
   useEffect(() => {
-    if (!Capacitor.isNativePlatform() || !canSyncPromos) {
+    if (!isNativeApp() || !canSyncPromos) {
       return;
     }
 
@@ -61,9 +61,7 @@ function NovuPromoSync(): null {
   const pathname = usePathname();
   const lastSurfacedIdRef = useRef<string | null>(null);
   const canSyncPromos =
-    pathname !== null &&
-    isPromoBannerRoute(pathname) &&
-    Capacitor.isNativePlatform(); // Only show promos on native apps
+    pathname !== null && isPromoBannerRoute(pathname) && isNativeApp(); // Only show promos on native apps
 
   const { notifications } = useNotifications({
     read: false,

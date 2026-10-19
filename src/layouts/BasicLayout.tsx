@@ -6,7 +6,7 @@ import { type PropsWithChildren } from "react";
 import { ExploreHeader } from "@/app/explore/components/ExploreHeader";
 import { BottomNavigation } from "@/components/BottomNavigation";
 import { useAuthStore } from "@/store/useAuthStore";
-import { useIsPartnerMode } from "@/store/usePartnerStore";
+import { useIsPartnerMode, usePartnerHydrated } from "@/store/usePartnerStore";
 
 export const BasicLayout = ({
   children,
@@ -14,19 +14,22 @@ export const BasicLayout = ({
 }: PropsWithChildren<{ className?: string }>) => {
   const { isAuthenticated } = useAuthStore();
   const isPartnerMode = useIsPartnerMode();
+  const hydrated = usePartnerHydrated();
 
   return (
     <div
       className={clsx(
         "min-h-screen overflow-x-hidden bg-background",
-        isPartnerMode ? "pb-6" : "pb-28",
+        "pb-28",
         className
       )}
       style={{
         paddingTop: "var(--status-bar-height, env(safe-area-inset-top, 0px))",
       }}
     >
-      <ExploreHeader isAuthenticated={isAuthenticated} />
+      {hydrated && !isPartnerMode ? (
+        <ExploreHeader isAuthenticated={isAuthenticated} />
+      ) : null}
       {children}
       <BottomNavigation />
     </div>

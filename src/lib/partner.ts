@@ -22,13 +22,4 @@ export function getPartnerConfig(): PartnerConfig | null {
   return usePartnerStore.getState().partner;
 }
 
-export function isInIframe(): boolean {
-  if (typeof window === "undefined") {
-    return false;
-  }
-  try {
-    return window.self !== window.top;
-  } catch {
-    return true;
-  }
-}
+export { isInIframe } from "@/lib/app-platform";

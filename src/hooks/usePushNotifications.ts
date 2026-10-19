@@ -1,10 +1,10 @@
 "use client";
 
-import { Capacitor } from "@capacitor/core";
 import { PushNotifications } from "@capacitor/push-notifications";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 
+import { isNativeApp, getAppPlatform } from "@/lib/app-platform";
 import { navigateTo } from "@/lib/capacitor-navigate";
 import { graphqlRequest } from "@/lib/graphql-client";
 import {
@@ -64,7 +64,7 @@ export function usePushNotifications(userId: string | undefined): void {
   const initializedForRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!userId || !Capacitor.isNativePlatform()) {
+    if (!userId || !isNativeApp()) {
       return;
     }
     if (initializedForRef.current === userId) {
@@ -72,7 +72,7 @@ export function usePushNotifications(userId: string | undefined): void {
     }
     initializedForRef.current = userId;
 
-    const rawPlatform = Capacitor.getPlatform();
+    const rawPlatform = getAppPlatform();
     const platform = rawPlatform === "ios" ? "apns" : "fcm";
 
     const setup = async () => {
@@ -145,8 +145,7 @@ export function usePushNotifications(userId: string | undefined): void {
           actionId: string;
         }) => {
           const data = action.notification.data as
-            | Record<string, unknown>
-            | undefined;
+            Record<string, unknown> | undefined;
           const isBanner = isPromoNotificationData(data);
 
           if (isBanner) {
