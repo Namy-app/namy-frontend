@@ -482,7 +482,7 @@ export function StoreMapListingView({
                       onClick={() => setMapSortBy("DISTANCE")}
                       className={`flex w-1/2 items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold transition-colors ${
                         mapSortBy === "DISTANCE"
-                          ? "bg-[#0f172a] text-white"
+                          ? "bg-[var(--partner-primary,#0f172a)] text-white"
                           : "bg-slate-100 text-foreground"
                       }`}
                     >
@@ -494,7 +494,7 @@ export function StoreMapListingView({
                       onClick={() => setMapSortBy("RATING")}
                       className={`flex w-1/2 items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold transition-colors ${
                         mapSortBy === "RATING"
-                          ? "bg-[#0f172a] text-white"
+                          ? "bg-[var(--partner-primary,#0f172a)] text-white"
                           : "bg-slate-100 text-foreground"
                       }`}
                     >
@@ -516,8 +516,8 @@ export function StoreMapListingView({
                 />
 
                 {promoIds?.length ? (
-                  <div className="mx-4 mb-2 flex items-center justify-between gap-2 rounded-xl border border-orange-200 bg-orange-50 px-3 py-2">
-                    <p className="text-xs font-medium text-orange-700">
+                  <div className="mx-4 mb-2 flex items-center justify-between gap-2 rounded-xl border border-[var(--partner-border,#fed7aa)] bg-[var(--partner-secondary-tint,#fff7ed)] px-3 py-2">
+                    <p className="text-xs font-medium text-[var(--partner-primary,#c2410c)]">
                       {promoIds.length} {entityLabelPlural.replace(/es$/, "")}
                       {promoIds.length !== 1 ? "s" : ""}{" "}
                       {t("ui.from_the_promotion")}
@@ -526,7 +526,7 @@ export function StoreMapListingView({
                       <button
                         type="button"
                         onClick={() => router.replace(promoListPath)}
-                        className="shrink-0 text-xs text-orange-500 underline"
+                        className="shrink-0 text-xs text-[var(--partner-primary,#f97316)] underline"
                       >
                         {t("ui.view_all")}
                       </button>

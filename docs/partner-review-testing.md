@@ -5,10 +5,10 @@ No earlier PR needs to be merged to apply or review this change.
 
 ## Revised behaviour
 
-- Partner navigation has only Explore and My coupons, using Namy's existing
-  icons and active-pill style. Store detail belongs to Explore. No app top header.
-- My coupons retains all, active and used filters. Bottom spacing includes the
-  safe area, including the QR scroll container.
+- Partner mode has no top or bottom navigation. Explore, My coupons and store
+  detail remain directly accessible by URL. This supersedes the two-tab review request.
+- My coupons retains all, active and used filters. Extra bottom-tab clearance
+  is removed; QR content retains safe-area spacing.
 - Partner profile is removed. Direct profile links redirect to My coupons;
   normal profile content is not mounted while partner storage hydrates.
 - Crisp's partner button is removed and the provider does not install its script
@@ -23,19 +23,21 @@ No earlier PR needs to be merged to apply or review this change.
 
 This establishes intended app behaviour if a native bridge is present in a
 frame; it does not establish how the actual USA Transfers host injects its bridge.
-No final Rodrigo theme, icons or logo were available during this work. Existing
-placeholder config remains. There is deliberately no replacement logo header.
+USA Transfers colours are now confirmed: primary `#03378D`, secondary `#FF4E18`.
+The frontend theme overrides the old USA Transfers placeholder colours; other
+partners retain their own config. Final icons/logo remain pending. There is no
+replacement logo header.
 
 ## Automated validation
 
 Run `yarn type-check`, then:
 
 ```sh
-node --test tools/partner-review/*.test.mjs tools/i18n/i18n.test.mjs tools/partner-reporting/reporting.test.mjs tools/partner-iframe/host.test.mjs
+node --test tools/partner-branding/*.test.mjs tools/partner-review/*.test.mjs tools/i18n/i18n.test.mjs tools/partner-reporting/reporting.test.mjs tools/partner-iframe/host.test.mjs
 ```
 
 The review tests cover iframe/native/SSR detection, storage, dynamic-route
-navigation, web Maps key selection, native-detection bypasses, two-tab markup,
+navigation, web Maps key selection, native-detection bypasses, hidden partner navigation,
 normal five-tab markup, top header presence, hydration, blocked Crisp installation,
 profile deep-link routing and review query enablement. These are unit/server
 markup tests, not a mobile browser or device run.
@@ -43,9 +45,9 @@ markup tests, not a mobile browser or device run.
 ## Mobile observations and evidence limits
 
 Source/layout changes remove the old header clearance on Explore, My coupons and
-store detail; keep room for the new bottom navigation; and reserve safe-area room
+store detail; remove unused bottom-navigation clearance; and reserve safe-area room
 at the bottom of the QR scroll view. Automated component markup confirms the
-requested two tabs and no partner header.
+absence of partner navigation.
 
 A mobile browser run could not be completed in this environment: no browser was
 installed and the browser download failed. No iOS/Android visual, touch, keyboard,
@@ -57,11 +59,11 @@ Transfers host test remains separate from Namy's Capacitor application.
 1. Run the frontend with local-only `FRAME_ANCESTORS="*"` and use the existing
    `tools/partner-iframe` host with a fresh code. Use approved frame origins on staging.
 2. At 320/390/430 px portrait widths and landscape, verify no top menu or old
-   header-sized gap, two tabs remain visible, and no horizontal page overflow.
-3. Open a store from Explore. Explore stays selected; device/browser back returns
+   header-sized gap, no bottom navigation, and no horizontal page overflow.
+3. Open a store from Explore. Device/browser back returns
    to the listing. No ratings/review content, write button or review network query.
-4. Switch to My coupons; test all/active/used. Open a QR, scroll restrictions to
-   the end, close it, and switch tabs. No Crisp widget, script or help button.
+4. Open `/my-coupons` directly; test all/active/used. Open a QR, scroll restrictions
+   to the end and close it. No Crisp widget, script or help button.
 5. Open `/profile` directly; confirm redirect to My coupons and no profile flash.
 6. In the actual iframe on iOS and Android, inspect effective helpers: web/false.
    Verify web storage, real `/stores/<id>` URLs, web Maps key and browser location

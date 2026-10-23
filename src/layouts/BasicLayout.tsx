@@ -20,7 +20,7 @@ export const BasicLayout = ({
     <div
       className={clsx(
         "min-h-screen overflow-x-hidden bg-background",
-        "pb-28",
+        isPartnerMode ? "pb-6" : "pb-28",
         className
       )}
       style={{

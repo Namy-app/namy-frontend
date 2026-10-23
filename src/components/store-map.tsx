@@ -74,8 +74,8 @@ function StorePinLabel({
       <div
         className={`px-3 py-1.5 rounded-full text-sm font-bold whitespace-nowrap shadow-md border transition-all ${
           isSelected
-            ? "bg-[#E8572A] text-white border-[#E8572A]"
-            : "bg-white text-gray-900 border-gray-200 hover:bg-[#fff5f2] hover:border-[#E8572A]"
+            ? "bg-[var(--partner-primary,#E8572A)] text-white border-[var(--partner-primary,#E8572A)]"
+            : "bg-white text-gray-900 border-gray-200 hover:bg-[var(--partner-primary-tint,#fff5f2)] hover:border-[var(--partner-primary,#E8572A)]"
         }`}
       >
         {store.name}
@@ -85,7 +85,11 @@ function StorePinLabel({
         width="12"
         height="10"
         viewBox="0 0 12 10"
-        className={isSelected ? "text-[#E8572A]" : "text-[#E8572A]"}
+        className={
+          isSelected
+            ? "text-[var(--partner-primary,#E8572A)]"
+            : "text-[var(--partner-primary,#E8572A)]"
+        }
       >
         <path d="M6 10 L0 0 Q6 3 12 0 Z" fill="currentColor" />
       </svg>
@@ -134,7 +138,7 @@ function MapSelectedStoreCard({
               "https://placehold.co/124x124/fef2f2/f87171?text=Store";
           }}
         />
-        <div className="absolute left-2 top-2 rounded-md bg-[#E8572A] px-1.5 py-0.5 text-[11px] font-bold leading-none text-white">
+        <div className="absolute left-2 top-2 rounded-md bg-[var(--partner-primary,#E8572A)] px-1.5 py-0.5 text-[11px] font-bold leading-none text-white">
           {discountPercentage}%
         </div>
         <button
@@ -162,8 +166,10 @@ function MapSelectedStoreCard({
         </div>
 
         <div className="flex items-center gap-1">
-          <Star className="h-3.5 w-3.5 fill-[#E8572A] text-[#E8572A]" />
-          <span className="text-xs font-semibold text-[#E8572A]">{rating}</span>
+          <Star className="h-3.5 w-3.5 fill-[var(--partner-primary,#E8572A)] text-[var(--partner-primary,#E8572A)]" />
+          <span className="text-xs font-semibold text-[var(--partner-primary,#E8572A)]">
+            {rating}
+          </span>
           {store.reviewCounter ? (
             <span className="text-xs text-gray-400">
               ({store.reviewCounter})
@@ -179,7 +185,7 @@ function MapSelectedStoreCard({
 
         {distanceLabel ? (
           <div className="flex items-center gap-1 text-gray-500">
-            <MapPin className="h-3 w-3 text-[#E8572A]" />
+            <MapPin className="h-3 w-3 text-[var(--partner-primary,#E8572A)]" />
             <span className="text-xs">{distanceLabel}</span>
           </div>
         ) : null}
