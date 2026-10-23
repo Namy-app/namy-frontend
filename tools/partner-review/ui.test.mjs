@@ -52,13 +52,22 @@ function mocks(partner, path = "/explore", hydrated = true) {
   };
 }
 for (const path of ["/explore", "/stores/real-id", "/my-coupons"]) {
-  test(`partner mode renders no bottom navigation at ${path}`, () => {
+  test(`partner tabs expose only Explore and My coupons at ${path}`, () => {
     const { BottomNavigation } = load(
       "src/components/BottomNavigation.tsx",
       mocks(true, path)
     );
     const html = renderToStaticMarkup(React.createElement(BottomNavigation));
-    assert.equal(html, "");
+    assert.equal((html.match(/<button/g) ?? []).length, 2);
+    assert.match(html, /aria-label="Explore"/);
+    assert.match(html, /aria-label="My coupons"/);
+    const active = path === "/my-coupons" ? "My coupons" : "Explore";
+    assert.match(
+      html,
+      new RegExp(`aria-label="${active}" aria-current="page"`)
+    );
+    assert.match(html, /safe-area-inset-bottom/);
+    assert.doesNotMatch(html, /Perfil|Mural|Liga/);
   });
 }
 test("normal authenticated Namy retains all five tabs", () => {
@@ -93,7 +102,7 @@ for (const partner of [true, false]) {
       React.createElement(BasicLayout, null, "Content")
     );
     assert.equal(html.includes("<header"), !partner);
-    assert.match(html, partner ? /pb-6/ : /pb-28/);
+    assert.match(html, /pb-28/);
     assert.match(html, /Content/);
   });
 }

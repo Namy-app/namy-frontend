@@ -27,10 +27,12 @@ function logDevGoogleMapsKey(
     ...window.__NAMY_MAPS_DEBUG__,
     runtime,
     envVar: source,
-    key,
+    keyConfigured: Boolean(key),
   };
 
-  console.warn(`[Google Maps] runtime=${runtime} envVar=${source} key=${key}`);
+  console.warn(
+    `[Google Maps] runtime=${runtime} envVar=${source} keyConfigured=${Boolean(key)}`
+  );
 }
 
 /**

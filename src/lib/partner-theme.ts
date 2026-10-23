@@ -1,11 +1,5 @@
 import type { PartnerConfig } from "@/store/usePartnerStore";
 
-/** Approved USA Transfers palette; takes precedence over its placeholder config. */
-export const USA_TRANSFERS_COLORS = {
-  primary: "#03378D",
-  secondary: "#FF4E18",
-} as const;
-
 /** Convert partner hex colours to the HSL channels used by Namy's tokens. */
 function hexToHsl(value: string | undefined): string | null {
   if (!value || !/^#(?:[\da-f]{3}|[\da-f]{6})$/i.test(value)) {
@@ -54,6 +48,19 @@ function tint(hex: string, amount: number): string {
   );
 }
 
+function foreground(hex: string): { hsl: string; hex: string } {
+  const raw = hex.slice(1);
+  const expanded = raw.length === 3 ? [...raw].map((c) => c + c).join("") : raw;
+  const rgb = [0, 2, 4].map((index) => {
+    const value = parseInt(expanded.slice(index, index + 2), 16) / 255;
+    return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+  });
+  const luminance = rgb[0]! * 0.2126 + rgb[1]! * 0.7152 + rgb[2]! * 0.0722;
+  return (luminance + 0.05) / 0.05 >= 1.05 / (luminance + 0.05)
+    ? { hsl: "0 0% 0%", hex: "#000000" }
+    : { hsl: "0 0% 100%", hex: "#FFFFFF" };
+}
+
 /** Produce scoped token overrides. An absent session must not recolour normal Namy. */
 export function buildPartnerTheme(
   partner: PartnerConfig | null
@@ -61,10 +68,7 @@ export function buildPartnerTheme(
   if (!partner) {
     return {};
   }
-  const colors =
-    partner.slug === "usa-transfers"
-      ? USA_TRANSFERS_COLORS
-      : (partner.branding.colors ?? {});
+  const colors = partner.branding.colors ?? {};
   const primary = hexToHsl(colors.primary);
   const secondary = hexToHsl(colors.secondary);
   const overrides: Record<string, string> = {};
@@ -72,7 +76,7 @@ export function buildPartnerTheme(
     Object.assign(overrides, {
       "--partner-primary": colors.primary!,
       "--primary": primary,
-      "--primary-foreground": "0 0% 100%",
+      "--primary-foreground": foreground(colors.primary!).hsl,
       "--ring": primary,
       "--primary-glow": primary,
       "--partner-primary-tint": tint(colors.primary!, 0.07),
@@ -87,29 +91,28 @@ export function buildPartnerTheme(
     Object.assign(overrides, {
       "--partner-secondary": colors.secondary!,
       "--secondary": secondary,
+      "--secondary-foreground": foreground(colors.secondary!).hsl,
+      "--partner-secondary-foreground": foreground(colors.secondary!).hex,
+      "--accent-foreground": foreground(colors.secondary!).hsl,
+      "--services-foreground": foreground(colors.secondary!).hsl,
       "--partner-secondary-tint": tint(colors.secondary!, 0.09),
       "--accent": secondary,
       "--services": secondary,
       "--gradient-secondary": `linear-gradient(135deg, hsl(${secondary}), hsl(${secondary}))`,
     });
   }
-  if (partner.slug === "usa-transfers") {
-    Object.assign(overrides, {
-      "--background": "0 0% 100%",
-      "--card": "0 0% 100%",
-      "--popover": "0 0% 100%",
-      "--secondary-foreground": "0 0% 0%",
-      "--partner-secondary-foreground": "#000000",
-      "--accent-foreground": "0 0% 0%",
-      "--services-foreground": "0 0% 0%",
-      "--foreground": "222 47% 11%",
-      "--card-foreground": "222 47% 11%",
-      "--popover-foreground": "222 47% 11%",
-      "--muted-foreground": "215 25% 35%",
-      "--muted": "214 32% 96%",
-      "--border": "214 32% 91%",
-      "--input": "214 32% 91%",
-    });
-  }
+  // Every partner uses the same neutral white surfaces, independent of identity.
+  Object.assign(overrides, {
+    "--background": "0 0% 100%",
+    "--card": "0 0% 100%",
+    "--popover": "0 0% 100%",
+    "--foreground": "222 47% 11%",
+    "--card-foreground": "222 47% 11%",
+    "--popover-foreground": "222 47% 11%",
+    "--muted-foreground": "215 25% 35%",
+    "--muted": "214 32% 96%",
+    "--border": "214 32% 91%",
+    "--input": "214 32% 91%",
+  });
   return overrides;
 }

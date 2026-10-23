@@ -741,7 +741,7 @@ function MyCouponsContent(): React.JSX.Element {
                 isPartnerMode
                   ? {
                       paddingBottom:
-                        "calc(4rem + env(safe-area-inset-bottom, 0px))",
+                        "calc(7rem + env(safe-area-inset-bottom, 0px))",
                     }
                   : undefined
               }

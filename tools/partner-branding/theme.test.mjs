@@ -8,10 +8,10 @@ import { buildPartnerTheme } from "../../src/lib/partner-theme.ts";
 
 const partner = (
   slug = "usa-transfers",
-  colors = { primary: "#1D4ED8", secondary: "#FFFFFF" }
+  colors = { primary: "#03378D", secondary: "#FF4E18" }
 ) => ({ slug, branding: { colors } });
 
-test("approved USA Transfers colours override old placeholder config", () => {
+test("all partner colours come from the DB config, independent of slug", () => {
   const tokens = buildPartnerTheme(partner());
   assert.equal(tokens["--partner-primary"], "#03378D");
   assert.equal(tokens["--partner-secondary"], "#FF4E18");
@@ -19,6 +19,12 @@ test("approved USA Transfers colours override old placeholder config", () => {
   assert.equal(tokens["--partner-secondary-tint"], "#FFEFEA");
   assert.equal(tokens["--background"], "0 0% 100%");
   assert.equal(tokens["--primary"], tokens["--ring"]);
+  assert.deepEqual(buildPartnerTheme(partner("another-partner")), tokens);
+  const updated = buildPartnerTheme(
+    partner("usa-transfers", { primary: "#1D4ED8", secondary: "#FFFFFF" })
+  );
+  assert.equal(updated["--partner-primary"], "#1D4ED8");
+  assert.equal(updated["--partner-secondary"], "#FFFFFF");
 });
 test("normal Namy receives no overrides; other partners keep their config", () => {
   assert.deepEqual(buildPartnerTheme(null), {});
@@ -27,18 +33,19 @@ test("normal Namy receives no overrides; other partners keep their config", () =
   );
   assert.equal(tokens["--partner-primary"], "#123");
   assert.equal(tokens["--partner-secondary"], "#abcdef");
-  assert.equal(tokens["--foreground"], undefined);
+  assert.equal(tokens["--background"], "0 0% 100%");
+  assert.equal(tokens["--card"], "0 0% 100%");
 });
 test("invalid generic config colours are not injected into CSS", () => {
-  assert.deepEqual(
-    buildPartnerTheme(
-      partner("another-partner", {
-        primary: "url(bad)",
-        secondary: "not-a-colour",
-      })
-    ),
-    {}
+  const tokens = buildPartnerTheme(
+    partner("another-partner", {
+      primary: "url(bad)",
+      secondary: "not-a-colour",
+    })
   );
+  assert.equal(tokens["--partner-primary"], undefined);
+  assert.equal(tokens["--partner-secondary"], undefined);
+  assert.equal(tokens["--background"], "0 0% 100%");
 });
 test("primary and secondary foreground choices are readable", () => {
   function luminance(hex) {
@@ -70,6 +77,7 @@ test("leaving partner mode restores every previous inline token", () => {
     ["--partner-secondary", "prior"],
   ]);
   const values = new Map(saved);
+  const attributes = new Map();
   let cleanup;
   const module = { exports: {} };
   const mocks = {
@@ -84,6 +92,9 @@ test("leaving partner mode restores every previous inline token", () => {
   vm.runInNewContext(`(function(require,module,exports){${output}\n})`, {
     document: {
       documentElement: {
+        getAttribute: (key) => attributes.get(key) ?? null,
+        setAttribute: (key, value) => attributes.set(key, value),
+        removeAttribute: (key) => attributes.delete(key),
         style: {
           getPropertyValue: (key) => values.get(key) ?? "",
           setProperty: (key, value) => values.set(key, value),
@@ -94,6 +105,8 @@ test("leaving partner mode restores every previous inline token", () => {
   })((name) => mocks[name], module, module.exports);
   module.exports.PartnerTheme();
   assert.equal(values.get("--partner-primary"), "#03378D");
+  assert.equal(attributes.get("data-partner-mode"), "true");
   cleanup();
   assert.deepEqual(values, saved);
+  assert.equal(attributes.has("data-partner-mode"), false);
 });

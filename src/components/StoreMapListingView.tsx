@@ -15,10 +15,12 @@ import { useMyLevel } from "@/domains/user/hooks/query/useMyLevel";
 import { BasicLayout } from "@/layouts/BasicLayout";
 import type { Store } from "@/lib/api-types";
 import { useAppTranslation } from "@/lib/i18n/useAppTranslation";
+import { resolveMapCenter } from "@/lib/map-center";
 import { getUserLocationSafe } from "@/lib/utils";
 import { Button } from "@/shared/components/Button";
 import { Input } from "@/shared/components/Input";
 import { useAuthStore } from "@/store/useAuthStore";
+import { useIsPartnerMode } from "@/store/usePartnerStore";
 
 /** Fixed map panel offsets (ExploreHeader h-14 + bottom nav h-16) */
 const MAP_PANEL_TOP =
@@ -109,6 +111,7 @@ export function StoreMapListingView({
   promoListPath,
 }: StoreMapListingViewProps): React.JSX.Element {
   const { t } = useAppTranslation();
+  const isPartnerMode = useIsPartnerMode();
 
   const router = useRouter();
   const { data: categoriesData, isLoading: categoriesLoading } =
@@ -231,22 +234,10 @@ export function StoreMapListingView({
   }, [allStoresResult?.data, userLocation, mapSortBy]);
 
   /** Map center — never block the map UI waiting on GPS; use stores centroid as fallback. */
-  const mapCenter = useMemo(() => {
-    if (userLocation) {
-      return {
-        lat: userLocation.latitude,
-        lng: userLocation.longitude,
-      };
-    }
-    const withCoords = mapStoresList.filter((s) => s.lat && s.lng);
-    if (withCoords.length > 0) {
-      return {
-        lat: withCoords.reduce((sum, s) => sum + s.lat!, 0) / withCoords.length,
-        lng: withCoords.reduce((sum, s) => sum + s.lng!, 0) / withCoords.length,
-      };
-    }
-    return { lat: 19.4326, lng: -99.1332 };
-  }, [userLocation, mapStoresList]);
+  const mapCenter = useMemo(
+    () => resolveMapCenter(undefined, userLocation, mapStoresList),
+    [userLocation, mapStoresList]
+  );
 
   const toggleMapSheetSnap = (): void => {
     setSnapPosition((prev) => (prev === "peek" ? "full" : "peek"));
@@ -397,8 +388,12 @@ export function StoreMapListingView({
         ref={mapPanelRef}
         className="fixed left-1/2 -translate-x-1/2 z-10 flex min-h-0 flex-col overflow-hidden bg-background"
         style={{
-          top: MAP_PANEL_TOP,
-          bottom: MAP_PANEL_BOTTOM,
+          top: isPartnerMode
+            ? "var(--status-bar-height, env(safe-area-inset-top, 0px))"
+            : MAP_PANEL_TOP,
+          bottom: isPartnerMode
+            ? "calc(4rem + env(safe-area-inset-bottom, 0px))"
+            : MAP_PANEL_BOTTOM,
           maxWidth: "1024px",
           width: "100%",
         }}

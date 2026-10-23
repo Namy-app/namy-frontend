@@ -47,7 +47,7 @@ export function PartnerExpired(): React.JSX.Element {
             type="button"
             onClick={handleReload}
             disabled={reloading}
-            className="mt-6 rounded-lg bg-[var(--partner-primary,#03378D)] px-6 py-3 text-sm font-medium text-white disabled:opacity-70"
+            className="mt-6 rounded-lg bg-[var(--partner-primary,#171717)] px-6 py-3 text-sm font-medium text-white disabled:opacity-70"
           >
             {reloading ? t("ui.reloading") : t("ui.reload")}
           </button>

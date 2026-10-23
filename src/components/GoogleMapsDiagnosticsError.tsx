@@ -1,30 +1,31 @@
 "use client";
 
-import {
-  formatMapsLoadError,
-  isMapsDiagnosticsEnabled,
-} from "@/lib/google-maps-diagnostics";
+import { isMapsDiagnosticsEnabled } from "@/lib/google-maps-diagnostics";
 
 interface GoogleMapsDiagnosticsErrorProps {
   height: string;
   loadError: Error | undefined;
   authRejected: boolean;
+  apiKeyMissing?: boolean;
 }
 
 export function GoogleMapsDiagnosticsError({
   height,
   loadError,
   authRejected,
+  apiKeyMissing = false,
 }: GoogleMapsDiagnosticsErrorProps) {
   const verbose = isMapsDiagnosticsEnabled();
   const snap =
     typeof window !== "undefined" ? window.__NAMY_MAPS_DEBUG__ : undefined;
 
-  const summary = authRejected
-    ? "Google rejected the Maps API key (you may see a grey map with “Something went wrong”). For iOS, add bundle ID com.namyapp to this key in Google Cloud → Credentials, enable Maps JavaScript API, and ensure billing is on."
-    : loadError
-      ? formatMapsLoadError(loadError)
-      : "Check your connection and try again.";
+  const summary = apiKeyMissing
+    ? "The map is temporarily unavailable. You can still browse the store list."
+    : authRejected
+      ? "The map is currently unavailable. You can still browse stores and coupons."
+      : loadError
+        ? "Check your connection and try again."
+        : "Check your connection and try again.";
 
   return (
     <div
@@ -38,6 +39,10 @@ export function GoogleMapsDiagnosticsError({
             Maps debug
           </p>
           {snap?.runtime != null ? <p>runtime: {snap.runtime}</p> : null}
+          {snap?.envVar ? <p>key source: {snap.envVar}</p> : null}
+          {snap?.keyConfigured !== undefined ? (
+            <p>key configured: {String(snap.keyConfigured)}</p>
+          ) : null}
           {snap?.loadScriptError != null ? (
             <p>loadScript: {snap.loadScriptError}</p>
           ) : null}
