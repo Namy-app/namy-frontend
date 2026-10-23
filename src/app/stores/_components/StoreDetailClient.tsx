@@ -1093,7 +1093,7 @@ export default function StoreDetailClient(): React.JSX.Element {
                   )}
                 </div>
 
-                <Card className="p-6 space-y-4 bg-white border border-[#f1e9e6] rounded-xl shadow-md">
+                <Card className="p-6 space-y-4 bg-white border border-[var(--partner-border,#f1e9e6)] rounded-xl shadow-md">
                   {parsedStore.hoursStructured &&
                   parsedStore.hoursStructured.length > 0 ? (
                     <>
@@ -1286,7 +1286,7 @@ export default function StoreDetailClient(): React.JSX.Element {
                   </div>
                 ) : null}
 
-                <Card className="p-5 bg-white border border-[#f1e9e6] rounded-xl">
+                <Card className="p-5 bg-white border border-[var(--partner-border,#f1e9e6)] rounded-xl">
                   <h2 className="text-xl font-bold text-foreground mb-4">
                     {t("ui.discount_restrictions")}
                   </h2>
@@ -1375,7 +1375,7 @@ export default function StoreDetailClient(): React.JSX.Element {
                               <button
                                 key={review.id}
                                 onClick={() => setSelectedReview(review)}
-                                className="w-full flex items-start gap-3 bg-white border border-[#f1e9e6] rounded-2xl px-4 py-3 shadow-sm hover:bg-orange-50 hover:border-orange-200 transition-colors text-left"
+                                className="w-full flex items-start gap-3 bg-white border border-[var(--partner-border,#f1e9e6)] rounded-2xl px-4 py-3 shadow-sm hover:bg-orange-50 hover:border-orange-200 transition-colors text-left"
                               >
                                 {/* Avatar */}
                                 <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-base font-bold text-[var(--partner-primary,#f97316)] shrink-0">
@@ -1436,10 +1436,10 @@ export default function StoreDetailClient(): React.JSX.Element {
               </div>
 
               <aside className="space-y-6">
-                <Card className="p-5 bg-white border border-[#f1e9e6] rounded-xl shadow-md">
+                <Card className="p-5 bg-white border border-[var(--partner-border,#f1e9e6)] rounded-xl shadow-md">
                   <h3 className="font-semibold mb-3">{t("ui.location_alt")}</h3>
                   {/* Hide until we sort out the map */}
-                  <div className="aspect-video hidden bg-[#fbf7f6] rounded-xl mb-3 flex items-center justify-center">
+                  <div className="aspect-video hidden bg-[var(--partner-primary-tint,#fbf7f6)] rounded-xl mb-3 flex items-center justify-center">
                     <span className="text-4xl">🗺️</span>
                   </div>
                   <Button
@@ -1461,7 +1461,7 @@ export default function StoreDetailClient(): React.JSX.Element {
                   </div>
                 </Card>
 
-                <Card className="p-5 bg-white border border-[#f1e9e6] rounded-xl shadow-md">
+                <Card className="p-5 bg-white border border-[var(--partner-border,#f1e9e6)] rounded-xl shadow-md">
                   <Button
                     onClick={handleShareContact}
                     className="w-full bg-white hover:bg-gray-200 text-gray-800 border border-gray-300"
