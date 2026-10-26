@@ -179,7 +179,7 @@ export function BottomNavigation(): React.JSX.Element | null {
               aria-label={item.label}
               aria-current={active ? "page" : undefined}
               onClick={() => router.push(item.path)}
-              className="flex items-center justify-center transition-all"
+              className="flex min-h-11 min-w-11 items-center justify-center transition-all"
             >
               {active ? (
                 <span

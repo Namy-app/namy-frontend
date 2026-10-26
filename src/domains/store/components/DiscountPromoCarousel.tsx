@@ -125,10 +125,10 @@ function TicketPromoCard({
   const theme: PromoAccentTheme = partner
     ? {
         ...getPromoAccentTheme(slide.accent),
-        panel: "bg-secondary",
+        panel: "bg-[var(--partner-primary-tint,#fff)]",
         stub: "bg-primary",
-        scallop: "bg-secondary",
-        badge: "bg-primary/10 text-primary",
+        scallop: "bg-[var(--partner-primary-tint,#fff)]",
+        badge: "bg-[var(--partner-secondary-tint,#fff)] text-primary",
         accentText: "text-primary",
         unlockBtn: "bg-primary text-primary-foreground hover:opacity-90",
         dot: "bg-primary",
@@ -255,6 +255,7 @@ export function DiscountPromoCarousel({
   unlock,
 }: DiscountPromoCarouselProps): React.JSX.Element | null {
   const { t } = useAppTranslation();
+  const partner = usePartnerConfig();
 
   const {
     trackRef,
@@ -341,7 +342,7 @@ export function DiscountPromoCarousel({
                     onClick={() => goToIndex(index)}
                     className={`rounded-full transition-all ${
                       realIndex === index
-                        ? `h-2 w-6 ${getPromoAccentTheme(slide.accent).dot}`
+                        ? `h-2 w-6 ${partner ? "bg-[var(--partner-secondary)]" : getPromoAccentTheme(slide.accent).dot}`
                         : "h-2 w-2 bg-stone-300 hover:bg-stone-400"
                     }`}
                     aria-label={`Ir a promoción ${index + 1}`}

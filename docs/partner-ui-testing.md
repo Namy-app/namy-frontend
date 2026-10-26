@@ -13,10 +13,10 @@ This PR changes the Namy web frontend. The iframe host is separate from Namy mob
 ## Acceptance checks
 
 - Login: successful exchange, code removed from child URL, explore/coupons/store links load directly. Expired and reused codes fail; Reload reaches the host.
-- Branding: no partner top header; configured colours on bottom tabs, explore cards, listing, store details and coupon/QR screens. Final logo/theme assets remain pending. Normal Namy retains its colours and logo.
-- Navigation: two bottom tabs (Explore and My coupons), matching Namy styling and icons. Store pages keep Explore selected. No top navigation, premium, level, league, wallet, referrals, logout, onboarding or notification promotions. Profile deep links go to My coupons without mounting profile content. My coupons retains all/active/used filters.
+- Branding: no partner top header; configured colours on explore cards, listing, store details and coupon/QR screens. All partner brand colours and logos come from the DB config; white surfaces apply to every partner. Normal Namy retains its colours and logo.
+- Navigation: two bottom tabs (Explore/My coupons), no top navigation. Store pages keep Explore selected; direct URLs still work. No premium, level, league, wallet, referrals, logout, onboarding or notification promotions. Profile deep links go to My coupons without mounting profile content. My coupons retains all/active/used filters.
 - Coupon: ad-free partner sessions call `generateCoupon` without requesting video ads. No AdSense load on partner entry/reload. Verify actual returned coupon value, QR, animation, active/used filters and redemption. Fixed/zero-value and premium offers currently follow backend exceptions; clarify the blanket 15% requirement with Vinay.
-- QR: Powered by Nami with logo and staff hint. No Crisp help button or script in partner mode. Check QR content scrolls above the bottom tabs.
+- QR: Powered by Nami with logo and staff hint. No Crisp help button or script in partner mode. Check QR content scrolls to the end.
 - Content: restaurants and services, search, store detail, location granted/denied, map. Reviews, rating previews and review submission are absent in partner mode; review queries must not run. Mural remains feature-gated where otherwise accessible.
 - Analytics: existing tracked events carry the current partner slug, or null in normal mode; direct generation uses method `partner`.
 - Regression: normal Namy login, bottom nav, premium ad bypass, free-user ad unlock, profile and referrals unchanged.
