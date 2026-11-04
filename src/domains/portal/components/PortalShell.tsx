@@ -17,6 +17,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { PortalBillingStatusDot } from "@/domains/portal/components/PortalBillingStatusBadge";
+import { PortalMissingCardBanner } from "@/domains/portal/components/PortalMissingCardBanner";
 import {
   usePortalSwitchStore,
   useSelectedPortalStore,
@@ -408,6 +409,7 @@ export function PortalShell({ children }: PortalShellProps): React.JSX.Element {
           </aside>
         </div>
 
+        <PortalMissingCardBanner />
         <main className="flex-1">{children}</main>
       </div>
     </div>
