@@ -793,7 +793,7 @@ function MyCouponsContent(): React.JSX.Element {
                   <div className="inline-flex items-center gap-2 text-xs text-muted-foreground">
                     <Image
                       src="/namy-logo.webp"
-                      alt="Nami"
+                      alt="Ñamy"
                       width={24}
                       height={24}
                     />
