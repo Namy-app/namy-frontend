@@ -2,9 +2,12 @@ import { Loader2, Percent, X } from "lucide-react";
 import { useState, useCallback } from "react";
 
 import {
-  type Discount,
+  type AdminPartner,
   type AvailableDaysAndTimes,
+  type Discount,
+  useAdminPartners,
   useCreateDiscount,
+  useStorePartnerSettings,
   useUpdateDiscount,
 } from "@/domains/admin";
 import { useToast } from "@/hooks/use-toast";
@@ -67,9 +70,36 @@ export const CreateDiscountModal = ({
     maxDiscountAmount: discount?.maxDiscountAmount?.toString() ?? "",
     availableDaysAndTimes: resolveInitialAvailableDays(discount),
     additionalRestrictions: discount?.additionalRestrictions ?? [],
+    partnerId: discount?.partnerId ?? "",
   });
 
   const [newRestriction, setNewRestriction] = useState("");
+
+  const partnersQuery = useAdminPartners();
+  const settingsQuery = useStorePartnerSettings(storeId);
+  const activePartners = (partnersQuery.data ?? []).filter(
+    (partner) => partner.active
+  );
+  const exclusivePartnerId = settingsQuery.data?.exclusivePartnerId ?? null;
+  const partnerChoices = exclusivePartnerId
+    ? activePartners.filter((partner) => partner.id === exclusivePartnerId)
+    : activePartners;
+  const selectedPartner = (partnersQuery.data ?? []).find(
+    (partner) => partner.id === formData.partnerId
+  );
+  const visiblePartnerChoices: AdminPartner[] =
+    formData.partnerId &&
+    !partnerChoices.some((partner) => partner.id === formData.partnerId)
+      ? [
+          ...partnerChoices,
+          selectedPartner ?? {
+            id: formData.partnerId,
+            slug: "",
+            name: "Partner",
+            active: false,
+          },
+        ]
+      : partnerChoices;
 
   const today = new Date().toISOString().split("T")[0];
   const minStartDate = discount?.id ? undefined : today;
@@ -177,6 +207,7 @@ export const CreateDiscountModal = ({
                 ? formData.additionalRestrictions
                 : undefined,
             ...promoPayload,
+            partnerId: formData.partnerId || null,
           },
         });
       } else {
@@ -206,6 +237,7 @@ export const CreateDiscountModal = ({
               ? formData.additionalRestrictions
               : undefined,
           ...promoPayload,
+          partnerId: formData.partnerId || null,
         });
       }
       toast({
@@ -262,6 +294,29 @@ export const CreateDiscountModal = ({
           className="flex min-h-0 flex-1 flex-col"
         >
           <div className="min-w-0 flex-1 space-y-6 overflow-x-hidden overflow-y-auto p-4 sm:p-6">
+            <div>
+              <label
+                htmlFor="discount-visible-to"
+                className="block text-sm font-medium text-foreground mb-2"
+              >
+                Visible to
+              </label>
+              <select
+                id="discount-visible-to"
+                value={formData.partnerId}
+                onChange={(event) =>
+                  setFormData({ ...formData, partnerId: event.target.value })
+                }
+                className="w-full px-4 py-2 border border-border rounded-lg bg-background focus:ring-2 focus:ring-primary focus:border-transparent"
+              >
+                <option value="">Everyone</option>
+                {visiblePartnerChoices.map((partner) => (
+                  <option key={partner.id} value={partner.id}>
+                    {partner.name} users only
+                  </option>
+                ))}
+              </select>
+            </div>
             {/* Basic Information */}
             <div className="space-y-4">
               <h4 className="text-sm font-semibold text-foreground uppercase tracking-wide">

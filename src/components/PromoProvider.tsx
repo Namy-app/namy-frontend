@@ -1,7 +1,6 @@
 "use client";
 
 import { App } from "@capacitor/app";
-import { Capacitor } from "@capacitor/core";
 import { NovuProvider, useNotifications } from "@novu/nextjs/hooks";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
@@ -11,6 +10,7 @@ import {
   type PromoBannerData,
 } from "@/app/explore/components/PromoBanner";
 import { analytics } from "@/lib/analytics";
+import { isNativeApp } from "@/lib/app-platform";
 import { env } from "@/lib/env";
 import {
   isPromoBannerRoute,
@@ -21,6 +21,7 @@ import {
 } from "@/lib/promo-storage";
 import { syncLatestNovuPromo } from "@/lib/push-handler";
 import { useAuthStore } from "@/store/useAuthStore";
+import { useIsPartnerMode, usePartnerHydrated } from "@/store/usePartnerStore";
 import { recoverPendingPromo, usePromoStore } from "@/store/usePromoStore";
 
 function PromoSyncBootstrap({ userId }: { userId: string | undefined }): null {
@@ -37,7 +38,7 @@ function PromoSyncBootstrap({ userId }: { userId: string | undefined }): null {
   }, [canSyncPromos, userId]);
 
   useEffect(() => {
-    if (!Capacitor.isNativePlatform() || !canSyncPromos) {
+    if (!isNativeApp() || !canSyncPromos) {
       return;
     }
 
@@ -60,9 +61,7 @@ function NovuPromoSync(): null {
   const pathname = usePathname();
   const lastSurfacedIdRef = useRef<string | null>(null);
   const canSyncPromos =
-    pathname !== null &&
-    isPromoBannerRoute(pathname) &&
-    Capacitor.isNativePlatform(); // Only show promos on native apps
+    pathname !== null && isPromoBannerRoute(pathname) && isNativeApp(); // Only show promos on native apps
 
   const { notifications } = useNotifications({
     read: false,
@@ -152,6 +151,12 @@ export function PromoProvider({
 }): React.JSX.Element {
   const userId = useAuthStore((s) => s.user?.id);
   const appId = env.NEXT_PUBLIC_NOVU_APPLICATION_IDENTIFIER;
+  const isPartnerMode = useIsPartnerMode();
+  const partnerHydrated = usePartnerHydrated();
+
+  if (!partnerHydrated || isPartnerMode) {
+    return <>{children}</>;
+  }
 
   if (!userId || !appId) {
     return (

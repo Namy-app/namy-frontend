@@ -1,6 +1,7 @@
-import { Capacitor } from "@capacitor/core";
 import { Preferences } from "@capacitor/preferences";
 import type { StateStorage } from "zustand/middleware";
+
+import { isNativeApp } from "@/lib/app-platform";
 
 /**
  * Zustand storage adapter that uses @capacitor/preferences on iOS/Android
@@ -8,7 +9,7 @@ import type { StateStorage } from "zustand/middleware";
  */
 export const capacitorStorage: StateStorage = {
   getItem: async (name: string): Promise<string | null> => {
-    if (Capacitor.isNativePlatform()) {
+    if (isNativeApp()) {
       const { value } = await Preferences.get({ key: name });
       return value;
     }
@@ -16,7 +17,7 @@ export const capacitorStorage: StateStorage = {
   },
 
   setItem: async (name: string, value: string): Promise<void> => {
-    if (Capacitor.isNativePlatform()) {
+    if (isNativeApp()) {
       await Preferences.set({ key: name, value });
     } else {
       localStorage.setItem(name, value);
@@ -24,7 +25,7 @@ export const capacitorStorage: StateStorage = {
   },
 
   removeItem: async (name: string): Promise<void> => {
-    if (Capacitor.isNativePlatform()) {
+    if (isNativeApp()) {
       await Preferences.remove({ key: name });
     } else {
       localStorage.removeItem(name);

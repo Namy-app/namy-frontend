@@ -1,5 +1,6 @@
 import { Browser } from "@capacitor/browser";
-import { Capacitor } from "@capacitor/core";
+
+import { getAppPlatform } from "@/lib/app-platform";
 
 /**
  * Interface for location data
@@ -27,7 +28,7 @@ function buildGoogleMapsUrl(location: LocationData): string {
 }
 
 async function openUrl(url: string): Promise<void> {
-  const platform = Capacitor.getPlatform();
+  const platform = getAppPlatform();
   if (platform === "android" || platform === "ios") {
     await Browser.open({ url });
   } else {

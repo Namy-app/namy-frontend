@@ -3,6 +3,8 @@
 import { GoogleMap, Marker } from "@react-google-maps/api";
 import { useMemo, useState } from "react";
 
+import { GoogleMapsDiagnosticsError } from "@/components/GoogleMapsDiagnosticsError";
+import { useGoogleMapsStatus } from "@/components/GoogleMapsProvider";
 import { MapLoadingView } from "@/components/MapLoadingView";
 
 interface MapDisplayProps {
@@ -34,8 +36,28 @@ export function MapDisplay({
   storeName,
   height = "200px",
 }: MapDisplayProps) {
+  const { isLoaded, loadError, authRejected, apiKeyMissing } =
+    useGoogleMapsStatus();
   const center = useMemo(() => ({ lat, lng }), [lat, lng]);
   const [tilesReady, setTilesReady] = useState(false);
+
+  if (loadError || authRejected || apiKeyMissing) {
+    return (
+      <GoogleMapsDiagnosticsError
+        height="min-h-[200px]"
+        loadError={loadError}
+        authRejected={authRejected}
+        apiKeyMissing={apiKeyMissing}
+      />
+    );
+  }
+  if (!isLoaded) {
+    return (
+      <div style={{ height }}>
+        <MapLoadingView message="Loading map…" />
+      </div>
+    );
+  }
 
   return (
     <div

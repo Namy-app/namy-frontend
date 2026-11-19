@@ -3,6 +3,8 @@
 import { Autocomplete } from "@react-google-maps/api";
 import { useRef, useState } from "react";
 
+import { useGoogleMapsStatus } from "@/components/GoogleMapsProvider";
+
 interface AddressAutocompleteProps {
   value: string;
   onChange: (
@@ -23,6 +25,7 @@ export function AddressAutocomplete({
   required = false,
   className = "",
 }: AddressAutocompleteProps) {
+  const { isLoaded, loadError, authRejected } = useGoogleMapsStatus();
   const [autocomplete, setAutocomplete] =
     useState<google.maps.places.Autocomplete | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -49,25 +52,23 @@ export function AddressAutocomplete({
     onChange(e.target.value, null, null, null);
   };
 
+  const input = (
+    <input
+      ref={inputRef}
+      type="text"
+      value={value}
+      onChange={handleInputChange}
+      placeholder={placeholder}
+      required={required}
+      className={`w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent ${className}`}
+    />
+  );
+  if (!isLoaded || loadError || authRejected) {
+    return input;
+  }
   return (
-    <Autocomplete
-      onLoad={onLoad}
-      onPlaceChanged={onPlaceChanged}
-      options={
-        {
-          // No componentRestrictions or types — allow any location
-        }
-      }
-    >
-      <input
-        ref={inputRef}
-        type="text"
-        value={value}
-        onChange={handleInputChange}
-        placeholder={placeholder}
-        required={required}
-        className={`w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent ${className}`}
-      />
+    <Autocomplete onLoad={onLoad} onPlaceChanged={onPlaceChanged} options={{}}>
+      {input}
     </Autocomplete>
   );
 }

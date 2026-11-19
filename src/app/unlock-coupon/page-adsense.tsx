@@ -2,9 +2,10 @@
 
 import { useState, useMemo } from "react";
 
+import { PartnerAdRouteGuard } from "@/components/partner/PartnerAdRouteGuard";
 import { RewardedVideoAd } from "@/components/RewardedVideoAd";
 
-export default function UnlockCouponPage(): React.JSX.Element {
+function UnlockCouponPageContent(): React.JSX.Element {
   const [couponUnlocked, setCouponUnlocked] = useState(false);
   const [showAd, setShowAd] = useState(false);
 
@@ -202,5 +203,13 @@ export default function UnlockCouponPage(): React.JSX.Element {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function UnlockCouponPage(): React.JSX.Element {
+  return (
+    <PartnerAdRouteGuard>
+      <UnlockCouponPageContent />
+    </PartnerAdRouteGuard>
   );
 }

@@ -11,6 +11,8 @@ import {
   getMsUntilExpiry,
 } from "@/domains/coupon/formatExpiryCountdown";
 import type { CouponItem } from "@/domains/coupon/type";
+import { useAppTranslation } from "@/lib/i18n/useAppTranslation";
+import { useIsPartnerMode } from "@/store/usePartnerStore";
 
 type Props = {
   coupon: CouponItem;
@@ -41,7 +43,10 @@ export default function CouponCard({
   promoLabel,
   onViewQr,
 }: Props): React.JSX.Element {
-  const displayLabel = promoLabel.trim() || "Promoción Especial";
+  const { t } = useAppTranslation();
+
+  const isPartnerMode = useIsPartnerMode();
+  const displayLabel = promoLabel.trim() || t("ui.special_offer");
   const isCompactLabel = displayLabel.length > 12;
   const [countdown, setCountdown] = useState<string | null>(null);
 
@@ -87,7 +92,9 @@ export default function CouponCard({
   const isRedeemed = status === "redeemed";
 
   const bgClass = isActive
-    ? `bg-gradient-to-r ${getGradient(coupon.code)}`
+    ? isPartnerMode
+      ? "bg-gradient-primary"
+      : `bg-gradient-to-r ${getGradient(coupon.code)}`
     : "bg-gradient-to-r from-gray-400 to-gray-500";
 
   const storeImage = (coupon as { store?: { imageUrl?: string | null } }).store
@@ -128,7 +135,7 @@ export default function CouponCard({
             {displayLabel}
           </p>
           <p className="text-white/90 font-semibold text-base mt-1 truncate">
-            {coupon.store?.name ?? "Tienda"}
+            {coupon.store?.name ?? t("ui.store")}
           </p>
         </div>
       </div>
@@ -156,7 +163,7 @@ export default function CouponCard({
             className="bg-white rounded-full px-4 py-1.5 flex items-center gap-1.5 font-semibold text-sm text-gray-800 hover:bg-white/90 transition-colors"
           >
             <QrCode className="w-4 h-4" />
-            Ver QR
+            {t("ui.view_qr")}
           </button>
         ) : null}
       </div>

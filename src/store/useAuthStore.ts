@@ -6,6 +6,11 @@ import type { LogoutReason } from "@/lib/analytics/types";
 import { type User } from "@/lib/api-types";
 import { capacitorStorage } from "@/lib/capacitor-storage";
 import { setAuthToken, setAuthErrorCallback } from "@/lib/graphql-client";
+import { usePartnerStore } from "@/store/usePartnerStore";
+
+interface SetAuthOptions {
+  partner?: boolean;
+}
 
 interface AuthState {
   user: User | null;
@@ -15,7 +20,12 @@ interface AuthState {
   expiresAt: number | null;
 
   // Actions
-  setAuth: (user: User, accessToken: string, rememberMe?: boolean) => void;
+  setAuth: (
+    user: User,
+    accessToken: string,
+    rememberMe?: boolean,
+    options?: SetAuthOptions
+  ) => void;
   clearAuth: (reason?: LogoutReason) => void;
   updateUser: (user: Partial<User>) => void;
   checkExpiration: () => boolean;
@@ -30,7 +40,11 @@ export const useAuthStore = create<AuthState>()(
       rememberMe: false,
       expiresAt: null,
 
-      setAuth: (user, accessToken, rememberMe = false) => {
+      setAuth: (user, accessToken, rememberMe = false, options) => {
+        // A normal Namy login always leaves partner (white-label) mode.
+        if (options?.partner !== true) {
+          usePartnerStore.getState().clearPartner();
+        }
         setAuthToken(accessToken);
         // If remember me: 30 days, otherwise: 1 day
         const expirationTime = rememberMe
@@ -106,7 +120,19 @@ export const useAuthStore = create<AuthState>()(
 // This allows the graphql-client to trigger logout on auth errors
 if (typeof window !== "undefined") {
   setAuthErrorCallback(() => {
+    const partnerMode = usePartnerStore.getState().partner != null;
     const state = useAuthStore.getState();
+    if (partnerMode) {
+      state.clearAuth("auth_error");
+      const path = window.location.pathname;
+      if (
+        path !== "/partner/expired" &&
+        !path.startsWith("/partner/expired/")
+      ) {
+        window.location.replace("/partner/expired");
+      }
+      return;
+    }
     state.clearAuth("auth_error");
   });
 }

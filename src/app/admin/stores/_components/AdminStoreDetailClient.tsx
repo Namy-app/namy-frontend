@@ -31,6 +31,8 @@ import { resolveCapacitorDynamicId } from "@/lib/capacitor-navigate";
 import { extractErrorMessage } from "@/lib/utils";
 import { useAuthStore } from "@/store/useAuthStore";
 
+import { StorePartnerCard } from "./StorePartnerCard";
+
 type TabType = "info" | "catalogs" | "coupons";
 
 export default function StoreDetailPage() {
@@ -297,6 +299,7 @@ export default function StoreDetailPage() {
         {/* Store Info Tab */}
         {activeTab === "info" && (
           <div className="space-y-8">
+            <StorePartnerCard storeId={storeId} />
             <StoreInfo
               discounts={discounts}
               discountIsLoading={discountsLoading}

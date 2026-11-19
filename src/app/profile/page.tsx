@@ -44,6 +44,7 @@ import { getInitials, getUserLevelTitle } from "@/lib/user.lib";
 import { extractErrorMessage } from "@/lib/utils";
 import CrispProvider from "@/providers/CrispProvider";
 import { useAuthStore } from "@/store/useAuthStore";
+import { useIsPartnerMode, usePartnerHydrated } from "@/store/usePartnerStore";
 
 const EMOJI_AVATARS = [
   "🐶",
@@ -619,7 +620,7 @@ function AccountMenu({
   );
 }
 
-export default function ProfilePage(): React.JSX.Element | null {
+function NamyProfilePage(): React.JSX.Element | null {
   const router = useRouter();
   const { toast } = useToast();
   const { user, updateUser } = useAuthStore();
@@ -1016,4 +1017,16 @@ export default function ProfilePage(): React.JSX.Element | null {
       </BasicLayout>
     </ProtectedRoute>
   );
+}
+
+export default function ProfilePage(): React.JSX.Element | null {
+  const isPartnerMode = useIsPartnerMode();
+  const hydrated = usePartnerHydrated();
+  const router = useRouter();
+  useEffect(() => {
+    if (hydrated && isPartnerMode) {
+      router.replace("/my-coupons");
+    }
+  }, [hydrated, isPartnerMode, router]);
+  return !hydrated || isPartnerMode ? null : <NamyProfilePage />;
 }

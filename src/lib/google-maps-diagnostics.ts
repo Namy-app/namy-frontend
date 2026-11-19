@@ -14,7 +14,8 @@ export const GOOGLE_MAPS_AUTH_FAILURE_SUMMARY = `gm_authFailure — Google Maps 
 
 Google does not pass a reason string to this callback. Typical causes:
 • API key invalid or from another project
-• Application restrictions: iOS bundle ID must be com.namyapp (Cloud Console → Credentials → key → iOS apps)
+• Embedded web: website referrer must allow the actual iframe page origin (for staging: https://namy-frontend.vercel.app/*)
+• Top-level native app: check its platform-specific key restrictions
 • Maps JavaScript API not enabled for the project
 • Billing disabled on the Google Cloud project
 • Key quota exceeded
@@ -82,7 +83,7 @@ declare global {
     __NAMY_MAPS_DEBUG__?: {
       runtime?: "ios" | "android" | "web";
       envVar?: string;
-      key?: string;
+      keyConfigured?: boolean;
       authFailureAt?: number;
       authFailureSummary?: string;
       loadScriptError?: string;

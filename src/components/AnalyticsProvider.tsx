@@ -1,7 +1,6 @@
 "use client";
 
 import { App } from "@capacitor/app";
-import { Capacitor } from "@capacitor/core";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
@@ -17,6 +16,7 @@ import {
   hasTrackedAppOpenedThisSession,
   markAppOpenedThisSession,
 } from "@/lib/analytics/posthog-client";
+import { isNativeApp } from "@/lib/app-platform";
 import { useAuthStore } from "@/store/useAuthStore";
 
 let lastScreenKey: string | null = null;
@@ -65,7 +65,7 @@ export function AnalyticsProvider({
         analytics.track("app_opened");
       }
 
-      if (!Capacitor.isNativePlatform()) {
+      if (!isNativeApp()) {
         return;
       }
 

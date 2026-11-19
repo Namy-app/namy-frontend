@@ -1,6 +1,9 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { useEffect } from "react";
+
+import { useIsPartnerMode, usePartnerHydrated } from "@/store/usePartnerStore";
 
 declare global {
   interface Window {
@@ -11,7 +14,16 @@ declare global {
 }
 
 export default function CrispProvider() {
+  const isPartnerMode = useIsPartnerMode();
+  const hydrated = usePartnerHydrated();
+  const pathname = usePathname();
+  const disabled =
+    !hydrated || isPartnerMode || pathname.startsWith("/partner");
   useEffect(() => {
+    if (disabled) {
+      window.$crisp?.push(["do", "chat:hide"]);
+      return;
+    }
     const websiteId = process.env.NEXT_PUBLIC_CRISP_WEBSITE_ID;
     if (!process.env.NEXT_PUBLIC_CRISP_WEBSITE_ID) {
       return;
@@ -54,9 +66,11 @@ export default function CrispProvider() {
       script.src = "https://client.crisp.chat/l.js";
       script.async = true;
       document.head.appendChild(script);
+      existingScript = script;
     }
 
     return () => {
+      window.$crisp?.push(["do", "chat:hide"]);
       if (existingScript?.parentNode) {
         existingScript.parentNode.removeChild(existingScript);
       }
@@ -64,7 +78,7 @@ export default function CrispProvider() {
       delete window.$crisp;
       delete window.CRISP_WEBSITE_ID;
     };
-  }, []);
+  }, [disabled]);
 
   return null;
 }

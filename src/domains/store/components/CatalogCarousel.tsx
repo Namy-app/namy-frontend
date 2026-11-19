@@ -1,6 +1,10 @@
+"use client";
+
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
+
+import { useAppTranslation } from "@/lib/i18n/useAppTranslation";
 
 // Catalog Carousel Component
 export const CatalogCarousel = ({
@@ -12,6 +16,7 @@ export const CatalogCarousel = ({
   catalogName: string;
   onImageClick: (url: string) => void;
 }) => {
+  const { t } = useAppTranslation();
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const goToPrevious = () => {
@@ -46,14 +51,14 @@ export const CatalogCarousel = ({
             <button
               onClick={goToPrevious}
               className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors z-10"
-              aria-label="Previous image"
+              aria-label={t("ui.previous_image")}
             >
               <ChevronLeft className="w-6 h-6" />
             </button>
             <button
               onClick={goToNext}
               className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors z-10"
-              aria-label="Next image"
+              aria-label={t("ui.next_image")}
             >
               <ChevronRight className="w-6 h-6" />
             </button>

@@ -1,9 +1,10 @@
 "use client";
 
-import { Capacitor } from "@capacitor/core";
 import type { PluginListenerHandle } from "@capacitor/core";
 import { Keyboard } from "@capacitor/keyboard";
 import { useEffect } from "react";
+
+import { getAppPlatform } from "@/lib/app-platform";
 
 const FOCUSABLE_INPUT_SELECTOR =
   'input:not([type="hidden"]):not([disabled]), textarea:not([disabled]), select:not([disabled]), [contenteditable="true"]';
@@ -52,7 +53,7 @@ function scheduleScrollIntoView(): void {
 
 export function KeyboardScrollFix(): null {
   useEffect(() => {
-    const platform = Capacitor.getPlatform();
+    const platform = getAppPlatform();
     const isNative = platform === "android" || platform === "ios";
 
     let showHandle: PluginListenerHandle | null = null;

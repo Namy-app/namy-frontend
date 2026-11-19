@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Namy partner iframe test host</title>
+    <style>
+      body {
+        margin: 0;
+        font:
+          16px system-ui,
+          sans-serif;
+        background: #eef2ff;
+        color: #172554;
+      }
+      header {
+        padding: 20px;
+        max-width: 1000px;
+        margin: auto;
+      }
+      h1 {
+        font-size: 22px;
+      }
+      form {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: end;
+      }
+      label {
+        display: grid;
+        gap: 6px;
+        font-size: 14px;
+      }
+      input,
+      select,
+      button {
+        padding: 10px;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        font: inherit;
+      }
+      button {
+        background: #1d4ed8;
+        color: white;
+        cursor: pointer;
+      }
+      #status {
+        min-height: 24px;
+      }
+      iframe {
+        display: block;
+        width: min(100%, 430px);
+        height: 75dvh;
+        margin: 0 auto 24px;
+        border: 1px solid #94a3b8;
+        background: white;
+        border-radius: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Partner iframe test host</h1>
+      <p>
+        Use a fresh one-time test code within 60 seconds. No partner API key
+        belongs in this page.
+      </p>
+      <form id="launch">
+        <label
+          >Namy web URL
+          <input id="base" type="url" value="http://localhost:3000" required
+        /></label>
+        <label
+          >One-time code
+          <input id="code" type="password" autocomplete="off" required
+        /></label>
+        <label
+          >Language
+          <select id="lang">
+            <option value="en">English</option>
+            <option value="es">Spanish</option>
+          </select></label
+        >
+        <label
+          >Start screen
+          <select id="redirect">
+            <option value="/explore">Explore</option>
+            <option value="/my-coupons">My coupons</option>
+            <option value="/profile">Profile</option>
+          </select></label
+        >
+        <button type="submit">Open partner experience</button>
+      </form>
+      <p id="status" role="status" aria-live="polite">
+        Waiting for a test code.
+      </p>
+    </header>
+    <iframe
+      id="namy"
+      title="Namy partner experience"
+      allow="geolocation"
+    ></iframe>
+    <script>
+      const form = document.getElementById("launch");
+      const frame = document.getElementById("namy");
+      const status = document.getElementById("status");
+      const codeInput = document.getElementById("code");
+      const redirectInput = document.getElementById("redirect");
+      let childOrigin = null;
+      let pendingRedirect = null;
+
+      form.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const base = new URL(document.getElementById("base").value);
+        if (!["http:", "https:"].includes(base.protocol)) return;
+        const url = new URL("/partner", base.origin);
+        url.searchParams.set("code", codeInput.value.trim());
+        url.searchParams.set("lang", document.getElementById("lang").value);
+        url.searchParams.set(
+          "redirect",
+          pendingRedirect || redirectInput.value
+        );
+        childOrigin = url.origin;
+        frame.src = url.href;
+        codeInput.value = "";
+        pendingRedirect = null;
+        status.textContent =
+          "Opened. Check login, URL cleanup, branding and coupon flow inside the frame.";
+      });
+
+      window.addEventListener("message", (event) => {
+        if (
+          event.source !== frame.contentWindow ||
+          event.origin !== childOrigin
+        )
+          return;
+        if (!event.data || event.data.type !== "namy:reauth") return;
+        const path = event.data.redirect;
+        pendingRedirect =
+          typeof path === "string" &&
+          path.startsWith("/") &&
+          !path.startsWith("//")
+            ? path
+            : "/explore";
+        status.textContent =
+          "Reload requested. Enter a fresh code and press Open to restore the previous screen.";
+        codeInput.focus();
+      });
+    </script>
+  </body>
+</html>

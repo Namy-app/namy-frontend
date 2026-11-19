@@ -1,9 +1,9 @@
 "use client";
 
-import { Capacitor } from "@capacitor/core";
 import { PushNotifications } from "@capacitor/push-notifications";
 
 import { analytics } from "@/lib/analytics";
+import { isNativeApp, getAppPlatform } from "@/lib/app-platform";
 import { env } from "@/lib/env";
 import { graphqlRequest } from "@/lib/graphql-client";
 import {
@@ -239,7 +239,7 @@ export async function initPushNotifications(
   navigateFn: (path: string) => void
 ): Promise<void> {
   console.warn("[Push] init called");
-  if (!Capacitor.isNativePlatform()) {
+  if (!isNativeApp()) {
     return;
   }
   if (initialized) {
@@ -248,7 +248,7 @@ export async function initPushNotifications(
   }
   initialized = true;
 
-  const platform = Capacitor.getPlatform() === "ios" ? "apns" : "fcm";
+  const platform = getAppPlatform() === "ios" ? "apns" : "fcm";
 
   const perm = await PushNotifications.requestPermissions();
   console.warn("[Push] permission:", JSON.stringify(perm));
@@ -344,8 +344,7 @@ export async function initPushNotifications(
     (action) => {
       console.warn("[Push] actionPerformed raw:", JSON.stringify(action));
       const data = action.notification.data as
-        | Record<string, unknown>
-        | undefined;
+        Record<string, unknown> | undefined;
       const isBanner = isPromoNotificationData(data);
       const deepLink = buildDeepLink(data);
 
@@ -429,7 +428,7 @@ export async function initPushNotifications(
 
 export function resetPushHandler(): void {
   initialized = false;
-  if (Capacitor.isNativePlatform()) {
+  if (isNativeApp()) {
     PushNotifications.removeAllListeners().catch(() => undefined);
   }
 }

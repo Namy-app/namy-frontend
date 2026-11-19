@@ -451,3 +451,16 @@ select:focus {
     height: 0;
   }
 }
+
+/* Embedded partner labels must remain legible without changing normal Namy. */
+html[data-partner-mode="true"] {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+html[data-partner-mode="true"] :is(.text-xs, .text-\[10px\], .text-\[11px\]) {
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+html[data-partner-mode="true"] :where(input, select, textarea) {
+  font-size: 1rem;
+}

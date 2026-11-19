@@ -14,6 +14,7 @@ import {
   displayDiscountValue,
   resolveDiscountDisplayText,
 } from "@/lib/discount-type";
+import { useAppTranslation } from "@/lib/i18n/useAppTranslation";
 import { Button } from "@/shared/components/Button";
 import { Card } from "@/shared/components/Card";
 
@@ -77,15 +78,18 @@ function FeaturedCouponCard({
   isPremium: boolean;
   onImageLoad?: () => void;
 }): React.JSX.Element {
+  const { t, i18n } = useAppTranslation();
+
   const storeId = discount.store?.id ?? discount.storeId;
-  const storeName = discount.store?.name ?? "Tienda";
+  const storeName = discount.store?.name ?? t("ui.store");
   const discountLabel = getCouponDiscountLabel(
     discount,
     userLevelPct,
     isPremium
   );
   const scheduleBadge = formatDiscountScheduleBadge(
-    toDiscountForBadge(discount)
+    toDiscountForBadge(discount),
+    i18n.language === "en" ? "en" : "es"
   );
   const subtitle =
     discount.description?.trim() ||
@@ -106,10 +110,10 @@ function FeaturedCouponCard({
           unoptimized
           onLoad={onImageLoad}
         />
-        <div className="absolute bottom-3 left-3 max-w-[calc(100%-1.5rem)] truncate rounded-full bg-[#F1A151] px-2.5 py-1 text-xs font-bold text-white">
+        <div className="absolute bottom-3 left-3 max-w-[calc(100%-1.5rem)] truncate rounded-full bg-[var(--partner-primary,#F1A151)] px-2.5 py-1 text-xs font-bold text-white">
           {discountLabel}
         </div>
-        {scheduleBadge !== "Todos los días" ? (
+        {scheduleBadge !== t("ui.every_day") ? (
           <div className="absolute bottom-3 right-3 max-w-[45%] truncate rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-[#423A33] shadow">
             {scheduleBadge}
           </div>
@@ -140,6 +144,8 @@ export function FeaturedCouponsCarousel({
   userLevelPct?: number;
   isPremium?: boolean;
 }): React.JSX.Element | null {
+  const { t } = useAppTranslation();
+
   const featuredItems = useMemo(
     () => discounts.slice(0, MAX_FEATURED_COUPONS),
     [discounts]
@@ -163,7 +169,7 @@ export function FeaturedCouponsCarousel({
       <div className="mb-8 px-6">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-xl font-bold text-foreground">
-            Ofertas destacadas{" "}
+            {t("ui.featured_offers")}{" "}
             <Emoji cp="1f3ab" label="ticket" className="inline-block w-5 h-5" />
           </h2>
         </div>
@@ -181,7 +187,7 @@ export function FeaturedCouponsCarousel({
       <div className="px-6">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-xl font-bold text-foreground">
-            Ofertas destacadas{" "}
+            {t("ui.featured_offers")}{" "}
             <Emoji cp="1f3ab" label="ticket" className="inline-block w-5 h-5" />
           </h2>
         </div>
@@ -219,7 +225,7 @@ export function FeaturedCouponsCarousel({
                 size="icon"
                 onClick={prevSlide}
                 className="absolute top-24 left-2 z-10 h-10 w-10 -translate-y-1/2 rounded-full border-2 border-border bg-white shadow-lg transition-all hover:scale-110 hover:bg-white"
-                aria-label="Cupón anterior"
+                aria-label={t("ui.previous_coupon")}
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -243,7 +249,7 @@ export function FeaturedCouponsCarousel({
                 size="icon"
                 onClick={nextSlide}
                 className="absolute top-24 right-2 z-10 h-10 w-10 -translate-y-1/2 rounded-full border-2 border-border bg-white shadow-lg transition-all hover:scale-110 hover:bg-white"
-                aria-label="Siguiente cupón"
+                aria-label={t("ui.next_coupon")}
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"

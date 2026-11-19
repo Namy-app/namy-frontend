@@ -1,4 +1,8 @@
 export const AnalyticsEvent = {
+  PARTNER_SESSION_STARTED: "partner_session_started",
+  PARTNER_REAUTH_REQUESTED: "partner_reauth_requested",
+  PARTNER_COUPON_GENERATED: "partner_coupon_generated",
+  PARTNER_COUPON_QR_VIEWED: "partner_coupon_qr_viewed",
   SCREEN_VIEWED: "screen_viewed",
   APP_OPENED: "app_opened",
   APP_FOREGROUNDED: "app_foregrounded",

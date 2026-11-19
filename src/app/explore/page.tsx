@@ -6,6 +6,7 @@ import { useStores } from "@/domains/store/hooks/query/useStores";
 import { useMyLevel } from "@/domains/user/hooks/query/useMyLevel";
 import { BasicLayout } from "@/layouts/BasicLayout";
 import { useAuthStore } from "@/store/useAuthStore";
+import { useIsPartnerMode } from "@/store/usePartnerStore";
 
 import { ActiveChallenges } from "./components/ActiveChallenges";
 import { CategoryCards } from "./components/CategoryCards";
@@ -16,6 +17,7 @@ import { UserLevelBanner } from "./components/UserLevelBanner";
 
 export default function ExplorePage(): React.JSX.Element {
   const { user } = useAuthStore();
+  const isPartnerMode = useIsPartnerMode();
   const { data: closestStores, isLoading: isLoadingClosestStores } =
     useClosestStores(undefined, { page: 1, first: 10 });
   const { data: storesResult, isLoading: isLoadingStores } = useStores(
@@ -32,13 +34,14 @@ export default function ExplorePage(): React.JSX.Element {
   return (
     <BasicLayout className="bg-gradient-hero">
       <div
-        className="mx-auto mt-10 w-full min-w-0 max-w-5xl pb-16"
+        className={`mx-auto ${isPartnerMode ? "mt-0" : "mt-10"} w-full min-w-0 max-w-5xl pb-16`}
         style={{
-          paddingTop:
-            "calc(3.5rem + var(--status-bar-height, env(safe-area-inset-top, 0px)))",
+          paddingTop: isPartnerMode
+            ? "1rem"
+            : "calc(3.5rem + var(--status-bar-height, env(safe-area-inset-top, 0px)))",
         }}
       >
-        <UserLevelBanner />
+        {!isPartnerMode && <UserLevelBanner />}
         <CategoryCards />
         <FeaturedCouponsCarousel
           discounts={promotedDiscounts}
@@ -51,7 +54,7 @@ export default function ExplorePage(): React.JSX.Element {
           discountPercentage={discountPercentage}
           isLoading={isLoadingClosestStores ? isLoadingStores : undefined}
         />
-        <ActiveChallenges />
+        {!isPartnerMode && <ActiveChallenges />}
         <PageFooter />
       </div>
     </BasicLayout>

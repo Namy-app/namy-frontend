@@ -1,8 +1,9 @@
 "use client";
 
 import { App } from "@capacitor/app";
-import { Capacitor } from "@capacitor/core";
 import { useEffect, useState } from "react";
+
+import { isNativeApp, getAppPlatform } from "@/lib/app-platform";
 
 import packageJson from "../../package.json";
 
@@ -13,11 +14,11 @@ function webVersionLine(): string {
 async function resolveNativeVersionLine(): Promise<string> {
   try {
     const info = await App.getInfo();
-    const platform = Capacitor.getPlatform() === "ios" ? "iOS" : "Android";
+    const platform = getAppPlatform() === "ios" ? "iOS" : "Android";
     const buildSuffix = info.build ? ` (${info.build})` : "";
     return `${platform} · v${info.version}${buildSuffix}`;
   } catch {
-    return Capacitor.getPlatform() === "ios" ? "iOS" : "Android";
+    return getAppPlatform() === "ios" ? "iOS" : "Android";
   }
 }
 
@@ -28,7 +29,7 @@ export function AppVersionLabel() {
     let cancelled = false;
 
     void (async () => {
-      const next = Capacitor.isNativePlatform()
+      const next = isNativeApp()
         ? await resolveNativeVersionLine()
         : webVersionLine();
       if (!cancelled) {

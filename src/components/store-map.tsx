@@ -1,17 +1,17 @@
 "use client";
 
-import { GoogleMap, useJsApiLoader, OverlayView } from "@react-google-maps/api";
+import { GoogleMap, OverlayView } from "@react-google-maps/api";
 import { Heart, MapPin, Star, X } from "lucide-react";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import { useState, useEffect, useCallback, useMemo } from "react";
 
 import { GoogleMapsDiagnosticsError } from "@/components/GoogleMapsDiagnosticsError";
+import { useGoogleMapsStatus } from "@/components/GoogleMapsProvider";
 import { MapLoadingView } from "@/components/MapLoadingView";
 import { StoreNavLink } from "@/components/StoreNavLink";
 import type { Store } from "@/lib/api-types";
-import { getGoogleMapsApiKey } from "@/lib/google-maps-api-key";
-import { MAPS_AUTH_FAILURE_EVENT } from "@/lib/google-maps-diagnostics";
+import { isMapCoordinate, resolveMapCenter } from "@/lib/map-center";
 import { getUserLocationSafe, type UserLocation } from "@/lib/utils";
 
 const mapContainerStyle = {
@@ -74,8 +74,8 @@ function StorePinLabel({
       <div
         className={`px-3 py-1.5 rounded-full text-sm font-bold whitespace-nowrap shadow-md border transition-all ${
           isSelected
-            ? "bg-[#E8572A] text-white border-[#E8572A]"
-            : "bg-white text-gray-900 border-gray-200 hover:bg-[#fff5f2] hover:border-[#E8572A]"
+            ? "bg-[var(--partner-primary,#E8572A)] text-white border-[var(--partner-primary,#E8572A)]"
+            : "bg-white text-gray-900 border-gray-200 hover:bg-[var(--partner-primary-tint,#fff5f2)] hover:border-[var(--partner-primary,#E8572A)]"
         }`}
       >
         {store.name}
@@ -85,7 +85,11 @@ function StorePinLabel({
         width="12"
         height="10"
         viewBox="0 0 12 10"
-        className={isSelected ? "text-[#E8572A]" : "text-[#E8572A]"}
+        className={
+          isSelected
+            ? "text-[var(--partner-primary,#E8572A)]"
+            : "text-[var(--partner-primary,#E8572A)]"
+        }
       >
         <path d="M6 10 L0 0 Q6 3 12 0 Z" fill="currentColor" />
       </svg>
@@ -134,7 +138,7 @@ function MapSelectedStoreCard({
               "https://placehold.co/124x124/fef2f2/f87171?text=Store";
           }}
         />
-        <div className="absolute left-2 top-2 rounded-md bg-[#E8572A] px-1.5 py-0.5 text-[11px] font-bold leading-none text-white">
+        <div className="absolute left-2 top-2 rounded-md bg-[var(--partner-primary,#E8572A)] px-1.5 py-0.5 text-[11px] font-bold leading-none text-white">
           {discountPercentage}%
         </div>
         <button
@@ -162,8 +166,10 @@ function MapSelectedStoreCard({
         </div>
 
         <div className="flex items-center gap-1">
-          <Star className="h-3.5 w-3.5 fill-[#E8572A] text-[#E8572A]" />
-          <span className="text-xs font-semibold text-[#E8572A]">{rating}</span>
+          <Star className="h-3.5 w-3.5 fill-[var(--partner-primary,#E8572A)] text-[var(--partner-primary,#E8572A)]" />
+          <span className="text-xs font-semibold text-[var(--partner-primary,#E8572A)]">
+            {rating}
+          </span>
           {store.reviewCounter ? (
             <span className="text-xs text-gray-400">
               ({store.reviewCounter})
@@ -179,7 +185,7 @@ function MapSelectedStoreCard({
 
         {distanceLabel ? (
           <div className="flex items-center gap-1 text-gray-500">
-            <MapPin className="h-3 w-3 text-[#E8572A]" />
+            <MapPin className="h-3 w-3 text-[var(--partner-primary,#E8572A)]" />
             <span className="text-xs">{distanceLabel}</span>
           </div>
         ) : null}
@@ -199,12 +205,9 @@ function StoreMapInner({
   const [selectedStore, setSelectedStore] = useState<Store | null>(null);
   const [showUserInfo, setShowUserInfo] = useState(false);
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
-  const [gpsFetchPending, setGpsFetchPending] = useState(() => !center);
-  const isLoadingLocation = !center && gpsFetchPending;
   const [mapInstance, setMapInstance] = useState<google.maps.Map | null>(null);
   const [bounds, setBounds] = useState<google.maps.LatLngBounds | null>(null);
   const [mapTilesReady, setMapTilesReady] = useState(false);
-  const [mapsAuthRejected, setMapsAuthRejected] = useState(false);
 
   const handleBoundsChanged = useCallback(() => {
     if (mapInstance) {
@@ -212,9 +215,12 @@ function StoreMapInner({
     }
   }, [mapInstance]);
 
-  const { isLoaded, loadError } = useJsApiLoader({
-    googleMapsApiKey: getGoogleMapsApiKey(),
-  });
+  const {
+    isLoaded,
+    loadError,
+    authRejected: mapsAuthRejected,
+    apiKeyMissing,
+  } = useGoogleMapsStatus();
 
   useEffect(() => {
     if (center) {
@@ -244,7 +250,6 @@ function StoreMapInner({
       if (location) {
         setUserLocation(location);
       }
-      setGpsFetchPending(false);
     });
 
     return () => {
@@ -252,55 +257,28 @@ function StoreMapInner({
     };
   }, [center]);
 
-  useEffect(() => {
-    const onAuthFailure = (): void => {
-      setMapsAuthRejected(true);
-    };
-    window.addEventListener(MAPS_AUTH_FAILURE_EVENT, onAuthFailure);
-    return () => {
-      window.removeEventListener(MAPS_AUTH_FAILURE_EVENT, onAuthFailure);
-    };
-  }, []);
-
-  const storesWithCoords = stores.filter((s) => s.lat && s.lng);
-
   const visibleStores = useMemo(() => {
-    return stores
-      .filter((s) => s.lat && s.lng)
-      .filter((store) => {
-        if (!bounds) {
-          return true;
-        }
-        return bounds.contains({ lat: store.lat!, lng: store.lng! });
-      });
+    return stores.filter(isMapCoordinate).filter((store) => {
+      if (!bounds) {
+        return true;
+      }
+      return bounds.contains({ lat: store.lat!, lng: store.lng! });
+    });
   }, [stores, bounds]);
 
   useEffect(() => {
     onSelectedStoreChange?.(selectedStore);
   }, [selectedStore, onSelectedStoreChange]);
 
-  const mapCenter =
-    center ||
-    (userLocation
-      ? { lat: userLocation.latitude, lng: userLocation.longitude }
-      : null) ||
-    (storesWithCoords.length > 0
-      ? {
-          lat:
-            storesWithCoords.reduce((sum, s) => sum + s.lat!, 0) /
-            storesWithCoords.length,
-          lng:
-            storesWithCoords.reduce((sum, s) => sum + s.lng!, 0) /
-            storesWithCoords.length,
-        }
-      : { lat: 19.4326, lng: -99.1332 });
+  const mapCenter = resolveMapCenter(center, userLocation, stores);
 
-  if (loadError || mapsAuthRejected) {
+  if (loadError || mapsAuthRejected || apiKeyMissing) {
     return (
       <GoogleMapsDiagnosticsError
         height={height}
         loadError={loadError ?? undefined}
         authRejected={mapsAuthRejected}
+        apiKeyMissing={apiKeyMissing}
       />
     );
   }
@@ -337,12 +315,6 @@ function StoreMapInner({
         </div>
       ) : null}
 
-      {isLoadingLocation ? (
-        <div className="absolute inset-0 z-10">
-          <MapLoadingView message="Getting your location…" />
-        </div>
-      ) : null}
-
       <GoogleMap
         mapContainerStyle={mapContainerStyle}
         center={mapCenter}
@@ -361,17 +333,22 @@ function StoreMapInner({
           setShowUserInfo(false);
         }}
       >
-        <OverlayView
-          position={mapCenter}
-          mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
-        >
-          <UserLocationMarker
-            onClick={() => {
-              setSelectedStore(null);
-              setShowUserInfo((prev) => !prev);
+        {userLocation ? (
+          <OverlayView
+            position={{
+              lat: userLocation.latitude,
+              lng: userLocation.longitude,
             }}
-          />
-        </OverlayView>
+            mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
+          >
+            <UserLocationMarker
+              onClick={() => {
+                setSelectedStore(null);
+                setShowUserInfo((prev) => !prev);
+              }}
+            />
+          </OverlayView>
+        ) : null}
 
         {visibleStores.map((store) => (
           <OverlayView

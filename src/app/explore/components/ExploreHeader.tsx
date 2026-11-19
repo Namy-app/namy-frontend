@@ -25,6 +25,7 @@ import {
   surfacePromo,
 } from "@/lib/promo-storage";
 import { useAuthStore } from "@/store/useAuthStore";
+import { usePartnerConfig } from "@/store/usePartnerStore";
 
 interface ExploreHeaderProps {
   isAuthenticated: boolean;
@@ -32,8 +33,9 @@ interface ExploreHeaderProps {
 
 export function ExploreHeader({
   isAuthenticated,
-}: ExploreHeaderProps): React.JSX.Element {
+}: ExploreHeaderProps): React.JSX.Element | null {
   const router = useRouter();
+  const partner = usePartnerConfig();
   const { user, clearAuth } = useAuthStore();
 
   const handleNotificationClick = (notification: {
@@ -105,6 +107,10 @@ export function ExploreHeader({
     setIsDropdownOpen(false);
     router.push("/");
   };
+
+  if (partner) {
+    return null;
+  }
 
   return (
     <header

@@ -1,7 +1,6 @@
 "use client";
 
 import { Browser } from "@capacitor/browser";
-import { Capacitor } from "@capacitor/core";
 import { useQueryClient } from "@tanstack/react-query";
 import { Crown, Check, X, Zap, Gift } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -17,6 +16,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { BasicLayout } from "@/layouts/BasicLayout";
 import { analytics } from "@/lib/analytics";
+import { isNativeApp } from "@/lib/app-platform";
 import { extractErrorMessage } from "@/lib/utils";
 import { useAuthStore } from "@/store/useAuthStore";
 
@@ -114,7 +114,7 @@ function SubscriptionContent(): React.JSX.Element {
         sendInstantly: true,
       });
 
-      if (Capacitor.isNativePlatform()) {
+      if (isNativeApp()) {
         await Browser.open({ url: session.url });
       } else {
         window.location.href = session.url;

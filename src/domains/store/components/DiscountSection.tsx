@@ -6,6 +6,7 @@ import { useMemo, useState } from "react";
 import {
   type Discount,
   type DiscountsResponse,
+  useAdminPartners,
   useUpdateDiscount,
 } from "@/domains/admin";
 import { useToast } from "@/hooks/use-toast";
@@ -44,6 +45,7 @@ export const DiscountSection = ({
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const updateDiscount = useUpdateDiscount();
+  const { data: partners } = useAdminPartners();
   const [discountModalOpen, setDiscountModalOpen] = useState(false);
   const [editingDiscount, setEditingDiscount] = useState<Discount | undefined>(
     undefined
@@ -194,6 +196,14 @@ export const DiscountSection = ({
                       {inferDiscountPromoDisplayMode(discount) === "banner" ? (
                         <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-sky-100 text-sky-900">
                           Banner
+                        </span>
+                      ) : null}
+                      {discount.partnerId ? (
+                        <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-violet-100 text-violet-900">
+                          {partners?.find(
+                            (partner) => partner.id === discount.partnerId
+                          )?.name ?? "Partner"}{" "}
+                          only
                         </span>
                       ) : null}
                     </div>
